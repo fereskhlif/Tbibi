@@ -1,22 +1,31 @@
 package tn.esprit.pi.tbibi.entities;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
+
 import java.util.Date;
-@AllArgsConstructor
+
 @Entity
 @Getter
 @Setter
+@Builder
 @ToString
 @NoArgsConstructor
-public class Acte {
+@AllArgsConstructor
+
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Medicine {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int acte_id;
-    private Date date;
-    private String description;
-    private String typeOfActe;
+    Long medicineId;
+    String medicineName;
+    int quantity;
+    Date dateOfExpiration;
+    float price;
+    int stock;
 
 }
