@@ -25,8 +25,7 @@ public class Appointement {
     @Enumerated(EnumType.STRING)
     private StatusAppointement statusAppointement;
     private String service;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     Schedule schedule;
-
 
 }
