@@ -13,13 +13,13 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 
-public class MedicalReccords {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int medicalfile_id;
-    private String imageLabo;
-    private String result_ia;
-    private String medical_historuy;
-    private String chronic_diseas;
-    private String rep_doc;
+    private int user_id;
+    private String name;
+    private String Email;
+    private String email;
+    private String password;
+    private String adresse;
 }

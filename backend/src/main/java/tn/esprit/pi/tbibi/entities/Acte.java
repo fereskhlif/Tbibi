@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.util.Date;
+
 @AllArgsConstructor
 @Entity
 @Getter
@@ -13,13 +15,12 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 
-public class MedicalReccords {
+public class Acte {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int medicalfile_id;
-    private String imageLabo;
-    private String result_ia;
-    private String medical_historuy;
-    private String chronic_diseas;
-    private String rep_doc;
+    private int acte_id;
+    private Date date;
+    private String description;
+    private String typeOfActe;
+
 }
