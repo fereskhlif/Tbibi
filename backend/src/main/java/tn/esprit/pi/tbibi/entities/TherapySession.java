@@ -19,36 +19,22 @@ public class TherapySession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer sessionId;
 
-    @Column(columnDefinition = "TEXT")
     private String progressNote;
 
-    @Column(nullable = false)
     private LocalDate scheduledDate;
 
-    @Column(columnDefinition = "TEXT")
     private String evaluationResult;
 
-    @Column(nullable = false)
     private LocalTime startTime;
 
-    @Column(nullable = false)
     private LocalTime endTime;
 
-    // ========================================
-    // Relation avec User (Patient)
-    // Many-to-One : Plusieurs sessions pour un patient
-    // ========================================
     @ManyToOne
     @JoinColumn(name = "patient_user_id", nullable = false)
-    @ToString.Exclude
-    private User patient; // User avec role = PATIENT
 
-    // ========================================
-    // Relation avec User (Physiotherapist)
-    // Many-to-One : Plusieurs sessions pour un physiothérapeute
-    // ========================================
+    private User patient;
     @ManyToOne
     @JoinColumn(name = "physiotherapist_user_id", nullable = false)
-    @ToString.Exclude
-    private User physiotherapist; // User avec role = PHYSIO
+
+    private User physiotherapist;
 }
