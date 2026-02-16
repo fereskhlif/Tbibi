@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Set;
+
 @Entity
 @Getter
 @Setter
@@ -13,12 +15,15 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PaymentHistory {
+    public class PaymentHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long historyId;
     double amount;
 
-    @ManyToOne
-    Payment payment;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy="paymenthistory")
+    private Set<Payment> Payments;;
+
+
+
 }
