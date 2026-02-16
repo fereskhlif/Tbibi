@@ -24,4 +24,8 @@ public class MonitoringOfChronicDisease {
     private String plan;
 
     private String criticalAlert;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
 }

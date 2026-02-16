@@ -18,4 +18,10 @@ public class Reminder {
     private LocalDate heureRappel;
 
     private Integer frequence;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+
 }
