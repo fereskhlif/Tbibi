@@ -27,5 +27,7 @@ public class Appointement {
     private String service;
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     Schedule schedule;
+    @ManyToOne
+    User user;
 
 }
