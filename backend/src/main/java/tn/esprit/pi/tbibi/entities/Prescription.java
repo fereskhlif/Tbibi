@@ -1,14 +1,12 @@
 package tn.esprit.pi.tbibi.entities;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 
 import java.util.Date;
 import java.util.List;
 
-public class prescription {
+@Entity
+public class Prescription {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int prescriptionID;
@@ -17,4 +15,8 @@ public class prescription {
     private String note;
     @ManyToOne
     Acte acte;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy="prescription")
+    private List<Treatment> Treatments;
+
 }

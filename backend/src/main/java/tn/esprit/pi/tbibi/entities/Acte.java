@@ -1,8 +1,5 @@
 package tn.esprit.pi.tbibi.entities;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
 @AllArgsConstructor
@@ -18,5 +15,9 @@ public class Acte {
     private Date date;
     private String description;
     private String typeOfActe;
+    @ManyToOne(cascade = CascadeType.ALL)
+    MonitoringOfChronicDisease monitoringofchronicdisease;
+    ;
+
 
 }
