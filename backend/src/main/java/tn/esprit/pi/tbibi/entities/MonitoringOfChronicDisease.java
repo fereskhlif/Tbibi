@@ -14,7 +14,6 @@ public class MonitoringOfChronicDisease {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long chroid;
-
     private LocalDate dateOfDiagnosis;
 
     private String nameOfDisease;
