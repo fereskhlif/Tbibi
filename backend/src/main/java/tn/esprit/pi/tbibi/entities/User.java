@@ -9,7 +9,7 @@ import java.util.Set;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"medicalFiles", "Orders", "Appointements"}) // Exclude collections
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -30,8 +30,10 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
     private Role role;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy="user")
-    private Set<Order> Orders;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy="user")
-    private Set<Appointement> Appointements;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
+    private List<Order> orders;  // Changed to List and lowercase
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
+    private List<Appointement> appointements;  // Changed to List and lowercase
 }
