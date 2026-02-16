@@ -1,10 +1,9 @@
 package tn.esprit.pi.tbibi.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Set;
 
 @AllArgsConstructor
 @Entity
@@ -22,4 +21,9 @@ public class MedicalReccords {
     private String medical_historuy;
     private String chronic_diseas;
     private String rep_doc;
+    @OneToMany(cascade = CascadeType.ALL)
+    private Set<Laboratory_Result> Laboratory_Results;
+
+
+
 }
