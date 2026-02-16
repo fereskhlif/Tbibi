@@ -3,6 +3,7 @@ package tn.esprit.pi.tbibi.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -29,4 +30,8 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
     private Role role;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy="user")
+    private Set<Order> Orders;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy="user")
+    private Set<Appointement> Appointements;
 }
