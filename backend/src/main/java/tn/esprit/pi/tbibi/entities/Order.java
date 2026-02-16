@@ -11,22 +11,28 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
-
+@ToString(exclude = {"orderLines", "pharmacy", "user"})  // Exclude relationships
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long orderId;
     Date deliveryDate;
     float totalAmount;
+
     @Enumerated(EnumType.STRING)
     Status orderStatus;
     Date orderDate;
 
-    @OneToMany(mappedBy = "order")
+    @ManyToMany
+    @JoinTable(
+            name = "order_orderline",
+            joinColumns = @JoinColumn(name = "order_id"),
+            inverseJoinColumns = @JoinColumn(name = "orderline_id")
+    )
     List<OrderLine> orderLines;
 
     @ManyToOne
