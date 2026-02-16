@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Set;
+
 @Entity
 @Table(name = "Appointement")
 @Getter
@@ -25,5 +27,7 @@ public class Ia_history {
     private String VocaleChatbot;
     private String textChatbot;
     private String imageChatbot;
+    @OneToMany(cascade = CascadeType.ALL)
+    private Set<Laboratory_Result> Laboratory_Results;
 
 }

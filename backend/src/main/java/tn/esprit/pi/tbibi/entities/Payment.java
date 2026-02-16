@@ -24,8 +24,11 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     PaymentMethod paymentMethod;
 
-    @OneToMany(mappedBy = "payment" , cascade = CascadeType.ALL)
-    List<PaymentHistory> paymentHistory;
+    @ManyToOne
+    PaymentHistory paymenthistory;
+
+
+
 
     @ManyToOne
     User user;
