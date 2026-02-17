@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Entity
 @Table(name = "laboratory_results")
@@ -38,4 +39,6 @@ public class Laboratory_Result {
     @OneToOne(mappedBy = "laboratoryResult", cascade = CascadeType.ALL)
 
     private MedicalPictureAnalysis medicalPictureAnalysis;
+    @OneToMany(cascade = CascadeType.ALL)
+    private Set<User> Users;
 }
