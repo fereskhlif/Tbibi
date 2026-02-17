@@ -33,7 +33,6 @@ public class TherapySession {
     @JoinColumn(name = "patient_user_id", nullable = false)
 
     private User patient;
-
     @ManyToOne
     @JoinColumn(name = "physiotherapist_user_id", nullable = false)
 
