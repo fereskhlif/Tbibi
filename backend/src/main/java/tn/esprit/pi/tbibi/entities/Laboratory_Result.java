@@ -40,5 +40,5 @@ public class Laboratory_Result {
 
     private MedicalPictureAnalysis medicalPictureAnalysis;
     @OneToMany(cascade = CascadeType.ALL)
-    private Set<User> Users;
+    private Set<User> users;
 }
