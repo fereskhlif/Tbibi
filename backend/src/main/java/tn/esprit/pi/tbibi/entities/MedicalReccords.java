@@ -1,17 +1,13 @@
 package tn.esprit.pi.tbibi.entities;
-
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.Set;
-
 @AllArgsConstructor
 @Entity
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-
 public class MedicalReccords {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,8 +18,5 @@ public class MedicalReccords {
     private String chronic_diseas;
     private String rep_doc;
     @OneToMany(cascade = CascadeType.ALL)
-    private Set<Laboratory_Result> Laboratory_Results;
-
-
-
+    private Set<Laboratory_Result> laboratoryResults;
 }
