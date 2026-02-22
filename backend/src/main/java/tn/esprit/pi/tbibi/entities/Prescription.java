@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
+
 
 @Entity
 @Getter
@@ -25,7 +25,7 @@ public class Prescription {
             joinColumns = @JoinColumn(name = "prescription_id"),
             inverseJoinColumns = @JoinColumn(name = "medicine_id")
     )
-    private List<Medicine> medicines;  // Fixed: Added @ManyToMany
+    private List<Medicine> medicines;
 
     private Date date;
     private String note;
@@ -34,5 +34,5 @@ public class Prescription {
     Acte acte;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "prescription")
-    private List<Treatment> treatments;  // Renamed to lowercase
+    private List<Treatment> treatments;
 }
