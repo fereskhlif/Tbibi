@@ -8,8 +8,9 @@ import java.util.List;
 
 public interface IMedicalReccordsService {
     MdicalReccordsResponse add(MdicalReccordsRequest request, MultipartFile file) ;
-    MdicalReccordsResponse update(int id, MdicalReccordsRequest request, MultipartFile file) ;
+    public MdicalReccordsResponse update(int id, MdicalReccordsRequest request);
     void delete(int id);
     MdicalReccordsResponse getById(int id);
     List<MdicalReccordsResponse> getAll();
+    public MdicalReccordsResponse add(MdicalReccordsRequest request);
 }
