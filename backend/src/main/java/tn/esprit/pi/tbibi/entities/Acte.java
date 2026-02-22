@@ -17,7 +17,7 @@ public class Acte {
     private String typeOfActe;
     @ManyToOne(cascade = CascadeType.ALL)
     MonitoringOfChronicDisease monitoringofchronicdisease;
-    ;
+
 
 
 }

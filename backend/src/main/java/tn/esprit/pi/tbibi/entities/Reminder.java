@@ -2,7 +2,6 @@ package tn.esprit.pi.tbibi.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
@@ -10,23 +9,18 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
-
-@FieldDefaults(level = AccessLevel.PRIVATE)
-
-public class Reminders {
+public class Reminder {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long reminderId;
-    LocalDateTime reminderDate;
-    int frequency;
+    private Long reminderId;
+
+    private LocalDateTime heureRappel;
+    private int frequence;
+
     @ManyToOne
-    Treatment treatment;
-
-
-
-    }
+    private Treatment treatment;
+}
 

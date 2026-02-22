@@ -29,5 +29,5 @@ public class Treatment {
     Prescription prescription;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy="treatment")
-    private List<Reminders> Reminders;
+    private List<Reminder> Reminders;
 }
