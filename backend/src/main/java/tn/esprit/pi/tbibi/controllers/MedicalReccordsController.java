@@ -14,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/medical-records")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class MedicalReccordsController {
 
     private final MedicalRec service;

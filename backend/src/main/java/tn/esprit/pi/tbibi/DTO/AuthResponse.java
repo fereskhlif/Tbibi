@@ -1,4 +1,8 @@
 package tn.esprit.pi.tbibi.DTO;
 
-public class AuthResponse {
+public record AuthResponse(
+        String token,
+        String email,
+        String role
+) {
 }
