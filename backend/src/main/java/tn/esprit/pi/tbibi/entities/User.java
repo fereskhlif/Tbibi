@@ -5,6 +5,7 @@ import lombok.*;
 import java.util.List;
 import java.util.Set;
 
+@Builder
 @Entity
 @Table(name = "users")
 @Getter
@@ -22,6 +23,8 @@ public class User {
     private String email;
     private String password;
     private String adresse;
+    @Builder.Default
+    boolean enabled = true;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "patient_id")
