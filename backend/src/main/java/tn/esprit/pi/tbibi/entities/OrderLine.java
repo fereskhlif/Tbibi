@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"orders", "medicine"})  // Exclude relationships
+
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderLine {
     @Id
