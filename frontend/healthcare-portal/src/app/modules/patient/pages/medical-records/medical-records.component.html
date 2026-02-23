@@ -1,0 +1,151 @@
+<div class="p-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Medical Records</h1>
+      <p class="text-gray-600">View and manage your health records</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button (click)="openAddForm()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Add Record</button>
+      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Download All</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex gap-2 mb-6 flex-wrap">
+    <button *ngFor="let f of filters" (click)="activeFilter = f"
+      [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' + (activeFilter === f ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50')">
+      {{f}}
+    </button>
+  </div>
+
+  <!-- Records List -->
+  <div *ngIf="errorMessage" class="mb-4 p-4 bg-red-50 text-red-700 rounded">{{errorMessage}}</div>
+
+  <div *ngIf="records.length === 0 && !errorMessage" class="text-gray-500">No records found.</div>
+
+  <div class="space-y-4">
+    <div *ngFor="let record of filteredRecords; let i = index" class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div [class]="'w-12 h-12 rounded-lg flex items-center justify-center ' + record.bgColor">
+            <span class="text-2xl">{{record.icon}}</span>
+          </div>
+          <div>
+            <h3 class="font-semibold text-gray-900">{{record.imageLabo}}</h3>
+            <p class="text-sm text-gray-600">{{record.chronic_diseas}} • {{record.medical_historuy}}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span [class]="'px-3 py-1 text-xs rounded-full font-medium ' + record.statusClass">{{record.status}}</span>
+          <button (click)="viewRecord(record)" class="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">View</button>
+          <button (click)="openEditForm(record, i)" class="px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">Edit</button>
+          <button (click)="deleteRecord(i)" class="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Record Details Modal -->
+  <div *ngIf="selectedRecord" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
+      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="font-bold text-xl text-gray-900">Record Details</h3>
+        <button (click)="selectedRecord = null" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center gap-4 mb-4">
+          <div [class]="'w-16 h-16 rounded-xl flex items-center justify-center text-3xl ' + selectedRecord.bgColor">{{selectedRecord.icon}}</div>
+          <div>
+            <h4 class="text-lg font-bold text-gray-900">{{selectedRecord.imageLabo}}</h4>
+            <p class="text-gray-500">{{selectedRecord.type}}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Résultat IA</p>
+            <p class="font-medium text-gray-900">{{selectedRecord.result_ia}}</p>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Maladies chroniques</p>
+            <p class="font-medium text-gray-900">{{selectedRecord.chronic_diseas}}</p>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-lg col-span-2">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Historique médical</p>
+            <p class="font-medium text-gray-900">{{selectedRecord.medical_historuy}}</p>
+          </div>
+        </div>
+
+        <div class="mt-4" *ngIf="selectedRecord.rep_doc">
+          <p class="font-semibold text-gray-900 mb-2">Rapport médecin</p>
+          <p class="text-gray-600 text-sm leading-relaxed">📄 {{selectedRecord.rep_doc}}</p>
+        </div>
+      </div>
+      <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+        <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Download PDF</button>
+        <button (click)="selectedRecord = null" class="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit Form Modal -->
+  <div *ngIf="showForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
+      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="font-bold text-xl text-gray-900">{{ isEditing ? 'Edit Record' : 'Add Record' }}</h3>
+        <button (click)="cancelForm()" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+
+      <form [formGroup]="formMedicalRecord">
+        <div class="p-6 space-y-4">
+          <div class="grid grid-cols-1 gap-3">
+
+            <div>
+              <input formControlName="imageLabo" placeholder="Image Labo"
+                class="w-full p-3 border border-gray-200 rounded-lg" />
+              <p *ngIf="formMedicalRecord.controls['imageLabo'].invalid && formMedicalRecord.controls['imageLabo'].touched"
+                class="text-red-500 text-xs mt-1">Champ obligatoire</p>
+            </div>
+
+            <div>
+              <input formControlName="result_ia" placeholder="Résultat IA"
+                class="w-full p-3 border border-gray-200 rounded-lg" />
+              <p *ngIf="formMedicalRecord.controls['result_ia'].invalid && formMedicalRecord.controls['result_ia'].touched"
+                class="text-red-500 text-xs mt-1">Champ obligatoire</p>
+            </div>
+
+            <div>
+              <textarea formControlName="medical_historuy" placeholder="Historique médical" rows="3"
+                class="w-full p-3 border border-gray-200 rounded-lg resize-none"></textarea>
+              <p *ngIf="formMedicalRecord.controls['medical_historuy'].invalid && formMedicalRecord.controls['medical_historuy'].touched"
+                class="text-red-500 text-xs mt-1">Minimum 10 caractères</p>
+            </div>
+
+            <div>
+              <input formControlName="chronic_diseas" placeholder="Maladies chroniques"
+                class="w-full p-3 border border-gray-200 rounded-lg" />
+              <p *ngIf="formMedicalRecord.controls['chronic_diseas'].invalid && formMedicalRecord.controls['chronic_diseas'].touched"
+                class="text-red-500 text-xs mt-1">Champ obligatoire</p>
+            </div>
+
+            <div>
+              <input type="file" accept=".pdf" (change)="onFileChange($event)"
+                class="w-full p-3 border border-gray-200 rounded-lg" />
+              <p *ngIf="selectedFile" class="text-xs text-green-600 mt-1">✅ {{selectedFile.name}}</p>
+              <p *ngIf="!selectedFile && isEditing" class="text-xs text-blue-600 mt-1">📄 Fichier existant conservé</p>
+            </div>
+
+          </div>
+        </div>
+        <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+          <button type="button" (click)="cancelForm()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+          <button type="button" (click)="saveForm()" [disabled]="formMedicalRecord.invalid"
+            class="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+            {{ isEditing ? 'Save' : 'Add' }}
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
