@@ -9,7 +9,7 @@ import java.util.Set;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = {"medicalFiles", "Orders", "Appointements"}) // Exclude collections
+@ToString(exclude = { "medicalFiles", "Orders", "Appointements" }) // Exclude collections
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -32,8 +32,8 @@ public class User {
     private Role role;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Order> orders;  // Changed to List and lowercase
+    private List<Order> orders; // Changed to List and lowercase
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Appointement> appointements;  // Changed to List and lowercase
+    private List<Appointement> appointements; // Changed to List and lowercase
 }

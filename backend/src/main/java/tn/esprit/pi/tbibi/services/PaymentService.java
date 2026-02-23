@@ -4,11 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.DTO.payment.PaymentRequest;
 import tn.esprit.pi.tbibi.DTO.payment.PaymentResponse;
-import tn.esprit.pi.tbibi.entities.Payment;
-import tn.esprit.pi.tbibi.entities.PaymentHistory;
-import tn.esprit.pi.tbibi.entities.PaymentMethod;
-import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.mappers.PaymentMapper;
+import tn.esprit.pi.tbibi.entities.*;
 import tn.esprit.pi.tbibi.repositories.PaymentHistoryRepository;
 import tn.esprit.pi.tbibi.repositories.PaymentRepository;
 import tn.esprit.pi.tbibi.repositories.UserRepository;
@@ -22,23 +19,26 @@ public class PaymentService implements IPaymentService {
     PaymentRepository paymentRepo;
     PaymentHistoryRepository paymentHistoryRepo;
     UserRepository userRepo;
+    PaymentMapper paymentMapper;
 
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
         PaymentHistory paymentHistory = paymentHistoryRepo.findById(request.getPaymentHistoryId()).orElseThrow();
         User user = userRepo.findById(request.getUserId()).orElseThrow();
-        Payment payment = PaymentMapper.toEntity(request, paymentHistory, user);
-        return PaymentMapper.toResponse(paymentRepo.save(payment));
+        Payment payment = paymentMapper.toEntity(request);
+        payment.setPaymenthistory(paymentHistory);
+        payment.setUser(user);
+        return paymentMapper.toDto(paymentRepo.save(payment));
     }
 
     @Override
     public PaymentResponse getPaymentById(Long id) {
-        return PaymentMapper.toResponse(paymentRepo.findById(id).orElseThrow());
+        return paymentMapper.toDto(paymentRepo.findById(id).orElseThrow());
     }
 
     @Override
     public List<PaymentResponse> getAllPayments() {
-        return paymentRepo.findAll().stream().map(PaymentMapper::toResponse).toList();
+        return paymentRepo.findAll().stream().map(paymentMapper::toDto).toList();
     }
 
     @Override
@@ -50,7 +50,7 @@ public class PaymentService implements IPaymentService {
         payment.setPaymentMethod(PaymentMethod.valueOf(request.getPaymentMethod()));
         payment.setPaymenthistory(paymentHistory);
         payment.setUser(user);
-        return PaymentMapper.toResponse(paymentRepo.save(payment));
+        return paymentMapper.toDto(paymentRepo.save(payment));
     }
 
     @Override
