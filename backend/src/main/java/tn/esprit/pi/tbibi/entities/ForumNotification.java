@@ -3,7 +3,6 @@ package tn.esprit.pi.tbibi.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
@@ -12,23 +11,23 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ForumPost {
+public class ForumNotification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long postId;
-    String title;
-    String content;
-    LocalDateTime createdDate;
-    Integer views;
-
-    @Enumerated(EnumType.STRING)
-    PostStatus postStatus;
+    Long notificationId;
+    String message;
+    Boolean isRead;
+    LocalDateTime createdAt;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    User author;
+    @JoinColumn(name = "recipient_id")
+    User recipient;
 
     @ManyToOne
-    @JoinColumn(name = "category_id")
-    ForumCategory category;
+    @JoinColumn(name = "post_id")
+    ForumPost post;
+
+    @ManyToOne
+    @JoinColumn(name = "comment_id")
+    ForumComment comment;
 }

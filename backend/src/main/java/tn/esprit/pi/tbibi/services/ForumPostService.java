@@ -30,6 +30,7 @@ public class ForumPostService implements IForumPostService {
         post.setCategory(category);
         post.setCreatedDate(LocalDateTime.now());
         post.setViews(0);
+        post.setPostStatus(PostStatus.OPEN);
         return postMapper.toDto(postRepo.save(post));
     }
 
