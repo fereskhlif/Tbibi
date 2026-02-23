@@ -4,11 +4,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.DTO.forumcomment.ForumCommentRequest;
 import tn.esprit.pi.tbibi.DTO.forumcomment.ForumCommentResponse;
+import tn.esprit.pi.tbibi.entities.ForumNotification;
 import tn.esprit.pi.tbibi.mappers.ForumCommentMapper;
 import tn.esprit.pi.tbibi.entities.ForumComment;
 import tn.esprit.pi.tbibi.entities.ForumPost;
 import tn.esprit.pi.tbibi.entities.User;
+import tn.esprit.pi.tbibi.mappers.ForumNotificationMapper;
 import tn.esprit.pi.tbibi.repositories.ForumCommentRepository;
+import tn.esprit.pi.tbibi.repositories.ForumNotificationRepository;
 import tn.esprit.pi.tbibi.repositories.ForumPostRepository;
 import tn.esprit.pi.tbibi.repositories.UserRepository;
 import java.time.LocalDateTime;
@@ -21,7 +24,9 @@ public class ForumCommentService implements IForumCommentService {
     ForumPostRepository postRepo;
     UserRepository userRepo;
     ForumCommentMapper commentMapper;
+    ForumNotificationRepository notificationRepo;
 
+    //Notification logic :
     @Override
     public ForumCommentResponse createComment(ForumCommentRequest request) {
         User author = userRepo.findById(request.getAuthorId()).orElseThrow();
@@ -29,9 +34,27 @@ public class ForumCommentService implements IForumCommentService {
         ForumComment comment = commentMapper.toEntity(request);
         comment.setAuthor(author);
         comment.setPost(post);
+
         comment.setCommentDate(LocalDateTime.now());
-        return commentMapper.toDto(commentRepo.save(comment));
+        commentRepo.save(comment);
+
+        // ── Create notification automatically ──────────────────
+        if (!post.getAuthor().getUserId().equals(request.getAuthorId())) {
+            // only notify if commenter is not the post author himself
+            ForumNotification notification = new ForumNotification();
+            notification.setMessage(author.getName() + " commented on your post: " + post.getTitle());
+            notification.setIsRead(false);
+            notification.setCreatedAt(LocalDateTime.now());
+            notification.setRecipient(post.getAuthor());
+            notification.setPost(post);
+            notification.setComment(comment);
+            notificationRepo.save(notification);
+        }
+
+        return commentMapper.toDto(comment);
     }
+
+
 
     @Override
     public ForumCommentResponse getCommentById(Long id) {
