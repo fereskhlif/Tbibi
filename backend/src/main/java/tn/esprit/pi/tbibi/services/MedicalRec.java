@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.pi.tbibi.DTO.MdicalReccordsRequest;
 import tn.esprit.pi.tbibi.DTO.MdicalReccordsResponse;
-import tn.esprit.pi.tbibi.controllers.MedicalReccordsController;
 import tn.esprit.pi.tbibi.entities.MedicalReccords;
 import tn.esprit.pi.tbibi.repositories.MedicalReccordsRepo;
 
@@ -46,8 +45,20 @@ private String saveFile(MultipartFile file) {
     }
 
     @Override
-    public MdicalReccordsResponse update(int id, MdicalReccordsRequest request, MultipartFile file) {
-        return null;
+    public MdicalReccordsResponse add(MdicalReccordsRequest request) {
+        MedicalReccords entity = mapper.toEntity(request);
+        return mapper.toResponse(repository.save(entity));
+    }
+
+    @Override
+    public MdicalReccordsResponse update(int id, MdicalReccordsRequest request) {
+        MedicalReccords entity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Record not found"));
+        entity.setImageLabo(request.getImageLabo());
+        entity.setResult_ia(request.getResult_ia());
+        entity.setMedical_historuy(request.getMedical_historuy());
+        entity.setChronic_diseas(request.getChronic_diseas());
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override
@@ -60,8 +71,14 @@ private String saveFile(MultipartFile file) {
         return null;
     }
 
+
     @Override
     public List<MdicalReccordsResponse> getAll() {
-        return List.of();
+        List<MedicalReccords> entities = repository.findAll();
+        List<MdicalReccordsResponse> responses = new java.util.ArrayList<>();
+        for (MedicalReccords entity : entities) {
+            responses.add(mapper.toResponse(entity));
+        }
+        return responses;
     }
 }
