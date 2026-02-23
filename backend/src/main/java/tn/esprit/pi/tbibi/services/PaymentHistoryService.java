@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.DTO.paymenthistory.PaymentHistoryRequest;
 import tn.esprit.pi.tbibi.DTO.paymenthistory.PaymentHistoryResponse;
-import tn.esprit.pi.tbibi.entities.PaymentHistory;
 import tn.esprit.pi.tbibi.mappers.PaymentHistoryMapper;
+import tn.esprit.pi.tbibi.entities.PaymentHistory;
 import tn.esprit.pi.tbibi.repositories.PaymentHistoryRepository;
 
 import java.util.List;
@@ -15,28 +15,28 @@ import java.util.List;
 public class PaymentHistoryService implements IPaymentHistoryService {
 
     PaymentHistoryRepository paymentHistoryRepo;
+    PaymentHistoryMapper paymentHistoryMapper;
 
     @Override
     public PaymentHistoryResponse createPaymentHistory(PaymentHistoryRequest request) {
-        PaymentHistory paymentHistory = PaymentHistoryMapper.toEntity(request);
-        return PaymentHistoryMapper.toResponse(paymentHistoryRepo.save(paymentHistory));
+        return paymentHistoryMapper.toDto(paymentHistoryRepo.save(paymentHistoryMapper.toEntity(request)));
     }
 
     @Override
     public PaymentHistoryResponse getPaymentHistoryById(Long id) {
-        return PaymentHistoryMapper.toResponse(paymentHistoryRepo.findById(id).orElseThrow());
+        return paymentHistoryMapper.toDto(paymentHistoryRepo.findById(id).orElseThrow());
     }
 
     @Override
     public List<PaymentHistoryResponse> getAllPaymentHistories() {
-        return paymentHistoryRepo.findAll().stream().map(PaymentHistoryMapper::toResponse).toList();
+        return paymentHistoryRepo.findAll().stream().map(paymentHistoryMapper::toDto).toList();
     }
 
     @Override
     public PaymentHistoryResponse updatePaymentHistory(Long id, PaymentHistoryRequest request) {
         PaymentHistory paymentHistory = paymentHistoryRepo.findById(id).orElseThrow();
         paymentHistory.setAmount(request.getAmount());
-        return PaymentHistoryMapper.toResponse(paymentHistoryRepo.save(paymentHistory));
+        return paymentHistoryMapper.toDto(paymentHistoryRepo.save(paymentHistory));
     }
 
     @Override
