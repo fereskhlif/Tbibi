@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PatientRoutingModule } from './patient-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
@@ -37,6 +37,7 @@ import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/p
     imports: [
         CommonModule,
         FormsModule,
+        ReactiveFormsModule,
         PatientRoutingModule,
         SharedModule
     ]
