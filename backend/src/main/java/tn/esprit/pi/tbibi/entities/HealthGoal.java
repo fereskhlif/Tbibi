@@ -6,26 +6,24 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
 import java.util.List;
-
+import java.time.LocalDate;
 @Entity
 @Getter
 @Setter
-@Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+public class HealthGoal {
 
-@FieldDefaults(level = AccessLevel.PRIVATE)
-
-public class Treatment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long treatmentId;
-    Date startDate;
-    Date endDate;
-    String description;
+    private Long id;
 
-    @ManyToOne
-    Prescription prescription;
+    private String goalTitle;
 
+    private String description;
+
+    private LocalDate targetDate;
+
+    private boolean achieved;
 }
