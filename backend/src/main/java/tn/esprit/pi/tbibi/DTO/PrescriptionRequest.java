@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PrescriptionRequest {
-    private List<Medicine> medicines;
+    //private List<Medicine> medicines;
     private Date date;
     private String note;
 }
