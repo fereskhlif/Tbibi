@@ -3,8 +3,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
-
 @Entity
 @Table(name = "Appointement")
 @Getter
@@ -15,19 +13,20 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Appointement {
+public class Appointment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long appointementId;
+    private Long appointmentId;
     private String doctor;
-    private String availableDoctor;
-    private LocalDate dateAppointement;
+    private String specialty;
+    private String reasonForVisit;
+    private String service;
     @Enumerated(EnumType.STRING)
     private StatusAppointement statusAppointement;
-    private String service;
+
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    Schedule schedule;
+    private Schedule schedule;
     @ManyToOne
-    User user;
+    private User user;
 
 }
