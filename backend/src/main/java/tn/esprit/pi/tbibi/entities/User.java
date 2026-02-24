@@ -3,7 +3,6 @@ package tn.esprit.pi.tbibi.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
-import java.util.Set;
 
 @Builder
 @Entity
@@ -38,5 +37,5 @@ public class User {
     private List<Order> orders;  // Changed to List and lowercase
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Appointement> appointements;  // Changed to List and lowercase
+    private List<Appointment> appointements;  // Changed to List and lowercase
 }
