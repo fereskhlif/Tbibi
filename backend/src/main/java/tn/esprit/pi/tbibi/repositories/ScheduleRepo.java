@@ -8,6 +8,5 @@ import java.util.List;
 
 public interface ScheduleRepo extends JpaRepository<Schedule,Long> {
     List<Schedule> findByDate(LocalDate date);
-    List<Schedule> findByIsAvailable(Boolean isAvailable);
-
+    List<Schedule> findByDocteurIsAvailable(String docteur ,Boolean isAvailable);
 }
