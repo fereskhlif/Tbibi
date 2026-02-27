@@ -8,12 +8,8 @@ import java.util.List;
 public interface IScheduleService {
 
     ScheduleResponse create(ScheduleRequest request);
-
     ScheduleResponse getById(Integer id);
-
     List<ScheduleResponse> getAll();
-
     ScheduleResponse update(Integer id, ScheduleRequest request);
-
     void delete(Integer id);
 }

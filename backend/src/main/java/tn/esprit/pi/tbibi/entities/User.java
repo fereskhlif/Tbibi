@@ -38,4 +38,7 @@ public class User {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private List<Appointment> appointements;  // Changed to List and lowercase
+
+    @OneToMany
+    private List<Teleconsultation> consultationRooms;
 }

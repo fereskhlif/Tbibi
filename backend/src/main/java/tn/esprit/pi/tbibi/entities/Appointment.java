@@ -2,6 +2,8 @@ package tn.esprit.pi.tbibi.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "Appointement")
@@ -17,10 +19,12 @@ public class Appointment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long appointmentId;
-    private String doctor;
-    private String specialty;
-    private String reasonForVisit;
     private String service;
+    private String specialty;
+    private String doctor;
+
+    private String reasonForVisit;
+
     @Enumerated(EnumType.STRING)
     private StatusAppointement statusAppointement;
 
@@ -28,5 +32,7 @@ public class Appointment {
     private Schedule schedule;
     @ManyToOne
     private User user;
+    @OneToMany(mappedBy = "appointments", cascade = CascadeType.ALL)
+    private List<Notification> notification = new ArrayList<>();
 
 }
