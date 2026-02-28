@@ -14,7 +14,7 @@ public class ForumCommentResponse {
     Long commentId;
     String comment;
     LocalDateTime commentDate;
-    Long authorId;
+    Integer authorId;
     String authorName;
     Long postId;
 }

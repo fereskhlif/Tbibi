@@ -22,7 +22,7 @@ public class PharmacyController {
     }
 
     @GetMapping("/{id}")
-    public PharmacyResponse getById(@PathVariable Long id) {
+    public PharmacyResponse getById(@PathVariable("id") Long id) {
         return pharmacyService.getPharmacyById(id);
     }
 
@@ -32,12 +32,12 @@ public class PharmacyController {
     }
 
     @PutMapping("/{id}")
-    public PharmacyResponse update(@PathVariable Long id, @RequestBody PharmacyRequest request) {
+    public PharmacyResponse update(@PathVariable("id") Long id, @RequestBody PharmacyRequest request) {
         return pharmacyService.updatePharmacy(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable("id") Long id) {
         pharmacyService.deletePharmacy(id);
     }
 }

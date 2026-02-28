@@ -11,6 +11,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ForumCommentRequest {
     String comment;
-    Long authorId;
+    Integer authorId;
     Long postId;
 }

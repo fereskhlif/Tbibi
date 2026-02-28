@@ -3,6 +3,7 @@ package tn.esprit.pi.tbibi.DTO.medicine;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -13,8 +14,12 @@ import java.util.Date;
 public class MedicineResponse {
     Long medicineId;
     String medicineName;
-    int quantity;
     Date dateOfExpiration;
     float price;
     int stock;
+    int minStockAlert;
+    boolean available;
+    List<String> imageUrls;
+    String description;
+    String dosage;
 }

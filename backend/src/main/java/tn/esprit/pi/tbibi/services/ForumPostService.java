@@ -8,7 +8,7 @@ import tn.esprit.pi.tbibi.mappers.ForumPostMapper;
 import tn.esprit.pi.tbibi.entities.*;
 import tn.esprit.pi.tbibi.repositories.ForumCategoryRepository;
 import tn.esprit.pi.tbibi.repositories.ForumPostRepository;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class ForumPostService implements IForumPostService {
 
     ForumPostRepository postRepo;
     ForumCategoryRepository categoryRepo;
-    UserRepository userRepo;
+    UserRepo userRepo;
     ForumPostMapper postMapper;
 
     @Override

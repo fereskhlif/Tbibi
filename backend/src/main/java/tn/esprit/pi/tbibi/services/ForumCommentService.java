@@ -1,19 +1,19 @@
 package tn.esprit.pi.tbibi.services;
 
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.DTO.forumcomment.ForumCommentRequest;
 import tn.esprit.pi.tbibi.DTO.forumcomment.ForumCommentResponse;
-import tn.esprit.pi.tbibi.entities.ForumNotification;
+import tn.esprit.pi.tbibi.entities.Notification;
 import tn.esprit.pi.tbibi.mappers.ForumCommentMapper;
 import tn.esprit.pi.tbibi.entities.ForumComment;
 import tn.esprit.pi.tbibi.entities.ForumPost;
 import tn.esprit.pi.tbibi.entities.User;
-import tn.esprit.pi.tbibi.mappers.ForumNotificationMapper;
 import tn.esprit.pi.tbibi.repositories.ForumCommentRepository;
-import tn.esprit.pi.tbibi.repositories.ForumNotificationRepository;
+import tn.esprit.pi.tbibi.repositories.NotificationRepository;
 import tn.esprit.pi.tbibi.repositories.ForumPostRepository;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 import java.time.LocalDateTime;
 
 @Service
@@ -22,9 +22,9 @@ public class ForumCommentService implements IForumCommentService {
 
     ForumCommentRepository commentRepo;
     ForumPostRepository postRepo;
-    UserRepository userRepo;
+    UserRepo userRepo;
     ForumCommentMapper commentMapper;
-    ForumNotificationRepository notificationRepo;
+    NotificationRepository notificationRepo;
 
     //Notification logic :
     @Override
@@ -41,13 +41,12 @@ public class ForumCommentService implements IForumCommentService {
         // ── Create notification automatically ──────────────────
         if (!post.getAuthor().getUserId().equals(request.getAuthorId())) {
             // only notify if commenter is not the post author himself
-            ForumNotification notification = new ForumNotification();
+            Notification notification = new Notification();
             notification.setMessage(author.getName() + " commented on your post: " + post.getTitle());
             notification.setIsRead(false);
             notification.setCreatedAt(LocalDateTime.now());
             notification.setRecipient(post.getAuthor());
-            notification.setPost(post);
-            notification.setComment(comment);
+
             notificationRepo.save(notification);
         }
 
@@ -70,6 +69,13 @@ public class ForumCommentService implements IForumCommentService {
 
     @Override
     public void deleteComment(Long id) {
-        commentRepo.deleteById(id);
+
     }
+    //@Transactional
+    //@Override
+    //public void deleteComment(Long id) {
+        // ← delete notifications linked to this comment first
+        //notificationRepo.deleteByComment_CommentId(id);
+        //commentRepo.deleteById(id);
+    //}
 }

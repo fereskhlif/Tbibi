@@ -12,8 +12,10 @@ import java.util.Date;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class MedicineRequest {
     String medicineName;
-    int quantity;
     Date dateOfExpiration;
     float price;
     int stock;
+    int minStockAlert;
+    String description;
+    String dosage;
 }

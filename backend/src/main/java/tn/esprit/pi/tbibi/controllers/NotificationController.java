@@ -2,7 +2,7 @@ package tn.esprit.pi.tbibi.controllers;
 
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import tn.esprit.pi.tbibi.DTO.forumnotification.ForumNotificationResponse;
+import tn.esprit.pi.tbibi.DTO.notification.NotificationResponse;
 import tn.esprit.pi.tbibi.services.IForumNotificationService;
 
 import java.util.List;
@@ -11,17 +11,17 @@ import java.util.List;
 @RequestMapping("/api/forum/notifications")
 @CrossOrigin(origins = "http://localhost:4200")
 @AllArgsConstructor
-public class ForumNotificationController {
+public class NotificationController {
 
     IForumNotificationService notificationService;
 
     @GetMapping("/user/{userId}")
-    public List<ForumNotificationResponse> getMyNotifications(@PathVariable Long userId) {
+    public List<NotificationResponse> getMyNotifications(@PathVariable Integer userId) {
         return notificationService.getMyNotifications(userId);
     }
 
     @GetMapping("/unread/user/{userId}")
-    public Long countUnread(@PathVariable Long userId) {
+    public Long countUnread(@PathVariable Integer userId) {
         return notificationService.countUnread(userId);
     }
 
@@ -30,8 +30,4 @@ public class ForumNotificationController {
         notificationService.markAsRead(id);
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        notificationService.deleteNotification(id);
-    }
 }

@@ -8,7 +8,7 @@ import tn.esprit.pi.tbibi.mappers.PaymentMapper;
 import tn.esprit.pi.tbibi.entities.*;
 import tn.esprit.pi.tbibi.repositories.PaymentHistoryRepository;
 import tn.esprit.pi.tbibi.repositories.PaymentRepository;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class PaymentService implements IPaymentService {
 
     PaymentRepository paymentRepo;
     PaymentHistoryRepository paymentHistoryRepo;
-    UserRepository userRepo;
+    UserRepo userRepo;
     PaymentMapper paymentMapper;
 
     @Override

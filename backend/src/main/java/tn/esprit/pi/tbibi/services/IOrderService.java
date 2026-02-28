@@ -9,6 +9,9 @@ public interface IOrderService {
     OrderResponse createOrder(OrderRequest request);
     OrderResponse getOrderById(Long id);
     List<OrderResponse> getAllOrders();
-    OrderResponse updateOrder(Long id, OrderRequest request);
+    OrderResponse updateOrderStatus(Long id, String status);
     void deleteOrder(Long id);
+    List<OrderResponse> getOrdersByUser(Integer userId);
+    List<OrderResponse> getPendingOrders();
+
 }

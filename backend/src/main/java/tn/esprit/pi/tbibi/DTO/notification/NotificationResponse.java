@@ -1,4 +1,4 @@
-package tn.esprit.pi.tbibi.DTO.forumnotification;
+package tn.esprit.pi.tbibi.DTO.notification;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ForumNotificationResponse {
+public class NotificationResponse {
     Long notificationId;
     String message;
     Boolean isRead;
@@ -18,4 +18,5 @@ public class ForumNotificationResponse {
     Long recipientId;
     Long postId;
     String postTitle;
+    Long commentId;
 }

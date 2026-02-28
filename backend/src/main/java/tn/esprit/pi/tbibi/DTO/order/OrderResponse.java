@@ -21,6 +21,7 @@ public class OrderResponse {
     String orderStatus;
     Long pharmacyId;
     String pharmacyName;
-    Long userId;
+    String userName;
+    Integer userId;
     List<OrderLineResponse> orderLines;
 }

@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-@ToString(exclude = {"orderLines", "prescriptions"})
+@ToString(exclude = {"prescriptions"})
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -19,14 +19,23 @@ public class Medicine {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long medicineId;
+    String description;
+    String dosage;
     String medicineName;
-    int quantity;
     Date dateOfExpiration;
     float price;
     int stock;
+    int minStockAlert;
+    boolean available = true;
 
-    @OneToMany(mappedBy = "medicine", cascade = CascadeType.ALL)
-    List<OrderLine> orderLines;
+
+    @ElementCollection
+    @CollectionTable(name = "medicine_images",
+            joinColumns = @JoinColumn(name = "medicine_id"))
+    @Column(name = "image_url")
+    List<String> imageUrls; //
+
+
 
     @ManyToMany(mappedBy = "medicines")
     List<Prescription> prescriptions;  // Added back-reference

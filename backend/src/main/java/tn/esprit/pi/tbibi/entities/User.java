@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -16,7 +17,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int userId;
+    private Integer userId;
 
     private String name;
     private String email;
@@ -32,8 +33,13 @@ public class User {
     private Role role;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
+    @JsonIgnore
     private List<Order> orders; // Changed to List and lowercase
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private List<Appointement> appointements; // Changed to List and lowercase
+
+    @OneToOne
+    @JoinColumn(name = "pharmacy_id")
+    Pharmacy pharmacy;
 }

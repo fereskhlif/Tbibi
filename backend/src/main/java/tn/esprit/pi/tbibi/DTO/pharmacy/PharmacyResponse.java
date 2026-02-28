@@ -14,5 +14,4 @@ public class PharmacyResponse {
     Long pharmacyId;
     String pharmacyName;
     String pharmacyAddress;
-    List<Long> orderIds;
 }

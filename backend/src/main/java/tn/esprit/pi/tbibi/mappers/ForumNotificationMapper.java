@@ -1,10 +1,14 @@
 package tn.esprit.pi.tbibi.mappers;
 
 import org.mapstruct.Mapper;
-import tn.esprit.pi.tbibi.DTO.forumnotification.ForumNotificationResponse;
-import tn.esprit.pi.tbibi.entities.ForumNotification;
+import org.mapstruct.Mapping;
+import tn.esprit.pi.tbibi.DTO.notification.NotificationResponse;
+import tn.esprit.pi.tbibi.entities.Notification;
 
 @Mapper(componentModel = "spring")
 public interface ForumNotificationMapper {
-    ForumNotificationResponse toDto(ForumNotification notification);
+
+    @Mapping(source = "recipient.userId", target = "recipientId")
+
+    NotificationResponse toDto(Notification notification);
 }

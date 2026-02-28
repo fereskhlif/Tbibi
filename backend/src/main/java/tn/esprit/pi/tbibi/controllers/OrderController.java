@@ -22,7 +22,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public OrderResponse getOrderById(@PathVariable Long id) {
+    public OrderResponse getOrderById(@PathVariable("id") Long id) {
         return orderService.getOrderById(id);
     }
 
@@ -31,15 +31,23 @@ public class OrderController {
         return orderService.getAllOrders();
     }
 
-    @PutMapping("/{id}")
-    public OrderResponse updateOrder(@PathVariable Long id, @RequestBody OrderRequest request) {
-        return orderService.updateOrder(id, request);
+    @PutMapping("/{id}/status")
+    public OrderResponse updateStatus(@PathVariable("id") Long id, @RequestParam("status") String status) {
+        return orderService.updateOrderStatus(id, status);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteOrder(@PathVariable Long id) {
+    public void deleteOrder(@PathVariable("id") Long id) {
         orderService.deleteOrder(id);
     }
 
+    @GetMapping("/user/{userId}")
+    public List<OrderResponse> getOrdersByUser(@PathVariable("userId") Integer userId) {
+        return orderService.getOrdersByUser(userId);
+    }
 
+    @GetMapping("/pending")
+    public List<OrderResponse> getPendingOrders() {
+        return orderService.getPendingOrders();
+    }
 }

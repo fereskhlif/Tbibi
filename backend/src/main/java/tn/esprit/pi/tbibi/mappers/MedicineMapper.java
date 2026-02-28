@@ -1,6 +1,7 @@
 package tn.esprit.pi.tbibi.mappers;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import tn.esprit.pi.tbibi.DTO.medicine.MedicineRequest;
 import tn.esprit.pi.tbibi.DTO.medicine.MedicineResponse;
 import tn.esprit.pi.tbibi.entities.Medicine;

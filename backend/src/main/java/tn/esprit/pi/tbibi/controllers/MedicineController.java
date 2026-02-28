@@ -1,7 +1,9 @@
 package tn.esprit.pi.tbibi.controllers;
 
 import lombok.AllArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.pi.tbibi.DTO.medicine.MedicineRequest;
 import tn.esprit.pi.tbibi.DTO.medicine.MedicineResponse;
 import tn.esprit.pi.tbibi.services.IMedicineService;
@@ -16,13 +18,15 @@ public class MedicineController {
 
     IMedicineService medicineService;
 
-    @PostMapping
-    public MedicineResponse create(@RequestBody MedicineRequest request) {
-        return medicineService.createMedicine(request);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public MedicineResponse create(
+            @RequestPart("medicine") MedicineRequest request,
+            @RequestPart(value = "images", required = true) List<MultipartFile> images) {
+        return medicineService.createMedicine(request, images);
     }
 
     @GetMapping("/{id}")
-    public MedicineResponse getById(@PathVariable Long id) {
+    public MedicineResponse getById(@PathVariable("id") Long id) {
         return medicineService.getMedicineById(id);
     }
 
@@ -32,12 +36,41 @@ public class MedicineController {
     }
 
     @PutMapping("/{id}")
-    public MedicineResponse update(@PathVariable Long id, @RequestBody MedicineRequest request) {
+    public MedicineResponse update(@PathVariable("id") Long id, @RequestBody MedicineRequest request) {
         return medicineService.updateMedicine(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable("id") Long id) {
         medicineService.deleteMedicine(id);
+    }
+
+    @GetMapping("/low-stock")
+    public List<MedicineResponse> getLowStock() {
+        return medicineService.getLowStockMedicines();
+    }
+
+    @GetMapping("/expired")
+    public List<MedicineResponse> getExpired() {
+        return medicineService.getExpiredMedicines();
+    }
+
+    @GetMapping("/search")
+    public List<MedicineResponse> search(@RequestParam("name") String name) {
+        return medicineService.searchByName(name);
+    }
+
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public MedicineResponse addImage(
+            @PathVariable("id") Long id,
+            @RequestPart("image") MultipartFile image) {
+        return medicineService.addImage(id, image);
+    }
+
+    @DeleteMapping("/{id}/images")
+    public MedicineResponse removeImage(
+            @PathVariable("id") Long id,
+            @RequestParam("imageUrl") String imageUrl) {
+        return medicineService.removeImage(id, imageUrl);
     }
 }

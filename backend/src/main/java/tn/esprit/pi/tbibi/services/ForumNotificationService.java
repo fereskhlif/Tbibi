@@ -2,10 +2,10 @@ package tn.esprit.pi.tbibi.services;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import tn.esprit.pi.tbibi.DTO.forumnotification.ForumNotificationResponse;
+import tn.esprit.pi.tbibi.DTO.notification.NotificationResponse;
+import tn.esprit.pi.tbibi.entities.Notification;
 import tn.esprit.pi.tbibi.mappers.ForumNotificationMapper;
-import tn.esprit.pi.tbibi.entities.ForumNotification;
-import tn.esprit.pi.tbibi.repositories.ForumNotificationRepository;
+import tn.esprit.pi.tbibi.repositories.NotificationRepository;
 
 import java.util.List;
 
@@ -13,32 +13,32 @@ import java.util.List;
 @AllArgsConstructor
 public class ForumNotificationService implements IForumNotificationService {
 
-    ForumNotificationRepository notificationRepo;
+    NotificationRepository notificationRepo;
     ForumNotificationMapper notificationMapper;
 
     @Override
-    public List<ForumNotificationResponse> getMyNotifications(Long userId) {
+    public List<NotificationResponse> getMyNotifications(Integer userId) {  // ← Long to Integer
         return notificationRepo
-                .findByRecipient_UserIdOrderByCreatedAtDesc(userId)
+                .findByRecipient_UserIdOrderByCreatedAtDesc(Long.valueOf(userId))
                 .stream()
                 .map(notificationMapper::toDto)
                 .toList();
     }
 
     @Override
-    public Long countUnread(Long userId) {
-        return notificationRepo.countByRecipient_UserIdAndIsReadFalse(userId);
+    public Long countUnread(Integer userId) {
+        return notificationRepo.countByRecipient_UserIdAndIsReadFalse(Long.valueOf(userId));  // ← real count
     }
-
     @Override
     public void markAsRead(Long notificationId) {
-        ForumNotification notification = notificationRepo.findById(notificationId).orElseThrow();
+        Notification notification = notificationRepo.findById(notificationId).orElseThrow();
         notification.setIsRead(true);
         notificationRepo.save(notification);
     }
 
     @Override
     public void deleteNotification(Long notificationId) {
-        notificationRepo.deleteById(notificationId);
+
     }
+
 }

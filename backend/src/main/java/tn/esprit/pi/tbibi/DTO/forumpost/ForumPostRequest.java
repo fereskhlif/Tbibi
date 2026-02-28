@@ -13,6 +13,6 @@ public class ForumPostRequest {
     String title;
     String content;
     String postStatus;
-    Long authorId;
+    Integer authorId;
     Long categoryId;
 }

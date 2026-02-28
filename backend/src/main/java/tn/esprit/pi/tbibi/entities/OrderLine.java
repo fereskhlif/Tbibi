@@ -21,8 +21,9 @@ public class OrderLine {
     int quantity;
     float unitPrice;
 
-    @ManyToMany(mappedBy = "orderLines")
-    List<Order> orders;
+
+    @ManyToOne
+    Order order;
 
     @ManyToOne
     @JoinColumn(name = "medicine_id")

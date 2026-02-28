@@ -17,7 +17,7 @@ public class ForumPostResponse {
     LocalDateTime createdDate;
     Integer views;
     String postStatus;
-    Long authorId;
+    Integer authorId;
     String authorName;
     Long categoryId;
     String categoryName;

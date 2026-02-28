@@ -15,5 +15,5 @@ public class PaymentResponse {
     LocalDate paymentDate;
     String paymentMethod;
     Long paymentHistoryId;
-    Long userId;
+    Integer userId;
 }

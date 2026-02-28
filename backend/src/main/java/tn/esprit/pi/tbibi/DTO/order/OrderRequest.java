@@ -2,6 +2,7 @@ package tn.esprit.pi.tbibi.DTO.order;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import tn.esprit.pi.tbibi.DTO.orderline.OrderLineRequest;
 
 import java.util.Date;
 import java.util.List;
@@ -13,11 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderRequest {
-    Date deliveryDate;
-    Date orderDate;
-    float totalAmount;
-    String orderStatus;
     Long pharmacyId;
-    Long userId;
-    List<Long> orderLineIds;
+    Integer userId;
+    List<OrderLineRequest> orderLines;
 }
