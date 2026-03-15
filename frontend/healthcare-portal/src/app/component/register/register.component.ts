@@ -1,47 +1,55 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { AuthService, RegisterRequest } from '../../services/auth.service';
 
 @Component({
   selector: 'app-register',
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.css'
+  templateUrl: './register.component.html'
 })
 export class RegisterComponent {
+  
+  email = '';
+  password = '';
+  selectedRole = '';
+  uploadedDocument: string | null = null;  // 👈 AJOUTEZ CETTE LIGNE
+  isLoading = false;
+  errorMessage = '';
 
-  registerForm = new FormGroup({
-    
-    email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)]),
-    role: new FormControl('', Validators.required),
-  });
+  constructor(private authService: AuthService) {}
 
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
+  // Méthode pour gérer l'upload de document
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.uploadedDocument = file.name;  // 👈 Stocke le nom du fichier
+    }
+  }
 
   onSubmit(): void {
-    if (this.registerForm.invalid) return;
+    if (!this.email || !this.password || !this.selectedRole) {
+      this.errorMessage = 'Please fill all required fields';
+      return;
+    }
 
+    this.isLoading = true;
     
-    const email = this.registerForm.value.email!;
-    const password = this.registerForm.value.password!;
-    const role = this.registerForm.value.role! as 'ROLE_PATIENT' | 'ROLE_DOCTOR' | 'ROLE_PHARMACIST' | 'ROLE_PHYSIOTHERAPIST' | 'ROLE_LABORATORY';
-    this.authService.register({  email, password, role }).subscribe({
-      next: () => {
-        alert('Registration successful! Please log in.');
-        this.router.navigateByUrl('/login');
+    const registerData: RegisterRequest = {
+      name: "User",
+      email: this.email,
+      password: this.password,
+      roleName: this.selectedRole,
+      medicalLicense: this.uploadedDocument || undefined  // 👈 Maintenant ça fonctionne
+    };
+
+    this.authService.register(registerData).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        alert('Registration successful!');
+        // Redirection ou autre action
       },
-      error: (error: HttpErrorResponse) => {
-        alert('An error occurred during registration.');
-        console.error(error);
+      error: (error) => {
+        this.isLoading = false;
+        this.errorMessage = error.error || 'Registration failed';
       }
     });
   }
-  get email()    { return this.registerForm.get('email'); }
-  get password() { return this.registerForm.get('password'); }
-  get role()     { return this.registerForm.get('role'); }
 }

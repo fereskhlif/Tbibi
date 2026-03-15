@@ -1,0 +1,21 @@
+/* À ajouter à la FIN de src/styles.scss ou src/styles.css */
+
+input[type="file"]::-webkit-file-upload-button,
+input[type="file"]::file-selector-button {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  padding: 6px 14px;
+  margin-right: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  background-color: #f8f9fa;
+  color: #212529;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover,
+input[type="file"]::file-selector-button:hover {
+  background-color: #e2e6ea;
+}

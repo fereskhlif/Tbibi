@@ -14,41 +14,39 @@ const routes: Routes = [
   { path: 'graphic-charter', component: GraphicCharterComponent },
   {
     path: 'patient',
-  component: MainLayoutComponent,
-  canActivate: [AuthGuard, RoleGuard],
-  data: { role: 'ROLE_PATIENT' },  
-  loadChildren: () => import('./modules/patient/patient.module').then(m => m.PatientModule)
+    component: MainLayoutComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { role: 'PATIENT' },  // ⚠️ Sans le préfixe ROLE_
+    loadChildren: () => import('./modules/patient/patient.module').then(m => m.PatientModule)
   },
   {
     path: 'doctor',
     component: MainLayoutComponent,
     canActivate: [AuthGuard, RoleGuard],
-    data: { role: 'ROLE_DOCTOR' },
+    data: { role: 'DOCTEUR' },  // ⚠️ Attention: 'DOCTEUR' pas 'DOCTOR'
     loadChildren: () => import('./modules/doctor/doctor.module').then(m => m.DoctorModule)
-
   },
   {
     path: 'physio',
     component: MainLayoutComponent,
     canActivate: [AuthGuard, RoleGuard],
-    data: { role: 'ROLE_PHYSIOTHERAPIST' },
+    data: { role: 'KINE' },  // ⚠️ 'KINE' pas 'PHYSIOTHERAPIST'
     loadChildren: () => import('./modules/physiotherapist/physiotherapist.module').then(m => m.PhysiotherapistModule)
   },
   {
     path: 'pharmacist',
     component: MainLayoutComponent,
     canActivate: [AuthGuard, RoleGuard],
-    data: { role: 'ROLE_PHARMACIST' },
+    data: { role: 'PHARMASIS' },  // ⚠️ 'PHARMASIS' pas 'PHARMACIST'
     loadChildren: () => import('./modules/pharmacist/pharmacist.module').then(m => m.PharmacistModule)
   },
   {
-     path: 'laboratory',
+    path: 'laboratory',
     component: MainLayoutComponent,
     canActivate: [AuthGuard, RoleGuard],
-    data: { role: 'ROLE_LABORATORY' },
+    data: { role: 'LABORATORY' },  // ⚠️ 'LABORATORY' (correspond)
     loadChildren: () => import('./modules/laboratory/laboratory.module').then(m => m.LaboratoryModule)
-  },
-  { path: '**', redirectTo: '' }
+  }
 ];
 
 @NgModule({

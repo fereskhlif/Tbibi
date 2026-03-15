@@ -140,7 +140,7 @@ export class MainLayoutComponent implements OnInit {
   private patientNav: NavItem[] = [
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'My Profile' },
-    { path: 'records', icon: 'file-text', label: 'Medical Records' },
+    { path: 'medical-records', icon: 'file-text', label: 'Medical Records' },
     { path: 'chat', icon: 'message-square', label: 'AI Health Assistant' },
     { path: 'appointments', icon: 'calendar', label: 'Appointments' },
     { path: 'doctor-schedules', icon: 'users', label: 'Doctor Schedules' },
@@ -198,10 +198,25 @@ export class MainLayoutComponent implements OnInit {
 
   ngOnInit() {
     const rawRole = this.route.snapshot.data['role'] || 'patient';
-    if (typeof rawRole === 'string' && rawRole.startsWith('ROLE_')) {
-      this.role = rawRole.replace(/^ROLE_/, '').toLowerCase();
+    // Map possible role tokens from routing/auth to the normalized keys used below
+    const roleMap: Record<string, string> = {
+      'PATIENT': 'patient',
+      'DOCTEUR': 'doctor',
+      'DOCTOR': 'doctor',
+      'KINE': 'physiotherapist',
+      'PHYSIOTHERAPIST': 'physiotherapist',
+      'PHARMASIS': 'pharmacist',
+      'PHARMACIST': 'pharmacist',
+      'LABORATORY': 'laboratory'
+    };
+
+    let key = rawRole;
+    if (typeof key === 'string' && key.startsWith('ROLE_')) key = key.replace(/^ROLE_/, '');
+    if (typeof key === 'string') {
+      const up = key.toUpperCase();
+      this.role = roleMap[up] || key.toLowerCase();
     } else {
-      this.role = rawRole;
+      this.role = key as any;
     }
     this.setupNavigation();
     this.router.events.pipe(
