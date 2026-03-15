@@ -20,7 +20,6 @@
 
   <!-- Records List -->
   <div *ngIf="errorMessage" class="mb-4 p-4 bg-red-50 text-red-700 rounded">{{errorMessage}}</div>
-
   <div *ngIf="records.length === 0 && !errorMessage" class="text-gray-500">No records found.</div>
 
   <div class="space-y-4">
@@ -36,23 +35,28 @@
           </div>
         </div>
         <div class="flex items-center gap-3">
+          <div class="text-center">
+            <span [class]="'text-lg font-bold ' + getScoreColor(record.healthScore)">{{record.healthScore}}</span>
+            <p class="text-xs text-gray-400">Health Score</p>
+          </div>
           <span [class]="'px-3 py-1 text-xs rounded-full font-medium ' + record.statusClass">{{record.status}}</span>
           <button (click)="viewRecord(record)" class="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">View</button>
           <button (click)="openEditForm(record, i)" class="px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">Edit</button>
           <button (click)="deleteRecord(i)" class="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">Delete</button>
+          <button (click)="openAddActeForm(record)" class="px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded-lg transition-colors">+ Acte</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Record Details Modal -->
+  <!-- ───────────── Record Details Modal (READ) ───────────── -->
   <div *ngIf="selectedRecord" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
+    <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl max-h-[90vh]">
       <div class="p-6 border-b border-gray-100 flex justify-between items-center">
         <h3 class="font-bold text-xl text-gray-900">Record Details</h3>
         <button (click)="selectedRecord = null" class="text-gray-400 hover:text-gray-600">✕</button>
       </div>
-      <div class="p-6 space-y-4">
+      <div class="p-6 space-y-4 overflow-y-auto">
         <div class="flex items-center gap-4 mb-4">
           <div [class]="'w-16 h-16 rounded-xl flex items-center justify-center text-3xl ' + selectedRecord.bgColor">{{selectedRecord.icon}}</div>
           <div>
@@ -60,7 +64,22 @@
             <p class="text-gray-500">{{selectedRecord.type}}</p>
           </div>
         </div>
-
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Global Health Score</p>
+            <p [class]="'text-3xl font-extrabold ' + getScoreColor(selectedRecord.healthScore)">
+              {{selectedRecord.healthScore}}<span class="text-base font-medium text-gray-400">/100</span>
+            </p>
+            <p [class]="'text-sm font-medium mt-1 ' + getScoreColor(selectedRecord.healthScore)">
+              {{getScoreLabel(selectedRecord.healthScore)}}
+            </p>
+          </div>
+          <div class="text-5xl opacity-20">❤️</div>
+        </div>
+        <div *ngIf="selectedRecord.imageUrl" class="rounded-xl overflow-hidden border border-gray-200">
+          <p class="text-xs text-gray-500 uppercase font-semibold px-3 pt-3 pb-2">Medical Image</p>
+          <img [src]="selectedRecord.imageUrl" alt="Medical image" class="w-full object-contain max-h-56 bg-gray-50" />
+        </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="bg-gray-50 p-3 rounded-lg">
             <p class="text-xs text-gray-500 uppercase font-semibold">Résultat IA</p>
@@ -68,14 +87,13 @@
           </div>
           <div class="bg-gray-50 p-3 rounded-lg">
             <p class="text-xs text-gray-500 uppercase font-semibold">Maladies chroniques</p>
-            <p class="font-medium text-gray-900">{{selectedRecord.chronic_diseas}}</p>
+            <p class="font-medium text-gray-900">{{selectedRecord.chronic_diseas || '—'}}</p>
           </div>
           <div class="bg-gray-50 p-3 rounded-lg col-span-2">
             <p class="text-xs text-gray-500 uppercase font-semibold">Historique médical</p>
             <p class="font-medium text-gray-900">{{selectedRecord.medical_historuy}}</p>
           </div>
         </div>
-
         <div class="mt-4" *ngIf="selectedRecord.rep_doc">
           <p class="font-semibold text-gray-900 mb-2">Rapport médecin</p>
           <p class="text-gray-600 text-sm leading-relaxed">📄 {{selectedRecord.rep_doc}}</p>
@@ -88,20 +106,20 @@
     </div>
   </div>
 
-  <!-- Add / Edit Form Modal -->
+  <!-- ───────────── Add / Edit Form Modal (CREATE) ───────────── -->
   <div *ngIf="showForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
+    <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl max-h-[90vh]">
       <div class="p-6 border-b border-gray-100 flex justify-between items-center">
         <h3 class="font-bold text-xl text-gray-900">{{ isEditing ? 'Edit Record' : 'Add Record' }}</h3>
         <button (click)="cancelForm()" class="text-gray-400 hover:text-gray-600">✕</button>
       </div>
 
       <form [formGroup]="formMedicalRecord">
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 overflow-y-auto">
           <div class="grid grid-cols-1 gap-3">
 
             <div>
-              <input formControlName="imageLabo" placeholder="Image Labo"
+              <input formControlName="imageLabo" placeholder="Image / Lab name"
                 class="w-full p-3 border border-gray-200 rounded-lg" />
               <p *ngIf="formMedicalRecord.controls['imageLabo'].invalid && formMedicalRecord.controls['imageLabo'].touched"
                 class="text-red-500 text-xs mt-1">Champ obligatoire</p>
@@ -115,37 +133,107 @@
             </div>
 
             <div>
-              <textarea formControlName="medical_historuy" placeholder="Historique médical" rows="3"
+              <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Historique médical</label>
+              <textarea formControlName="medical_historuy" placeholder="Décrivez votre historique médical…" rows="3"
                 class="w-full p-3 border border-gray-200 rounded-lg resize-none"></textarea>
               <p *ngIf="formMedicalRecord.controls['medical_historuy'].invalid && formMedicalRecord.controls['medical_historuy'].touched"
-                class="text-red-500 text-xs mt-1">Minimum 10 caractères</p>
+                class="text-red-500 text-xs mt-1">Minimum 4 caractères</p>
             </div>
 
             <div>
-              <input formControlName="chronic_diseas" placeholder="Maladies chroniques"
+              <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Maladies chroniques</label>
+              <input formControlName="chronic_diseas" placeholder="Ex: Diabète, Hypertension, Asthme…"
                 class="w-full p-3 border border-gray-200 rounded-lg" />
-              <p *ngIf="formMedicalRecord.controls['chronic_diseas'].invalid && formMedicalRecord.controls['chronic_diseas'].touched"
-                class="text-red-500 text-xs mt-1">Champ obligatoire</p>
             </div>
 
-            <div>
-              <input type="file" accept=".pdf" (change)="onFileChange($event)"
-                class="w-full p-3 border border-gray-200 rounded-lg" />
-              <p *ngIf="selectedFile" class="text-xs text-green-600 mt-1">✅ {{selectedFile.name}}</p>
-              <p *ngIf="!selectedFile && isEditing" class="text-xs text-blue-600 mt-1">📄 Fichier existant conservé</p>
-            </div>
+           <!-- ── Medical Image Upload ── -->
+<div>
+  <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Image médicale</label>
 
+ <!-- Drop zone wrapped in label for reliable file picker -->
+<label
+  class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all cursor-pointer hover:border-blue-400 hover:bg-blue-50 block"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+  [class.border-blue-500]="isDragOver"
+  [class.bg-blue-50]="isDragOver">
+
+  <!-- Preview -->
+  <div *ngIf="imagePreviewUrl; else uploadPlaceholder">
+    <img [src]="imagePreviewUrl" alt="Aperçu" class="mx-auto max-h-48 rounded-lg object-contain mb-3 shadow" />
+    <p class="text-xs text-gray-500">Cliquer ou déposer pour changer</p>
+    <button type="button" (click)="removeImage($event)"
+      class="mt-2 px-3 py-1 text-xs text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors">
+      🗑 Supprimer
+    </button>
+  </div>
+
+  <ng-template #uploadPlaceholder>
+    <div class="flex flex-col items-center gap-2 text-gray-400">
+      <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-3xl">🩻</div>
+      <p class="text-sm font-medium text-gray-600">Glissez une image ou cliquez pour parcourir</p>
+      <p class="text-xs text-gray-400">PNG, JPG, WEBP — max 10 Mo</p>
+    </div>
+  </ng-template>
+
+  <!-- Input directement dans le label = ouverture native garantie -->
+  <input type="file" accept="image/*" class="hidden" (change)="onImageChange($event)" />
+</label>
+  <!-- Hidden input -->
+  <input #imageFileInput type="file" accept="image/*" class="hidden"
+    (change)="onImageChange($event)" />
+</div>
           </div>
         </div>
+
         <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-          <button type="button" (click)="cancelForm()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+          <button type="button" (click)="cancelForm()"
+            class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
           <button type="button" (click)="saveForm()" [disabled]="formMedicalRecord.invalid"
             class="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
             {{ isEditing ? 'Save' : 'Add' }}
           </button>
         </div>
       </form>
-
     </div>
   </div>
+
+  <!-- ───────────── Add Acte Modal ───────────── -->
+  <div *ngIf="showActeForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl max-h-[90vh]">
+      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="font-bold text-xl text-gray-900">Ajouter un Acte</h3>
+        <button (click)="cancelActeForm()" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <div class="p-6 space-y-4 overflow-y-auto">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Description</label>
+          <input [(ngModel)]="acteForm.description" placeholder="Description de l'acte"
+            class="w-full p-3 border border-gray-200 rounded-lg" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Type d'acte</label>
+          <input [(ngModel)]="acteForm.typeOfActe" placeholder="Ex: CONSULTATION, CHIRURGIE..."
+            class="w-full p-3 border border-gray-200 rounded-lg" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Date</label>
+          <input type="datetime-local" [(ngModel)]="acteForm.date"
+            class="w-full p-3 border border-gray-200 rounded-lg" />
+        </div>
+      </div>
+      <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="cancelActeForm()"
+          class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          Annuler
+        </button>
+        <button (click)="saveActe()"
+          class="px-5 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+          Ajouter
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
