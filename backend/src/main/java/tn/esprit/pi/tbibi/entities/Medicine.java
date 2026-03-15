@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -29,5 +30,6 @@ public class Medicine {
     List<OrderLine> orderLines;
 
     @ManyToMany(mappedBy = "medicines")
+    @JsonIgnore
     List<Prescription> prescriptions;  // Added back-reference
 }

@@ -1,13 +1,10 @@
 package tn.esprit.pi.tbibi.DTO;
 
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import lombok.*;
-import tn.esprit.pi.tbibi.entities.Medicine;
+import tn.esprit.pi.tbibi.entities.PrescriptionStatus;
 
-import java.util.Date;
 import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,7 +12,14 @@ import java.util.List;
 @Builder
 public class PrescriptionResponse {
     private int prescriptionID;
-
-    private Date date;
+    // Dans PrescriptionResponse.java — AJOUTER ces champs
+    private Integer acteId;
+    private Integer patientId;
+    private String  patientName;
+    private String  patientEmail;
     private String note;
+    private String date;           // String ISO → Angular le parse sans problème
+    private String statusUpdatedAt;
+    private PrescriptionStatus status;
+
 }

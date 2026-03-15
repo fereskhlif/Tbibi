@@ -1,6 +1,9 @@
 package tn.esprit.pi.tbibi.DTO;
 import lombok.*;
 
+import java.util.List;
+
+@Data
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,4 +16,6 @@ public class MdicalReccordsResponse {
     private String medical_historuy;
     private String chronic_diseas;
     private String rep_doc;
+    private String imageUrl;
+    private List<ActeResponse> actes;
 }
