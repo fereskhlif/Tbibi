@@ -1,137 +1,95 @@
-import { Component, OnInit } from '@angular/core';
-import { PrescriptionRequest, PrescriptionResponse, PrescriptionService } from '../../../../services/prescription-service.service';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  PrescriptionRequest,
+  PrescriptionResponse,
+  PrescriptionService,
+  PrescriptionStatus,
+  STATUS_META,
+} from '../../../../services/prescription-service.service';
+import { interval, Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-prescriptions',
-  template: `
-    <div class="p-8">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Prescriptions</h1>
-          <p class="text-gray-600">Manage your medications and refills</p>
-        </div>
-        <button (click)="openAddModal()" class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">
-          + New Request
-        </button>
-      </div>
-
-      <!-- Loading -->
-      <div *ngIf="loading" class="text-center py-10 text-gray-500">Chargement...</div>
-
-      <!-- Error -->
-      <div *ngIf="error" class="text-center py-10 text-red-500">{{error}}</div>
-
-      <!-- Liste -->
-      <div class="space-y-4" *ngIf="!loading && !error">
-        <div *ngFor="let rx of prescriptions"
-          class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
-
-          <div class="p-6 flex items-start gap-4 cursor-pointer" (click)="rx.expanded = !rx.expanded">
-            <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-50">
-              <lucide-icon name="pill" class="w-6 h-6 text-gray-700"></lucide-icon>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between mb-1">
-                <h3 class="font-bold text-gray-900 text-lg">Prescription #{{rx.prescriptionID}}</h3>
-                <span class="px-2.5 py-0.5 text-xs rounded-full font-medium bg-green-100 text-green-700">Active</span>
-              </div>
-              <p class="text-sm text-gray-600 mb-2">{{rx.note}}</p>
-              <p class="text-xs text-gray-500">{{rx.date | date: 'dd/MM/yyyy'}}</p>
-              <div class="mt-2" *ngIf="rx.medicines && rx.medicines.length > 0">
-                <span *ngFor="let m of rx.medicines"
-                  class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full mr-1">
-                  {{m.medicineName}} ({{m.quantity}})
-                </span>
-              </div>
-            </div>
-            <div class="text-gray-400 group-hover:text-blue-600 transition-colors">
-              <lucide-icon name="chevron-down"
-                [class]="'w-5 h-5 transform transition-transform ' + (rx.expanded ? 'rotate-180' : '')">
-              </lucide-icon>
-            </div>
-          </div>
-
-          <!-- Expanded Actions -->
-          <div *ngIf="rx.expanded"
-            class="border-t border-gray-100 bg-gray-50 p-4 flex flex-wrap gap-3 animate-slide-down">
-            <button (click)="openEditModal(rx)"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-              Modifier
-            </button>
-            <button (click)="deletePrescription(rx.prescriptionID)"
-              class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors">
-              Supprimer
-            </button>
-          </div>
-        </div>
-
-        <div *ngIf="prescriptions.length === 0" class="text-center py-10 text-gray-400">
-          Aucune prescription trouvée.
-        </div>
-      </div>
-
-      <!-- Modal Add/Edit -->
-      <div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-          <h2 class="text-lg font-bold mb-4">{{editMode ? 'Modifier' : 'Nouvelle'}} Prescription</h2>
-          <div class="space-y-3">
-            <div>
-              <label class="text-sm text-gray-600">Note</label>
-              <input [(ngModel)]="form.note"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1 text-sm"
-                placeholder="Note..." />
-            </div>
-            <div>
-              <label class="text-sm text-gray-600">Date</label>
-              <input type="datetime-local" [(ngModel)]="form.date"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1 text-sm" />
-            </div>
-          </div>
-          <div class="flex gap-3 mt-5 justify-end">
-            <button (click)="showModal = false"
-              class="px-4 py-2 border border-gray-300 rounded-lg text-sm">
-              Annuler
-            </button>
-            <button (click)="save()"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-              Sauvegarder
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
+  templateUrl: './prescriptions.component.html',
   styles: [`
-    .rotate-180 { transform: rotate(180deg); }
-    @keyframes slide-down { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-slide-down { animation: slide-down 0.2s ease-out; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pulse-ring { 0% { box-shadow:0 0 0 0 rgba(59,130,246,0.4); } 70% { box-shadow:0 0 0 8px rgba(59,130,246,0); } 100% { box-shadow:0 0 0 0 rgba(59,130,246,0); } }
+    @keyframes shimmer { 0% { background-position:-400px 0; } 100% { background-position:400px 0; } }
+    .rx-card { animation:fadeUp 0.35s ease both; transition:box-shadow 0.2s,transform 0.2s; }
+    .rx-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.08); }
+    .status-pending { animation:pulse-ring 2s infinite; }
+    .progress-track { position:relative; display:flex; align-items:center; justify-content:space-between; }
+    .progress-track::before { content:''; position:absolute; top:50%; left:0; right:0; height:3px; background:#e5e7eb; transform:translateY(-50%); z-index:0; }
+    .progress-fill { position:absolute; top:50%; left:0; height:3px; background:linear-gradient(90deg,#3b82f6,#8b5cf6); transform:translateY(-50%); transition:width 0.6s ease; z-index:1; }
+    .step-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; position:relative; z-index:2; transition:all 0.3s; }
+    .skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:400px 100%; animation:shimmer 1.4s ease-in-out infinite; border-radius:8px; }
+    .modal-overlay { backdrop-filter:blur(4px); animation:fadeUp 0.2s ease; }
+    .rotate-180 { transform:rotate(180deg); }
   `]
 })
-export class PrescriptionsComponent implements OnInit {
+export class PrescriptionsComponent implements OnInit, OnDestroy {
 
   prescriptions: PrescriptionResponse[] = [];
   loading = false;
   error = '';
+
+  // ── Detail modal ──────────────────────────────────────────────────────────
+  showDetail = false;
+  detailRx: PrescriptionResponse | null = null;
+
+  // ── Add / Edit modal ──────────────────────────────────────────────────────
   showModal = false;
   editMode = false;
   selectedId: number | null = null;
+  saving = false;
 
-  form: PrescriptionRequest = {
-    note: '',
-    date: ''
-  };
+  form: PrescriptionRequest = { note: '', date: '' };
+
+  // ── Filter / sort ─────────────────────────────────────────────────────────
+  activeFilter: PrescriptionStatus | 'ALL' = 'ALL';
+  sortDesc = true;
+
+  // ── Status polling (every 30 s for "real-time" feel) ─────────────────────
+  private pollSub?: Subscription;
+
+  // Expose to template
+  STATUS_META = STATUS_META;
+  statusKeys: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED', 'CANCELLED'];
+  readonly STEPS: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED'];
 
   constructor(private prescriptionService: PrescriptionService) {}
 
   ngOnInit(): void {
     this.loadAll();
+    // Poll every 30 seconds to refresh statuses
+    this.pollSub = interval(30_000)
+      .pipe(switchMap(() => this.prescriptionService.getAll()))
+      .subscribe({
+        next: (data) => {
+          this.prescriptions = data.map(rx => ({
+            ...rx,
+            expanded: this.prescriptions.find(p => p.prescriptionID === rx.prescriptionID)?.expanded ?? false
+          }));
+          if (this.detailRx) {
+            const updated = this.prescriptions.find(p => p.prescriptionID === this.detailRx!.prescriptionID);
+            if (updated) this.detailRx = updated;
+          }
+        }
+      });
   }
+
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
+  }
+
+  // ── Data ──────────────────────────────────────────────────────────────────
 
   loadAll(): void {
     this.loading = true;
     this.error = '';
     this.prescriptionService.getAll().subscribe({
-      next: (data: PrescriptionResponse[]) => {
+      next: (data) => {
         this.prescriptions = data.map(rx => ({ ...rx, expanded: false }));
         this.loading = false;
       },
@@ -142,54 +100,135 @@ export class PrescriptionsComponent implements OnInit {
     });
   }
 
+  // ── Computed ──────────────────────────────────────────────────────────────
+
+  get filtered(): PrescriptionResponse[] {
+    let list = this.activeFilter === 'ALL'
+      ? [...this.prescriptions]
+      : this.prescriptions.filter(rx => rx.status === this.activeFilter);
+
+    list.sort((a, b) => {
+      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      return this.sortDesc ? -diff : diff;
+    });
+    return list;
+  }
+
+  countByStatus(s: PrescriptionStatus): number {
+    return this.prescriptions.filter(rx => rx.status === s).length;
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  statusMeta(status: PrescriptionStatus) {
+    return STATUS_META[status] ?? STATUS_META['PENDING'];
+  }
+
+  stepOf(status: PrescriptionStatus): number {
+    return this.STEPS.indexOf(status);
+  }
+
+  // ── Detail modal ──────────────────────────────────────────────────────────
+
+  openDetail(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    this.detailRx = { ...rx };
+    this.showDetail = true;
+  }
+
+  closeDetail(): void {
+    this.showDetail = false;
+    this.detailRx = null;
+  }
+
+  // ── Add / Edit modal ──────────────────────────────────────────────────────
+
   openAddModal(): void {
-    this.editMode = false;
-    this.selectedId = null;
-    this.form = { note: '', date: '' };
-    this.showModal = true;
-  }
+  this.editMode = false;
+  this.selectedId = null;
+  
+  // ✅ FORMAT ISO COMPLET avec secondes et millisecondes
+  const now = new Date();
+  
+  // Méthode 1: toISOString() donne automatiquement "2026-02-28T16:00:00.000Z"
+  const isoString = now.toISOString();
+  
+  this.form = { 
+    note: '', 
+    date: isoString
+  };
+  
+  console.log('📅 Date envoyée:', isoString); // Vérification
+  this.showModal = true;
+}
 
-  openEditModal(rx: PrescriptionResponse): void {
-    this.editMode = true;
-    this.selectedId = rx.prescriptionID;
-    this.form = { note: rx.note, date: rx.date };
-    this.showModal = true;
-  }
+openEditModal(rx: PrescriptionResponse, event?: Event): void {
+  event?.stopPropagation();
+  this.editMode = true;
+  this.selectedId = rx.prescriptionID;
+  
+  // ✅ Pour l'édition, convertir la date reçue en format ISO
+  const dateObj = new Date(rx.date);
+  this.form = {
+    note: rx.note,
+    date: dateObj.toISOString()  // ← Convertir au bon format
+  };
+  this.showModal = true;
+}
 
-  save(): void {
-    if (this.editMode && this.selectedId !== null) {
-      this.prescriptionService.update(this.selectedId, this.form).subscribe({
-        next: () => {
-          this.showModal = false;
-          this.loadAll();
-        },
-        error: () => {
-          this.error = 'Erreur lors de la modification.';
-        }
-      });
-    } else {
-      this.prescriptionService.add(this.form).subscribe({
-        next: () => {
-          this.showModal = false;
-          this.loadAll();
-        },
-        error: () => {
-          this.error = "Erreur lors de l'ajout.";
-        }
-      });
+ save(): void {
+  if (this.saving) return;
+  
+  // ✅ S'assurer que la date est au bon format avant envoi
+  let dateToSend = this.form.date;
+  
+  // Si la date n'a pas de secondes, les ajouter
+  if (dateToSend && dateToSend.length === 16) { // Format "2026-02-28T16:00"
+    dateToSend = dateToSend + ':00.000Z';
+  }
+  
+  const dataToSend = {
+    note: this.form.note,
+    date: dateToSend
+  };
+  
+  console.log('📤 Données à envoyer:', dataToSend);
+  
+  this.saving = true;
+
+  const obs = this.editMode && this.selectedId !== null
+    ? this.prescriptionService.update(this.selectedId, dataToSend)
+    : this.prescriptionService.add(dataToSend);
+
+  obs.subscribe({
+    next: (response) => {
+      console.log('✅ Réponse:', response);
+      this.showModal = false;
+      this.saving = false;
+      this.loadAll();
+    },
+    error: (err) => {
+      console.error('❌ Erreur:', err);
+      this.error = this.editMode ? 'Erreur modification' : "Erreur ajout";
+      this.saving = false;
     }
+  });
+}
+
+  deletePrescription(id: number, event?: Event): void {
+    event?.stopPropagation();
+    if (!confirm('Voulez-vous vraiment supprimer cette prescription ?')) return;
+
+    this.prescriptionService.delete(id).subscribe({
+      next: () => {
+        this.prescriptions = this.prescriptions.filter(rx => rx.prescriptionID !== id);
+        if (this.detailRx?.prescriptionID === id) this.closeDetail();
+      },
+      error: () => { this.error = 'Erreur lors de la suppression.'; }
+    });
   }
 
-  deletePrescription(id: number): void {
-    if (confirm('Voulez-vous vraiment supprimer cette prescription ?')) {
-      this.prescriptionService.delete(id).subscribe({
-        next: () => {
-          this.loadAll();
-        },
-        error: () => {
-          this.error = 'Erreur lors de la suppression.';
-        }
-      });
-    }
+  trackById(_: number, rx: PrescriptionResponse): number {
+    return rx.prescriptionID;
   }
 }
