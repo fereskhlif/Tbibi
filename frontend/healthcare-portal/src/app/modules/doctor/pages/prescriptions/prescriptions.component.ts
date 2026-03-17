@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
   ActeDTO,
+  PatientDTO,
   PrescriptionRequest,
   PrescriptionResponse,
   PrescriptionService,
@@ -8,7 +9,8 @@ import {
   STATUS_META,
 } from '../../../../services/prescription-service.service';
 import { interval, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-doctor-prescriptions',
@@ -469,45 +471,80 @@ import { switchMap } from 'rxjs/operators';
 </div>
 
   <!-- ════════════════════════════════════════════════════════════════════════
-       ADD / EDIT MODAL
+       UNIFIED ADD / EDIT MODAL
   ════════════════════════════════════════════════════════════════════════ -->
   <div *ngIf="showModal"
     class="modal-overlay fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
     (click)="showModal = false">
 
-    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       (click)="$event.stopPropagation()">
 
-      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+      <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-white z-10">
         <h2 class="text-lg font-extrabold text-gray-900">
-          {{editMode ? '✏️ Modifier la prescription' : '➕ Nouvelle prescription'}}
+          {{editMode ? '✏️ Modifier la prescription' : '➕ Nouvelle prescription & Acte'}}
         </h2>
         <button (click)="showModal = false" class="text-gray-400 hover:text-gray-700 text-xl leading-none">✕</button>
       </div>
 
-      <div class="p-6 space-y-4">
+      <div class="p-6 space-y-5 overflow-y-auto flex-1">
+        
+        <ng-container *ngIf="!editMode">
+          <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-2">
+            <p class="text-xs text-blue-800 font-semibold mb-3">
+              Un acte médical sera créé et lié automatiquement à cette prescription.
+            </p>
+            
+            <div class="space-y-4">
+              <!-- Patient -->
+              <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Patient *</label>
+                <select [(ngModel)]="form.patientId"
+                  class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-white">
+                  <option [ngValue]="null" disabled>Sélectionner un patient...</option>
+                  <option *ngFor="let p of patients" [ngValue]="p.patientId">{{p.patientName}}</option>
+                </select>
+              </div>
+
+              <!-- Acte Type -->
+              <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Type d'acte *</label>
+                <select [(ngModel)]="form.typeOfActe"
+                  class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-white">
+                  <option value="PRESCRIPTION">Prescription</option>
+                  <option value="ANALYSIS">Analyse</option>
+                  <option value="DIAGNOSIS">Diagnostic</option>
+                </select>
+              </div>
+
+              <!-- Acte Description -->
+              <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description de l'acte *</label>
+                <input type="text" [(ngModel)]="form.acteDescription" placeholder="Ex: Consultation médicale générale..."
+                  class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition" />
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Prescription Note -->
         <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Note</label>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Note de prescription</label>
           <textarea [(ngModel)]="form.note" rows="3"
-            placeholder="Describe les symptômes, observations..."
-            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition">
+            placeholder="Détails de l'ordonnance, instructions..."
+            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
           </textarea>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Date</label>
-          <input type="datetime-local" [(ngModel)]="form.date"
-            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition" />
         </div>
       </div>
 
-      <div class="p-5 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+      <div class="p-5 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 z-10">
         <button (click)="showModal = false"
           class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-100 transition-colors">
           Annuler
         </button>
         <button (click)="save()" [disabled]="saving"
           class="px-5 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
-          {{saving ? 'Sauvegarde...' : (editMode ? 'Enregistrer' : 'Ajouter')}}
+          {{saving ? 'Sauvegarde...' : (editMode ? 'Enregistrer' : 'Créer Acte & Prescription')}}
         </button>
       </div>
     </div>
@@ -519,6 +556,7 @@ import { switchMap } from 'rxjs/operators';
 export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   acteSearch = '';
   actes: ActeDTO[] = [];
+  patients: PatientDTO[] = [];
   showAssignModal = false;
   assigningRx: PrescriptionResponse | null = null;
   selectedActeId: number | null = null;
@@ -535,7 +573,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   selectedId: number | null = null;
   saving = false;
 
-  form: PrescriptionRequest = { note: '', date: '' };
+  form: any = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', note: '', date: '' };
 
   activeFilter: PrescriptionStatus | 'ALL' = 'ALL';
   sortDesc = true;
@@ -551,6 +589,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadAll();
     this.loadActes();
+    this.loadPatients();
     this.pollSub = interval(30_000)
       .pipe(switchMap(() => this.prescriptionService.getAll()))
       .subscribe({
@@ -589,12 +628,20 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   loadActes(): void {
   this.prescriptionService.getAllActes().subscribe({
     next: (data) => {
-      console.log('ACTES REÇUS:', data); // ← ajouter
+      console.log('ACTES REÇUS:', data);
       this.actes = data;
     },
     error: (err) => console.error('Erreur chargement actes', err)
   });
 }
+
+  loadPatients(): void {
+    this.prescriptionService.getAllPatients().subscribe({
+      next: (data) => this.patients = data,
+      error: (err) => console.error('Erreur chargement patients', err)
+    });
+  }
+
 
   get filtered(): PrescriptionResponse[] {
     let list = this.activeFilter === 'ALL'
@@ -634,7 +681,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.editMode = false;
     this.selectedId = null;
     const isoString = new Date().toISOString();
-    this.form = { note: '', date: isoString };
+    this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', note: '', date: isoString };
     console.log('📅 Date envoyée:', isoString);
     this.showModal = true;
   }
@@ -644,6 +691,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.editMode = true;
     this.selectedId = rx.prescriptionID;
     this.form = {
+      patientId: null, acteDescription: '', typeOfActe: '',
       note: rx.note,
       date: new Date(rx.date).toISOString()
     };
@@ -659,29 +707,67 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
 
   save(): void {
     if (this.saving) return;
+
+    if (!this.editMode && !this.form.patientId) {
+      this.error = "Veuillez sélectionner un patient.";
+      return;
+    }
+    if (!this.editMode && !this.form.acteDescription) {
+      this.error = "Veuillez fournir une description pour l'acte.";
+      return;
+    }
+
     let dateToSend = this.form.date;
     if (dateToSend && dateToSend.length === 16) {
       dateToSend = dateToSend + ':00.000Z';
     }
-    const dataToSend = { note: this.form.note, date: dateToSend };
-    console.log('📤 Données à envoyer:', dataToSend);
+    const rxDataToSend = { note: this.form.note, date: dateToSend };
+
     this.saving = true;
-    const obs = this.editMode && this.selectedId !== null
-      ? this.prescriptionService.update(this.selectedId, dataToSend)
-      : this.prescriptionService.add(dataToSend);
-    obs.subscribe({
-      next: (response: any) => {
-        console.log('✅ Réponse:', response);
-        this.showModal = false;
-        this.saving = false;
-        this.loadAll();
-      },
-      error: (err: any) => {
-        console.error('❌ Erreur:', err);
-        this.error = this.editMode ? 'Erreur modification' : "Erreur ajout";
-        this.saving = false;
-      }
-    });
+
+    if (this.editMode && this.selectedId !== null) {
+      this.prescriptionService.update(this.selectedId, rxDataToSend).subscribe({
+        next: () => {
+          this.showModal = false;
+          this.saving = false;
+          this.loadAll();
+        },
+        error: () => {
+          this.error = 'Erreur modification';
+          this.saving = false;
+        }
+      });
+    } else {
+      // Create unified Acte + Prescription
+      const acteReq = {
+        date: dateToSend,
+        description: this.form.acteDescription,
+        typeOfActe: this.form.typeOfActe
+      };
+      
+      this.prescriptionService.addActeForPatient(this.form.patientId, acteReq).pipe(
+        switchMap(createdActe => {
+          return this.prescriptionService.add(rxDataToSend).pipe(
+            switchMap(createdRx => this.prescriptionService.assignActe(createdRx.prescriptionID, createdActe.acteId))
+          );
+        }),
+        catchError(err => {
+          console.error("Erreur lors de la création unifiée:", err);
+          throw err;
+        })
+      ).subscribe({
+        next: () => {
+          this.showModal = false;
+          this.saving = false;
+          this.loadAll();
+          this.loadActes(); // refresh actes in assign list
+        },
+        error: () => {
+          this.error = "Erreur lors de la création de l'acte et de la prescription.";
+          this.saving = false;
+        }
+      });
+    }
   }
 
   saveAssign(): void {
