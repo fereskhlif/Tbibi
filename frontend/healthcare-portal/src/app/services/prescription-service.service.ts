@@ -11,6 +11,17 @@ export interface ActeDTO {
   patientId?: number;
   patientName?: string;
 }
+
+export interface PatientDTO {
+  patientId: number;
+  patientName: string;
+}
+
+export interface ActeCreateRequest {
+  date: string;
+  description: string;
+  typeOfActe: string;
+}
 export interface MedicineDTO {
   medicineId: number;
   medicineName: string;
@@ -93,4 +104,17 @@ export class PrescriptionService {
 getAllActes(): Observable<ActeDTO[]> {
   return this.http.get<ActeDTO[]>(`${environment.baseUrl}/actes/all`);
 }
+
+  /** Returns all patients (PATIENT role) for the doctor's dropdown. */
+  getAllPatients(): Observable<PatientDTO[]> {
+    return this.http.get<PatientDTO[]>(`${environment.baseUrl}/actes/patients`);
+  }
+
+  /** Creates a new acte linked to the selected patient. */
+  addActeForPatient(patientId: number, acte: ActeCreateRequest): Observable<any> {
+    return this.http.post<any>(
+      `${environment.baseUrl}/actes/add-for-patient/${patientId}`,
+      acte
+    );
+  }
 }

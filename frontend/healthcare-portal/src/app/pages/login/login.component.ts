@@ -19,6 +19,7 @@ export class LoginComponent {
   selectedRole = '';
   email = '';
   password = '';
+  name = '';
   uploadedDocument: string | null = null;
   isLoading = false;
   errorMessage = '';
@@ -82,6 +83,10 @@ handleSubmit(): void {
       this.errorMessage = 'Please select a role.';
       return;
     }
+    if (!this.name || !this.name.trim()) {
+      this.errorMessage = 'Full name is required.';
+      return;
+    }
     if (!this.email || !this.password) {
       this.errorMessage = 'Email and password are required.';
       return;
@@ -94,7 +99,7 @@ handleSubmit(): void {
     this.isLoading = true;
     
     const registerData: RegisterRequest = {
-  name: "User",  // Ajoutez un nom par défaut
+  name: this.name,  // Utilize the name variable
   email: this.email,
   password: this.password,
   roleName: this.selectedRole as string,  // ✅ Utilisez roleName, pas role
@@ -118,6 +123,7 @@ handleSubmit(): void {
         this.isSignup = false;
         this.selectedRole = '';
         this.password = '';
+        this.name = '';
         this.uploadedDocument = null;
         // Email is preserved for convenience
       },
@@ -220,6 +226,7 @@ private isTokenExpired(token: string): boolean {
 resetForm(): void {
   this.email = '';
   this.password = '';
+  this.name = '';
   this.selectedRole = '';
   this.uploadedDocument = null;
   this.errorMessage = '';
