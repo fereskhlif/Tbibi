@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
+  ActeDTO,
   PrescriptionRequest,
   PrescriptionResponse,
   PrescriptionService,
@@ -31,7 +32,9 @@ import { switchMap } from 'rxjs/operators';
 export class PrescriptionsComponent implements OnInit, OnDestroy {
 
   prescriptions: PrescriptionResponse[] = [];
+  actes: ActeDTO[] = [];
   loading = false;
+  loadingActes = false;
   error = '';
 
   // ── Detail modal ──────────────────────────────────────────────────────────
@@ -49,6 +52,7 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
   // ── Filter / sort ─────────────────────────────────────────────────────────
   activeFilter: PrescriptionStatus | 'ALL' = 'ALL';
   sortDesc = true;
+  selectedDoctorId: number | null = null;
 
   // ── Status polling (every 30 s for "real-time" feel) ─────────────────────
   private pollSub?: Subscription;
@@ -64,7 +68,7 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
     this.loadAll();
     // Poll every 30 seconds to refresh statuses
     this.pollSub = interval(30_000)
-      .pipe(switchMap(() => this.prescriptionService.getAll()))
+      .pipe(switchMap(() => this.prescriptionService.getMyPrescriptions()))
       .subscribe({
         next: (data) => {
           this.prescriptions = data.map(rx => ({
@@ -87,29 +91,81 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
 
   loadAll(): void {
     this.loading = true;
+    this.loadingActes = true;
     this.error = '';
-    this.prescriptionService.getAll().subscribe({
+
+    // Load prescriptions
+    this.prescriptionService.getMyPrescriptions().subscribe({
       next: (data) => {
         this.prescriptions = data.map(rx => ({ ...rx, expanded: false }));
         this.loading = false;
       },
       error: () => {
-        this.error = 'Erreur lors du chargement des prescriptions.';
+        this.error = 'Erreur lors du chargement des données.';
         this.loading = false;
+      }
+    });
+
+    // Load actes
+    this.prescriptionService.getMyActes().subscribe({
+      next: (data) => {
+        this.actes = data;
+        this.loadingActes = false;
+      },
+      error: () => {
+        this.loadingActes = false;
       }
     });
   }
 
   // ── Computed ──────────────────────────────────────────────────────────────
 
+  /** Unique list of doctors sorted by name, extracted from loaded prescriptions and actes. */
+  get doctors(): { doctorId: number; doctorName: string }[] {
+    const map = new Map<number, string>();
+    this.prescriptions.forEach(rx => {
+      if (rx.doctorId != null && rx.doctorName) {
+        map.set(rx.doctorId, rx.doctorName);
+      }
+    });
+    this.actes.forEach(a => {
+      if (a.doctorId != null && a.doctorName) {
+        map.set(a.doctorId, a.doctorName);
+      }
+    });
+    return Array.from(map.entries())
+      .map(([doctorId, doctorName]) => ({ doctorId, doctorName }))
+      .sort((a, b) => a.doctorName.localeCompare(b.doctorName));
+  }
+
   get filtered(): PrescriptionResponse[] {
     let list = this.activeFilter === 'ALL'
       ? [...this.prescriptions]
       : this.prescriptions.filter(rx => rx.status === this.activeFilter);
 
+    // Doctor filter
+    if (this.selectedDoctorId !== null) {
+      list = list.filter(rx => rx.doctorId === this.selectedDoctorId);
+    }
+
     list.sort((a, b) => {
       const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
       return this.sortDesc ? -diff : diff;
+    });
+    return list;
+  }
+
+  get filteredActes(): ActeDTO[] {
+    let list = [...this.actes];
+
+    if (this.selectedDoctorId !== null) {
+      list = list.filter(a => a.doctorId === this.selectedDoctorId);
+    }
+
+    list.sort((a, b) => {
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      return this.sortDesc ? timeB - timeA : timeA - timeB;
     });
     return list;
   }

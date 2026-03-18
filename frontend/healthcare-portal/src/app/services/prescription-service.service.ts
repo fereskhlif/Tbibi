@@ -8,8 +8,11 @@ export interface ActeDTO {
   acteId: number;
   description: string;
   typeOfActe?: string;
+  date?: string;
   patientId?: number;
   patientName?: string;
+  doctorId?: number;
+  doctorName?: string;
 }
 
 export interface PatientDTO {
@@ -33,6 +36,8 @@ export interface PrescriptionResponse {
 patientId?: number;
 patientName?: string;
 patientEmail?: string;
+  doctorId?: number;
+  doctorName?: string;
   prescriptionID: number;
   medicines: MedicineDTO[];
   date: string;
@@ -75,6 +80,11 @@ export class PrescriptionService {
     return this.http.get<PrescriptionResponse[]>(`${this.apiUrl}/all`);
   }
 
+  /** Returns only the prescriptions for the currently authenticated patient (enriched with doctor info). */
+  getMyPrescriptions(): Observable<PrescriptionResponse[]> {
+    return this.http.get<PrescriptionResponse[]>(`${this.apiUrl}/my`);
+  }
+
   getById(id: number): Observable<PrescriptionResponse> {
     return this.http.get<PrescriptionResponse>(`${this.apiUrl}/get/${id}`);
   }
@@ -104,6 +114,11 @@ export class PrescriptionService {
 getAllActes(): Observable<ActeDTO[]> {
   return this.http.get<ActeDTO[]>(`${environment.baseUrl}/actes/all`);
 }
+
+  /** Returns only the actes for the currently authenticated patient (enriched with doctor info). */
+  getMyActes(): Observable<ActeDTO[]> {
+    return this.http.get<ActeDTO[]>(`${environment.baseUrl}/actes/my`);
+  }
 
   /** Returns all patients (PATIENT role) for the doctor's dropdown. */
   getAllPatients(): Observable<PatientDTO[]> {
