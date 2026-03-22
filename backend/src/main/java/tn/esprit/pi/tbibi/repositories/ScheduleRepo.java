@@ -6,7 +6,12 @@ import tn.esprit.pi.tbibi.entities.Schedule;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface ScheduleRepo extends JpaRepository<Schedule,Long> {
+public interface ScheduleRepo extends JpaRepository<Schedule, Long> {
     List<Schedule> findByDate(LocalDate date);
-    List<Schedule> findByDocteurIsAvailable(String docteur ,Boolean isAvailable);
+
+    List<Schedule> findByDoctorUserIdAndIsAvailableTrue(int doctorId);
+
+    List<Schedule> findByDoctorUserId(int doctorId);
+
+    List<Schedule> findByDoctorUserIdAndDate(int doctorId, LocalDate date);
 }

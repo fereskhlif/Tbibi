@@ -1,6 +1,9 @@
 package tn.esprit.pi.tbibi.controllers;
 
+import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.DTO.AuthResponse;
@@ -17,16 +20,26 @@ public class AuthController {
     private final IAuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        var saved = authService.register(req);
-        return ResponseEntity.ok("User created: " + saved.getEmail());
-
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ResponseEntity<?> register(
+            @RequestBody @Valid RegisterRequest request
+    ) throws MessagingException {
+        authService.register(request);
+        return ResponseEntity.accepted().build();
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<AuthResponse> login(
+            @RequestBody @Valid LoginRequest req) {
         return ResponseEntity.ok(authService.login(req));
 
+    }
+
+    @GetMapping("/activate-account")
+    public void confirm(
+            @RequestParam String token
+    ) throws MessagingException {
+        authService.activateAccount(token);
     }
 
 }

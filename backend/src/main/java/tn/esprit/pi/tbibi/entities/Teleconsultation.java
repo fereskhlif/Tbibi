@@ -20,13 +20,14 @@ import java.time.LocalDateTime;
 public class Teleconsultation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    private Integer id;
     private String roomUrl;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
     private String notes;
     @OneToOne
     private ConsultationRoom consultationRoom;
-    @OneToOne(cascade = CascadeType.ALL , mappedBy = "teleconsultation")
+    @OneToOne
+    @JoinColumn(name = "appointment_id", nullable = false)
     private Appointment appointment;
 }
