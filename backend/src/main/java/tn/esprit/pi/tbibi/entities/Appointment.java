@@ -1,4 +1,5 @@
 package tn.esprit.pi.tbibi.entities;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -28,11 +29,13 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     private StatusAppointement statusAppointement;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Schedule schedule;
     @ManyToOne
     private User user;
     @OneToMany(mappedBy = "appointments", cascade = CascadeType.ALL)
     private List<Notification> notification = new ArrayList<>();
+    @OneToOne(mappedBy = "appointment", cascade = CascadeType.ALL)
+    private Teleconsultation teleconsultation;
 
 }

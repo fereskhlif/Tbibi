@@ -26,6 +26,11 @@ public class Schedule {
     private LocalDate date;
     private LocalTime startTime;
     private Boolean isAvailable;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor_id")
+    private User doctor;
+
     @OneToMany(mappedBy = "schedule")
     private List<Appointment> appointments;
 
