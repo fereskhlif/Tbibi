@@ -26,45 +26,56 @@ export class MedicalRecordsServiceService {
   add(data: any): Observable<any> {
     return this.http.post<any>(
       `${environment.baseUrl}/medical-records/add`,
-      data,
-      { headers: this.authHeaders() }
+      data
     );
   }
 
   update(id: number, data: any): Observable<any> {
     return this.http.put<any>(
       `${environment.baseUrl}/medical-records/${id}`,
-      data,
-      { headers: this.authHeaders() }
+      data
     );
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(
-      `${environment.baseUrl}/medical-records/${id}`,
-      { headers: this.authHeaders() }
+  delete(id: number): Observable<any> {
+    return this.http.delete<any>(`${environment.baseUrl}/medical-records/${id}`);
+  }
+
+  // ── Patient self-service methods ──────────────────────────────────────────
+
+  getMyRecord(): Observable<any> {
+    return this.http.get<any>(
+      `${environment.baseUrl}/medical-records/my`
+    );
+  }
+
+  uploadPatientImage(file: File): Observable<any> {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+
+    return this.http.post<any>(
+      `${environment.baseUrl}/medical-records/my/upload-image`,
+      fd
+    );
+  }
+
+  updateMyRecord(data: any): Observable<any> {
+    return this.http.put<any>(
+      `${environment.baseUrl}/medical-records/my`,
+      data
+    );
+  }
+
+  deletePatientImage(imagePath: string): Observable<any> {
+    return this.http.delete<any>(
+      `${environment.baseUrl}/medical-records/my/image`,
+      { 
+        params: { path: imagePath }
+      }
     );
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-
-  /**
-   * Reads the JWT from localStorage using the same key as AuthService.
-   * Key: 'TokenUserConnect'  (value is JSON-stringified → needs JSON.parse)
-   */
-  private getToken(): string | null {
-    const raw = localStorage.getItem('TokenUserConnect');
-    // Le token est stocké comme une string, pas comme du JSON
-    return raw ? raw : null;
-  }
-
-  /** JSON + Bearer token headers */
-  private authHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${this.getToken()}`
-    });
-  }
 
   /**
    * Builds multipart/form-data.
@@ -72,7 +83,6 @@ export class MedicalRecordsServiceService {
    */
   private buildFormData(data: any, imageFile?: File | null, pdfFile?: File | null): FormData {
     const fd = new FormData();
-
     if (data.imageLabo        != null) fd.append('imageLabo',        data.imageLabo);
     if (data.result_ia        != null) fd.append('result_ia',        data.result_ia);
     if (data.medical_historuy != null) fd.append('medical_historuy', data.medical_historuy);

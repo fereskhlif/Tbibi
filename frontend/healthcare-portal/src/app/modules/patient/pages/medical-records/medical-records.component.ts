@@ -1,21 +1,21 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MedicalRecordsServiceService } from '../../../../services/medical-records-service.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-
+import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 @Component({
   selector: 'app-medical-records',
-  templateUrl: './medical-records.component.html'
+  templateUrl: './medical-records.component.html',
+  styleUrls: ['./medical-records.component.css']
 })
 export class MedicalRecordsComponent implements OnInit {
-  isDragOver = false;
   activeFilter = 'All';
   filters = ['All', 'Medical Records'];
   showActeForm = false;
-selectedRecordForActe: any = null;
-acteForm = { description: '', typeOfActe: '', date: '' };
+  selectedRecordForActe: any = null;
+  acteForm = { description: '', typeOfActe: '', date: '' };
   records: any[] = [];
   errorMessage = '';
   selectedRecord: any = null;
@@ -29,13 +29,13 @@ acteForm = { description: '', typeOfActe: '', date: '' };
   imagePreviewUrl: string | null = null;  // base64 preview + sent as JSON field
 
   formMedicalRecord = new FormGroup({
-    imageLabo:        new FormControl('', Validators.required),
-    result_ia:        new FormControl('', Validators.required),
+    imageLabo:        new FormControl(''),
+    result_ia:        new FormControl(''),
     medical_historuy: new FormControl('', [Validators.required, Validators.minLength(4)]),
     chronic_diseas:   new FormControl(''),
   });
 
-  constructor(private service: MedicalRecordsServiceService , private http: HttpClient) {}
+  constructor(private service: MedicalRecordsServiceService , private http: HttpClient , private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadRecords();
@@ -105,9 +105,9 @@ acteForm = { description: '', typeOfActe: '', date: '' };
     this.showForm = true;
   }
 
-  openEditForm(record: any, index: number): void {
+  openEditForm(record: any): void {
     this.isEditing         = true;
-    this.editIndex         = index;
+    this.editIndex         = null;
     this.editId            = record.medicalfile_id;
     this.selectedFile      = null;
     this.selectedImageFile = null;
@@ -165,10 +165,10 @@ acteForm = { description: '', typeOfActe: '', date: '' };
     }
 
     if (this.isEditing && this.editId !== null) {
-      this.service.update(this.editId, payload).subscribe({
+      this.service.updateMyRecord(payload).subscribe({
         next: (updated: any) => {
           const rec = this.buildRecord(updated, payload);
-          if (this.editIndex !== null) this.records[this.editIndex] = rec;
+          this.records = this.records.map(r => r.medicalfile_id === this.editId ? rec : r);
           if (this.selectedRecord)     this.selectedRecord = rec;
           this.cancelForm();
         },
@@ -177,7 +177,7 @@ acteForm = { description: '', typeOfActe: '', date: '' };
     } else {
       this.service.add(payload).subscribe({
         next: (created: any) => {
-          this.records.unshift(this.buildRecord(created, payload));
+          this.records = [this.buildRecord(created, payload), ...this.records];
           this.cancelForm();
         },
         error: (err) => console.error('Erreur add:', err)
@@ -234,33 +234,10 @@ saveActe(): void {
       }
     });
   }
-  @ViewChild('imageFileInput') imageFileInput!: ElementRef<HTMLInputElement>;
+  
+@ViewChild('imageFileInput') imageFileInput!: ElementRef<HTMLInputElement>;
 @ViewChild('pdfFileInput') pdfFileInput!: ElementRef<HTMLInputElement>;
-onDragOver(event: DragEvent): void {
-  event.preventDefault();
-  event.stopPropagation();
-  this.isDragOver = true;
-}
 
-onDragLeave(event: DragEvent): void {
-  event.preventDefault();
-  event.stopPropagation();
-  this.isDragOver = false;
-}
-
-onDrop(event: DragEvent): void {
-  event.preventDefault();
-  event.stopPropagation();
-  this.isDragOver = false;
-
-  const file = event.dataTransfer?.files?.[0];
-  if (!file || !file.type.startsWith('image/')) return;
-
-  this.selectedImageFile = file;
-  const reader = new FileReader();
-  reader.onload = () => { this.imagePreviewUrl = reader.result as string; };
-  reader.readAsDataURL(file);
-}
 
 removeImage(event: MouseEvent): void {
   event.stopPropagation(); // ne pas rouvrir le file picker
@@ -271,7 +248,6 @@ removeImage(event: MouseEvent): void {
   }
 }
 
-// Ajoutez ces deux méthodes :
 triggerImageInput(): void {
   this.imageFileInput.nativeElement.click();
 }
@@ -279,17 +255,100 @@ triggerImageInput(): void {
 triggerPdfInput(): void {
   this.pdfFileInput.nativeElement.click();
 }
-  deleteRecord(index: number): void {
-    if (!confirm('Are you sure you want to delete this record?')) return;
 
-    const record = this.records[index];
-    this.service.delete(record.medicalfile_id).subscribe({
-      next: () => {
-        this.records.splice(index, 1);
-        if (this.selectedRecord?.medicalfile_id === record.medicalfile_id) this.selectedRecord = null;
-        if (this.isEditing && this.editIndex === index) this.cancelForm();
-      },
-      error: (err: HttpErrorResponse) => console.error('Erreur delete:', err)
-    });
+// ── Patient Images / Gallery ────────────────────────────────────────────────
+isUploadingPatientImage = false;
+patientImagesLoading = false;
+
+onPatientImageSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    Array.from(input.files).forEach(file => this.uploadPatientImage(file));
   }
+  if (input) {
+      input.value = ''; // Reset the input to allow selecting the same file again
+  }
+}
+
+
+uploadPatientImage(file: File): void {
+  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
+  if (!allowed.includes(file.type)) {
+    alert('Format non supporté. Utilisez: JPG, PNG, GIF, WEBP, PDF');
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Fichier trop grand. Maximum 10 MB.');
+    return;
+  }
+
+  this.isUploadingPatientImage = true;
+  this.service.uploadPatientImage(file).subscribe({
+    next: (data: any) => {
+      this.isUploadingPatientImage = false;
+      // If we're currently viewing the record, update it immediately
+      if (this.selectedRecord && data.medicalfile_id === this.selectedRecord.medicalfile_id) {
+        this.selectedRecord.patientImages = data.patientImages;
+      }
+      alert('Image ajoutée avec succès !');
+    },
+    error: (err) => {
+      this.isUploadingPatientImage = false;
+      console.error('Erreur upload image:', err);
+      alert('Erreur lors de l\'upload de l\'image.');
+    }
+  });
+}
+
+deletePatientImage(imagePath: string, event: Event): void {
+  event.stopPropagation();
+  if (!confirm('Voulez-vous vraiment supprimer ce document ?')) return;
+
+  this.service.deletePatientImage(imagePath).subscribe({
+    next: () => {
+      if (this.selectedRecord && this.selectedRecord.patientImages) {
+        this.selectedRecord.patientImages = this.selectedRecord.patientImages.filter((p: string) => p !== imagePath);
+      }
+      alert('Image supprimée avec succès.');
+    },
+    error: (err) => {
+      console.error('Erreur suppression image:', err);
+      alert('Erreur lors de la suppression de l\'image.');
+    }
+  });
+}
+
+isPdf(path: string): boolean {
+  return path.toLowerCase().endsWith('.pdf');
+}
+
+getFileName(path: string): string {
+  return path.split('/').pop() || path;
+}
+
+getFileLabel(path: string): string {
+  const name = this.getFileName(path);
+  return name.length > 30 ? name.substring(0, 27) + '...' : name;
+}
+
+getImageUrl(path: string): string {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${environment.baseUrl}${path}`;
+}
+
+  deleteRecord(record: any): void {
+  if (!confirm('Are you sure you want to delete this record?')) { return; }
+
+  this.service.delete(record.medicalfile_id).subscribe({
+    next: () => {
+      this.records = this.records.filter(r => r.medicalfile_id !== record.medicalfile_id);
+      if (this.selectedRecord?.medicalfile_id === record.medicalfile_id) {
+        this.selectedRecord = null;
+      }
+      this.cdr.detectChanges(); // ← cette ligne doit exister
+    },
+    error: (err) => console.error('Erreur delete:', err)
+  });
+}
 }
