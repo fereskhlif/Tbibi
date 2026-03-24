@@ -5,11 +5,14 @@ import { environment } from '../../environments/environment';
 
 // Interface pour l'inscription - correspond au backend
 export interface RegisterRequest {
-  name?: string;           // Optionnel
+  name: string;
   email: string;
-  password: string;
+  password?: string;
   roleName: string;        // ⚠️ Changé de 'role' à 'roleName' pour correspondre au backend
   medicalLicense?: string; // Optionnel pour les professionnels
+  dateOfBirth?: string;
+  gender?: string;
+  adresse?: string;
 }
 
 // Interface pour la connexion

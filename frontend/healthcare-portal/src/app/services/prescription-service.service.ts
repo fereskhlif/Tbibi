@@ -33,6 +33,7 @@ export interface MedicineDTO {
 
 export interface PrescriptionResponse {
   acteId?: number;
+  acteType?: string;  // typeOfActe of the linked Acte (e.g. ANALYSE_DIAGNOSTIQUE)
 patientId?: number;
 patientName?: string;
 patientEmail?: string;
@@ -131,5 +132,10 @@ getAllActes(): Observable<ActeDTO[]> {
       `${environment.baseUrl}/actes/add-for-patient/${patientId}`,
       acte
     );
+  }
+
+  /** Returns prescriptions linked to an acte with analysis type (for laboratory). */
+  getAnalysisPrescriptions(): Observable<PrescriptionResponse[]> {
+    return this.http.get<PrescriptionResponse[]>(`${this.apiUrl}/analysis`);
   }
 }

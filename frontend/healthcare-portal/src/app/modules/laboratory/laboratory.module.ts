@@ -8,9 +8,10 @@ import { SampleManagementComponent } from './pages/sample-management/sample-mana
 import { TestResultsComponent } from './pages/test-results/test-results.component';
 import { EquipmentManagementComponent } from './pages/equipment-management/equipment-management.component';
 import { QualityControlComponent } from './pages/quality-control/quality-control.component';
+import { LabPrescriptionsComponent } from './pages/prescriptions/prescriptions.component';
 
 @NgModule({
-    declarations: [LabDashboardComponent, LabProfileComponent, SampleManagementComponent, TestResultsComponent, EquipmentManagementComponent, QualityControlComponent],
+    declarations: [LabDashboardComponent, LabProfileComponent, SampleManagementComponent, TestResultsComponent, EquipmentManagementComponent, QualityControlComponent, LabPrescriptionsComponent],
     imports: [CommonModule, FormsModule, LaboratoryRoutingModule]
 })
 export class LaboratoryModule { }
