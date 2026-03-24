@@ -1,10 +1,10 @@
-
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MedicalRecordsServiceService } from '../../../../services/medical-records-service.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+
 @Component({
   selector: 'app-medical-records',
   templateUrl: './medical-records.component.html',
@@ -35,7 +35,7 @@ export class MedicalRecordsComponent implements OnInit {
     chronic_diseas:   new FormControl(''),
   });
 
-  constructor(private service: MedicalRecordsServiceService , private http: HttpClient , private cdr: ChangeDetectorRef) {}
+  constructor(private service: MedicalRecordsServiceService , private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadRecords();
@@ -44,10 +44,12 @@ export class MedicalRecordsComponent implements OnInit {
   // ── Records ──────────────────────────────────────────────────────────────
 
   loadRecords(): void {
-    this.service.getAll().subscribe({
-      next: (data: any[]) => {
+    this.service.getMyRecord().subscribe({
+      next: (data: any) => {
         this.errorMessage = '';
-        this.records = (data || []).map(r => ({
+        // getMyRecord returns a single object containing the medical record
+        const dataArray = data ? (Array.isArray(data) ? data : [data]) : [];
+        this.records = dataArray.map(r => ({
           ...r,
           icon:        r.icon        ?? '🏥',
           bgColor:     r.bgColor     ?? 'bg-blue-50',
@@ -59,7 +61,7 @@ export class MedicalRecordsComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         console.error('Erreur chargement:', err);
-        this.errorMessage = 'Impossible de charger les dossiers médicaux.';
+        this.errorMessage = 'Impossible de charger vos dossiers médicaux.';
         this.records = [];
       }
     });
@@ -338,17 +340,15 @@ getImageUrl(path: string): string {
 }
 
   deleteRecord(record: any): void {
-  if (!confirm('Are you sure you want to delete this record?')) { return; }
+    if (!confirm('Are you sure you want to delete this record?')) return;
 
-  this.service.delete(record.medicalfile_id).subscribe({
-    next: () => {
-      this.records = this.records.filter(r => r.medicalfile_id !== record.medicalfile_id);
-      if (this.selectedRecord?.medicalfile_id === record.medicalfile_id) {
-        this.selectedRecord = null;
-      }
-      this.cdr.detectChanges(); // ← cette ligne doit exister
-    },
-    error: (err) => console.error('Erreur delete:', err)
-  });
-}
+    this.service.delete(record.medicalfile_id).subscribe({
+      next: () => {
+        this.loadRecords(); // Re-fetch from the database to see the updated list
+        if (this.selectedRecord?.medicalfile_id === record.medicalfile_id) this.selectedRecord = null;
+        if (this.isEditing && this.editId === record.medicalfile_id) this.cancelForm();
+      },
+      error: (err: HttpErrorResponse) => console.error('Erreur delete:', err)
+    });
+  }
 }

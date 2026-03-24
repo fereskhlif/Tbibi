@@ -156,6 +156,10 @@ export interface HistoryRequest {
           Historique
           <span class="hist-count" *ngIf="histEntries.length > 0">{{ histEntries.length }}</span>
         </button>
+        <button [class.active]="tab==='full'" (click)="openFullRecordTab()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3 12.75h6m-6-3h6M5.25 18.75h-.75A2.25 2.25 0 012.25 16.5V7.5A2.25 2.25 0 014.5 5.25h9a2.25 2.25 0 012.25 2.25v1.5"/></svg>
+          Dossier
+        </button>
       </div>
 
       <!-- ── FORM TAB ── -->
@@ -300,6 +304,46 @@ export interface HistoryRequest {
             <span class="hc-date">{{ extractDate(entry) }}</span>
           </div>
           <pre class="hc-body">{{ stripDate(entry) }}</pre>
+        </div>
+      </div>
+
+      <!-- ── FULL RECORD TAB ── -->
+      <div class="mb" *ngIf="tab==='full'">
+        <div *ngIf="loadingFullRecord" class="no-hist">
+          <div class="spinner-sm sp-white" style="position:relative; right:auto; border-top-color:#6366f1; border-width:3px; width:24px; height:24px; margin-bottom:1rem;"></div>
+          <span>Chargement...</span>
+        </div>
+        <div *ngIf="!loadingFullRecord && !fullRecord" class="no-hist">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <span>Aucun dossier médical trouvé pour ce patient</span>
+        </div>
+        <div *ngIf="!loadingFullRecord && fullRecord">
+          <div class="info-grid">
+            <div class="ii"><label>Image / Labo</label><div class="iv">{{fullRecord.imageLabo || '—'}}</div></div>
+            <div class="ii"><label>Résultat IA</label><div class="iv">{{fullRecord.result_ia || '—'}}</div></div>
+            <div class="ii"><label>Type / Catégorie</label><div class="iv">{{fullRecord.type || fullRecord.category || '—'}}</div></div>
+            <div class="ii"><label>Score de santé global</label><div class="iv last-v" [class.text-green-600]="fullRecord.healthScore >= 75" [class.text-red-600]="fullRecord.healthScore < 50">{{fullRecord.healthScore}}<span style="font-size:0.75rem; color:#94a3b8">/100</span></div></div>
+          </div>
+          
+          <div *ngIf="fullRecord.imageUrl">
+            <div class="section-divider"><div class="sd-label">Image Médicale IA</div></div>
+            <img [src]="fullRecord.imageUrl" alt="IA result" style="width:100%; max-height:200px; object-fit:contain; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; padding:0.5rem;"/>
+          </div>
+
+          <div class="section-divider">
+            <div class="sd-label">Documents Patient (Analyses, Scanners)</div>
+          </div>
+          <div *ngIf="fullRecord.patientImages && fullRecord.patientImages.length > 0" style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div *ngFor="let img of fullRecord.patientImages" style="border:1px solid #e2e8f0; padding:4px; border-radius:8px; background:#fff;">
+               <a [href]="getImageUrl(img)" target="_blank" style="text-decoration:none; color:#6366f1; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.25rem;">
+                  <span *ngIf="img.toLowerCase().endsWith('.pdf')" style="padding:0.5rem;">📄 Voir PDF</span>
+                  <img *ngIf="!img.toLowerCase().endsWith('.pdf')" [src]="getImageUrl(img)" style="max-width:100px; max-height:100px; display:block; border-radius:4px;" />
+               </a>
+            </div>
+          </div>
+          <div *ngIf="!fullRecord.patientImages || fullRecord.patientImages.length === 0" style="color:#94a3b8; font-size:0.875rem; text-align:center; padding:1rem 0;">
+             Aucun document additionnel n'a été ajouté par le patient.
+          </div>
         </div>
       </div>
 
@@ -576,9 +620,12 @@ export class PatientRecordsComponent implements OnInit {
 
   showModal = false;
   sel: PatientRecordDTO | null = null;
-  tab: 'form' | 'history' = 'form';
+  tab: 'form' | 'history' | 'full' = 'form';
   histEntries: string[] = [];
   derniereVisite = '';
+  
+  fullRecord: any = null;
+  loadingFullRecord = false;
 
   form: HistoryRequest = { filiere: '', visitNote: '', analyseSanguine: '', vaccination: '', prescriptions: [], autre: '', vaccines: [], appareilUrinaire: '', urinaryExams: [] };
   saving = false;
@@ -616,6 +663,7 @@ export class PatientRecordsComponent implements OnInit {
   openForm(p: PatientRecordDTO) {
     this.sel = p;
     this.tab = 'form';
+    this.fullRecord = null;
     this.form = { filiere: '', visitNote: '', analyseSanguine: '', vaccination: '', prescriptions: [], autre: '', vaccines: [], appareilUrinaire: '', urinaryExams: [] };
     this.saveSuccess = false; this.saveError = '';
     this.histEntries = this.parseHistory(p.medicalHistory);
@@ -637,6 +685,30 @@ export class PatientRecordsComponent implements OnInit {
     } else {
       this.form.prescriptions.push(id);
     }
+  }
+
+  // ── Dossier Complet ──
+  openFullRecordTab() {
+    this.tab = 'full';
+    if (!this.fullRecord && this.sel) {
+      this.loadingFullRecord = true;
+      this.http.get(`${this.api}/${this.sel.medicalFileId}`).subscribe({
+        next: (res) => {
+          this.fullRecord = res;
+          this.loadingFullRecord = false;
+        },
+        error: (err) => {
+          console.error('Erreur chargement dossier complet:', err);
+          this.loadingFullRecord = false;
+        }
+      });
+    }
+  }
+
+  getImageUrl(path: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${environment.baseUrl}${path}`;
   }
 
   // ── Vaccin Modal ──

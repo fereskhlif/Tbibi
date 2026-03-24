@@ -188,6 +188,7 @@ export class MainLayoutComponent implements OnInit {
   private laboratoryNav: NavItem[] = [
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'Professional Profile' },
+    { path: 'prescriptions', icon: 'flask-conical', label: 'Prescriptions reçues' },
     { path: 'samples', icon: 'microscope', label: 'Sample Management' },
     { path: 'results', icon: 'file-text', label: 'Test Results' },
     { path: 'equipment', icon: 'settings', label: 'Equipment Management' },
