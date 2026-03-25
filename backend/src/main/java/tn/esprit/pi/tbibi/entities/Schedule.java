@@ -5,10 +5,11 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Appointement")
+@Table(name = "Schedule")
 @Getter
 @Setter
 @ToString
@@ -21,11 +22,11 @@ import java.util.List;
 public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long schedueId;
-    private LocalDate startTime;
-    private LocalDate endTime;
+    private Long scheduleId;
+    private LocalDate date;
+    private LocalTime startTime;
     private Boolean isAvailable;
     @OneToMany(mappedBy = "schedule")
-    private List<Appointement> appointements;
+    private List<Appointment> appointments;
 
 }
