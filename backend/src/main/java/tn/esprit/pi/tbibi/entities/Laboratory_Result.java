@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,4 +42,9 @@ public class Laboratory_Result {
     private MedicalPictureAnalysis medicalPictureAnalysis;
     @OneToMany(cascade = CascadeType.ALL)
     private Set<User> Users;
+    // In Laboratory_Result entity — add @JsonIgnore to any back-reference
+    @ManyToOne
+    @JoinColumn(name = "medical_file_id")
+    @JsonIgnore  // ← ADD THIS if missing
+    private MedicalReccords medicalReccords;
 }

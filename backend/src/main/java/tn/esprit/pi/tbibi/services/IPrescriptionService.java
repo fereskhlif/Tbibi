@@ -2,6 +2,7 @@ package tn.esprit.pi.tbibi.services;
 
 import tn.esprit.pi.tbibi.DTO.PrescriptionRequest;
 import tn.esprit.pi.tbibi.DTO.PrescriptionResponse;
+import tn.esprit.pi.tbibi.entities.PrescriptionStatus;
 
 import java.util.List;
 
@@ -11,4 +12,6 @@ public interface IPrescriptionService {
     void delete(int id);
     PrescriptionResponse getById(int id);
     List<PrescriptionResponse> getAll();
+    PrescriptionResponse updateStatus(int id, PrescriptionStatus status);
+    PrescriptionResponse assignActe(int prescriptionId, int acteId);
 }
