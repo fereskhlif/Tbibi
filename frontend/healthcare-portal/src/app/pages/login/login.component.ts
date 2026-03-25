@@ -201,7 +201,8 @@ export class LoginComponent {
             'DOCTEUR': '/doctor',
             'KINE': '/physio',
             'PHARMASIS': '/pharmacist',
-            'LABORATORY': '/laboratory'
+            'LABORATORY': '/laboratory',
+            'ADMIN': '/admin/dashboard'
           };
 
           const destination = routes[response.role] || '/';

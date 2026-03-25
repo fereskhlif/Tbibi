@@ -195,6 +195,13 @@ export class MainLayoutComponent implements OnInit {
     { path: 'quality', icon: 'shield-check', label: 'Quality Control' }
   ];
 
+  private adminNav: NavItem[] = [
+    { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard Admin' },
+    { path: 'users', icon: 'users', label: 'Utilisateurs' },
+    { path: 'approvals', icon: 'check-circle', label: 'Approbations' },
+    { path: 'settings', icon: 'settings', label: 'Configuration' }
+  ];
+
   constructor(private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
@@ -208,7 +215,8 @@ export class MainLayoutComponent implements OnInit {
       'PHYSIOTHERAPIST': 'physiotherapist',
       'PHARMASIS': 'pharmacist',
       'PHARMACIST': 'pharmacist',
-      'LABORATORY': 'laboratory'
+      'LABORATORY': 'laboratory',
+      'ADMIN': 'admin'
     };
 
     let key = rawRole;
@@ -234,7 +242,8 @@ export class MainLayoutComponent implements OnInit {
       'doctor': 'doctor',
       'physiotherapist': 'physio',
       'pharmacist': 'pharmacist',
-      'laboratory': 'laboratory'
+      'laboratory': 'laboratory',
+      'admin': 'admin'
     };
     this.roleUrlPrefix = rolePrefixMap[this.role] || this.role;
     switch (this.role) {
@@ -257,6 +266,10 @@ export class MainLayoutComponent implements OnInit {
       case 'laboratory':
         this.navItems = this.laboratoryNav;
         this.floatingButton = { path: 'samples', bgClass: 'bg-cyan-600 hover:bg-cyan-700', title: 'Pending Samples', count: 3 };
+        break;
+      case 'admin':
+        this.navItems = this.adminNav;
+        this.floatingButton = { path: 'approvals', bgClass: 'bg-emerald-600 hover:bg-emerald-700', title: 'En Attente', count: 5 };
         break;
     }
   }

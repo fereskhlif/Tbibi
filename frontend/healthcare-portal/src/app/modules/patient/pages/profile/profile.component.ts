@@ -83,6 +83,32 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
           <p class="text-sm text-gray-500">Veuillez consulter la section "Dossier Médical" pour vos dossiers médicaux détaillés.</p>
         </div>
 
+        <!-- Change Password -->
+        <div class="lg:col-span-3 bg-white rounded-xl border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Changer le mot de passe</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm text-gray-500 mb-1">Ancien mot de passe</label>
+              <input type="password" [(ngModel)]="passwords.oldPassword" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" placeholder="**********" />
+            </div>
+            <div>
+              <label class="block text-sm text-gray-500 mb-1">Nouveau mot de passe</label>
+              <input type="password" [(ngModel)]="passwords.newPassword" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" placeholder="**********" />
+            </div>
+            <div>
+              <label class="block text-sm text-gray-500 mb-1">Confirmer mot de passe</label>
+              <input type="password" [(ngModel)]="passwords.confirmPassword" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" placeholder="**********" />
+            </div>
+          </div>
+          <div class="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <span *ngIf="pwMessage" [class]="pwSuccess ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">{{pwMessage}}</span>
+            <span *ngIf="!pwMessage"></span>
+            <button (click)="changePassword()" [disabled]="changingPw" class="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+              {{ changingPw ? 'Mise à jour...' : 'Mettre à jour' }}
+            </button>
+          </div>
+        </div>
+
       </div>
 
       <!-- Error state -->
@@ -111,6 +137,11 @@ export class ProfileComponent implements OnInit {
   profileImageUrl: string | null = null;
   uploadingPic = false;
   personalInfo: any[] = [];
+  
+  passwords = { oldPassword: '', newPassword: '', confirmPassword: '' };
+  changingPw = false;
+  pwMessage = '';
+  pwSuccess = false;
 
   constructor(private userService: UserService) { }
 
@@ -166,6 +197,42 @@ export class ProfileComponent implements OnInit {
         console.error('Erreur upload', err);
         this.uploadingPic = false;
         alert('Échec de la mise à jour de la photo de profil.');
+      }
+    });
+  }
+
+  changePassword(): void {
+    if (!this.passwords.oldPassword || !this.passwords.newPassword || !this.passwords.confirmPassword) {
+      this.pwMessage = "Veuillez remplir tous les champs.";
+      this.pwSuccess = false;
+      return;
+    }
+    if (this.passwords.newPassword !== this.passwords.confirmPassword) {
+      this.pwMessage = "Les nouveaux mots de passe ne correspondent pas.";
+      this.pwSuccess = false;
+      return;
+    }
+    
+    this.changingPw = true;
+    this.pwMessage = '';
+    
+    this.userService.changePassword(this.passwords.oldPassword, this.passwords.newPassword).subscribe({
+      next: () => {
+        this.changingPw = false;
+        this.pwSuccess = true;
+        this.pwMessage = 'Mot de passe mis à jour avec succès.';
+        this.passwords = { oldPassword: '', newPassword: '', confirmPassword: '' };
+        setTimeout(() => this.pwMessage = '', 5000);
+      },
+      error: (err) => {
+        console.error(err);
+        this.changingPw = false;
+        this.pwSuccess = false;
+        if (err.status === 400 && err.error) {
+          this.pwMessage = err.error;
+        } else {
+          this.pwMessage = 'Erreur lors du changement de mot de passe.';
+        }
       }
     });
   }

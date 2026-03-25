@@ -26,10 +26,7 @@
         class="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5">
         <span>{{ sortDesc ? '↓' : '↑' }}</span> Date
       </button>
-      <button (click)="openAddModal()"
-        class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors shadow-sm shadow-blue-200 flex items-center gap-2">
-        <span>+</span> Nouvelle prescription
-      </button>
+
     </div>
   </div>
 
@@ -103,8 +100,8 @@
       class="rx-card bg-white rounded-xl border border-gray-200 overflow-hidden"
       [style.animation-delay]="(i * 60) + 'ms'">
 
-      <!-- Card header (clickable) -->
-      <div class="p-5 flex items-start gap-4 cursor-pointer" (click)="rx.expanded = !rx.expanded">
+      <!-- Card header -->
+      <div class="p-5 flex items-start gap-4">
 
         <!-- Icon -->
         <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
@@ -153,11 +150,6 @@
           </div>
         </div>
 
-        <!-- Chevron -->
-        <div class="text-gray-400 transition-transform duration-200 mt-1 flex-shrink-0"
-          [class.rotate-180]="rx.expanded">
-          ▾
-        </div>
       </div>
 
       <!-- Mini progress bar (always visible, only for non-cancelled) -->
@@ -186,9 +178,8 @@
         ❌ Cette prescription a été annulée
       </div>
 
-      <!-- Expanded actions -->
-      <div *ngIf="rx.expanded"
-        class="border-t border-gray-100 bg-gray-50 px-5 py-3 flex flex-wrap gap-2">
+      <!-- Card Action Buttons -->
+      <div class="border-t border-gray-100 bg-gray-50 px-5 py-3 flex flex-wrap gap-2">
         <button (click)="openDetail(rx, $event)"
           class="px-3.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors flex items-center gap-1.5">
           🔍 Voir les détails
@@ -201,57 +192,57 @@
           class="px-3.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors flex items-center gap-1.5">
           🗑️ Supprimer
         </button>
+        <button (click)="showActesForRx(rx, $event)"
+          class="px-3.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5">
+          🩺 Actes
+        </button>
       </div>
     </div>
   </div>
 
 
-  <!-- ── Actes Médicaux Section ─────────────────────────────────────────────────── -->
-  <div class="mt-12 mb-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Mes Actes Médicaux</h2>
-        <p class="text-sm text-gray-500 mt-0.5">{{filteredActes.length}} acte(s) trouvé(s)</p>
-      </div>
-    </div>
-  </div>
+  <!-- ════════════════════════════════════════════════════════════════════════
+       ACTE MODAL
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="showActeModal && acteForRx"
+    class="modal-overlay fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    (click)="showActeModal = false; acteForRx = null">
 
-  <div *ngIf="loadingActes" class="space-y-4">
-    <div *ngFor="let i of [1,2]" class="bg-white rounded-xl border border-gray-200 p-6">
-      <div class="flex gap-4">
-        <div class="skeleton w-12 h-12 rounded-lg flex-shrink-0"></div>
-        <div class="flex-1 space-y-2">
-          <div class="skeleton h-4 w-2/5 rounded"></div>
-          <div class="skeleton h-3 w-3/5 rounded"></div>
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col"
+      (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-extrabold text-gray-900">🩺 Acte Médical</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Relié à cette prescription</p>
+        </div>
+        <button (click)="showActeModal = false; acteForRx = null" class="text-gray-400 hover:text-gray-700 text-xl">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- Acte info -->
+        <div class="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+          <p class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Détails de l'acte</p>
+          <p class="text-sm font-semibold text-blue-800">#{{acteForRx.acteId}} — {{acteForRx.typeOfActe || 'Acte Médical'}}</p>
+          <p class="text-sm text-blue-700 mt-2">{{acteForRx.description || 'Aucune description fournie.'}}</p>
+        </div>
+
+        <div class="flex flex-wrap gap-3 text-sm text-gray-600">
+          <span *ngIf="acteForRx.date">📅 {{acteForRx.date | date: 'dd MMM yyyy, HH:mm'}}</span>
+          <span *ngIf="acteForRx.doctorName" class="text-indigo-600 font-medium">👨‍⚕️ Dr. {{acteForRx.doctorName}}</span>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div *ngIf="!loadingActes && !error && filteredActes.length === 0"
-    class="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
-    <p class="text-4xl mb-3">🩺</p>
-    <p class="text-gray-500 font-medium">Aucun acte médical trouvé</p>
-  </div>
-
-  <div class="space-y-3" *ngIf="!loadingActes">
-    <div *ngFor="let acte of filteredActes" class="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4 hover:shadow-md transition-shadow">
-      <div class="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0 text-xl text-indigo-500">
-        🩺
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="flex flex-wrap items-center gap-2 mb-1">
-          <h3 class="font-bold text-gray-900">{{acte.typeOfActe || 'Acte Médical'}} #{{acte.acteId}}</h3>
-        </div>
-        <p class="text-sm text-gray-600 mb-1.5">{{acte.description || '—'}}</p>
-        <div class="flex flex-wrap gap-3 text-xs text-gray-400">
-          <span *ngIf="acte.date">📅 {{acte.date | date: 'dd MMM yyyy, HH:mm'}}</span>
-          <span *ngIf="acte.doctorName" class="text-indigo-600 font-medium">👨‍⚕️ Dr. {{acte.doctorName}}</span>
-        </div>
+      <!-- Footer -->
+      <div class="p-5 bg-gray-50 border-t border-gray-100 flex justify-end">
+        <button (click)="showActeModal = false; acteForRx = null"
+          class="px-5 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          Fermer
+        </button>
       </div>
     </div>
   </div>
-
 
   <!-- ════════════════════════════════════════════════════════════════════════
        DETAIL MODAL
@@ -359,10 +350,7 @@
 
       <!-- Modal footer -->
       <div class="p-5 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
-        <button (click)="openEditModal(detailRx); closeDetail()"
-          class="px-4 py-2 text-sm font-semibold bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-          ✏️ Modifier
-        </button>
+
         <button (click)="closeDetail()"
           class="px-5 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
           Fermer
@@ -372,49 +360,6 @@
   </div>
 
 
-  <!-- ════════════════════════════════════════════════════════════════════════
-       ADD / EDIT MODAL
-  ════════════════════════════════════════════════════════════════════════ -->
-  <div *ngIf="showModal"
-    class="modal-overlay fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-    (click)="showModal = false">
 
-    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
-      (click)="$event.stopPropagation()">
-
-      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-        <h2 class="text-lg font-extrabold text-gray-900">
-          {{editMode ? '✏️ Modifier la prescription' : '➕ Nouvelle prescription'}}
-        </h2>
-        <button (click)="showModal = false" class="text-gray-400 hover:text-gray-700 text-xl leading-none">✕</button>
-      </div>
-
-      <div class="p-6 space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Note</label>
-          <textarea [(ngModel)]="form.note" rows="3"
-            placeholder="Describe les symptômes, observations..."
-            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition">
-          </textarea>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Date</label>
-          <input type="datetime-local" [(ngModel)]="form.date"
-            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition" />
-        </div>
-      </div>
-
-      <div class="p-5 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-        <button (click)="showModal = false"
-          class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-100 transition-colors">
-          Annuler
-        </button>
-        <button (click)="save()" [disabled]="saving"
-          class="px-5 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
-          {{saving ? 'Sauvegarde...' : (editMode ? 'Enregistrer' : 'Ajouter')}}
-        </button>
-      </div>
-    </div>
-  </div>
 
 </div>

@@ -46,6 +46,13 @@ const routes: Routes = [
     canActivate: [AuthGuard, RoleGuard],
     data: { role: 'LABORATORY' },  // ⚠️ 'LABORATORY' (correspond)
     loadChildren: () => import('./modules/laboratory/laboratory.module').then(m => m.LaboratoryModule)
+  },
+  {
+    path: 'admin',
+    component: MainLayoutComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { role: 'ADMIN' },
+    loadChildren: () => import('./modules/admin/admin.module').then(m => m.AdminModule)
   }
 ];
 

@@ -1,0 +1,103 @@
+<div class="pw">
+  <!-- Header -->
+  <div class="ph">
+    <div class="ph-left">
+      <div class="ph-ico">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Gestion des Utilisateurs</h1>
+        <p>Annuaire complet de la plateforme</p>
+      </div>
+    </div>
+    <div class="stat-badge">
+      <span class="sn">{{users.length}}</span>
+      <span class="sl">utilisateur(s)</span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-wrap">
+    <select [(ngModel)]="roleFilter" class="filter-select">
+      <option value="ALL">Tous les rôles</option>
+      <option value="PATIENT">Patients</option>
+      <option value="DOCTOR">Médecins</option>
+      <option value="PHARMACIST">Pharmaciens</option>
+      <option value="LABORATORY">Laboratoires</option>
+      <option value="ADMIN">Admins</option>
+    </select>
+    <select [(ngModel)]="statusFilter" class="filter-select">
+      <option value="ALL">Tous les statuts</option>
+      <option value="ACTIVE">Actifs</option>
+      <option value="PENDING">En attente</option>
+      <option value="BLOCKED">Bloqués</option>
+    </select>
+  </div>
+
+  <!-- Error/Loading -->
+  <div *ngIf="loading" class="empty-state" style="background:#fff;border-radius:18px;border:1px solid #e2e8f0;">
+    Chargement des utilisateurs en cours...
+  </div>
+  <div *ngIf="error && !loading" class="err-bar">
+    ⚠️ {{error}}
+    <button (click)="loadUsers()">Réessayer</button>
+  </div>
+
+  <!-- Table -->
+  <div class="tbl-card" *ngIf="!loading">
+    <table class="ptbl">
+      <thead><tr>
+        <th>Utilisateur</th><th>Rôle</th><th>Statut</th><th>Sexe</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        <tr *ngIf="filteredUsers.length === 0"><td colspan="5" class="empty-state">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+          Aucun utilisateur trouvé avec ces critères.
+        </td></tr>
+
+        <tr *ngFor="let user of filteredUsers" class="prow">
+          <td>
+            <div style="display:flex; align-items:center; gap:.75rem;">
+              <div class="avatar"
+                [style.background]="getRoleBadgeColor(user.role?.roleName)"
+                [style.color]="getRoleBadgeText(user.role?.roleName)">
+                {{getInitial(user.name)}}
+              </div>
+              <div style="display:flex;flex-direction:column;">
+                <span style="font-weight:600; color:#1e293b;">{{user.name}}</span>
+                <span class="em">{{user.email}}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="ch-tag"
+              [style.background]="getRoleBadgeColor(user.role?.roleName)"
+              [style.color]="getRoleBadgeText(user.role?.roleName)">
+              {{user.role?.roleName || 'INCONNU'}}
+            </span>
+          </td>
+          <td>
+            <span *ngIf="user.accountStatus === 'ACTIVE'"  class="status-tag" style="background:#dcfce7;color:#16a34a;">✅ Actif</span>
+            <span *ngIf="user.accountStatus === 'PENDING'" class="status-tag" style="background:#fff7ed;color:#ea580c;">⏳ En attente</span>
+            <span *ngIf="user.accountStatus === 'BLOCKED'" class="status-tag" style="background:#fee2e2;color:#dc2626;">🚫 Bloqué</span>
+            <span *ngIf="user.accountStatus === 'REJECTED'" class="status-tag" style="background:#f1f5f9;color:#64748b;">❌ Rejeté</span>
+          </td>
+          <td class="em">
+            {{user.gender === 'Female' ? '♀ Féminin' : (user.gender === 'Male' ? '♂ Masculin' : '—')}}
+          </td>
+          <td style="display:flex; gap:0.5rem; align-items:center;">
+            <button *ngIf="user.accountStatus !== 'BLOCKED'" class="btn-warn"
+              (click)="updateStatus(user.userId, 'BLOCKED')" title="Bloquer">🚫</button>
+            <button *ngIf="user.accountStatus === 'BLOCKED'" class="btn-ok"
+              (click)="updateStatus(user.userId, 'ACTIVE')" title="Débloquer">✅</button>
+            <button *ngIf="user.accountStatus === 'PENDING'" class="btn-ok"
+              (click)="updateStatus(user.userId, 'ACTIVE')" title="Approuver">✔ Approuver</button>
+            <button class="btn-danger" (click)="deleteUser(user.userId)" title="Supprimer">🗑️</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
