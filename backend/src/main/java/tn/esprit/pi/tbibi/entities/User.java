@@ -9,7 +9,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = {"medicalFiles", "Orders", "Appointements"})
+@ToString(exclude = {"medicalFiles", "orders", "appointements"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -22,6 +22,16 @@ public class User {
     private String email;
     private String password;
     private String adresse;
+
+    private java.time.LocalDate dateOfBirth;
+    private String gender;
+    private String profilePicture;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status")
+    private UserStatus accountStatus = UserStatus.PENDING;
+
     @Builder.Default
     @Column(name = "is_enabled")
     Boolean enabled = true;

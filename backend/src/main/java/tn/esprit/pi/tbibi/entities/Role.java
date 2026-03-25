@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -19,6 +20,7 @@ public class Role {
     @Column(name = "role_name", unique = true, nullable = false)
     private String roleName;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "role")
     private List<User> users;
 }

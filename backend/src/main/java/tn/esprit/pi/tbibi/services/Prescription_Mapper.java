@@ -27,10 +27,13 @@ public interface Prescription_Mapper {
     @Mapping(target = "date",            source = "date",            qualifiedByName = "dateToIso")
     @Mapping(target = "statusUpdatedAt", source = "statusUpdatedAt", qualifiedByName = "dateToIso")
     @Mapping(target = "status",          source = "status",          qualifiedByName = "safeStatus")
-    @Mapping(target = "acteId",          source = "acte.acteId")        // ← AJOUTER
-    @Mapping(target = "patientId",       ignore = true)                  // ← DÉPLACER ici
-    @Mapping(target = "patientName",     ignore = true)                  // ← DÉPLACER ici
+    @Mapping(target = "acteId",          source = "acte.acteId")
+    @Mapping(target = "acteType",        source = "acte.typeOfActe")
+    @Mapping(target = "patientId",       ignore = true)
+    @Mapping(target = "patientName",     ignore = true)
     @Mapping(target = "patientEmail",    ignore = true)
+    @Mapping(target = "doctorId",        ignore = true)
+    @Mapping(target = "doctorName",      ignore = true)
     PrescriptionResponse toDto(Prescription entity);
 
     @Named("dateToIso")

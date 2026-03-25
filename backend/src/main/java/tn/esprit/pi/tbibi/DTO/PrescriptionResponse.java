@@ -12,11 +12,13 @@ import java.util.List;
 @Builder
 public class PrescriptionResponse {
     private int prescriptionID;
-    // Dans PrescriptionResponse.java — AJOUTER ces champs
     private Integer acteId;
+    private String  acteType;   // typeOfActe of the linked Acte (e.g., ANALYSE_DIAGNOSTIQUE)
     private Integer patientId;
     private String  patientName;
     private String  patientEmail;
+    private Integer doctorId;
+    private String  doctorName;
     private String note;
     private String date;           // String ISO → Angular le parse sans problème
     private String statusUpdatedAt;

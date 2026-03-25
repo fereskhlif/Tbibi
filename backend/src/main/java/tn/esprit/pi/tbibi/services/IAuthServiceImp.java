@@ -75,16 +75,25 @@ public class IAuthServiceImp implements IAuthService {
             log.info("Role found with ID: {}", role.getRole_id());
         }
 
+        // Set initial validation status based on role
+        tn.esprit.pi.tbibi.entities.UserStatus initialStatus = roleNameUpper.equals("PATIENT") 
+            ? tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE 
+            : tn.esprit.pi.tbibi.entities.UserStatus.PENDING;
+
         // Créer l'utilisateur avec le builder
         User user = User.builder()
                 .name(req.name() == null ? "Not Available" : req.name())
                 .email(req.email())
                 .password(passwordEncoder.encode(req.password()))
                 .role(role)
+                .dateOfBirth(req.dateOfBirth())
+                .gender(req.gender())
+                .adresse(req.adresse())
+                .accountStatus(initialStatus)
                 .enabled(true)
                 .build();
 
-        log.info("Saving user with role: {}", role.getRoleName());
+        log.info("Saving user with role: {}, initial status: {}", role.getRoleName(), initialStatus);
 
         // Sauvegarder l'utilisateur
         User savedUser = userRepository.save(user);

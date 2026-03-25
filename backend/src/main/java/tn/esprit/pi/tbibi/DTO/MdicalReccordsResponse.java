@@ -18,4 +18,5 @@ public class MdicalReccordsResponse {
     private String rep_doc;
     private String imageUrl;
     private List<ActeResponse> actes;
+    private List<String> patientImages;
 }

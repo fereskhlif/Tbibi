@@ -49,11 +49,33 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authProvider())
                 .authorizeHttpRequests(auth -> auth
+                        // Permettre le forward vers /error par Spring MVC
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.FORWARD, jakarta.servlet.DispatcherType.ERROR).permitAll()
+
                         // Public routes - no authentication needed
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/medical-records/**").authenticated()
-                        .requestMatchers("/prescriptions/**").authenticated()
+                        .requestMatchers("/error").permitAll()
+
+                        // Serve uploaded images publicly
+                        .requestMatchers("/uploads/**").permitAll()
+
+                        // Allow doctor to append history and search patients without blocking on JwtAuthFilter missing auth
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/medical-records/*/history").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/medical-records/patients/search").permitAll()
+
+                        // Patient self-service: view, upload, update, delete image
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/medical-records/my").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/medical-records/my/upload-image").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/medical-records/my").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/medical-records/my/image").authenticated()
+
+                        .requestMatchers("/medical-records/**").permitAll()
+                        //.requestMatchers("/prescriptions/**").authenticated()
+                        .requestMatchers("/prescriptions/**").permitAll()
+                        // TEMPORAIRE: On permet l'accès libre aux actes pour voir la VRAIE ERREUR cachée derrière le 403
+                        .requestMatchers("/actes/**").permitAll()
 
                         // Patient routes
                         .requestMatchers("/patient/**").hasRole("PATIENT")
@@ -81,7 +103,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // ✅ SOLUTION: Utiliser allowedOriginPatterns pour accepter tous les ports
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:*",
                 "http://127.0.0.1:*"

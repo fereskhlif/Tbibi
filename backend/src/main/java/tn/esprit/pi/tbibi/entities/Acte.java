@@ -29,5 +29,7 @@ public class Acte {
     @JsonIgnore
     private MedicalReccords medicalFile;  // ← must be exactly this name
 
-
+    /** ID du médecin qui a créé cet acte (null pour les anciens actes) */
+    @Column(name = "doctor_id")
+    private Integer doctorId;
 }

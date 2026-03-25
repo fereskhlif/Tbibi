@@ -14,4 +14,9 @@ public interface IPrescriptionService {
     List<PrescriptionResponse> getAll();
     PrescriptionResponse updateStatus(int id, PrescriptionStatus status);
     PrescriptionResponse assignActe(int prescriptionId, int acteId);
+    /** Returns only the prescriptions belonging to the currently authenticated patient. */
+    List<PrescriptionResponse> getMyPrescriptions();
+
+    /** Returns prescriptions linked to an acte of type "analyse" (for the laboratory). */
+    List<PrescriptionResponse> getAnalysisPrescriptions();
 }

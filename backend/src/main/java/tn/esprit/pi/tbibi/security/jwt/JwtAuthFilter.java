@@ -42,12 +42,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
         String method = request.getMethod();
-        log.info("========== JwtAuthFilter ==========");
-        log.info("Processing request: {} {}", method, path);
 
         log.debug("JwtAuthFilter - Processing request: {} {}", method, path);
         if (path.startsWith("/auth/")) {
-            log.info("🔴 Public path, skipping filter");
+            log.debug("🔴 Public path, skipping filter");
             filterChain.doFilter(request, response);
             return;
         }
@@ -59,35 +57,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 🟢 NOUVEAU: Autoriser toutes les requêtes GET sans token
-        if ("GET".equalsIgnoreCase(method)) {
-            log.info("🔴 GET request, skipping filter (permitAll)");
-            filterChain.doFilter(request, response);
-            return;
-        }
+        // 🟢 MODIFIÉ: Pour les requêtes GET, on tente tout de même de décoder le JWT si présent
+        // afin de remplir le SecurityContext (nécessaire pour /prescriptions/my par exemple).
+        // Si aucun token n'est présent, on laisse passer normalement (routes publiques).
 
         String authHeader = request.getHeader("Authorization");
-        log.info("🔴 Auth Header: {}", authHeader);
-        log.debug("JwtAuthFilter - Auth header: {}", authHeader);
+        log.debug("🔴 Auth Header: {}", authHeader);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.warn("JwtAuthFilter - No valid Bearer token found for protected path: {}", path);
+            log.debug("JwtAuthFilter - No valid Bearer token found for protected path: {}", path);
             // Ne pas bloquer, laisser Spring Security gérer l'accès
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = authHeader.substring(7);
-        log.info("🔴 Token reçu: {}", token);
         try {
             // Essayer de décoder le token pour voir s'il est valide
             String[] parts = token.split("\\.");
-            log.info("🔴 Nombre de parties: {}", parts.length);
             if (parts.length >= 2) {
                 String header = new String(java.util.Base64.getDecoder().decode(parts[0]));
                 String payload = new String(java.util.Base64.getDecoder().decode(parts[1]));
-                log.info("🔴 Header décodé: {}", header);
-                log.info("🔴 Payload décodé: {}", payload);
+                log.debug("🔴 Header décodé: {}", header);
+                log.debug("🔴 Payload décodé: {}", payload);
             }
         } catch (Exception e) {
             log.error("🔴 ERREUR décodage token: {}", e.getMessage());
@@ -102,7 +94,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        log.info("🔴 Authentication existante: {}", SecurityContextHolder.getContext().getAuthentication());
+        log.debug("🔴 Authentication existante: {}", SecurityContextHolder.getContext().getAuthentication());
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             log.debug("JwtAuthFilter - Loading user details for email: {}", email);
@@ -116,12 +108,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             userDetails, null, userDetails.getAuthorities()
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    log.info("🔴 AVANT setAuthentication - authToken: {}", authToken);
+                    log.debug("🔴 AVANT setAuthentication - authToken: {}", authToken);
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    log.info("🔴 APRÈS setAuthentication - Présent: {}",
+                    log.debug("🔴 APRÈS setAuthentication - Présent: {}",
                             SecurityContextHolder.getContext().getAuthentication() != null);
-                    log.info("🔴 APRÈS setAuthentication - Authorities: {}",
+                    log.debug("🔴 APRÈS setAuthentication - Authorities: {}",
                             SecurityContextHolder.getContext().getAuthentication().getAuthorities());
 
                 } else {
@@ -134,11 +126,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
         else {
-            log.info("🔴 Condition NON satisfaite - email null ou déjà authentifié");
-            log.info("🔴 email != null? {}", email != null);
-            log.info("🔴 Authentication == null? {}", SecurityContextHolder.getContext().getAuthentication() == null);
+            log.debug("🔴 Condition NON satisfaite - email null ou déjà authentifié");
+            log.debug("🔴 email != null? {}", email != null);
+            log.debug("🔴 Authentication == null? {}", SecurityContextHolder.getContext().getAuthentication() == null);
         }
-        log.info("========== JwtAuthFilter FIN ==========");
+        
         // Correction: Il y avait un double appel à filterChain.doFilter() ici qui a été retiré
         filterChain.doFilter(request, response);
     }

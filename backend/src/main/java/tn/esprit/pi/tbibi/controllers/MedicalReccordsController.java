@@ -9,8 +9,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.pi.tbibi.DTO.ActeRequest;
+import tn.esprit.pi.tbibi.DTO.HistoryRequest;
 import tn.esprit.pi.tbibi.DTO.MdicalReccordsRequest;
 import tn.esprit.pi.tbibi.DTO.MdicalReccordsResponse;
+import tn.esprit.pi.tbibi.DTO.PatientRecordDTO;
 import tn.esprit.pi.tbibi.services.MedicalRec;
 
 import java.io.IOException;
@@ -113,6 +115,100 @@ public class MedicalReccordsController {
         } catch (Exception e) {
             log.error("Erreur lors de la suppression: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body("Error deleting record: " + e.getMessage());
+        }
+    }
+
+    /** GET /medical-records/patients/search?name=... */
+    @GetMapping("/patients/search")
+    public ResponseEntity<List<PatientRecordDTO>> searchPatients(
+            @RequestParam(required = false, defaultValue = "") String name) {
+        log.info("=== SEARCH PATIENTS BY NAME: {} ===", name);
+        try {
+            List<PatientRecordDTO> result = service.searchPatientsByName(name);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Erreur recherche patients: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    /** POST /medical-records/{id}/history */
+    @PostMapping("/{id}/history")
+    public ResponseEntity<MdicalReccordsResponse> appendHistory(
+            @PathVariable int id,
+            @RequestBody HistoryRequest historyRequest) {
+        log.info("=== APPEND HISTORY TO RECORD: {} ===", id);
+        try {
+            MdicalReccordsResponse response = service.appendHistory(id, historyRequest);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur ajout historique: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    // ── Patient self-service endpoints ────────────────────────────────────────
+
+    /** GET /medical-records/my — returns the authenticated patient's own medical record */
+    @GetMapping("/my")
+    public ResponseEntity<MdicalReccordsResponse> getMyRecord(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("=== GET MY RECORD for user: {} ===", userDetails != null ? userDetails.getUsername() : "null");
+        try {
+            if (userDetails == null) return ResponseEntity.status(401).body(null);
+            MdicalReccordsResponse response = service.getMyRecord(userDetails.getUsername());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur get my record: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    /** POST /medical-records/my/upload-image — patient uploads an image from their PC */
+    @PostMapping(value = "/my/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MdicalReccordsResponse> uploadPatientImage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        log.info("=== UPLOAD PATIENT IMAGE for user: {} ===", userDetails != null ? userDetails.getUsername() : "null");
+        try {
+            if (userDetails == null) return ResponseEntity.status(401).body(null);
+            MdicalReccordsResponse response = service.uploadPatientImage(userDetails.getUsername(), file);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur upload image patient: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    /** PUT /medical-records/my — patient updates their own record (history, chronic diseases) */
+    @PutMapping("/my")
+    public ResponseEntity<MdicalReccordsResponse> updateMyRecord(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody MdicalReccordsRequest request) {
+        log.info("=== UPDATE MY RECORD for user: {} ===", userDetails != null ? userDetails.getUsername() : "null");
+        try {
+            if (userDetails == null) return ResponseEntity.status(401).body(null);
+            MdicalReccordsResponse response = service.updateMyRecord(userDetails.getUsername(), request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur update my record: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    /** DELETE /medical-records/my/image — patient removes one image from their record */
+    @DeleteMapping("/my/image")
+    public ResponseEntity<?> deleteMyImage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("path") String imagePath) {
+        log.info("=== DELETE MY IMAGE for user: {} ===", userDetails != null ? userDetails.getUsername() : "null");
+        try {
+            if (userDetails == null) return ResponseEntity.status(401).body(null);
+            service.deletePatientImage(userDetails.getUsername(), imagePath);
+            return ResponseEntity.ok("Image supprimée avec succès");
+        } catch (Exception e) {
+            log.error("Erreur suppression image: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body("Erreur: " + e.getMessage());
         }
     }
 }

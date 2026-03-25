@@ -110,4 +110,22 @@ public class PrescriptionController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    /**
+     * Returns only the prescriptions of the currently authenticated patient,
+     * enriched with doctor information. Used by the patient portal.
+     */
+    @GetMapping("/my")
+    public ResponseEntity<List<PrescriptionResponse>> getMyPrescriptions() {
+        return ResponseEntity.ok(service.getMyPrescriptions());
+    }
+
+    /**
+     * Returns prescriptions whose linked Acte has a typeOfActe related to analysis.
+     * Used by the laboratory portal.
+     */
+    @GetMapping("/analysis")
+    public ResponseEntity<List<PrescriptionResponse>> getAnalysisPrescriptions() {
+        return ResponseEntity.ok(service.getAnalysisPrescriptions());
+    }
 }

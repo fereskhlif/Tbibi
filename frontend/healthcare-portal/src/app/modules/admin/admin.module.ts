@@ -2,9 +2,9 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminRoutingModule } from './admin-routing.module';
-import { AdminDashboardComponent } from './dashboard/dashboard.component';
-import { AdminUsersComponent } from './users/users.component';
-import { AdminApprovalsComponent } from './approvals/approvals.component';
+import { AdminDashboardComponent } from './pages/dashboard/dashboard.component';
+import { AdminUsersComponent } from './pages/users/users.component';
+import { AdminApprovalsComponent } from './pages/approvals/approvals.component';
 
 @NgModule({
     declarations: [
