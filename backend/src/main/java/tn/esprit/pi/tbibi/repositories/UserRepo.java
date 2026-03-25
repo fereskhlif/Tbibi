@@ -26,4 +26,8 @@ public interface UserRepo extends JpaRepository<User, Integer> {
 
     @Query("SELECT concat('ID:', u.userId, ' | Name:', u.name, ' | Specialty:', u.specialty, ' | Role:', u.role.roleName) FROM User u")
     List<String> findDebugInfo();
+
+    /** Returns doctors whose name contains the given string (case-insensitive). Pattern should be %name% */
+    @Query("SELECT u FROM User u JOIN u.role r WHERE LOWER(r.roleName) LIKE 'doct%' AND LOWER(u.name) LIKE LOWER(:pattern)")
+    List<User> findDoctorsByNameContaining(@Param("pattern") String pattern);
 }

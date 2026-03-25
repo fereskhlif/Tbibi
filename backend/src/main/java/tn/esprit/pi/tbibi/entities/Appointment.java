@@ -23,13 +23,15 @@ public class Appointment {
     private String service;
     private String specialty;
     private String doctor;
+    private String patientName;
 
     private String reasonForVisit;
+    private String meetingLink;
 
     @Enumerated(EnumType.STRING)
     private StatusAppointement statusAppointement;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     private Schedule schedule;
     @ManyToOne
     private User user;

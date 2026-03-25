@@ -22,10 +22,18 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getAllSpecialties());
     }
 
-    /** GET /api/public/doctors?specialty=... → doctors filtered by specialty */
+    /** GET /api/public/doctors?specialty=... OR ?name=... → doctors filtered by specialty or name */
     @GetMapping
-    public ResponseEntity<List<DoctorDTO>> getDoctorsBySpecialty(@RequestParam("specialty") String specialty) {
-        return ResponseEntity.ok(doctorService.getDoctorsBySpecialty(specialty));
+    public ResponseEntity<List<DoctorDTO>> getDoctors(
+            @RequestParam(value = "specialty", required = false) String specialty,
+            @RequestParam(value = "name", required = false) String name) {
+        if (name != null && !name.trim().isEmpty()) {
+            return ResponseEntity.ok(doctorService.getDoctorsByName(name.trim()));
+        }
+        if (specialty != null && !specialty.trim().isEmpty()) {
+            return ResponseEntity.ok(doctorService.getDoctorsBySpecialty(specialty.trim()));
+        }
+        return ResponseEntity.ok(java.util.Collections.emptyList());
     }
 
     /**

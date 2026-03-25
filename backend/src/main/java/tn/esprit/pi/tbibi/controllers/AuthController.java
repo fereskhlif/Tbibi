@@ -1,12 +1,10 @@
 package tn.esprit.pi.tbibi.controllers;
 
-import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tn.esprit.pi.tbibi.DTO.AuthResponse;
 import tn.esprit.pi.tbibi.DTO.LoginRequest;
 import tn.esprit.pi.tbibi.DTO.RegisterRequest;
 import tn.esprit.pi.tbibi.services.IAuthService;
@@ -20,26 +18,45 @@ public class AuthController {
     private final IAuthService authService;
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.ACCEPTED)
     public ResponseEntity<?> register(
             @RequestBody @Valid RegisterRequest request
-    ) throws MessagingException {
-        authService.register(request);
-        return ResponseEntity.accepted().build();
+    ) {
+        try {
+            authService.register(request);
+            return ResponseEntity.accepted().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed.");
+        }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(
+    public ResponseEntity<?> login(
             @RequestBody @Valid LoginRequest req) {
-        return ResponseEntity.ok(authService.login(req));
-
+        try {
+            return ResponseEntity.ok(authService.login(req));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+        }
     }
 
     @GetMapping("/activate-account")
-    public void confirm(
+    public ResponseEntity<String> confirm(
             @RequestParam String token
-    ) throws MessagingException {
-        authService.activateAccount(token);
+    ) {
+        try {
+            authService.activateAccount(token);
+            return ResponseEntity.ok("Account activated successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.GONE).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during activation.");
+        }
     }
 
 }

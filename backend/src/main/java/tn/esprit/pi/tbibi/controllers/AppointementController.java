@@ -7,9 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.DTO.AppointmentRequest;
 import tn.esprit.pi.tbibi.DTO.AppointmentResponse;
+import tn.esprit.pi.tbibi.DTO.VerificationRequest;
+import tn.esprit.pi.tbibi.DTO.VerifyConfirmRequest;
 import tn.esprit.pi.tbibi.entities.StatusAppointement;
 import tn.esprit.pi.tbibi.services.AppointementService;
 
+import java.util.Map;
 import java.util.List;
 
 @RestController
@@ -26,17 +29,31 @@ public class AppointementController {
         return ResponseEntity.status(HttpStatus.CREATED).body(appointementService.create(request));
     }
 
+    /** Send SMS verification code before confirming appointment */
+    @PostMapping("/send-verification")
+    public ResponseEntity<Map<String, String>> sendVerification(@RequestBody VerificationRequest request) {
+        String verificationId = appointementService.sendVerificationCode(request);
+        return ResponseEntity.ok(Map.of("verificationId", verificationId));
+    }
+
+    /** Verify SMS code and create appointment, send confirmation email */
+    @PostMapping("/verify-and-confirm")
+    public ResponseEntity<AppointmentResponse> verifyAndConfirm(@RequestBody VerifyConfirmRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(appointementService.verifyAndConfirm(request.getVerificationId(), request.getCode()));
+    }
+
     /** Get all appointments */
     @GetMapping
     public ResponseEntity<List<AppointmentResponse>> getAll() {
         return ResponseEntity.ok(appointementService.getAll());
     }
 
-    /** Get one appointment by ID */
+    /** Get one appointment by ID
     @GetMapping("/{id}")
     public ResponseEntity<AppointmentResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(appointementService.getById(id));
-    }
+    }*/
 
     /** Get all appointments for a given schedule slot */
     @GetMapping("/schedule/{scheduleId}")

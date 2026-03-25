@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-    selector: 'app-patient-dashboard',
-    template: `
+  selector: 'app-patient-dashboard',
+  template: `
     <div class="p-8">
       <div class="mb-8">
         <h1 class="text-2xl font-bold text-gray-900 mb-2">Welcome back, John!</h1>
@@ -57,33 +57,33 @@ import { Router } from '@angular/router';
   `
 })
 export class DashboardComponent {
-    stats = [
-        { icon: '📅', title: 'Next Appointment', value: 'Tomorrow, 10:00 AM', subtitle: 'Dr. Sarah Johnson' },
-        { icon: '💊', title: 'Pending Medications', value: '3 medications', subtitle: '1 refill needed' },
-        { icon: '🔬', title: 'Lab Results', value: '2 new results', subtitle: 'Blood work completed' },
-        { icon: '📋', title: 'Health Score', value: '85/100', subtitle: 'Good condition' }
-    ];
+  stats = [
+    { icon: '📅', title: 'Next Appointment', value: 'Tomorrow, 10:00 AM', subtitle: 'Dr. Sarah Johnson' },
+    { icon: '💊', title: 'Pending Medications', value: '3 medications', subtitle: '1 refill needed' },
+    { icon: '🔬', title: 'Lab Results', value: '2 new results', subtitle: 'Blood work completed' },
+    { icon: '📋', title: 'Health Score', value: '85/100', subtitle: 'Good condition' }
+  ];
 
-    actions = [
-        { icon: '📅', title: 'Book Appointment', description: 'Schedule a teleconsultation', route: '/patient/appointments' },
-        { icon: '💬', title: 'AI Health Assistant', description: 'Chat with our AI assistant', route: '/patient/chat' },
-        { icon: '📋', title: 'Medical Records', description: 'View your health records', route: '/patient/records' },
-        { icon: '💊', title: 'Prescriptions', description: 'View your prescriptions', route: '/patient/prescriptions' },
-        { icon: '🛍️', title: 'Pharmacy Shop', description: 'Order medications online', route: '/patient/pharmacy-shop' },
-        { icon: '🔬', title: 'Lab Results', description: 'Check your lab results', route: '/patient/lab-results' }
-    ];
+  actions = [
+    { icon: '📅', title: 'Book Appointment', description: 'Schedule a teleconsultation', route: '/patient/appointments' },
+    { icon: '💬', title: 'AI Health Assistant', description: 'Chat with our AI assistant', route: '/patient/chat' },
+    { icon: '📋', title: 'Medical Records', description: 'View your health records', route: '/patient/records' },
+    { icon: '💊', title: 'Prescriptions', description: 'View your prescriptions', route: '/patient/prescriptions' },
+    { icon: '🛍️', title: 'Pharmacy Shop', description: 'Order medications online', route: '/patient/pharmacy-shop' },
+    { icon: '🔬', title: 'Lab Results', description: 'Check your lab results', route: '/patient/lab-results' }
+  ];
 
-    recentActivity = [
-        { icon: '📅', title: 'Appointment Confirmed', description: 'Video consultation with Dr. Sarah Johnson', time: '2 hours ago' },
-        { icon: '💊', title: 'Prescription Updated', description: 'Medication dosage adjusted by Dr. Ahmed', time: '5 hours ago' },
-        { icon: '🔬', title: 'Lab Results Available', description: 'Complete blood count results ready', time: '1 day ago' },
-        { icon: '💬', title: 'AI Consultation', description: 'Symptom analysis completed', time: '2 days ago' },
-        { icon: '💳', title: 'Payment Confirmed', description: 'Consultation fee processed', time: '3 days ago' }
-    ];
+  recentActivity = [
+    { icon: '📅', title: 'Appointment Confirmed', description: 'Video consultation with Dr. Sarah Johnson', time: '2 hours ago' },
+    { icon: '💊', title: 'Prescription Updated', description: 'Medication dosage adjusted by Dr. Ahmed', time: '5 hours ago' },
+    { icon: '🔬', title: 'Lab Results Available', description: 'Complete blood count results ready', time: '1 day ago' },
+    { icon: '💬', title: 'AI Consultation', description: 'Symptom analysis completed', time: '2 days ago' },
+    { icon: '💳', title: 'Payment Confirmed', description: 'Consultation fee processed', time: '3 days ago' }
+  ];
 
-    constructor(private router: Router) { }
+  constructor(private router: Router) { }
 
-    navigate(route: string) {
-        this.router.navigate([route]);
-    }
+  navigate(route: string) {
+    this.router.navigate([route]);
+  }
 }

@@ -61,6 +61,8 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/appointment")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/doctor/schedules/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/doctor/schedules")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/chronic/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/chronic")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/notifications/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/notifications")).permitAll()
 

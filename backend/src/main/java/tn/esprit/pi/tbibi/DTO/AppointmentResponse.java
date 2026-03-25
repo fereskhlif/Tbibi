@@ -21,4 +21,5 @@ public class AppointmentResponse {
     private Long scheduleId;
     private String scheduleDate;
     private String scheduleTime;
+    private String meetingLink;
 }

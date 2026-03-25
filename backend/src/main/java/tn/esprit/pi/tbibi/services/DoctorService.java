@@ -26,18 +26,35 @@ public class DoctorService implements IDoctorService {
         return userRepo.findDistinctSpecialties();
     }
 
+    private DoctorDTO toDoctorDTO(User u) {
+        return DoctorDTO.builder()
+                .userId(u.getUserId())
+                .name(u.getName())
+                .email(u.getEmail())
+                .specialty(u.getSpecialty())
+                .adresse(u.getAdresse())
+                .profilPicture(u.getProfilPicture())
+                .build();
+    }
+
     @Override
     public List<DoctorDTO> getDoctorsBySpecialty(String specialty) {
         if (specialty == null || specialty.trim().isEmpty()) {
             return Collections.emptyList();
         }
         return userRepo.findDoctorsBySpecialty(specialty).stream()
-                .map(u -> DoctorDTO.builder()
-                        .userId(u.getUserId())
-                        .name(u.getName())
-                        .email(u.getEmail())
-                        .specialty(u.getSpecialty())
-                        .build())
+                .map(this::toDoctorDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public List<DoctorDTO> getDoctorsByName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        String pattern = "%" + name.trim() + "%";
+        return userRepo.findDoctorsByNameContaining(pattern).stream()
+                .map(this::toDoctorDTO)
                 .collect(java.util.stream.Collectors.toList());
     }
 

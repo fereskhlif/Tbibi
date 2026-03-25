@@ -16,7 +16,9 @@ import tn.esprit.pi.tbibi.repositories.NotificationRepo;
 import tn.esprit.pi.tbibi.repositories.ScheduleRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
 
+import jakarta.mail.MessagingException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -28,6 +30,8 @@ public class AppointementService implements IAppointementService {
     private final UserRepo userRepo;
     private final IAppointementMapper mapper;
     private final NotificationRepo notificationRepo;
+    private final VerificationService verificationService;
+    private final EmailService emailService;
 
     @Override
     public AppointmentResponse create(AppointmentRequest request) {
@@ -55,6 +59,10 @@ public class AppointementService implements IAppointementService {
             User patient = userRepo.findById(request.getUserId())
                     .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + request.getUserId()));
             appointment.setUser(patient);
+            // Set patientName directly so the doctor always sees the correct name
+            if (appointment.getPatientName() == null || appointment.getPatientName().isBlank()) {
+                appointment.setPatientName(patient.getName());
+            }
         }
 
         Appointment saved = appointmentRepository.save(appointment);
@@ -173,5 +181,81 @@ public class AppointementService implements IAppointementService {
     private Schedule findScheduleById(Long id) {
         return scheduleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found with id: " + id));
+    }
+
+    /** Send SMS verification code for appointment booking */
+    public String sendVerificationCode(tn.esprit.pi.tbibi.DTO.VerificationRequest request) {
+        return verificationService.createVerification(request);
+    }
+
+    /** Verify code and create appointment, then send confirmation email */
+    public AppointmentResponse verifyAndConfirm(String verificationId, String code) {
+        var pv = verificationService.consume(verificationId, code);
+        var req = pv.request();
+
+        // Generate a unique meeting room per appointment
+        String meetingLink = "https://meet.jit.si/tbibi-" + java.util.UUID.randomUUID();
+
+        // Determine the correct patient userId: use the verified email to look up the user.
+        // This is safe because the email was verified by code, and prevents issues where
+        // localStorage.userId belongs to a doctor testing the booking flow.
+        Integer patientUserId = req.getUserId();
+        String verifiedEmail = req.getPatientEmail();
+        if (verifiedEmail != null && !verifiedEmail.isBlank()) {
+            patientUserId = userRepo.findByEmail(verifiedEmail)
+                    .map(u -> u.getUserId())
+                    .orElse(req.getUserId());
+        }
+
+        AppointmentRequest apptReq = AppointmentRequest.builder()
+                .userId(patientUserId)
+                .doctor(req.getDoctor())
+                .service(req.getSpecialty())
+                .specialty(req.getSpecialty())
+                .reasonForVisit(req.getReasonForVisit())
+                .statusAppointement("PENDING")
+                .scheduleId(req.getScheduleId())
+                .build();
+        AppointmentResponse response = create(apptReq);
+
+        // Persist the meeting link AND the patient name (from the form) on the saved appointment.
+        // Storing patientName directly ensures the doctor always sees the right name even if
+        // the userId was incorrectly linked.
+        final String patientNameFromForm = req.getPatientName() != null ? req.getPatientName() : "";
+        appointmentRepository.findById(response.getAppointmentId()).ifPresent(a -> {
+            a.setMeetingLink(meetingLink);
+            if (!patientNameFromForm.isBlank()) {
+                a.setPatientName(patientNameFromForm);
+            }
+            appointmentRepository.save(a);
+            // Update the response to reflect the correct patientName
+            response.setPatientName(a.getPatientName());
+        });
+
+        Schedule schedule = findScheduleById(req.getScheduleId());
+        String patientEmail = req.getPatientEmail();
+        if ((patientEmail == null || patientEmail.isBlank()) && req.getUserId() != null) {
+            patientEmail = userRepo.findById(req.getUserId()).map(User::getEmail).orElse(null);
+        }
+        if (patientEmail != null && !patientEmail.isBlank()) {
+            try {
+                String dateStr = schedule.getDate() != null ? schedule.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+                String timeStr = schedule.getStartTime() != null ? schedule.getStartTime().toString().substring(0, 5) : "";
+                String location = schedule.getDoctor() != null && schedule.getDoctor().getAdresse() != null ? schedule.getDoctor().getAdresse() : "";
+                emailService.sendAppointmentConfirmation(
+                        patientEmail,
+                        req.getPatientName() != null ? req.getPatientName() : "Patient",
+                        req.getDoctor(),
+                        req.getSpecialty(),
+                        dateStr,
+                        timeStr,
+                        location,
+                        meetingLink);
+            } catch (MessagingException e) {
+                // Log but don't fail - appointment is already created
+                System.err.println("Failed to send confirmation email: " + e.getMessage());
+            }
+        }
+        return response;
     }
 }

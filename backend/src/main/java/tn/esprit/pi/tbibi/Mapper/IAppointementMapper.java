@@ -16,7 +16,7 @@ public interface IAppointementMapper {
     Appointment toEntity(AppointmentRequest appointmentRequest);
 
     @org.mapstruct.Mapping(source = "user.userId", target = "userId")
-    @org.mapstruct.Mapping(source = "user.name", target = "patientName")
+    @org.mapstruct.Mapping(source = "patientName", target = "patientName")
     @org.mapstruct.Mapping(source = "schedule.scheduleId", target = "scheduleId")
     @org.mapstruct.Mapping(source = "schedule.date", target = "scheduleDate")
     @org.mapstruct.Mapping(source = "schedule.startTime", target = "scheduleTime")

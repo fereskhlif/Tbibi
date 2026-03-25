@@ -47,7 +47,8 @@ public class AppointementMapper implements IAppointementMapper {
                 .specialty(appointment.getSpecialty())
                 .service(appointment.getService())
                 .reasonForVisit(appointment.getReasonForVisit())
-                .statusAppointement(appointment.getStatusAppointement());
+                .statusAppointement(appointment.getStatusAppointement())
+                .meetingLink(appointment.getMeetingLink());
 
         if (appointment.getUser() != null) {
             builder.userId(appointment.getUser().getUserId());

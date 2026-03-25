@@ -24,6 +24,10 @@ public class ScheduleService implements IScheduleService {
 
     @Override
     public ScheduleResponse create(ScheduleRequest request) {
+        // Reject past dates
+        if (request.getDate() != null && request.getDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Cannot create a schedule slot in the past. Please choose today or a future date.");
+        }
         User doctor = findDoctorById(request.getDoctorId().intValue());
         Schedule schedule = mapper.toScheduleEntity(request);
         schedule.setDoctor(doctor);

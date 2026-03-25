@@ -12,4 +12,6 @@ public class DoctorDTO {
     private String name;
     private String email;
     private String specialty;
+    private String adresse;
+    private String profilPicture;
 }

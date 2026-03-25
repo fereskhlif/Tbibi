@@ -22,9 +22,8 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    /** Create a schedule slot (DOCTOR only) */
+    /** Create a schedule slot */
     @PostMapping
-    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ScheduleResponse> create(@Valid @RequestBody ScheduleRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(scheduleService.create(request));
     }

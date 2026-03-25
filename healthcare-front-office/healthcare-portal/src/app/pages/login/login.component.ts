@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../shared/services/auth.service';
 
 @Component({
     selector: 'app-login',
@@ -70,8 +71,12 @@ import { Router, ActivatedRoute } from '@angular/router';
               <a href="#" class="text-blue-600 hover:text-blue-700">Forgot password?</a>
             </div>
 
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
-              {{ isSignup ? 'Create Account' : 'Sign In' }}
+            <div *ngIf="errorMessage" class="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+              {{errorMessage}}
+            </div>
+
+            <button type="submit" [disabled]="isLoading" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+              {{ isLoading ? 'Please wait...' : (isSignup ? 'Create Account' : 'Sign In') }}
             </button>
           </form>
 
@@ -96,6 +101,8 @@ export class LoginComponent implements OnInit {
     fullName = '';
     selectedRole: string = 'patient';
     uploadedDocument: string | null = null;
+    isLoading = false;
+    errorMessage = '';
 
     roles = [
         { value: 'patient', icon: '👤', label: 'Patient' },
@@ -105,15 +112,7 @@ export class LoginComponent implements OnInit {
         { value: 'laboratory', icon: '🔬', label: 'Laboratory' }
     ];
 
-    private mockUsers: { [key: string]: string } = {
-        'doctor@example.com': 'doctor',
-        'patient@example.com': 'patient',
-        'physio@example.com': 'physiotherapist',
-        'pharmacist@example.com': 'pharmacist',
-        'lab@example.com': 'laboratory'
-    };
-
-    constructor(private router: Router, private route: ActivatedRoute) { }
+    constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) { }
 
     ngOnInit() {
         this.isSignup = this.route.snapshot.data['signupMode'] || false;
@@ -166,10 +165,44 @@ export class LoginComponent implements OnInit {
                 alert('Please upload your professional certification');
                 return;
             }
-            this.navigateToRole(this.selectedRole);
+            this.isLoading = true;
+            this.errorMessage = '';
+            
+            const req = {
+                name: this.fullName,
+                email: this.email,
+                password: this.password,
+                roleName: this.selectedRole.toUpperCase()
+            };
+            
+            this.authService.register(req).subscribe({
+                next: () => {
+                    this.isLoading = false;
+                    alert('Compte créé avec succès ! Un email de confirmation vous a été envoyé pour activer votre compte.');
+                    this.toggleMode(); // Switch to login screen so they can log in
+                },
+                error: (err) => {
+                    this.isLoading = false;
+                    this.errorMessage = err.error?.message || 'Erreur lors de la création du compte. Cet email est peut-être déjà utilisé.';
+                }
+            });
         } else {
-            const role = this.mockUsers[this.email] || 'patient';
-            this.navigateToRole(role);
+            this.isLoading = true;
+            this.errorMessage = '';
+            this.authService.login({ email: this.email, password: this.password }).subscribe({
+                next: (res) => {
+                    this.isLoading = false;
+                    let cleanRole = res.role.toLowerCase();
+                    if (cleanRole.startsWith('role_')) {
+                        cleanRole = cleanRole.replace('role_', '');
+                    }
+                    this.navigateToRole(cleanRole);
+                },
+                error: (err) => {
+                    this.isLoading = false;
+                    this.errorMessage = 'Identifiants incorrects ou compte inactif.';
+                }
+            });
         }
     }
 

@@ -10,6 +10,8 @@ public interface IDoctorService {
 
     List<DoctorDTO> getDoctorsBySpecialty(String specialty);
 
+    List<DoctorDTO> getDoctorsByName(String name);
+
     List<ScheduleResponse> getAvailableSchedules(Integer doctorId);
 
     List<?> getDebugInfo();

@@ -13,6 +13,7 @@ import { RemindersComponent } from './pages/reminders/reminders.component';
 import { PaymentComponent } from './pages/payment/payment.component';
 import { InteractionHistoryComponent } from './pages/interaction-history/interaction-history.component';
 import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
+import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -22,6 +23,7 @@ const routes: Routes = [
     { path: 'chat', component: AiChatComponent },
     { path: 'appointments', component: AppointmentsComponent },
     { path: 'doctor-schedules', component: DoctorSchedulesComponent },
+    { path: 'book-appointment', component: BookAppointmentComponent },
     { path: 'prescriptions', component: PrescriptionsComponent },
     { path: 'pharmacy-shop', component: PharmacyShopComponent },
     { path: 'pharmacy-shop/product/:id', component: ProductDetailsComponent },

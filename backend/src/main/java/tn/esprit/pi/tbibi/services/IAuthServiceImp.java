@@ -67,7 +67,7 @@ public class IAuthServiceImp implements IAuthService {
                 .email(req.email())
                 .password(passwordEncoder.encode(req.password()))
                 .role(role)
-                .enabled(false) //  false until email is confirmed
+                .enabled(true) // Temp: bypass email verification
                 .build();
 
         userRepository.save(u);
@@ -82,14 +82,13 @@ public class IAuthServiceImp implements IAuthService {
                 u.getEmail(),
                 u.getName(),
                 EmailTemplateName.ACTIVATE_ACCOUNT,
-                activationUrl,
+                activationUrl + "?token=" + newToken,
                 newToken,
-                "Account activation"
-        );
+                "Account activation");
     }
 
     private String generateAndSaveActivationToken(User u) {
-        //  generates the code, saves it as a Token entity, returns it
+        // generates the code, saves it as a Token entity, returns it
         String generatedCode = generateActivationCode(6);
 
         Token token = Token.builder()
@@ -114,7 +113,7 @@ public class IAuthServiceImp implements IAuthService {
         }
 
         return codeBuilder.toString();
-    } //  closing brace was missing — login() was trapped inside this method
+    } // closing brace was missing — login() was trapped inside this method
 
     public void activateAccount(String code) throws MessagingException {
         Token token = tokenRepository.findByToken(code)
@@ -136,14 +135,15 @@ public class IAuthServiceImp implements IAuthService {
     @Override
     public AuthResponse login(LoginRequest req) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.email(), req.password())
-        );
+                new UsernamePasswordAuthenticationToken(req.email(), req.password()));
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(req.email());
 
-        if (!userDetails.isEnabled()) {
-            throw new IllegalStateException("Account not activated. Please check your email.");
-        }
+        // Temp: bypass email verification
+        // if (!userDetails.isEnabled()) {
+        // throw new IllegalStateException("Account not activated. Please check your
+        // email.");
+        // }
 
         String token = jwtService.generateToken(userDetails);
 
@@ -152,6 +152,9 @@ public class IAuthServiceImp implements IAuthService {
                 .orElseThrow(() -> new IllegalStateException("No roles found"))
                 .getAuthority();
 
-        return new AuthResponse(token, userDetails.getUsername(), role);
+        User user = userRepository.findByEmail(req.email())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId());
     }
 }

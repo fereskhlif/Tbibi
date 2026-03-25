@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.services;
 
+import jakarta.mail.MessagingException;
 import tn.esprit.pi.tbibi.DTO.AppointmentRequest;
 import tn.esprit.pi.tbibi.DTO.AppointmentResponse;
 import tn.esprit.pi.tbibi.entities.StatusAppointement;
@@ -16,6 +17,7 @@ public interface IAppointementService {
     List<AppointmentResponse> getByScheduleId(Long scheduleId);
 
     List<AppointmentResponse> getByUserId(Integer userId);
+
 
     /**
      * Get all appointments assigned to a doctor (by their user ID via the schedule)

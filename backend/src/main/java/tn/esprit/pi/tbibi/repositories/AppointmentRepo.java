@@ -12,7 +12,7 @@ public interface AppointmentRepo extends JpaRepository<Appointment, Long> {
     List<Appointment> findByDoctor(String doctor);
 
     /** All appointments whose schedule belongs to this doctor (by user ID) */
-    @Query("SELECT a FROM Appointment a JOIN a.schedule s JOIN s.doctor d WHERE d.userId = :doctorId ORDER BY s.date DESC, s.startTime DESC")
+    @Query("SELECT a FROM Appointment a JOIN FETCH a.schedule s JOIN s.doctor d WHERE d.userId = :doctorId ORDER BY s.date DESC, s.startTime DESC")
     List<Appointment> findByDoctorUserId(@Param("doctorId") Integer doctorId);
 
     List<Appointment> findByStatusAppointement(StatusAppointement status);
@@ -23,5 +23,7 @@ public interface AppointmentRepo extends JpaRepository<Appointment, Long> {
 
     List<Appointment> findBySpecialtyIgnoreCase(String specialty);
 
-    List<Appointment> findByUserUserId(int userId);
+    /** All appointments booked by a specific patient, schedule eagerly loaded */
+    @Query("SELECT a FROM Appointment a JOIN FETCH a.schedule s WHERE a.user.userId = :userId ORDER BY s.date ASC, s.startTime ASC")
+    List<Appointment> findByUserUserId(@Param("userId") int userId);
 }

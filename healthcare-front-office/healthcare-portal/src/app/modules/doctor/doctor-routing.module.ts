@@ -10,6 +10,9 @@ import { AiImageAnalysisComponent } from './pages/ai-image-analysis/ai-image-ana
 import { ChronicDiseaseComponent } from './pages/chronic-disease/chronic-disease.component';
 import { CriticalAlertsComponent } from './pages/critical-alerts/critical-alerts.component';
 import { DoctorLabResultsComponent } from './pages/lab-results/lab-results.component';
+import { DoctorNotificationsComponent } from './pages/notifications/notifications.component';
+import { DoctorAllAppointmentsComponent } from './pages/all-appointments/all-appointments.component';
+import { ManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -22,7 +25,10 @@ const routes: Routes = [
     { path: 'ai-analysis', component: AiImageAnalysisComponent },
     { path: 'chronic-disease', component: ChronicDiseaseComponent },
     { path: 'alerts', component: CriticalAlertsComponent },
-    { path: 'lab-results', component: DoctorLabResultsComponent }
+    { path: 'lab-results', component: DoctorLabResultsComponent },
+    { path: 'notifications', component: DoctorNotificationsComponent },
+    { path: 'all-appointments', component: DoctorAllAppointmentsComponent },
+    { path: 'manage-schedules', component: ManageSchedulesComponent }
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })
