@@ -12,4 +12,5 @@ public class MdicalReccordsRequest {
     private String medical_historuy;
     private String chronic_diseas;
     private String rep_doc;
+    private String imageUrl;
 }

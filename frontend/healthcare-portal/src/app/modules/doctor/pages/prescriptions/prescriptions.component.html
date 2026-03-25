@@ -1,0 +1,387 @@
+<div class="pw">
+  <!-- Header -->
+  <div class="ph">
+    <div class="ph-left">
+      <div class="ph-ico">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Mes Prescriptions</h1>
+        <p>Gestion et suivi des ordonnances délivrées</p>
+      </div>
+    </div>
+    <div style="display:flex; gap:1rem; align-items:center;">
+      <button class="btn-visite" style="padding:.6rem 1.2rem; font-size:.85rem; background:linear-gradient(135deg,#0ea5e9,#3b82f6);" (click)="openAddModal()">
+        + Nouvelle prescription
+      </button>
+      <div class="stat-badge">
+        <span class="sn">{{ prescriptions.length }}</span>
+        <span class="sl">prescription(s)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-wrap">
+    <button (click)="activeFilter = 'ALL'" [class.active]="activeFilter === 'ALL'" class="filter-btn">
+      Toutes ({{prescriptions.length}})
+    </button>
+    <button *ngFor="let s of statusKeys" (click)="activeFilter = s" [class.active]="activeFilter === s" class="filter-btn">
+      {{STATUS_META[s].icon}} {{STATUS_META[s].label}} ({{countByStatus(s)}})
+    </button>
+  </div>
+
+  <div *ngIf="error && !loading" class="err-bar">
+    ⚠️ {{error}} <button (click)="loadAll(); error=''">Réessayer</button>
+  </div>
+
+  <!-- Table List -->
+  <div class="tbl-card" *ngIf="!loading">
+    <table class="ptbl">
+      <thead><tr>
+        <th>ID</th><th>Patient / Date</th><th>Médicaments</th><th>Statut</th><th>Dernière màj</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        <tr *ngIf="filtered.length === 0"><td colspan="6" class="empty-state">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          Aucune prescription trouvée.
+        </td></tr>
+        <tr *ngFor="let rx of filtered; trackBy: trackById" class="prow" (click)="openDetail(rx, $event)">
+          <td><span class="dos-badge">#{{rx.prescriptionID}}</span></td>
+          <td>
+            <div style="display:flex; align-items:center; gap:.75rem;">
+              <div style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"
+                   [style.background]="STATUS_META[rx.status]?.bg ?? '#f3f4f6'">
+                {{STATUS_META[rx.status]?.icon ?? '💊'}}
+              </div>
+              <div style="display:flex; flex-direction:column">
+                <span style="font-weight:600; color:#1e293b">{{rx.patientName || 'Non affecté'}}</span>
+                <span class="em" style="font-size:0.75rem">{{rx.date | date: 'dd MMM yyyy'}}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span *ngIf="rx.medicines?.length" class="med-count">💊 {{rx.medicines.length}} médicament(s)</span>
+            <span *ngIf="!rx.medicines?.length" class="em">Aucun médicament</span>
+          </td>
+          <td>
+            <span class="ch-tag"
+              [style.background]="STATUS_META[rx.status]?.bg"
+              [style.color]="STATUS_META[rx.status]?.color">
+              {{STATUS_META[rx.status]?.label}}
+            </span>
+          </td>
+          <td class="em">
+            {{rx.statusUpdatedAt ? (rx.statusUpdatedAt | date: 'dd MMM, HH:mm') : '—'}}
+          </td>
+          <td style="display:flex; gap:0.5rem; align-items:center;">
+            <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem;" (click)="openEditModal(rx, $event); $event.stopPropagation()">✏️ Éditer</button>
+            <button class="btn-cancel" style="padding:0.3rem 0.6rem; font-size:0.75rem;" (click)="openAssignModal(rx, $event); $event.stopPropagation()">👤 Affecter</button>
+            <button class="btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" (click)="deletePrescription(rx.prescriptionID, $event); $event.stopPropagation()">🗑️</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       DETAIL MODAL
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="showDetail && detailRx" class="overlay" (click)="closeDetail()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <!-- Modal header -->
+      <div class="mh">
+        <div class="mh-left">
+          <div class="mh-ico">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          </div>
+          <div>
+            <h2>Prescription #{{detailRx.prescriptionID}}</h2>
+            <p>{{detailRx.date | date: 'EEEE d MMMM yyyy'}}</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <span class="ch-tag"
+            [style.background]="STATUS_META[detailRx.status]?.bg"
+            [style.color]="STATUS_META[detailRx.status]?.color">
+            {{STATUS_META[detailRx.status]?.icon}} {{STATUS_META[detailRx.status]?.label}}
+          </span>
+          <button class="mc-btn" (click)="closeDetail()">✕</button>
+        </div>
+      </div>
+
+      <div class="mb">
+
+        <!-- Patient info -->
+        <div class="info-grid" style="margin-bottom:1.25rem;">
+          <div class="ii">
+            <label>Patient</label>
+            <div class="iv" [style.color]="detailRx.patientName ? '#16a34a' : '#f97316'">
+              {{detailRx.patientName ? ('👤 ' + detailRx.patientName) : '⚠️ Non affecté'}}
+            </div>
+          </div>
+          <div class="ii">
+            <label>Dernière mise à jour</label>
+            <div class="iv">{{detailRx.statusUpdatedAt ? (detailRx.statusUpdatedAt | date: 'dd/MM/yyyy HH:mm') : '—'}}</div>
+          </div>
+        </div>
+
+        <!-- Status timeline -->
+        <div class="section-divider"><div class="sd-label">Suivi en temps réel</div></div>
+
+        <div *ngIf="detailRx.status !== 'CANCELLED'">
+          <div class="progress-track" style="margin-bottom:.5rem;">
+            <div class="progress-fill"
+              [style.width]="(stepOf(detailRx.status) >= 0 ? (stepOf(detailRx.status) / (STEPS.length - 1)) * 100 : 0) + '%'">
+            </div>
+            <div *ngFor="let step of STEPS; let si = index"
+              class="step-dot"
+              [style.background]="si <= stepOf(detailRx.status) ? STATUS_META[step].color : '#e5e7eb'"
+              [style.color]="si <= stepOf(detailRx.status) ? 'white' : '#9ca3af'"
+              [title]="STATUS_META[step].label">
+              {{si <= stepOf(detailRx.status) ? '✓' : (si + 1)}}
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:1rem;">
+            <div *ngFor="let step of STEPS; let si = index" style="flex:1;text-align:center;">
+              <p style="font-size:.72rem;font-weight:600;margin:0;"
+                [style.color]="si <= stepOf(detailRx.status) ? STATUS_META[step].color : '#9ca3af'">
+                {{STATUS_META[step].label}}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="detailRx.status === 'CANCELLED'"
+          style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:1rem;color:#dc2626;font-size:.875rem;font-weight:500;margin-bottom:1rem;">
+          ❌ Cette prescription a été annulée.
+        </div>
+
+        <!-- Note -->
+        <div class="section-divider"><div class="sd-label">Note du médecin</div></div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; font-size:.875rem; color:#334155; white-space:pre-wrap;">
+          {{detailRx.note || 'Aucune note.'}}
+        </div>
+
+        <!-- Medicines -->
+        <div class="section-divider"><div class="sd-label">Médicaments prescrits ({{detailRx.medicines?.length || 0}})</div></div>
+
+        <div *ngIf="detailRx.medicines && detailRx.medicines.length > 0" style="display:flex;flex-direction:column;gap:.5rem;">
+          <div *ngFor="let m of detailRx.medicines"
+            style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:.75rem 1rem;">
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <div style="width:32px;height:32px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.875rem;">💊</div>
+              <div>
+                <p style="font-weight:600;color:#1e293b;font-size:.875rem;margin:0;">{{m.medicineName}}</p>
+                <p style="font-size:.75rem;color:#94a3b8;margin:0;">ID: {{m.medicineId}}</p>
+              </div>
+            </div>
+            <span style="padding:.2rem .6rem;background:#dbeafe;color:#1d4ed8;font-size:.75rem;font-weight:700;border-radius:20px;">×{{m.quantity}}</span>
+          </div>
+        </div>
+
+        <div *ngIf="!detailRx.medicines || detailRx.medicines.length === 0" class="empty-state">
+          Aucun médicament associé.
+        </div>
+
+      </div>
+
+      <div class="mf">
+        <button class="btn-cancel" (click)="closeDetail()">Fermer</button>
+        <button class="btn-valid" (click)="openEditModal(detailRx); closeDetail()">✏️ Modifier</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       ASSIGN ACTE MODAL
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="showAssignModal && assigningRx" class="overlay" (click)="showAssignModal = false">
+    <div class="modal" (click)="$event.stopPropagation()" style="max-width:500px">
+
+      <div class="mh">
+        <div class="mh-left">
+          <div class="mh-ico" style="background:linear-gradient(135deg,#10b981,#059669)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+          </div>
+          <div>
+            <h2>👤 Affecter à un patient</h2>
+            <p>via sélection d'un Acte médical</p>
+          </div>
+        </div>
+        <button class="mc-btn" (click)="showAssignModal = false">✕</button>
+      </div>
+
+      <div class="mb">
+
+        <!-- Prescription info -->
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;">
+          <p style="font-size:.7rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.06em;margin:0 0 .25rem;">Prescription</p>
+          <p style="font-size:.875rem;font-weight:600;color:#1e40af;margin:0;">#{{assigningRx.prescriptionID}} — {{assigningRx.note || 'Sans note'}}</p>
+        </div>
+
+        <div *ngIf="assigningRx.patientName"
+          style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:.6rem 1rem;font-size:.875rem;color:#16a34a;font-weight:500;margin-bottom:1rem;">
+          ✅ Patient actuel : <strong>{{assigningRx.patientName}}</strong>
+        </div>
+        <div *ngIf="!assigningRx.patientName"
+          style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:.6rem 1rem;font-size:.875rem;color:#ea580c;font-weight:500;margin-bottom:1rem;">
+          ⚠️ Aucun patient assigné
+        </div>
+
+        <!-- Search -->
+        <div class="fg">
+          <label class="fl">Rechercher un acte / patient</label>
+          <input type="text" [(ngModel)]="acteSearch" placeholder="🔍 Nom du patient, type d'acte..." class="form-inp" />
+        </div>
+
+        <!-- Acte list label -->
+        <div class="fg">
+          <label class="fl">Sélectionner un acte ({{filteredActes.length}} disponible(s))</label>
+
+          <div *ngIf="filteredActes.length === 0" class="empty-state" style="border:1px dashed #e2e8f0;border-radius:10px;">
+            Aucun acte trouvé
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.5rem;max-height:240px;overflow-y:auto;">
+            <div *ngFor="let a of filteredActes"
+              (click)="selectedActeId = a.acteId"
+              style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:10px;border:2px solid;cursor:pointer;transition:all .15s;"
+              [style.border-color]="selectedActeId === a.acteId ? '#10b981' : '#e2e8f0'"
+              [style.background]="selectedActeId === a.acteId ? '#f0fdf4' : '#fff'">
+
+              <div style="width:20px;height:20px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;font-weight:700;transition:all .15s;"
+                [style.border-color]="selectedActeId === a.acteId ? '#10b981' : '#d1d5db'"
+                [style.background]="selectedActeId === a.acteId ? '#10b981' : 'transparent'"
+                [style.color]="selectedActeId === a.acteId ? '#fff' : 'transparent'">✓</div>
+
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                  <span style="font-size:.875rem;font-weight:700;color:#1e293b;">Acte #{{a.acteId}}</span>
+                  <span *ngIf="a.typeOfActe" style="padding:.15rem .5rem;background:#dbeafe;color:#1d4ed8;font-size:.72rem;border-radius:20px;font-weight:500;">{{a.typeOfActe}}</span>
+                </div>
+                <p *ngIf="a.description" style="font-size:.75rem;color:#64748b;margin:.1rem 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{a.description}}</p>
+              </div>
+
+              <div *ngIf="a.patientName" style="padding:.2rem .6rem;background:#f3e8ff;color:#7c3aed;font-size:.72rem;font-weight:600;border-radius:20px;flex-shrink:0;">👤 {{a.patientName}}</div>
+              <div *ngIf="!a.patientName" style="padding:.2rem .6rem;background:#f1f5f9;color:#94a3b8;font-size:.72rem;border-radius:20px;flex-shrink:0;">Inconnu</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected summary -->
+        <div *ngIf="selectedActeId !== null" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:.75rem 1rem;">
+          <p style="font-size:.7rem;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em;margin:0 0 .25rem;">Sélection</p>
+          <ng-container *ngFor="let a of actes">
+            <div *ngIf="a.acteId === selectedActeId" style="font-size:.875rem;color:#166534;font-weight:500;">
+              Acte #{{a.acteId}} → <strong>{{a.patientName || 'Patient inconnu'}}</strong>
+              <span *ngIf="a.typeOfActe" style="color:#16a34a;"> ({{a.typeOfActe}})</span>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <div class="mf">
+        <button class="btn-cancel" (click)="showAssignModal = false">Annuler</button>
+        <button class="btn-valid" style="background:linear-gradient(135deg,#10b981,#059669);" (click)="saveAssign()" [disabled]="selectedActeId === null">
+          ✅ Confirmer l'affectation
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       ADD / EDIT MODAL
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="showModal" class="overlay" (click)="showModal = false">
+    <div class="modal" (click)="$event.stopPropagation()" style="max-width:500px">
+
+      <div class="mh">
+        <div class="mh-left">
+          <div class="mh-ico">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+          </div>
+          <div>
+            <h2>{{editMode ? '✏️ Modifier la prescription' : '➕ Nouvelle prescription & Acte'}}</h2>
+            <p>Saisissez les informations de l'ordonnance</p>
+          </div>
+        </div>
+        <button class="mc-btn" (click)="showModal = false">✕</button>
+      </div>
+
+      <div class="mb">
+
+        <ng-container *ngIf="!editMode">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+            <p style="font-size:.8rem;color:#1e40af;font-weight:600;margin:0 0 .75rem;">
+              Un acte médical sera créé et lié automatiquement à cette prescription.
+            </p>
+
+            <!-- Patient -->
+            <div class="fg">
+              <label class="fl">Patient *</label>
+              <select [(ngModel)]="form.patientId" class="form-inp">
+                <option [ngValue]="null" disabled>Sélectionner un patient...</option>
+                <option *ngFor="let p of patients" [ngValue]="p.patientId">{{p.patientName}}</option>
+              </select>
+            </div>
+
+            <!-- Acte Type -->
+            <div class="fg">
+              <label class="fl">Type d'acte *</label>
+              <select [(ngModel)]="form.typeCategory" (ngModelChange)="onTypeChange($event)" class="form-inp">
+                <option value="PRESCRIPTION">Prescription médicamenteuse</option>
+                <option value="ANALYSE">Analyse</option>
+                <option value="DIAGNOSIS">Diagnostic</option>
+              </select>
+            </div>
+
+            <!-- Analysis Subtype -->
+            <div class="fg" *ngIf="form.typeCategory === 'ANALYSE'">
+              <label class="fl">Type d'analyse *</label>
+              <select [(ngModel)]="form.analysisSubType" (ngModelChange)="onAnalysisSubTypeChange($event)" class="form-inp">
+                <option value="" disabled>Sélectionner le type d'analyse...</option>
+                <option value="ANALYSE_DIAGNOSTIQUE">🔬 Analyses médicales diagnostiques</option>
+                <option value="ANALYSE_MICROBIOLOGIQUE">🦠 Analyses microbiologiques</option>
+                <option value="EXAMEN_ANATOMOPATHOLOGIQUE">🧬 Examens anatomopathologiques</option>
+                <option value="TEST_GENETIQUE">🧪 Tests génétiques</option>
+              </select>
+            </div>
+
+            <!-- Acte Description -->
+            <div class="fg">
+              <label class="fl">Description de l'acte *</label>
+              <input type="text" [(ngModel)]="form.acteDescription" placeholder="Ex: Consultation médicale générale..." class="form-inp" />
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Date -->
+        <div class="fg">
+          <label class="fl">Date (Acte &amp; Prescription)</label>
+          <input type="datetime-local" [(ngModel)]="form.date" class="form-inp" />
+        </div>
+
+        <!-- Note -->
+        <div class="fg">
+          <label class="fl">Note de prescription</label>
+          <textarea [(ngModel)]="form.note" rows="3" placeholder="Détails de l'ordonnance, instructions..." class="form-ta"></textarea>
+        </div>
+      </div>
+
+      <div class="mf">
+        <button class="btn-cancel" (click)="showModal = false">Annuler</button>
+        <button class="btn-valid" (click)="save()" [disabled]="saving">
+          {{saving ? 'Sauvegarde...' : (editMode ? 'Enregistrer' : 'Créer Acte & Prescription')}}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
