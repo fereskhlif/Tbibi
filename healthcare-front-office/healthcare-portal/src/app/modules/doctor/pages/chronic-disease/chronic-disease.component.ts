@@ -5,6 +5,14 @@ import {
   ChronicConditionRequest,
   ChronicConditionResponse
 } from '../../services/chronic-condition.service';
+export interface AlertToast {
+  id: number;
+  severity: string;
+  message: string;
+  patientName: string;
+  type: string;
+  value: string;
+}
 
 interface PatientOption { id: number; name: string; }
 
