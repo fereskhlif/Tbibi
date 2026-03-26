@@ -53,8 +53,8 @@
           <td>
             <div style="display:flex; align-items:center; gap:.75rem;">
               <div style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"
-                   [style.background]="STATUS_META[rx.status]?.bg ?? '#f3f4f6'">
-                {{STATUS_META[rx.status]?.icon ?? '💊'}}
+                   [style.background]="STATUS_META[rx.status].bg ?? '#f3f4f6'">
+                {{STATUS_META[rx.status].icon ?? '💊'}}
               </div>
               <div style="display:flex; flex-direction:column">
                 <span style="font-weight:600; color:#1e293b">{{rx.patientName || 'Non affecté'}}</span>
@@ -68,9 +68,9 @@
           </td>
           <td>
             <span class="ch-tag"
-              [style.background]="STATUS_META[rx.status]?.bg"
-              [style.color]="STATUS_META[rx.status]?.color">
-              {{STATUS_META[rx.status]?.label}}
+              [style.background]="STATUS_META[rx.status].bg"
+              [style.color]="STATUS_META[rx.status].color">
+              {{STATUS_META[rx.status].label}}
             </span>
           </td>
           <td class="em">
@@ -106,9 +106,9 @@
         </div>
         <div style="display:flex;align-items:center;gap:.75rem;">
           <span class="ch-tag"
-            [style.background]="STATUS_META[detailRx.status]?.bg"
-            [style.color]="STATUS_META[detailRx.status]?.color">
-            {{STATUS_META[detailRx.status]?.icon}} {{STATUS_META[detailRx.status]?.label}}
+            [style.background]="STATUS_META[detailRx.status].bg"
+            [style.color]="STATUS_META[detailRx.status].color">
+            {{STATUS_META[detailRx.status].icon}} {{STATUS_META[detailRx.status].label}}
           </span>
           <button class="mc-btn" (click)="closeDetail()">✕</button>
         </div>
