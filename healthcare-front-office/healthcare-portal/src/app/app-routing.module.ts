@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { HomepageComponent } from './pages/homepage/homepage.component';
 import { LoginComponent } from './pages/login/login.component';
 import { GraphicCharterComponent } from './pages/graphic-charter/graphic-charter.component';
+import { ActivateAccountComponent } from './pages/activate-account/activate-account.component';
 import { MainLayoutComponent } from './shared/layouts/main-layout/main-layout.component';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
@@ -11,6 +12,7 @@ const routes: Routes = [
   { path: '', component: HomepageComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: LoginComponent, data: { signupMode: true } },
+  { path: 'activate-account', component: ActivateAccountComponent },
   { path: 'graphic-charter', component: GraphicCharterComponent },
   {
     path: 'patient',

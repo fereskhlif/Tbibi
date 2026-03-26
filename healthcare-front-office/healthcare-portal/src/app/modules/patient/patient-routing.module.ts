@@ -12,7 +12,9 @@ import { RemindersComponent } from './pages/reminders/reminders.component';
 import { PaymentComponent } from './pages/payment/payment.component';
 import { DoctorSchedulesComponent } from './pages/doctor-schedules/doctor-schedules.component';
 import { InteractionHistoryComponent } from './pages/interaction-history/interaction-history.component';
-
+import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
+import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
+import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic.component';
 const routes: Routes = [
   {
     path: '',
@@ -65,8 +67,11 @@ const routes: Routes = [
   {
     path: 'interaction-history',
     component: InteractionHistoryComponent,
-  }
-];
+  },
+  { path: 'book-appointment', component: BookAppointmentComponent },
+  { path: 'chronic-monitor', component: PatientChronicComponent },
+  { path: 'pharmacy-shop/product/:id', component: ProductDetailsComponent },]
+
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],

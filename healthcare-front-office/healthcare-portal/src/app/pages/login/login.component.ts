@@ -1,7 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-
 import { AuthService, AuthResponse, RegisterRequest } from '../../services/auth.service'; // Ajoutez AuthResponse ici
 
 // Mettez à jour le type UserRole pour correspondre aux nouvelles valeurs

@@ -7,7 +7,7 @@ import lombok.experimental.FieldDefaults;
 import java.util.Set;
 
 @Entity
-@Table(name = "Appointement")
+@Table(name = "Ia_history")
 @Getter
 @Setter
 @ToString

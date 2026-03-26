@@ -18,6 +18,7 @@ import { PaymentComponent } from './pages/payment/payment.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { InteractionHistoryComponent } from './pages/interaction-history/interaction-history.component';
 
+<<<<<<< HEAD
 @NgModule({
   declarations: [
     DashboardComponent,
@@ -40,5 +41,35 @@ import { InteractionHistoryComponent } from './pages/interaction-history/interac
     SharedModule,
     PatientRoutingModule
   ]
+=======
+import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
+import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
+import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic.component';
+
+@NgModule({
+    declarations: [
+        DashboardComponent,
+        ProfileComponent,
+        MedicalRecordsComponent,
+        AiChatComponent,
+        AppointmentsComponent,
+        DoctorSchedulesComponent,
+        PrescriptionsComponent,
+        PharmacyShopComponent,
+        ProductDetailsComponent,
+        LabResultsComponent,
+        RemindersComponent,
+        PaymentComponent,
+        InteractionHistoryComponent,
+        BookAppointmentComponent,
+        PatientChronicComponent
+    ],
+    imports: [
+        CommonModule,
+        FormsModule,
+        PatientRoutingModule,
+        SharedModule
+    ]
+>>>>>>> backend-spring-security
 })
 export class PatientModule { }

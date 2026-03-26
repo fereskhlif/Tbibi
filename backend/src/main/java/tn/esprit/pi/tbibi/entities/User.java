@@ -9,7 +9,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = {"medicalFiles", "orders", "appointements"})
+@ToString(exclude = { "medicalFiles", "Orders", "Appointements" }) // Exclude collections
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -22,6 +22,10 @@ public class User {
     private String email;
     private String password;
     private String adresse;
+    private String specialty;
+    private String profilPicture;
+    @Builder.Default
+    boolean enabled = true;
 
     private java.time.LocalDate dateOfBirth;
     private String gender;
@@ -40,13 +44,16 @@ public class User {
     @JoinColumn(name = "patient_id")
     private List<MedicalReccords> medicalFiles;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "roleName")
     private Role role;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Order> orders;
+    private List<Order> orders; // Changed to List and lowercase
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Appointment> appointements;
+    private List<Appointment> appointements; // Changed to List and lowercase
+
+    @OneToMany
+    private List<Teleconsultation> consultationRooms;
 }

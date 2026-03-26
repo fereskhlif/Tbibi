@@ -623,7 +623,7 @@ export class PatientRecordsComponent implements OnInit {
   tab: 'form' | 'history' | 'full' = 'form';
   histEntries: string[] = [];
   derniereVisite = '';
-  
+
   fullRecord: any = null;
   loadingFullRecord = false;
 
@@ -643,7 +643,7 @@ export class PatientRecordsComponent implements OnInit {
   private search$ = new Subject<string>();
   private api = `${environment.baseUrl}/medical-records`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
     this.search$.pipe(debounceTime(400)).subscribe(t => this.fetch(t));
@@ -746,9 +746,9 @@ export class PatientRecordsComponent implements OnInit {
   }
 
   formIsValid(): boolean {
-    return !!((this.form.visitNote || '').trim() || (this.form.analyseSanguine || '').trim() || 
-             this.form.vaccines?.length > 0 || this.form.prescriptions?.length > 0 || (this.form.autre || '').trim() ||
-             (this.form.appareilUrinaire || '').trim() || this.form.urinaryExams?.length > 0);
+    return !!((this.form.visitNote || '').trim() || (this.form.analyseSanguine || '').trim() ||
+      this.form.vaccines?.length > 0 || this.form.prescriptions?.length > 0 || (this.form.autre || '').trim() ||
+      (this.form.appareilUrinaire || '').trim() || this.form.urinaryExams?.length > 0);
   }
 
   validate() {
@@ -760,25 +760,25 @@ export class PatientRecordsComponent implements OnInit {
       next: (res: any) => {
         this.saving = false;
         this.saveSuccess = true;
-        
+
         if (this.sel && res?.medical_historuy !== undefined) {
           this.sel.medicalHistory = res.medical_historuy;
         } else if (this.sel) {
           // Fallback UI generation
-          const ts = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+          const ts = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
           let built = `─── Visite du ${ts} ───`;
-          if (this.form.filiere)        built += `\nFilière       : ${this.form.filiere}`;
-          if (this.form.visitNote)      built += `\nNotes         : ${this.form.visitNote}`;
+          if (this.form.filiere) built += `\nFilière       : ${this.form.filiere}`;
+          if (this.form.visitNote) built += `\nNotes         : ${this.form.visitNote}`;
           if (this.form.analyseSanguine) built += `\nAnalyse sang. : ${this.form.analyseSanguine}`;
-          if (this.form.autre)          built += `\nA Signaler    : ${this.form.autre}`;
+          if (this.form.autre) built += `\nA Signaler    : ${this.form.autre}`;
           this.sel.medicalHistory = this.sel.medicalHistory
             ? this.sel.medicalHistory + '\n\n' + built : built;
         }
-        
+
         this.histEntries = this.parseHistory(this.sel?.medicalHistory || '');
         this.derniereVisite = this.histEntries.length > 0 ? this.extractDate(this.histEntries[0]) : 'Jamais';
         this.form = { filiere: '', visitNote: '', analyseSanguine: '', vaccination: '', prescriptions: [], autre: '', vaccines: [], appareilUrinaire: '', urinaryExams: [] };
-        
+
         // Refresh local search to get potentially updated history in background
         this.fetch(this.searchTerm);
       },
@@ -808,6 +808,6 @@ export class PatientRecordsComponent implements OnInit {
   initials(name: string): string {
     if (!name) return '?';
     const p = name.trim().split(/\s+/);
-    return p.length >= 2 ? (p[0][0]+p[1][0]).toUpperCase() : name.trim().slice(0,2).toUpperCase();
+    return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : name.trim().slice(0, 2).toUpperCase();
   }
 }
