@@ -23,6 +23,9 @@ import static org.springframework.mail.javamail.MimeMessageHelper.MULTIPART_MODE
 public class EmailService {
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
+
+    /** Expose sender for controllers that need to send custom inline HTML emails */
+    public JavaMailSender getMailSender() { return mailSender; }
     @Async
     public void sendEmail(
             String to,

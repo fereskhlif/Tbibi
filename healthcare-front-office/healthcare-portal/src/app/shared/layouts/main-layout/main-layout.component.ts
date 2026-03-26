@@ -150,7 +150,8 @@ export class MainLayoutComponent implements OnInit {
     { path: 'lab-results', icon: 'microscope', label: 'Lab Results' },
     { path: 'reminders', icon: 'clock', label: 'Reminders' },
     { path: 'payment', icon: 'credit-card', label: 'Payment' },
-    { path: 'history', icon: 'history', label: 'History' }
+    { path: 'history', icon: 'history', label: 'History' },
+    { path: 'chronic-monitor', icon: 'activity', label: 'Health Monitor' }
   ];
 
   private doctorNav: NavItem[] = [

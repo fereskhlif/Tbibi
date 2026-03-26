@@ -18,6 +18,7 @@ import { InteractionHistoryComponent } from './pages/interaction-history/interac
 
 import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
 import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
+import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic.component';
 
 @NgModule({
     declarations: [
@@ -34,7 +35,8 @@ import { BookAppointmentComponent } from './pages/book-appointment/book-appointm
         RemindersComponent,
         PaymentComponent,
         InteractionHistoryComponent,
-        BookAppointmentComponent
+        BookAppointmentComponent,
+        PatientChronicComponent
     ],
     imports: [
         CommonModule,

@@ -14,6 +14,7 @@ import { PaymentComponent } from './pages/payment/payment.component';
 import { InteractionHistoryComponent } from './pages/interaction-history/interaction-history.component';
 import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
 import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
+import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -30,7 +31,8 @@ const routes: Routes = [
     { path: 'lab-results', component: LabResultsComponent },
     { path: 'reminders', component: RemindersComponent },
     { path: 'payment', component: PaymentComponent },
-    { path: 'history', component: InteractionHistoryComponent }
+    { path: 'history', component: InteractionHistoryComponent },
+    { path: 'chronic-monitor', component: PatientChronicComponent }
 ];
 
 @NgModule({

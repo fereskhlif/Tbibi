@@ -53,6 +53,7 @@ export interface AppointmentResponse {
     scheduleId: number;
     scheduleDate: string;
     scheduleTime: string;
+    meetingLink?: string;
 }
 
 @Injectable({ providedIn: 'root' })

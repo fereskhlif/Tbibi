@@ -96,6 +96,9 @@ import { AppointmentResponse, ScheduleSlot } from '../../../patient/services/app
               <div class="flex flex-wrap gap-4 mt-1 text-sm text-gray-500">
                 <span>🕐 {{formatTime(apt.scheduleTime)}}</span>
                 <span *ngIf="apt.reasonForVisit">📋 {{apt.reasonForVisit}}</span>
+                <button *ngIf="apt.meetingLink" (click)="openMeeting(apt.meetingLink, $event)" class="text-blue-500 hover:text-blue-700 underline font-medium flex items-center gap-1 cursor-pointer bg-transparent border-none p-0">
+                  🔗 Join Meeting
+                </button>
               </div>
             </div>
 
@@ -377,6 +380,23 @@ export class DoctorAllAppointmentsComponent implements OnInit {
         if (!time) return '';
         if (Array.isArray(time)) return `${String(time[0]).padStart(2, '0')}:${String(time[1]).padStart(2, '0')}`;
         return String(time).substring(0, 5);
+    }
+
+    openMeeting(url: string | undefined, event: Event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (!url) return;
+        
+        let finalUrl = url.trim();
+        // If it looks like a relative file or an email, we might want to let it be,
+        // but assume for "Join Meeting", it's an http/https link.
+        if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+            finalUrl = 'https://' + finalUrl;
+        }
+        
+        window.open(finalUrl, '_blank', 'noopener,noreferrer');
     }
 
     private showSuccess(msg: string) {
