@@ -2,9 +2,16 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  template: '<router-outlet></router-outlet>',
+  styles: [':host { display: block; }']
 })
 export class AppComponent {
-  title = 'frontend';
+  ngOnInit() {
+  const token = localStorage.getItem('TokenUserConnect');
+  if (token && (token.startsWith('"') || token.endsWith('"'))) {
+    const cleanToken = token.replace(/^"|"$/g, '');
+    localStorage.setItem('TokenUserConnect', cleanToken);
+    console.log('Token nettoyé au démarrage');
+  }
+ }
 }
