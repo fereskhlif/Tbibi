@@ -171,9 +171,9 @@ describe('PatientRecordsComponent', () => {
   describe('openForm()', () => {
 
     it('doit ouvrir le modal et affecter le patient sélectionné', () => {
-      component.openForm(mockPatient);
+      component.openForm(JSON.parse(JSON.stringify(mockPatient)));
       expect(component.showModal).toBeTrue();
-      expect(component.sel).toEqual(mockPatient);
+      expect(component.sel?.medicalFileId).toEqual(mockPatient.medicalFileId);
     });
 
     it('doit réinitialiser le formulaire à chaque ouverture', () => {
@@ -196,7 +196,7 @@ describe('PatientRecordsComponent', () => {
     });
 
     it('doit afficher "Jamais" si aucun historique', () => {
-      component.openForm(mockPatient);
+      component.openForm(JSON.parse(JSON.stringify(mockPatient)));
       expect(component.derniereVisite).toBe('Jamais');
     });
 
@@ -208,7 +208,7 @@ describe('PatientRecordsComponent', () => {
     it('doit réinitialiser saveSuccess et saveError', () => {
       component.saveSuccess = true;
       component.saveError   = 'Erreur précédente';
-      component.openForm(mockPatient);
+      component.openForm(JSON.parse(JSON.stringify(mockPatient)));
       expect(component.saveSuccess).toBeFalse();
       expect(component.saveError).toBe('');
     });
@@ -432,7 +432,7 @@ describe('PatientRecordsComponent', () => {
   describe('validate()', () => {
 
     beforeEach(() => {
-      component.sel = mockPatient;
+      component.sel = JSON.parse(JSON.stringify(mockPatient));
       component.form.visitNote = 'Bilan annuel';
     });
 

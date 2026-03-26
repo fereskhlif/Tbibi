@@ -8,7 +8,7 @@ import { MedicalRecordsServiceService } from '../../../../services/medical-recor
 
 // ─── Mock du service ──────────────────────────────────────────────────────────
 const mockService = {
-  getAll:             jasmine.createSpy('getAll').and.returnValue(of([])),
+  getMyRecord:        jasmine.createSpy('getMyRecord').and.returnValue(of([])),
   add:                jasmine.createSpy('add'),
   updateMyRecord:     jasmine.createSpy('updateMyRecord'),
   delete:             jasmine.createSpy('delete'),
@@ -49,14 +49,14 @@ describe('MedicalRecordsComponent', () => {
   let fixture:   ComponentFixture<MedicalRecordsComponent>;
 
   beforeEach(async () => {
-    mockService.getAll.calls.reset();
+    mockService.getMyRecord.calls.reset();
     mockService.add.calls.reset();
     mockService.updateMyRecord.calls.reset();
     mockService.delete.calls.reset();
     mockService.uploadPatientImage.calls.reset();
     mockService.deletePatientImage.calls.reset();
 
-    mockService.getAll.and.returnValue(of([]));
+    mockService.getMyRecord.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       declarations: [MedicalRecordsComponent],
@@ -79,7 +79,7 @@ describe('MedicalRecordsComponent', () => {
     });
 
     it('doit appeler loadRecords() au démarrage', () => {
-      expect(mockService.getAll).toHaveBeenCalledTimes(1);
+      expect(mockService.getMyRecord).toHaveBeenCalledTimes(1);
     });
 
     it('doit initialiser activeFilter à "All"', () => {
@@ -113,7 +113,7 @@ describe('MedicalRecordsComponent', () => {
         medicalfile_id: 10, imageLabo: 'Labo A',
         result_ia: 'Normal', medical_historuy: 'Court', chronic_diseas: '',
       };
-      mockService.getAll.and.returnValue(of([rawRecord]));
+      mockService.getMyRecord.and.returnValue(of([rawRecord]));
       component.loadRecords();
       expect(component.records.length).toBe(1);
       expect(component.records[0].icon).toBe('🏥');
@@ -123,14 +123,14 @@ describe('MedicalRecordsComponent', () => {
     });
 
     it('doit afficher un message d\'erreur en cas d\'échec', () => {
-      mockService.getAll.and.returnValue(throwError(() => ({ status: 500 })));
+      mockService.getMyRecord.and.returnValue(throwError(() => ({ status: 500 })));
       component.loadRecords();
       expect(component.errorMessage).toBe('Impossible de charger les dossiers médicaux.');
       expect(component.records).toEqual([]);
     });
 
     it('doit gérer une réponse null sans erreur', () => {
-      mockService.getAll.and.returnValue(of(null as any));
+      mockService.getMyRecord.and.returnValue(of(null as any));
       component.loadRecords();
       expect(component.records).toEqual([]);
     });
