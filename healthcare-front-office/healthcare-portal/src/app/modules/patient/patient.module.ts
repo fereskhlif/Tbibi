@@ -15,8 +15,42 @@ import { LabResultsComponent } from './pages/lab-results/lab-results.component';
 import { RemindersComponent } from './pages/reminders/reminders.component';
 import { PaymentComponent } from './pages/payment/payment.component';
 import { InteractionHistoryComponent } from './pages/interaction-history/interaction-history.component';
-
 import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
+import { MedicineCatalogComponent } from './pages/medicine-catalog/medicine-catalog.component';
+import { MyOrdersComponent } from './pages/my-orders/my-orders.component';
+import { PharmacyListComponent } from './pages/pharmacy-list/pharmacy-list.component';
+
+import {
+    LucideAngularModule,
+    ShoppingCart,
+    ShoppingBag,
+    Package,
+    Search,
+    SearchX,
+    X,
+    Trash2,
+    Eye,
+    Plus,
+    MapPin,
+    Loader2,
+    Check,
+    CheckCircle,
+    AlertCircle,
+    RotateCcw,
+    Pencil,
+    Image,
+    Bell,
+    User,
+    ChevronLeft,
+    ChevronRight,
+    ShieldCheck,
+    Truck,
+    Filter,
+    ArrowUpDown,
+} from 'lucide-angular';
+import { CartPageComponent } from './pages/cart-page/cart-page.component';
+import { CheckoutPageComponent } from './pages/checkout-page/checkout-page.component';
+import { OrderSuccessComponent } from './pages/order-success/order-success.component';
 
 @NgModule({
     declarations: [
@@ -29,16 +63,49 @@ import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/p
         PrescriptionsComponent,
         PharmacyShopComponent,
         ProductDetailsComponent,
+        MedicineCatalogComponent,
+        MyOrdersComponent,
+        PharmacyListComponent,
         LabResultsComponent,
         RemindersComponent,
         PaymentComponent,
-        InteractionHistoryComponent
+        InteractionHistoryComponent,
+        CartPageComponent,
+        CheckoutPageComponent,
+        OrderSuccessComponent
     ],
     imports: [
         CommonModule,
         FormsModule,
         PatientRoutingModule,
-        SharedModule
+        SharedModule,
+        LucideAngularModule.pick({
+            ShoppingCart,
+            ShoppingBag,
+            Package,
+            Search,
+            SearchX,
+            X,
+            Trash2,
+            Eye,
+            Plus,
+            MapPin,
+            Loader2,
+            Check,
+            CheckCircle,
+            AlertCircle,
+            RotateCcw,
+            Pencil,
+            Image,
+            Bell,
+            User,
+            ChevronLeft,
+            ChevronRight,
+            ShieldCheck,
+            Truck,
+            Filter,
+            ArrowUpDown,
+        })
     ]
 })
 export class PatientModule { }

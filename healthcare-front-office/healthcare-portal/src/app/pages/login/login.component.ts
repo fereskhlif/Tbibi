@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
-    selector: 'app-login',
-    template: `
+  selector: 'app-login',
+  template: `
     <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div class="w-full max-w-md">
         <div class="bg-white rounded-2xl shadow-xl p-8">
@@ -29,16 +29,25 @@ import { Router, ActivatedRoute } from '@angular/router';
 
           <form (ngSubmit)="handleSubmit()" class="space-y-4">
             <div *ngIf="isSignup">
-              <label class="block text-sm text-gray-700 mb-1.5">Full Name</label>
-              <input type="text" [(ngModel)]="fullName" name="fullName" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="John Doe" required />
+              <label class="block text-sm text-gray-700 mb-1.5">Full Name <span class="text-red-500">*</span></label>
+              <input type="text" [(ngModel)]="fullName" name="fullName" 
+                [class]="'w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ' + (showGeneralErrors && !fullName ? 'border-red-500' : 'border-gray-300')" 
+                placeholder="John Doe" required />
+              <p *ngIf="showGeneralErrors && !fullName" class="text-xs text-red-500 mt-1">Full Name is required</p>
             </div>
             <div>
-              <label class="block text-sm text-gray-700 mb-1.5">Email Address</label>
-              <input type="email" [(ngModel)]="email" name="email" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="you@example.com" required />
+              <label class="block text-sm text-gray-700 mb-1.5">Email Address <span class="text-red-500">*</span></label>
+              <input type="email" [(ngModel)]="email" name="email" 
+                [class]="'w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ' + (showGeneralErrors && emailError ? 'border-red-500' : 'border-gray-300')" 
+                placeholder="you@example.com" required />
+              <p *ngIf="showGeneralErrors && emailError" class="text-xs text-red-500 mt-1">{{emailError}}</p>
             </div>
             <div>
-              <label class="block text-sm text-gray-700 mb-1.5">Password</label>
-              <input type="password" [(ngModel)]="password" name="password" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••" required />
+              <label class="block text-sm text-gray-700 mb-1.5">Password <span class="text-red-500">*</span></label>
+              <input type="password" [(ngModel)]="password" name="password" 
+                [class]="'w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ' + (showGeneralErrors && passwordError ? 'border-red-500' : 'border-gray-300')" 
+                placeholder="••••••••" required />
+              <p *ngIf="showGeneralErrors && passwordError" class="text-xs text-red-500 mt-1">{{passwordError}}</p>
             </div>
 
             <!-- Professional Document Upload -->
@@ -46,7 +55,7 @@ import { Router, ActivatedRoute } from '@angular/router';
               <label class="block text-sm text-gray-700 mb-1.5">
                 {{getDocumentLabel()}} <span class="text-red-500">*</span>
               </label>
-              <label class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-blue-500 transition-colors">
+              <label [class]="'flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-blue-500 transition-colors ' + (showGeneralErrors && !uploadedDocument ? 'border-red-500 bg-red-50/30' : 'border-gray-300')">
                 <div *ngIf="uploadedDocument" class="text-center">
                   <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2"><span class="text-2xl">✓</span></div>
                   <p class="text-sm text-gray-900 mb-1">Document uploaded</p>
@@ -59,7 +68,34 @@ import { Router, ActivatedRoute } from '@angular/router';
                 </div>
                 <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="handleDocumentUpload($event)" class="hidden" />
               </label>
-              <p class="text-xs text-gray-500 mt-1.5">Required for verification as a medical professional</p>
+              <p *ngIf="showGeneralErrors && !uploadedDocument" class="text-xs text-red-500 mt-1.5">Professional certification document is required</p>
+              <p *ngIf="!(showGeneralErrors && !uploadedDocument)" class="text-xs text-gray-500 mt-1.5">Required for verification as a medical professional</p>
+            </div>
+
+            <!-- Pharmacy Specific Fields -->
+            <div *ngIf="isSignup && selectedRole === 'pharmacist'" class="space-y-4 pt-2">
+              <h3 class="text-sm font-medium text-gray-900 border-b pb-2">Pharmacy Information</h3>
+              <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Pharmacy Name <span class="text-red-500">*</span></label>
+                <input type="text" [(ngModel)]="pharmacyName" name="pharmacyName" 
+                  [class]="'w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ' + (showPharmacyErrors && !pharmacyName ? 'border-red-500' : 'border-gray-300')" 
+                  placeholder="e.g. CityPharma" />
+                <p *ngIf="showPharmacyErrors && !pharmacyName" class="text-xs text-red-500 mt-1">Pharmacy Name is required</p>
+              </div>
+              <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Pharmacy Address <span class="text-red-500">*</span></label>
+                <input type="text" [(ngModel)]="pharmacyAddress" name="pharmacyAddress" 
+                  [class]="'w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ' + (showPharmacyErrors && !pharmacyAddress ? 'border-red-500' : 'border-gray-300')" 
+                  placeholder="e.g. Tunis Center, Rue de la Liberté" />
+                <p *ngIf="showPharmacyErrors && !pharmacyAddress" class="text-xs text-red-500 mt-1">Pharmacy Address is required</p>
+              </div>
+              <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Pharmacy Phone Number <span class="text-red-500">*</span></label>
+                <input type="tel" [(ngModel)]="pharmacyPhone" name="pharmacyPhone" 
+                  [class]="'w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ' + (showPharmacyErrors && phoneError ? 'border-red-500' : 'border-gray-300')" 
+                  placeholder="e.g. +216 71 234 567" />
+                <p *ngIf="showPharmacyErrors && phoneError" class="text-xs text-red-500 mt-1">{{phoneError}}</p>
+              </div>
             </div>
 
             <div *ngIf="!isSignup" class="flex items-center justify-between text-sm">
@@ -67,7 +103,7 @@ import { Router, ActivatedRoute } from '@angular/router';
                 <input type="checkbox" class="rounded" />
                 <span class="text-gray-600">Remember me</span>
               </label>
-              <a href="#" class="text-blue-600 hover:text-blue-700">Forgot password?</a>
+              <a routerLink="/forgot-password" class="text-blue-600 hover:text-blue-700">Forgot password?</a>
             </div>
 
             <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
@@ -90,97 +126,196 @@ import { Router, ActivatedRoute } from '@angular/router';
   `
 })
 export class LoginComponent implements OnInit {
-    isSignup = false;
-    email = '';
-    password = '';
-    fullName = '';
-    selectedRole: string = 'patient';
-    uploadedDocument: string | null = null;
+  isSignup = false;
+  email = '';
+  password = '';
+  fullName = '';
+  selectedRole: string = 'patient';
+  uploadedDocument: string | null = null;
 
-    roles = [
-        { value: 'patient', icon: '👤', label: 'Patient' },
-        { value: 'doctor', icon: '👨‍⚕️', label: 'Doctor' },
-        { value: 'physiotherapist', icon: '🧑‍⚕️', label: 'Physio' },
-        { value: 'pharmacist', icon: '💊', label: 'Pharmacist' },
-        { value: 'laboratory', icon: '🔬', label: 'Laboratory' }
-    ];
+  pharmacyName = '';
+  pharmacyAddress = '';
+  pharmacyPhone = '';
+  showPharmacyErrors = false;
+  showGeneralErrors = false;
 
-    private mockUsers: { [key: string]: string } = {
-        'doctor@example.com': 'doctor',
-        'patient@example.com': 'patient',
-        'physio@example.com': 'physiotherapist',
-        'pharmacist@example.com': 'pharmacist',
-        'lab@example.com': 'laboratory'
+  emailError = '';
+  passwordError = '';
+  phoneError = '';
+
+  roles = [
+    { value: 'patient', icon: '👤', label: 'Patient' },
+    { value: 'doctor', icon: '👨‍⚕️', label: 'Doctor' },
+    { value: 'physiotherapist', icon: '🧑‍⚕️', label: 'Physio' },
+    { value: 'pharmacist', icon: '💊', label: 'Pharmacist' },
+    { value: 'laboratory', icon: '🔬', label: 'Laboratory' }
+  ];
+
+  private mockUsers: { [key: string]: string } = {
+    'doctor@example.com': 'doctor',
+    'patient@example.com': 'patient',
+    'physio@example.com': 'physiotherapist',
+    'pharmacist@example.com': 'pharmacist',
+    'lab@example.com': 'laboratory'
+  };
+
+  constructor(private router: Router, private route: ActivatedRoute) { }
+
+  ngOnInit() {
+    this.isSignup = this.route.snapshot.data['signupMode'] || false;
+  }
+
+  selectRole(role: string) {
+    this.selectedRole = role;
+    this.uploadedDocument = null;
+    this.showPharmacyErrors = false;
+    this.showGeneralErrors = false;
+  }
+
+  isProfessionalRole(): boolean {
+    return ['doctor', 'physiotherapist', 'pharmacist', 'laboratory'].includes(this.selectedRole);
+  }
+
+  getDocumentLabel(): string {
+    const labels: { [key: string]: string } = {
+      doctor: 'Medical Diploma / Certification',
+      physiotherapist: 'Physiotherapy License / Certification',
+      pharmacist: 'Pharmacy License / Certification',
+      laboratory: 'Laboratory Accreditation / License'
     };
+    return labels[this.selectedRole] || 'Certification';
+  }
 
-    constructor(private router: Router, private route: ActivatedRoute) { }
+  getDocumentPlaceholder(): string {
+    const placeholders: { [key: string]: string } = {
+      doctor: 'Upload medical diploma',
+      physiotherapist: 'Upload physiotherapy license',
+      pharmacist: 'Upload pharmacy license',
+      laboratory: 'Upload laboratory accreditation'
+    };
+    return placeholders[this.selectedRole] || 'Upload certification';
+  }
 
-    ngOnInit() {
-        this.isSignup = this.route.snapshot.data['signupMode'] || false;
+  handleDocumentUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.[0]) {
+      this.uploadedDocument = input.files[0].name;
     }
+  }
 
-    selectRole(role: string) {
-        this.selectedRole = role;
-        this.uploadedDocument = null;
-    }
+  toggleMode() {
+    this.isSignup = !this.isSignup;
+    this.uploadedDocument = null;
+    this.showPharmacyErrors = false;
+    this.showGeneralErrors = false;
+  }
 
-    isProfessionalRole(): boolean {
-        return ['doctor', 'physiotherapist', 'pharmacist', 'laboratory'].includes(this.selectedRole);
-    }
+  handleSubmit() {
+    this.showPharmacyErrors = false;
+    this.showGeneralErrors = false;
+    this.emailError = '';
+    this.passwordError = '';
+    this.phoneError = '';
 
-    getDocumentLabel(): string {
-        const labels: { [key: string]: string } = {
-            doctor: 'Medical Diploma / Certification',
-            physiotherapist: 'Physiotherapy License / Certification',
-            pharmacist: 'Pharmacy License / Certification',
-            laboratory: 'Laboratory Accreditation / License'
-        };
-        return labels[this.selectedRole] || 'Certification';
-    }
+    if (this.isSignup) {
+      // Validate general fields
+      let hasGeneralError = false;
 
-    getDocumentPlaceholder(): string {
-        const placeholders: { [key: string]: string } = {
-            doctor: 'Upload medical diploma',
-            physiotherapist: 'Upload physiotherapy license',
-            pharmacist: 'Upload pharmacy license',
-            laboratory: 'Upload laboratory accreditation'
-        };
-        return placeholders[this.selectedRole] || 'Upload certification';
-    }
+      if (!this.fullName) {
+        hasGeneralError = true;
+      }
 
-    handleDocumentUpload(event: Event) {
-        const input = event.target as HTMLInputElement;
-        if (input.files?.[0]) {
-            this.uploadedDocument = input.files[0].name;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!this.email) {
+        this.emailError = 'Email is required';
+        hasGeneralError = true;
+      } else if (!emailRegex.test(this.email)) {
+        this.emailError = 'Please enter a valid email address';
+        hasGeneralError = true;
+      }
+
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!this.password) {
+        this.passwordError = 'Password is required';
+        hasGeneralError = true;
+      } else if (!passwordRegex.test(this.password)) {
+        this.passwordError = 'Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number';
+        hasGeneralError = true;
+      }
+
+      if (hasGeneralError) {
+        this.showGeneralErrors = true;
+        return; // Stop submission
+      }
+
+      // Validate professional document
+      if (this.isProfessionalRole() && !this.uploadedDocument) {
+        this.showGeneralErrors = true;
+        return; // Stop submission
+      }
+
+      if (this.selectedRole === 'pharmacist') {
+        let hasPharmError = false;
+        if (!this.pharmacyName) hasPharmError = true;
+        if (!this.pharmacyAddress) hasPharmError = true;
+
+        const phoneRegex = /^\+?[\d\s-]{8,}$/;
+        if (!this.pharmacyPhone) {
+          this.phoneError = 'Pharmacy Phone Number is required';
+          hasPharmError = true;
+        } else if (!phoneRegex.test(this.pharmacyPhone)) {
+          this.phoneError = 'Please enter a valid phone number (e.g. +216 71 234 567)';
+          hasPharmError = true;
         }
-    }
 
-    toggleMode() {
-        this.isSignup = !this.isSignup;
-        this.uploadedDocument = null;
-    }
-
-    handleSubmit() {
-        if (this.isSignup) {
-            if (this.isProfessionalRole() && !this.uploadedDocument) {
-                alert('Please upload your professional certification');
-                return;
-            }
-            this.navigateToRole(this.selectedRole);
-        } else {
-            const role = this.mockUsers[this.email] || 'patient';
-            this.navigateToRole(role);
+        if (hasPharmError) {
+          this.showPharmacyErrors = true;
+          return; // Stop submission
         }
-    }
+      }
 
-    private navigateToRole(role: string) {
-        const routeMap: { [key: string]: string } = {
-            patient: '/patient/dashboard',
-            doctor: '/doctor/dashboard',
-            physiotherapist: '/physio/dashboard',
-            pharmacist: '/pharmacist/dashboard',
-            laboratory: '/laboratory/dashboard'
-        };
-        this.router.navigate([routeMap[role] || '/patient/dashboard']);
+      // Prepare payload to send to backend
+      const payload: any = {
+        name: this.fullName,
+        email: this.email,
+        password: this.password,
+        role: this.selectedRole.toUpperCase()
+      };
+
+      if (this.isProfessionalRole()) {
+        payload.pharmacyLicense = this.uploadedDocument;
+      }
+
+      if (this.selectedRole === 'pharmacist') {
+        payload.pharmacyName = this.pharmacyName;
+        payload.pharmacyAddress = this.pharmacyAddress;
+        payload.pharmacyPhone = this.pharmacyPhone;
+      }
+
+      console.log('Registration submitted:', payload);
+      // TODO: Call API service with payload
+
+      this.navigateToRole(this.selectedRole);
+    } else {
+      const role = this.mockUsers[this.email] || 'patient';
+      this.navigateToRole(role);
     }
+  }
+
+  private navigateToRole(role: string) {
+    // Persist role + a placeholder userId so Forum pages can read them
+    localStorage.setItem('userRole', role);
+    // TODO: replace with real user ID from auth when backend auth is implemented
+    if (!localStorage.getItem('userId')) {
+      localStorage.setItem('userId', '1');
+    }
+    const routeMap: { [key: string]: string } = {
+      patient: '/patient/dashboard',
+      doctor: '/doctor/dashboard',
+      physiotherapist: '/physio/dashboard',
+      pharmacist: '/pharmacist/dashboard',
+      laboratory: '/laboratory/dashboard'
+    };
+    this.router.navigate([routeMap[role] || '/patient/dashboard']);
+  }
 }

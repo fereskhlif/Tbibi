@@ -22,7 +22,13 @@ const routes: Routes = [
     { path: 'ai-analysis', component: AiImageAnalysisComponent },
     { path: 'chronic-disease', component: ChronicDiseaseComponent },
     { path: 'alerts', component: CriticalAlertsComponent },
-    { path: 'lab-results', component: DoctorLabResultsComponent }
+    { path: 'lab-results', component: DoctorLabResultsComponent },
+    { 
+        path: 'forum', 
+        loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
+        data: { role: 'DOCTOR', userId: 2, userName: 'Dr. Karim', expertCategory: 'Ask a Doctor', title: 'Doctor Forum' }
+    }
+
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })

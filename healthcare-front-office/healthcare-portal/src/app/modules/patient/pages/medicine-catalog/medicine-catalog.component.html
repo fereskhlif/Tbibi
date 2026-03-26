@@ -1,0 +1,349 @@
+﻿<div class="min-h-screen bg-[#F8FAFC] flex flex-col font-sans relative">
+
+    <!-- Hero Banner -->
+    <div style="background: linear-gradient(135deg, #1e40af, #2563eb); min-height: 180px;"
+        class="pt-14 pb-20 px-6 lg:px-10 text-center">
+        <div class="relative z-10 max-w-4xl mx-auto flex flex-col items-center gap-2 mt-4">
+            <span *ngIf="pharmacyName" class="text-blue-200 font-bold tracking-widest uppercase text-xs mb-2">{{
+                pharmacyName }}</span>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-md">
+                Order Your Medications Online
+            </h1>
+            <p class="text-lg text-blue-100 font-medium mt-2 max-w-xl drop-shadow">
+                Fast, Safe & Delivered to Your Door
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content Container (Overlapping Hero) -->
+    <div class="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 -mt-10 relative z-20 pb-20">
+
+        <!-- Search & Filter Bar -->
+        <div
+            class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
+
+            <!-- Left: Search -->
+            <div class="relative w-full md:max-w-md">
+                <lucide-icon name="search"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></lucide-icon>
+                <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()"
+                    placeholder="Search for medications, brands..."
+                    class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-medium transition-all outline-none" />
+            </div>
+
+            <!-- Right: Sort & Filter -->
+            <div class="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1 shrink-0">
+                    <lucide-icon name="filter" class="w-4 h-4 text-gray-500"></lucide-icon>
+                    <select (change)="onFilterChange($event)"
+                        class="bg-transparent border-none text-sm font-medium text-gray-700 focus:ring-0 cursor-pointer outline-none py-2 pr-6">
+                        <option value="all">All Items</option>
+                        <option value="in-stock">In Stock Only</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1 shrink-0">
+                    <lucide-icon name="arrow-up-down" class="w-4 h-4 text-gray-500"></lucide-icon>
+                    <select (change)="onSortChange($event)"
+                        class="bg-transparent border-none text-sm font-medium text-gray-700 focus:ring-0 cursor-pointer outline-none py-2 pr-6">
+                        <option value="name-asc">Name A-Z</option>
+                        <option value="price-asc">Price (Low to High)</option>
+                        <option value="price-desc">Price (High to Low)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Bar (Count & Breadcrumbs) -->
+        <div class="flex flex-col sm:flex-row justify-between items-center sm:items-end mb-6 gap-4">
+            <button *ngIf="pharmacyId" (click)="goBack()"
+                class="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 self-start">
+                <lucide-icon name="chevron-left" [size]="16"></lucide-icon>
+                Back to Pharmacies
+            </button>
+            <div *ngIf="!loading && !error"
+                class="text-sm font-bold text-gray-500 ml-auto bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100">
+                Showing <span class="text-gray-900">{{filteredMedicines.length}}</span> medications
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error" class="bg-red-50 border border-red-100 p-8 rounded-3xl text-center shadow-sm">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <lucide-icon name="alert-circle" class="w-8 h-8 text-red-600"></lucide-icon>
+            </div>
+            <p class="text-red-700 font-bold mb-4 text-lg">{{error}}</p>
+            <button (click)="pharmacyId ? loadMedicinesByPharmacy(pharmacyId!) : loadMedicines()"
+                class="bg-red-600 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg shadow-red-200 hover:bg-red-700 hover:-translate-y-0.5 transition-all">Retry
+                Loading</button>
+        </div>
+
+        <!-- Loading State (Skeletons) -->
+        <div *ngIf="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div *ngFor="let i of [1,2,3,4,5,6]"
+                class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
+                <div class="h-[220px] bg-slate-200"></div>
+                <div class="p-5 flex flex-col gap-3">
+                    <div class="h-4 bg-slate-200 rounded w-1/3"></div>
+                    <div class="h-5 bg-slate-200 rounded w-3/4"></div>
+                    <div class="h-3 bg-slate-200 rounded w-1/2 mt-2"></div>
+                    <div class="h-8 bg-slate-200 rounded w-1/3 mt-4"></div>
+                    <div class="h-12 bg-slate-200 rounded w-full mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards Grid -->
+        <div *ngIf="!loading && !error" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+
+            <div *ngFor="let med of filteredMedicines"
+                class="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+
+                <!-- Image container -->
+                <div class="relative" (click)="openDetails(med)">
+                    <img [src]="getFirstImage(med)" style="height: 200px; width: 100%; object-fit: cover;"
+                        class="cursor-pointer group-hover:opacity-90 transition-opacity" />
+
+                    <!-- Stock badge top-left -->
+                    <div class="absolute top-2 left-2 z-10">
+                        <span *ngIf="med.stock > 10"
+                            class="bg-emerald-500 text-white font-bold text-xs px-2 py-1 rounded-full">
+                            In Stock
+                        </span>
+                        <span *ngIf="med.stock > 0 && med.stock <= 10"
+                            class="bg-orange-500 text-white font-bold text-xs px-2 py-1 rounded-full">
+                            Low Stock
+                        </span>
+                        <span *ngIf="med.stock === 0"
+                            class="bg-red-500 text-white font-bold text-xs px-2 py-1 rounded-full">
+                            Out of Stock
+                        </span>
+                    </div>
+
+                    <!-- Quick View Overlay -->
+                    <div
+                        class="absolute inset-x-0 bottom-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center bg-gradient-to-t from-black/50 to-transparent">
+                        <span
+                            class="bg-white/95 backdrop-blur-sm text-gray-900 font-bold text-xs uppercase tracking-widest px-6 py-2 rounded-full shadow-lg flex items-center gap-2">
+                            <lucide-icon name="eye" [size]="14"></lucide-icon> Quick View
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="p-5 flex flex-col flex-1 border-t border-gray-50">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{{med.dosage}}</p>
+                    <h3 class="text-[17px] font-bold text-gray-900 mb-2 leading-tight cursor-pointer hover:text-blue-600 transition-colors"
+                        (click)="openDetails(med)">
+                        {{med.medicineName}}
+                    </h3>
+
+                    <!-- 2 line description truncation -->
+                    <p class="text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed min-h-[40px]">
+                        {{med.description}}
+                    </p>
+
+                    <div class="mt-auto">
+                        <div class="flex items-end justify-between mb-5">
+                            <span class="text-2xl font-extrabold text-[#0F172A]">{{med.price | number:'1.2-2'}} <span
+                                    class="text-sm text-gray-500 font-medium ml-0.5">DT</span></span>
+                        </div>
+
+                        <!-- Quantity & Add to Cart Container -->
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-center justify-between bg-gray-50 p-1.5 rounded-xl border border-gray-100"
+                                *ngIf="med.stock > 0">
+                                <button (click)="decreaseQuantity(med)" [disabled]="quantities[med.medicineId] <= 1"
+                                    class="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm text-gray-600 hover:text-blue-600 hover:shadow disabled:opacity-50 transition-all">-</button>
+                                <span
+                                    class="font-bold text-gray-900 w-10 text-center select-none">{{quantities[med.medicineId]
+                                    || 1}}</span>
+                                <button (click)="increaseQuantity(med)"
+                                    [disabled]="quantities[med.medicineId] >= med.stock"
+                                    class="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm text-gray-600 hover:text-blue-600 hover:shadow disabled:opacity-50 transition-all">+</button>
+                            </div>
+
+                            <button (click)="addToCart(med, quantities[med.medicineId] || 1)"
+                                [disabled]="med.stock === 0"
+                                class="w-full h-[48px] flex items-center justify-center gap-2 font-bold text-[14px] text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 border-none rounded-xl shadow-md shadow-blue-500/20 active:scale-[0.98] transition-all">
+                                <lucide-icon name="shopping-cart" [size]="18" *ngIf="med.stock > 0"></lucide-icon>
+                                {{ med.stock === 0 ? 'Out of Stock' : 'Add to Cart' }}
+                            </button>
+                        </div>
+
+                        <p *ngIf="med.expirationDate" class="text-[11px] text-center text-gray-400 font-medium mt-4">
+                            Exp: {{med.expirationDate | date:'MMM yyyy'}}</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!loading && !error && filteredMedicines.length === 0"
+            class="text-center py-24 bg-white rounded-3xl border border-gray-100 shadow-sm mt-8">
+            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <lucide-icon name="search-x" class="w-10 h-10 text-gray-300"></lucide-icon>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">No medicines found</h3>
+            <p class="text-gray-500">We couldn't find anything matching your search criteria.</p>
+            <button (click)="searchQuery=''; filterOption='all'; applyFilters()"
+                class="mt-6 text-blue-600 font-bold hover:underline">Clear all filters</button>
+        </div>
+
+    </div>
+</div>
+
+
+
+<!-- ========================================== -->
+<!-- DETAIL MODAL (Quick View enhancement)      -->
+<!-- ========================================== -->
+<div *ngIf="selectedMedicine" class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50" (click)="closeDetails()"></div>
+
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative z-10">
+
+        <!-- Close Button -->
+        <button (click)="closeDetails()"
+            class="absolute top-6 right-6 z-20 w-10 h-10 bg-white shadow-lg hover:bg-gray-50 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 transition-all border border-gray-100">
+            <lucide-icon name="x" [size]="20"></lucide-icon>
+        </button>
+
+        <!-- Gallery Left -->
+        <div class="md:w-[45%] bg-gray-50/50 p-6 sm:p-10 flex flex-col gap-4 border-r border-gray-100">
+            <div
+                class="flex-1 rounded-[24px] overflow-hidden bg-white shadow-sm border border-gray-100 flex items-center justify-center min-h-[300px] relative p-8">
+                <!-- Badges over modal image -->
+                <div class="absolute top-6 left-6 flex flex-col gap-2 z-10">
+                    <span *ngIf="selectedMedicine.stock > 10"
+                        class="bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">In
+                        Stock</span>
+                    <span *ngIf="selectedMedicine.stock > 0 && selectedMedicine.stock <= 10"
+                        class="bg-orange-100 text-orange-700 font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-full border border-orange-200 shadow-sm">Low
+                        Stock</span>
+                    <span *ngIf="selectedMedicine.stock === 0"
+                        class="bg-red-100 text-red-700 font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-full border border-red-200 shadow-sm">Out
+                        of Stock</span>
+                </div>
+                <img [src]="getFirstImage(selectedMedicine)"
+                    class="w-full h-full object-contain mix-blend-multiply drop-shadow-sm max-h-[400px]">
+            </div>
+
+            <!-- Future thumbnail gallery could go here -->
+            <div *ngIf="selectedMedicine.imageUrls && selectedMedicine.imageUrls.length > 1"
+                class="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                <div *ngFor="let img of selectedMedicine.imageUrls"
+                    class="w-20 h-20 rounded-xl bg-white border-2 border-blue-100 overflow-hidden shrink-0 cursor-pointer hover:border-blue-400 p-2">
+                    <img [src]="img" class="w-full h-full object-contain mix-blend-multiply">
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Right -->
+        <div class="md:w-[55%] p-6 sm:p-10 flex flex-col overflow-y-auto bg-white">
+            <div class="space-y-4 mb-6">
+                <span
+                    class="bg-blue-50 text-blue-600 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest border border-blue-100">{{selectedMedicine.dosage}}</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                    {{selectedMedicine.medicineName}}</h2>
+
+                <div class="flex items-center gap-4 text-sm font-medium text-gray-400 mb-2">
+                    <span *ngIf="selectedMedicine.expirationDate" class="flex items-center gap-1.5"><lucide-icon
+                            name="calendar" [size]="14"></lucide-icon> Exp: {{selectedMedicine.expirationDate |
+                        date:'MMMM yyyy'}}</span>
+                </div>
+
+                <div class="w-16 h-1 bg-blue-600 rounded-full my-6"></div>
+
+                <p class="text-gray-600 leading-relaxed text-[15px] max-w-xl">{{selectedMedicine.description}}</p>
+            </div>
+
+            <div class="mt-auto">
+                <div class="bg-gray-50 rounded-[24px] p-6 sm:p-8 border border-gray-100 flex flex-col gap-6">
+                    <div class="flex items-end justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Unit Price</p>
+                            <div class="text-4xl font-black text-[#0F172A]">{{selectedMedicine.price | number:'1.2-2'}}
+                                <span class="text-lg text-gray-500 font-bold ml-1">DT</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h-px w-full bg-gray-200"></div>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <div
+                            class="flex items-center bg-white rounded-xl p-1.5 border border-gray-200 shadow-sm w-full sm:w-auto h-14">
+                            <button (click)="detailQuantity = detailQuantity > 1 ? detailQuantity - 1 : 1"
+                                class="w-12 h-11 flex items-center justify-center bg-gray-50 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-lg">-</button>
+                            <span
+                                class="w-16 text-center font-bold text-gray-900 text-lg select-none">{{detailQuantity}}</span>
+                            <button
+                                (click)="detailQuantity = detailQuantity < selectedMedicine!.stock ? detailQuantity + 1 : selectedMedicine!.stock"
+                                class="w-12 h-11 flex items-center justify-center bg-gray-50 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-lg">+</button>
+                        </div>
+
+                        <button (click)="addToCart(selectedMedicine, detailQuantity)"
+                            [disabled]="selectedMedicine.stock === 0"
+                            class="flex-1 w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 text-white font-bold text-lg rounded-xl shadow-xl shadow-blue-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                            <lucide-icon name="shopping-cart" *ngIf="selectedMedicine.stock > 0"></lucide-icon>
+                            {{ selectedMedicine.stock === 0 ? 'Out of Stock' : 'Add to Cart' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .animate-scale-up {
+        animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes scaleUp {
+        0% {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .scale-animation {
+        animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes popIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .animate-bounce {
+        animation: quickBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes quickBounce {
+
+        0%,
+        100% {
+            transform: scale(1) translateY(0);
+        }
+
+        50% {
+            transform: scale(1.3) translateY(-3px);
+        }
+    }
+</style>

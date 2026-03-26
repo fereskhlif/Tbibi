@@ -1,0 +1,361 @@
+<div class="min-h-screen bg-[#F8FAFC] p-6 lg:p-10 font-sans">
+    <div class="max-w-7xl mx-auto flex flex-col gap-8">
+
+        <!-- Header -->
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Order Management</h1>
+            <p class="text-sm text-gray-500 mt-1 font-medium">Manage and update patient pharmacy orders</p>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="flex flex-wrap gap-2">
+            <button *ngFor="let tab of tabs" (click)="selectTab(tab.key)"
+                [class]="'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ' + getTabClass(tab.key)">
+                {{ tab.label }}
+                <span class="text-xs px-2 py-0.5 rounded-full"
+                    [class]="activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'">
+                    {{ getCount(tab.key) }}
+                </span>
+            </button>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error" class="bg-red-50 border border-red-100 p-8 rounded-3xl text-center">
+            <p class="text-red-900 font-bold text-lg">Could not load orders</p>
+            <p class="text-red-500 text-sm mt-1">{{error}}</p>
+            <button (click)="loadOrders()"
+                class="mt-6 bg-red-600 text-white px-8 py-2 rounded-xl text-sm font-bold hover:bg-red-700">Retry</button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="flex flex-col items-center justify-center py-24">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-gray-400 font-bold uppercase tracking-widest text-[10px]">Loading Orders...</p>
+        </div>
+
+        <!-- Orders List -->
+        <div *ngIf="!loading && !error" class="flex flex-col gap-4">
+
+            <!-- Empty State -->
+            <div *ngIf="filteredOrders.length === 0"
+                class="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+                <div class="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <lucide-icon name="package" [size]="36" class="text-gray-300"></lucide-icon>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">No orders found</h3>
+                <p class="text-sm text-gray-500 mt-1">There are no orders for this category.</p>
+            </div>
+
+            <!-- Order Cards Wrapped in a Scrollable Container -->
+            <div class="max-h-[600px] overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                <div *ngFor="let order of pagedOrders"
+                    class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+
+                    <!-- Card Header -->
+                    <div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 cursor-pointer"
+                        (click)="expandedOrderId = expandedOrderId === order.orderId ? null : order.orderId">
+                        <div class="flex items-center gap-4">
+                            <!-- Order Icon -->
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+                                <lucide-icon name="package" [size]="22" class="text-blue-600"></lucide-icon>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-3">
+                                    <h3 class="text-base font-bold text-gray-900">#ORD-{{order.orderId}}</h3>
+                                    <span
+                                        [class]="'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(order.orderStatus)">
+                                        {{order.orderStatus.replace('_', ' ')}}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-4 mt-1">
+                                    <p class="text-sm text-gray-500">
+                                        <span class="font-semibold text-gray-700">{{order.userName}}</span>
+                                        <span class="mx-1 text-gray-300">•</span>
+                                        {{order.orderDate | date:'MMM d, y'}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Total</p>
+                            <p class="text-2xl font-black text-gray-900">{{order.totalAmount | number:'1.2-2'}} <span
+                                    class="text-sm font-bold text-gray-400">DT</span></p>
+                        </div>
+                        <!-- Chevron toggle indicator -->
+                        <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center transition-transform shrink-0"
+                            [class.rotate-180]="expandedOrderId === order.orderId">
+                            <lucide-icon name="chevron-down" [size]="18" class="text-gray-500"></lucide-icon>
+                        </div>
+                    </div>
+
+                    <!-- Order Lines and Action Buttons Wrapper (Collapsible) -->
+                    <div *ngIf="expandedOrderId === order.orderId" class="flex flex-col">
+                        <!-- Order Lines -->
+                        <div class="px-6 py-4 bg-gray-50/50">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Order Items
+                                ({{order.orderLines.length}})</p>
+                            <div class="space-y-1">
+                                <div *ngFor="let line of order.orderLines"
+                                    style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
+                                    <span
+                                        style="color: #2563EB; font-weight: 600; font-size: 13px; min-width: 28px;">{{line.quantity}}x</span>
+                                    <span
+                                        style="flex: 1; font-size: 14px; color: #0A1628; font-weight: 500;">{{line.medicineName
+                                        || '—'}}</span>
+                                    <span style="font-size: 12px; color: #6B7280;">{{line.unitPrice | number:'1.2-2'}}
+                                        DT /
+                                        unit</span>
+                                    <span style="font-size: 14px; font-weight: 700; color: #0A1628;">{{line.quantity *
+                                        line.unitPrice | number:'1.2-2'}} DT</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="px-6 py-4 flex items-center gap-3 flex-wrap border-t border-gray-100">
+                            <ng-container [ngSwitch]="order.orderStatus">
+
+                                <!-- PENDING: Confirm + Reject -->
+                                <ng-container *ngSwitchCase="'PENDING'">
+                                    <button
+                                        (click)="openConfirmDialog(order.orderId, 'CONFIRMED', 'Are you sure you want to confirm this order?')"
+                                        [disabled]="updatingOrderId === order.orderId"
+                                        style="display:flex;align-items:center;gap:6px;height:36px;padding:0 16px;background:#16A34A;color:white;font-size:13px;font-weight:700;border:none;border-radius:10px;cursor:pointer;transition:background 0.15s;"
+                                        onmouseover="this.style.background='#15803D'"
+                                        onmouseout="this.style.background='#16A34A'">
+                                        <lucide-icon *ngIf="updatingOrderId !== order.orderId" name="check"
+                                            [size]="15"></lucide-icon>
+                                        <lucide-icon *ngIf="updatingOrderId === order.orderId" name="loader-2"
+                                            [size]="15" class="animate-spin"></lucide-icon>
+                                        Confirm
+                                    </button>
+                                    <button
+                                        (click)="openConfirmDialog(order.orderId, 'REJECTED', 'Are you sure you want to reject this order?')"
+                                        [disabled]="updatingOrderId === order.orderId"
+                                        style="display:flex;align-items:center;gap:6px;height:36px;padding:0 16px;background:#DC2626;color:white;font-size:13px;font-weight:700;border:none;border-radius:10px;cursor:pointer;transition:background 0.15s;"
+                                        onmouseover="this.style.background='#B91C1C'"
+                                        onmouseout="this.style.background='#DC2626'">
+                                        <lucide-icon name="x" [size]="15"></lucide-icon>
+                                        Reject
+                                    </button>
+                                </ng-container>
+
+                                <!-- CONFIRMED: Mark In Progress -->
+                                <ng-container *ngSwitchCase="'CONFIRMED'">
+                                    <button
+                                        (click)="openConfirmDialog(order.orderId, 'IN_PROGRESS', 'Mark this order as In Progress?')"
+                                        [disabled]="updatingOrderId === order.orderId"
+                                        class="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-200 text-white text-sm font-bold rounded-xl transition-all">
+                                        <lucide-icon *ngIf="updatingOrderId !== order.orderId" name="rotate-ccw"
+                                            [size]="16"></lucide-icon>
+                                        <lucide-icon *ngIf="updatingOrderId === order.orderId" name="loader-2"
+                                            [size]="16" class="animate-spin"></lucide-icon>
+                                        Mark In Progress
+                                    </button>
+                                </ng-container>
+
+                                <!-- IN_PROGRESS: Mark Delivered -->
+                                <ng-container *ngSwitchCase="'IN_PROGRESS'">
+                                    <button
+                                        (click)="openConfirmDialog(order.orderId, 'DELIVERED', 'Mark this order as Delivered?')"
+                                        [disabled]="updatingOrderId === order.orderId"
+                                        class="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-200 text-white text-sm font-bold rounded-xl transition-all">
+                                        <lucide-icon *ngIf="updatingOrderId !== order.orderId" name="check-circle"
+                                            [size]="16"></lucide-icon>
+                                        <lucide-icon *ngIf="updatingOrderId === order.orderId" name="loader-2"
+                                            [size]="16" class="animate-spin"></lucide-icon>
+                                        Mark Delivered
+                                    </button>
+                                </ng-container>
+
+                                <!-- DELIVERED, CANCELLED, REJECTED: plain text -->
+                                <ng-container *ngSwitchDefault>
+                                    <span style="color:#9CA3AF;font-style:italic;font-size:12px;">No further actions
+                                        available</span>
+                                </ng-container>
+
+                            </ng-container>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Pagination Layout -->
+            <div *ngIf="totalPages > 1" class="flex items-center justify-between mt-6 px-2">
+                <span class="text-sm text-gray-500 font-medium">Page {{currentPage}} of {{totalPages}}</span>
+                <div class="flex items-center gap-2">
+                    <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"
+                        class="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                        <lucide-icon name="chevron-left" [size]="18" class="text-gray-600"></lucide-icon>
+                    </button>
+
+                    <div class="flex items-center gap-1">
+                        <ng-container *ngFor="let p of pageNumbers">
+                            <button *ngIf="p !== -1" (click)="goToPage(p)"
+                                [class]="p === currentPage ? 'w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-sm shadow-md' : 'w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all'">
+                                {{p}}
+                            </button>
+                            <span *ngIf="p === -1" class="text-gray-400 font-bold tracking-widest px-1">...</span>
+                        </ng-container>
+                    </div>
+
+                    <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+                        class="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                        <lucide-icon name="chevron-right" [size]="18" class="text-gray-600"></lucide-icon>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Confirmation Dialog -->
+<div *ngIf="confirmDialog.visible" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" (click)="cancelDialog()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 flex flex-col gap-6">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+                <lucide-icon name="alert-circle" [size]="24" class="text-blue-600"></lucide-icon>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 text-lg">Confirm Action</h3>
+                <p class="text-sm text-gray-500 mt-1">{{confirmDialog.message}}</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button (click)="cancelDialog()"
+                class="flex-1 py-3 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
+                Cancel
+            </button>
+            <button (click)="confirmAction()"
+                class="flex-1 py-3 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-100">
+                Yes, Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div *ngIf="selectedOrder" class="fixed inset-0 z-[150] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md" (click)="closeDetail()"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+
+        <!-- Modal Header -->
+        <div class="p-8 border-b border-gray-50 flex items-center justify-between shrink-0">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Order #ORD-{{selectedOrder.orderId}}</h2>
+                <div class="flex items-center gap-3 mt-1">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                        {{selectedOrder.orderDate |
+                        date:'fullDate'}}</p>
+                    <span
+                        [class]="'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(selectedOrder.orderStatus)">
+                        {{selectedOrder.orderStatus.replace('_', ' ')}}
+                    </span>
+                </div>
+            </div>
+            <button (click)="closeDetail()" class="p-2 text-gray-400 hover:text-gray-900 rounded-xl transition-all">
+                <lucide-icon name="x" [size]="24"></lucide-icon>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-8 overflow-y-auto space-y-6 flex-1">
+
+            <!-- Patient & Pharmacy -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-50 rounded-2xl p-4 space-y-1">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Patient</p>
+                    <p class="font-bold text-gray-900">{{selectedOrder.userName}}</p>
+                    <p class="text-xs text-gray-500">ID: {{selectedOrder.userId}}</p>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-4 space-y-1">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pharmacy</p>
+                    <p class="font-bold text-gray-900">{{selectedOrder.pharmacyName}}</p>
+                    <p class="text-xs text-gray-500">ID: {{selectedOrder.pharmacyId}}</p>
+                </div>
+            </div>
+
+            <!-- Order Lines -->
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Order Items</p>
+                <div class="space-y-3">
+                    <div *ngFor="let line of selectedOrder.orderLines"
+                        class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                {{line.quantity}}x
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900 text-sm">{{line.medicineName}}</p>
+                                <p class="text-xs text-gray-400 mt-0.5">Unit price: {{line.unitPrice |
+                                    number:'1.2-2'}}
+                                    DT</p>
+                            </div>
+                        </div>
+                        <span class="font-bold text-gray-900 text-sm">{{line.quantity * line.unitPrice |
+                            number:'1.2-2'}} DT</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-8 bg-gray-50/50 border-t border-gray-100 space-y-4 shrink-0">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-500 font-medium">Grand Total</span>
+                <span class="text-3xl font-black text-gray-900">{{selectedOrder.totalAmount | number:'1.2-2'}} <span
+                        class="text-sm font-bold text-gray-400">DT</span></span>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex gap-3 flex-wrap">
+                <ng-container [ngSwitch]="selectedOrder.orderStatus">
+                    <ng-container *ngSwitchCase="'PENDING'">
+                        <button
+                            (click)="openConfirmDialog(selectedOrder.orderId, 'CONFIRMED', 'Confirm this order?'); closeDetail()"
+                            class="flex-1 py-3 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-2xl transition-all flex items-center justify-center gap-2">
+                            <lucide-icon name="check-circle" [size]="16"></lucide-icon>
+                            Confirm Order
+                        </button>
+                        <button
+                            (click)="openConfirmDialog(selectedOrder.orderId, 'REJECTED', 'Reject this order?'); closeDetail()"
+                            class="flex-1 py-3 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-all flex items-center justify-center gap-2">
+                            <lucide-icon name="x-circle" [size]="16"></lucide-icon>
+                            Reject
+                        </button>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'CONFIRMED'">
+                        <button
+                            (click)="openConfirmDialog(selectedOrder.orderId, 'IN_PROGRESS', 'Mark as In Progress?'); closeDetail()"
+                            class="flex-1 py-3 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-2xl transition-all flex items-center justify-center gap-2">
+                            <lucide-icon name="rotate-ccw" [size]="16"></lucide-icon>
+                            Mark In Progress
+                        </button>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'IN_PROGRESS'">
+                        <button
+                            (click)="openConfirmDialog(selectedOrder.orderId, 'DELIVERED', 'Mark as Delivered?'); closeDetail()"
+                            class="flex-1 py-3 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-2xl transition-all flex items-center justify-center gap-2">
+                            <lucide-icon name="check-circle" [size]="16"></lucide-icon>
+                            Mark Delivered
+                        </button>
+                    </ng-container>
+                    <ng-container *ngSwitchDefault>
+                        <span
+                            class="text-xs font-bold text-gray-400 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100 flex-1 text-center">No
+                            further actions available</span>
+                    </ng-container>
+                </ng-container>
+                <button (click)="closeDetail()"
+                    class="px-6 py-3 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

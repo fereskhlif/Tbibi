@@ -4,11 +4,15 @@ import { HomepageComponent } from './pages/homepage/homepage.component';
 import { LoginComponent } from './pages/login/login.component';
 import { GraphicCharterComponent } from './pages/graphic-charter/graphic-charter.component';
 import { MainLayoutComponent } from './shared/layouts/main-layout/main-layout.component';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 
 const routes: Routes = [
   { path: '', component: HomepageComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: LoginComponent, data: { signupMode: true } },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'graphic-charter', component: GraphicCharterComponent },
   {
     path: 'patient',
@@ -39,6 +43,12 @@ const routes: Routes = [
     component: MainLayoutComponent,
     data: { role: 'laboratory' },
     loadChildren: () => import('./modules/laboratory/laboratory.module').then(m => m.LaboratoryModule)
+  },
+  {
+    path: 'forum',
+    component: MainLayoutComponent,
+    data: { role: 'patient' },
+    loadChildren: () => import('./modules/forum/forum.module').then(m => m.ForumModule)
   },
   { path: '**', redirectTo: '' }
 ];

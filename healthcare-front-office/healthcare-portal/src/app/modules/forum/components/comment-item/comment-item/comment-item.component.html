@@ -1,0 +1,174 @@
+<div class="flex gap-3" [style.paddingTop]="depth === 0 ? '16px' : '8px'"
+    [style.paddingBottom]="depth === 0 ? '16px' : '8px'"
+    [style.borderBottom]="depth === 0 && !isLast ? '1px solid #f3f4f6' : 'none'">
+
+    <!-- Avatar column + thread line -->
+    <div class="flex flex-col items-center shrink-0" [style.width]="depth === 0 ? '36px' : '28px'">
+        <div class="rounded-full text-white font-bold flex items-center justify-center shrink-0"
+            [style.width]="depth === 0 ? '36px' : '28px'" [style.height]="depth === 0 ? '36px' : '28px'"
+            [style.fontSize]="depth === 0 ? '14px' : '11px'" [style.background]="getAvatarColor(comment.authorName)">
+            {{ comment.authorName ? comment.authorName.charAt(0).toUpperCase() : '?' }}
+        </div>
+        <!-- Thread line -->
+        <div *ngIf="(comment.replies && comment.replies.length > 0) || replyingTo === comment.commentId"
+            style="width:2px;background:#e5e7eb;flex:1;margin-top:8px;min-height:16px;border-radius:9999px;">
+        </div>
+    </div>
+
+    <!-- Content column -->
+    <div class="flex-1 min-w-0">
+
+        <!-- Comment bubble -->
+        <div class="comment-bubble">
+
+            <!-- Author + time -->
+            <div class="flex items-center gap-2 mb-2.5 flex-wrap">
+                <span class="font-bold text-sm text-gray-900">{{ comment.authorName }}</span>
+                <span class="text-gray-300 text-xs">·</span>
+                <span class="text-xs text-gray-400 flex items-center gap-1">
+                    <lucide-icon name="clock" [size]="11"></lucide-icon>
+                    {{ timeAgo(comment.commentDate) }}
+                </span>
+            </div>
+
+            <!-- Body -->
+            <div class="text-sm text-gray-700 leading-relaxed mb-3
+                  prose prose-sm max-w-none
+                  prose-pre:bg-gray-100 prose-pre:rounded-lg
+                  prose-code:text-pink-600 prose-code:bg-pink-50
+                  prose-code:px-1 prose-code:rounded
+                  prose-blockquote:border-l-blue-300 prose-blockquote:text-gray-500
+                  prose-a:text-blue-600 prose-strong:text-gray-900" [innerHTML]="comment.comment | markdown">
+            </div>
+
+            <!-- Reply button -->
+            <button (click)="onStartReply(comment.commentId)" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400
+               hover:text-blue-600 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors">
+                <lucide-icon name="corner-down-right" [size]="12"></lucide-icon>
+                Reply
+            </button>
+        </div>
+
+        <!-- Inline reply editor -->
+        <div *ngIf="replyingTo === comment.commentId" class="mb-3 ml-1">
+            <div
+                class="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 focus-within:border-blue-400 focus-within:shadow-[0_0_0_3px_rgba(59,130,246,0.1)]">
+
+                <!-- Tabs -->
+                <div class="flex items-center gap-1 border-b border-gray-100 px-2 pt-1 bg-gray-50/60">
+                    <button (click)="replyPreview = false"
+                        class="px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors"
+                        [class.text-blue-600]="!replyPreview" [class.border-blue-600]="!replyPreview"
+                        [class.text-gray-400]="replyPreview" [class.border-transparent]="replyPreview">
+                        Write
+                    </button>
+                    <button (click)="replyPreview = true"
+                        class="px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors"
+                        [class.text-blue-600]="replyPreview" [class.border-blue-600]="replyPreview"
+                        [class.text-gray-400]="!replyPreview" [class.border-transparent]="!replyPreview">
+                        Preview
+                    </button>
+                </div>
+
+                <!-- Write mode -->
+                <div *ngIf="!replyPreview">
+                    <!-- Toolbar -->
+                    <div class="flex items-center gap-1.5 px-3 py-2 border-b border-gray-100 bg-gray-50/40 flex-wrap">
+                        <button type="button" (click)="insertReplyMarkdown('**','**',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Bold"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="bold" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="insertReplyMarkdown('*','*',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Italic"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="italic" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="insertReplyMarkdown('~~','~~',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Strikethrough"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="strikethrough" [size]="17"></lucide-icon>
+                        </button>
+                        <div class="w-px h-5 bg-gray-200 mx-1"></div>
+                        <button type="button" (click)="insertReplyMarkdown('### ','',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Heading"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="type" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="insertReplyMarkdown('> ','',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Quote"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="quote" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button"
+                            (click)="insertReplyMarkdown(codeBlockPrefix, codeBlockSuffix, replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Code"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="code" [size]="17"></lucide-icon>
+                        </button>
+                        <div class="w-px h-5 bg-gray-200 mx-1"></div>
+                        <button type="button" (click)="insertReplyMarkdown('- ','',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="List"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="list" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="insertReplyMarkdown('1. ','',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Numbered"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="list-ordered" [size]="17"></lucide-icon>
+                        </button>
+                        <div class="w-px h-5 bg-gray-200 mx-1"></div>
+                        <button type="button" (click)="insertReplyMarkdown('[','](url)',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Link"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="link" [size]="17"></lucide-icon>
+                        </button>
+                    </div>
+                    <!-- Textarea -->
+                    <textarea #replyInput [value]="replyText" (input)="onReplyTextChange($any($event.target).value)"
+                        rows="3" [placeholder]="'Reply to ' + comment.authorName + '...'"
+                        class="w-full px-4 py-3 text-sm text-gray-800 outline-none resize-y min-h-[90px] bg-white leading-relaxed placeholder:text-gray-300 block">
+          </textarea>
+                </div>
+
+                <!-- Preview -->
+                <div *ngIf="replyPreview" class="px-4 py-3 min-h-[90px]">
+                    <div *ngIf="replyText.trim()"
+                        class="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                        [innerHTML]="replyText | markdown">
+                    </div>
+                    <p *ngIf="!replyText.trim()" class="text-sm text-gray-300 italic">Nothing to preview</p>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex items-center justify-between px-3 py-2.5 bg-gray-50/60 border-t border-gray-100">
+                    <div></div>
+                    <div class="flex items-center gap-2">
+                        <button (click)="onStartReply(comment.commentId)"
+                            class="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                        <button (click)="onSubmitReply(comment.commentId)"
+                            [disabled]="submittingReply || !replyText.trim()"
+                            class="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                            <div *ngIf="submittingReply"
+                                class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin">
+                            </div>
+                            Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nested replies -->
+        <div *ngIf="comment.replies && comment.replies.length > 0" class="flex flex-col pl-1">
+            <app-comment-item *ngFor="let reply of comment.replies" [comment]="reply" [depth]="depth + 1"
+                [currentUserName]="currentUserName" [replyingTo]="replyingTo" [replyText]="replyText"
+                [submittingReply]="submittingReply" (startReplyEvent)="onStartReply($event)"
+                (submitReplyEvent)="submitReplyEvent.emit($event)" (replyTextChange)="onReplyTextChange($event)">
+            </app-comment-item>
+        </div>
+
+    </div>
+</div>
