@@ -1,29 +1,285 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  ActeDTO,
+  PatientDTO,
+  PrescriptionRequest,
+  PrescriptionResponse,
+  PrescriptionService,
+  PrescriptionStatus,
+  STATUS_META,
+} from '../../../../services/prescription-service.service';
+import { interval, Subscription } from 'rxjs';
+import { switchMap, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+
 @Component({
-    selector: 'app-doctor-prescriptions', template: `
-  <div class="p-8">
-    <div class="flex items-center justify-between mb-6"><div><h1 class="text-2xl font-bold text-gray-900">Prescriptions</h1><p class="text-gray-600">Create and manage patient prescriptions</p></div>
-    <button class="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700">+ New Prescription</button></div>
-    <div class="space-y-4">
-      <div *ngFor="let rx of prescriptions" class="bg-white rounded-xl border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-3"><span class="text-2xl">💊</span><div><h3 class="font-semibold text-gray-900">{{rx.patient}}</h3><p class="text-sm text-gray-500">{{rx.date}}</p></div></div>
-          <span [class]="'px-3 py-1 text-xs rounded-full ' + rx.statusClass">{{rx.status}}</span>
-        </div>
-        <div class="bg-gray-50 rounded-lg p-4">
-          <div *ngFor="let med of rx.medications" class="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
-            <div><p class="font-medium text-gray-900">{{med.name}}</p><p class="text-xs text-gray-500">{{med.dosage}} • {{med.frequency}}</p></div>
-            <span class="text-sm text-gray-600">{{med.duration}}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-` })
-export class DoctorPrescriptionsComponent {
-    prescriptions = [
-        { patient: 'John Doe', date: 'Jan 15, 2024', status: 'Active', statusClass: 'bg-green-100 text-green-700', medications: [{ name: 'Amoxicillin', dosage: '500mg', frequency: 'Twice daily', duration: '7 days' }, { name: 'Ibuprofen', dosage: '400mg', frequency: 'As needed', duration: '5 days' }] },
-        { patient: 'Jane Smith', date: 'Jan 12, 2024', status: 'Active', statusClass: 'bg-green-100 text-green-700', medications: [{ name: 'Metformin', dosage: '850mg', frequency: 'Twice daily', duration: '30 days' }] },
-        { patient: 'Mike Brown', date: 'Jan 10, 2024', status: 'Completed', statusClass: 'bg-gray-100 text-gray-600', medications: [{ name: 'Atorvastatin', dosage: '20mg', frequency: 'Once daily', duration: '30 days' }, { name: 'Aspirin', dosage: '81mg', frequency: 'Once daily', duration: '30 days' }] }
-    ];
+  selector: 'app-doctor-prescriptions',
+  templateUrl: './prescriptions.component.html',
+  styleUrls: ['./prescriptions.component.css']
+})
+export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
+  acteSearch = '';
+  actes: ActeDTO[] = [];
+  patients: PatientDTO[] = [];
+  showAssignModal = false;
+  assigningRx: PrescriptionResponse | null = null;
+  selectedActeId: number | null = null;
+
+  prescriptions: PrescriptionResponse[] = [];
+  loading = false;
+  error = '';
+
+  showDetail = false;
+  detailRx: PrescriptionResponse | null = null;
+
+  showModal = false;
+  editMode = false;
+  selectedId: number | null = null;
+  saving = false;
+
+  form: any = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: '' };
+
+  activeFilter: PrescriptionStatus | 'ALL' = 'ALL';
+  sortDesc = true;
+
+  private pollSub?: Subscription;
+
+  STATUS_META = STATUS_META;
+  statusKeys: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED', 'CANCELLED'];
+  readonly STEPS: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED'];
+
+  constructor(private prescriptionService: PrescriptionService) {}
+
+  ngOnInit(): void {
+    this.loadAll();
+    this.loadActes();
+    this.loadPatients();
+    this.pollSub = interval(30_000)
+      .pipe(switchMap(() => this.prescriptionService.getAll()))
+      .subscribe({
+        next: (data) => {
+          this.prescriptions = data.map(rx => ({
+            ...rx,
+            expanded: this.prescriptions.find(p => p.prescriptionID === rx.prescriptionID)?.expanded ?? false
+          }));
+          if (this.detailRx) {
+            const updated = this.prescriptions.find(p => p.prescriptionID === this.detailRx!.prescriptionID);
+            if (updated) this.detailRx = updated;
+          }
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
+  }
+
+  loadAll(): void {
+    this.loading = true;
+    this.error = '';
+    this.prescriptionService.getAll().subscribe({
+      next: (data) => {
+        this.prescriptions = data.map(rx => ({ ...rx, expanded: false }));
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Erreur lors du chargement des prescriptions.';
+        this.loading = false;
+      }
+    });
+  }
+
+  loadActes(): void {
+    this.prescriptionService.getAllActes().subscribe({
+      next: (data) => {
+        console.log('ACTES REÇUS:', data);
+        this.actes = data;
+      },
+      error: (err) => console.error('Erreur chargement actes', err)
+    });
+  }
+
+  loadPatients(): void {
+    this.prescriptionService.getAllPatients().subscribe({
+      next: (data) => this.patients = data,
+      error: (err) => console.error('Erreur chargement patients', err)
+    });
+  }
+
+  get filtered(): PrescriptionResponse[] {
+    let list = this.activeFilter === 'ALL'
+      ? [...this.prescriptions]
+      : this.prescriptions.filter(rx => rx.status === this.activeFilter);
+    list.sort((a, b) => {
+      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      return this.sortDesc ? -diff : diff;
+    });
+    return list;
+  }
+
+  countByStatus(s: PrescriptionStatus): number {
+    return this.prescriptions.filter(rx => rx.status === s).length;
+  }
+
+  statusMeta(status: PrescriptionStatus) {
+    return STATUS_META[status] ?? STATUS_META['PENDING'];
+  }
+
+  stepOf(status: PrescriptionStatus): number {
+    return this.STEPS.indexOf(status);
+  }
+
+  openDetail(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    this.detailRx = { ...rx };
+    this.showDetail = true;
+  }
+
+  closeDetail(): void {
+    this.showDetail = false;
+    this.detailRx = null;
+  }
+
+  openAddModal(): void {
+    this.editMode = false;
+    this.selectedId = null;
+    const isoString = new Date().toISOString();
+    this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: isoString };
+    console.log('📅 Date envoyée:', isoString);
+    this.showModal = true;
+  }
+
+  onTypeChange(value: string): void {
+    this.form.typeCategory = value;
+    this.form.analysisSubType = '';
+    if (value !== 'ANALYSE') {
+      this.form.typeOfActe = value;
+    } else {
+      this.form.typeOfActe = 'ANALYSE';
+    }
+  }
+
+  onAnalysisSubTypeChange(value: string): void {
+    this.form.analysisSubType = value;
+    this.form.typeOfActe = value;
+  }
+
+  openEditModal(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    this.editMode = true;
+    this.selectedId = rx.prescriptionID;
+    this.form = {
+      patientId: null, acteDescription: '', typeOfActe: '',
+      note: rx.note,
+      date: new Date(rx.date).toISOString()
+    };
+    this.showModal = true;
+  }
+
+  openAssignModal(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    this.assigningRx = rx;
+    this.selectedActeId = rx.acteId ?? null;
+    this.showAssignModal = true;
+  }
+
+  save(): void {
+    if (this.saving) return;
+
+    if (!this.editMode && !this.form.patientId) {
+      this.error = 'Veuillez sélectionner un patient.';
+      return;
+    }
+    if (!this.editMode && !this.form.acteDescription) {
+      this.error = "Veuillez fournir une description pour l'acte.";
+      return;
+    }
+
+    let dateToSend = this.form.date;
+    if (dateToSend && dateToSend.length === 16) {
+      dateToSend = dateToSend + ':00.000Z';
+    }
+    const rxDataToSend = { note: this.form.note, date: dateToSend };
+
+    this.saving = true;
+
+    if (this.editMode && this.selectedId !== null) {
+      this.prescriptionService.update(this.selectedId, rxDataToSend).subscribe({
+        next: () => {
+          this.showModal = false;
+          this.saving = false;
+          this.loadAll();
+        },
+        error: () => {
+          this.error = 'Erreur modification';
+          this.saving = false;
+        }
+      });
+    } else {
+      const acteReq = {
+        date: dateToSend,
+        description: this.form.acteDescription,
+        typeOfActe: this.form.typeOfActe
+      };
+
+      this.prescriptionService.addActeForPatient(this.form.patientId, acteReq).pipe(
+        switchMap(createdActe => {
+          return this.prescriptionService.add(rxDataToSend).pipe(
+            switchMap(createdRx => this.prescriptionService.assignActe(createdRx.prescriptionID, createdActe.acteId))
+          );
+        }),
+        catchError(err => {
+          console.error('Erreur lors de la création unifiée:', err);
+          throw err;
+        })
+      ).subscribe({
+        next: () => {
+          this.showModal = false;
+          this.saving = false;
+          this.loadAll();
+          this.loadActes();
+        },
+        error: () => {
+          this.error = "Erreur lors de la création de l'acte et de la prescription.";
+          this.saving = false;
+        }
+      });
+    }
+  }
+
+  saveAssign(): void {
+    if (!this.assigningRx || this.selectedActeId === null) return;
+    this.prescriptionService.assignActe(this.assigningRx.prescriptionID, this.selectedActeId)
+      .subscribe({
+        next: () => { this.showAssignModal = false; this.loadAll(); },
+        error: () => { this.error = "Erreur lors de l'affectation."; }
+      });
+  }
+
+  get filteredActes(): ActeDTO[] {
+    if (!this.acteSearch.trim()) return this.actes;
+    const q = this.acteSearch.toLowerCase();
+    return this.actes.filter(a =>
+      a.patientName?.toLowerCase().includes(q) ||
+      a.typeOfActe?.toLowerCase().includes(q) ||
+      a.description?.toLowerCase().includes(q) ||
+      String(a.acteId).includes(q)
+    );
+  }
+
+  deletePrescription(id: number, event?: Event): void {
+    event?.stopPropagation();
+    if (!confirm('Voulez-vous vraiment supprimer cette prescription ?')) return;
+    this.prescriptionService.delete(id).subscribe({
+      next: () => {
+        this.prescriptions = this.prescriptions.filter(rx => rx.prescriptionID !== id);
+        if (this.detailRx?.prescriptionID === id) this.closeDetail();
+      },
+      error: () => { this.error = 'Erreur lors de la suppression.'; }
+    });
+  }
+
+  trackById(_: number, rx: PrescriptionResponse): number {
+    return rx.prescriptionID;
+  }
 }
