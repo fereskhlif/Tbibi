@@ -60,9 +60,23 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
 
                         // Serve uploaded images publicly
                         .requestMatchers("/uploads/**").permitAll()
+
+                        // Appointment routes
+                        .requestMatchers("/appointement/**").permitAll()
+                        .requestMatchers("/appointment/**").permitAll()
+
+                        // Schedule routes
+                        .requestMatchers("/api/doctor/schedules/**").permitAll()
+
+                        // Chronic disease routes
+                        .requestMatchers("/api/chronic/**").permitAll()
+
+                        // Notification routes
+                        .requestMatchers("/notifications/**").permitAll()
 
                         // Allow doctor to append history and search patients without blocking on JwtAuthFilter missing auth
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/medical-records/*/history").permitAll()
@@ -75,9 +89,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/medical-records/my/image").authenticated()
 
                         .requestMatchers("/medical-records/**").permitAll()
-                        //.requestMatchers("/prescriptions/**").authenticated()
                         .requestMatchers("/prescriptions/**").permitAll()
-                        // TEMPORAIRE: On permet l'accès libre aux actes pour voir la VRAIE ERREUR cachée derrière le 403
                         .requestMatchers("/actes/**").permitAll()
 
                         // Patient routes
@@ -87,6 +99,7 @@ public class SecurityConfig {
                         .requestMatchers("/kine/**").hasRole("KINE")
 
                         // Doctor routes
+                        .requestMatchers("/doctor/**").hasAnyRole("DOCTOR", "DOCTEUR")
                         .requestMatchers("/docteur/**").hasRole("DOCTEUR")
 
                         // Pharmacist routes
@@ -98,29 +111,6 @@ public class SecurityConfig {
                         // Any other request must be authenticated
                         .anyRequest().authenticated()
                 )
-                        // Public routes
-                        .requestMatchers(new AntPathRequestMatcher("/auth/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/public/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/appointement/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/appointement")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/appointment/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/appointment")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/doctor/schedules/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/doctor/schedules")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/chronic/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/chronic")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/notifications/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/notifications")).permitAll()
-
-                        // *** DIAGNOSTIC: allow everything to confirm security is the root cause ***
-                        // Role-based routes (keep these AFTER the public routes above)
-                        .requestMatchers(new AntPathRequestMatcher("/patient/**")).hasRole("PATIENT")
-                        .requestMatchers(new AntPathRequestMatcher("/kine/**")).hasRole("KINE")
-                        .requestMatchers(new AntPathRequestMatcher("/doctor/**")).hasAnyRole("DOCTOR", "DOCTEUR")
-                        .requestMatchers(new AntPathRequestMatcher("/pharmasis/**")).hasRole("PHARMASIS")
-                        .requestMatchers(new AntPathRequestMatcher("/laboratory/**")).hasRole("LABORATORY")
-
-                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -129,7 +119,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:4201"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

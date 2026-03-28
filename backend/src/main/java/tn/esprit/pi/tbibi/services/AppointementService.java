@@ -56,7 +56,7 @@ public class AppointementService implements IAppointementService {
         }
 
         if (request.getUserId() != null) {
-            User patient = userRepo.findById(request.getUserId())
+            User patient = userRepo.findById(request.getUserId().longValue())
                     .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + request.getUserId()));
             appointment.setUser(patient);
             // Set patientName directly so the doctor always sees the correct name
@@ -140,9 +140,8 @@ public class AppointementService implements IAppointementService {
         mapper.updateEntityFromRequest(request, appointment);
         appointment.setSchedule(schedule);
         if (request.getUserId() != null) {
-            Integer userId = request.getUserId().intValue();
-            User patient = userRepo.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+            User patient = userRepo.findById(request.getUserId().longValue())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + request.getUserId()));
             appointment.setUser(patient);
         }
         return mapper.toResponse(appointmentRepository.save(appointment));
@@ -235,7 +234,7 @@ public class AppointementService implements IAppointementService {
         Schedule schedule = findScheduleById(req.getScheduleId());
         String patientEmail = req.getPatientEmail();
         if ((patientEmail == null || patientEmail.isBlank()) && req.getUserId() != null) {
-            patientEmail = userRepo.findById(req.getUserId()).map(User::getEmail).orElse(null);
+            patientEmail = userRepo.findById(req.getUserId().longValue()).map(User::getEmail).orElse(null);
         }
         if (patientEmail != null && !patientEmail.isBlank()) {
             try {

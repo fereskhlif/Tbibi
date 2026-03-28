@@ -9,7 +9,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = { "medicalFiles", "Orders", "Appointements" }) // Exclude collections
+@ToString(exclude = { "medicalFiles", "orders", "appointements" })
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -23,13 +23,10 @@ public class User {
     private String password;
     private String adresse;
     private String specialty;
-    private String profilPicture;
-    @Builder.Default
-    boolean enabled = true;
+    private String profilePicture;
 
     private java.time.LocalDate dateOfBirth;
     private String gender;
-    private String profilePicture;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -37,8 +34,8 @@ public class User {
     private UserStatus accountStatus = UserStatus.PENDING;
 
     @Builder.Default
-    @Column(name = "is_enabled")
-    Boolean enabled = true;
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled = true;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "patient_id")
@@ -49,11 +46,12 @@ public class User {
     private Role role;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Order> orders; // Changed to List and lowercase
+    private List<Order> orders;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
-    private List<Appointment> appointements; // Changed to List and lowercase
+    private List<Appointment> appointements;
 
     @OneToMany
+    @JoinColumn(name = "user_id")
     private List<Teleconsultation> consultationRooms;
 }

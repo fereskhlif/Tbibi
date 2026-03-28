@@ -98,6 +98,21 @@ export class LoginComponent {
         return;
       }
 
+      if (this.selectedRole === 'PATIENT') {
+        if (!this.dateOfBirth) {
+          this.errorMessage = 'Date of birth is required.';
+          return;
+        }
+        if (!this.gender) {
+          this.errorMessage = 'Gender is required.';
+          return;
+        }
+        if (!this.adresse || !this.adresse.trim()) {
+          this.errorMessage = 'Address is required.';
+          return;
+        }
+      }
+
       this.isLoading = true;
 
       const registerData: RegisterRequest = {
@@ -154,7 +169,8 @@ export class LoginComponent {
               this.errorMessage = 'Please use a different email address.';
             }
           } else {
-            this.errorMessage = error.error?.message || 'Registration failed. Please try again.';
+            const errorMsg = typeof error.error === 'string' ? error.error : error.error?.message;
+            this.errorMessage = errorMsg || 'Registration failed. Please try again.';
           }
         }
       });
@@ -197,14 +213,27 @@ export class LoginComponent {
           // Redirection
           const routes: Record<string, string> = {
             'PATIENT': '/patient',
+            'ROLE_PATIENT': '/patient',
             'DOCTEUR': '/doctor',
+            'DOCTOR': '/doctor',
+            'ROLE_DOCTEUR': '/doctor',
+            'ROLE_DOCTOR': '/doctor',
             'KINE': '/physio',
+            'PHYSIOTHERAPIST': '/physio',
+            'ROLE_KINE': '/physio',
             'PHARMASIS': '/pharmacist',
+            'PHARMACIST': '/pharmacist',
+            'ROLE_PHARMASIS': '/pharmacist',
             'LABORATORY': '/laboratory',
-            'ADMIN': '/admin/dashboard'
+            'ROLE_LABORATORY': '/laboratory',
+            'ADMIN': '/admin/dashboard',
+            'ROLE_ADMIN': '/admin/dashboard'
           };
 
-          const destination = routes[response.role] || '/';
+          // Clean up the role name
+          const roleKey = response.role ? response.role.toUpperCase().trim() : '';
+          const destination = routes[roleKey] || '/';
+          console.log(`Routing role '${roleKey}' to -> ${destination}`);
           this.router.navigateByUrl(destination);
         },
         error: (error: HttpErrorResponse) => {
@@ -212,7 +241,8 @@ export class LoginComponent {
           console.error('Login error:', error);
 
           if (error.status === 401) {
-            this.errorMessage = 'Invalid email or password.';
+            const errorMsg = typeof error.error === 'string' ? error.error : error.error?.message;
+            this.errorMessage = errorMsg || 'Invalid email or password.';
           } else {
             this.errorMessage = error.error?.message || 'Login failed. Please try again.';
           }

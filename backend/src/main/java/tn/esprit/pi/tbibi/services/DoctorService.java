@@ -33,7 +33,7 @@ public class DoctorService implements IDoctorService {
                 .email(u.getEmail())
                 .specialty(u.getSpecialty())
                 .adresse(u.getAdresse())
-                .profilPicture(u.getProfilPicture())
+                .profilPicture(u.getProfilePicture())
                 .build();
     }
 

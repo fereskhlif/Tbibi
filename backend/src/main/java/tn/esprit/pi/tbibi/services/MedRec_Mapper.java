@@ -6,7 +6,7 @@ import tn.esprit.pi.tbibi.DTO.MdicalReccordsRequest;
 import tn.esprit.pi.tbibi.DTO.MdicalReccordsResponse;
 import tn.esprit.pi.tbibi.entities.MedicalReccords;
 
-@Mapper(componentModel = "spring", uses = {Prescription_Mapper.class, Acte_Mapper.class})
+@Mapper(componentModel = "spring", uses = {Acte_Mapper.class})
 public interface MedRec_Mapper {
 
     @Mapping(target = "laboratoryResults", ignore = true)

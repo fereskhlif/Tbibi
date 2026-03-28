@@ -26,8 +26,8 @@ public class MedicalReccords {
     private String chronic_diseas;
     private String rep_doc;
     // In MedicalReccords entity
-    @OneToMany(cascade = CascadeType.ALL)
-    @JsonIgnore  // ← make sure this is there
+    @OneToMany(mappedBy = "medicalReccords", cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<Laboratory_Result> laboratoryResults;
     @Column(columnDefinition = "TEXT")
     private String imageUrl;

@@ -41,10 +41,12 @@ public class Laboratory_Result {
 
     private MedicalPictureAnalysis medicalPictureAnalysis;
     @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "lab_result_id")
+    @JsonIgnore
     private Set<User> Users;
-    // In Laboratory_Result entity — add @JsonIgnore to any back-reference
+
     @ManyToOne
     @JoinColumn(name = "medical_file_id")
-    @JsonIgnore  // ← ADD THIS if missing
+    @JsonIgnore
     private MedicalReccords medicalReccords;
 }

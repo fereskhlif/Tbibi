@@ -7,7 +7,7 @@ import { MainLayoutComponent } from '../../../../../shared/layouts/main-layout/m
 @Component({
     selector: 'app-product-details',
     template: `
-    <div class="p-8" *ngIf="product">
+    <div class="p-8" *ngIf="product as prod">
       <button (click)="goBack()" class="mb-6 flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors font-medium">
         <span>←</span> Back to Shop
       </button>
@@ -16,24 +16,24 @@ import { MainLayoutComponent } from '../../../../../shared/layouts/main-layout/m
         <div class="grid grid-cols-1 md:grid-cols-2">
           <!-- Image Section -->
           <div class="bg-gray-50 flex items-center justify-center p-12 min-h-[400px]">
-            <img *ngIf="product.image" [src]="product.image" [alt]="product.name" class="max-w-full max-h-[400px] object-contain drop-shadow-lg" />
-            <span *ngIf="!product.image" class="text-9xl">💊</span>
+            <img *ngIf="prod.image" [src]="prod.image" [alt]="prod.name" class="max-w-full max-h-[400px] object-contain drop-shadow-lg" />
+            <span *ngIf="!prod.image" class="text-9xl">💊</span>
           </div>
 
           <!-- Details Section -->
           <div class="p-8 md:p-12 flex flex-col">
             <div class="mb-auto">
               <div class="flex items-center gap-3 mb-4">
-                <span [class]="'px-3 py-1 text-sm rounded-full font-medium ' + (product.prescription ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700')">
-                  {{product.prescription ? 'Prescription Required' : 'Over the Counter'}}
+                <span [class]="'px-3 py-1 text-sm rounded-full font-medium ' + (prod.prescription ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700')">
+                  {{prod.prescription ? 'Prescription Required' : 'Over the Counter'}}
                 </span>
-                <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full font-medium">{{product.category}}</span>
+                <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full font-medium">{{prod.category}}</span>
               </div>
 
-              <h1 class="text-4xl font-bold text-gray-900 mb-4">{{product.name}}</h1>
-              <p class="text-xl text-gray-600 mb-8 leading-relaxed">{{product.description}}</p>
-              
-              <div class="text-3xl font-bold text-blue-600 mb-8">{{product.price}}</div>
+              <h1 class="text-4xl font-bold text-gray-900 mb-4">{{prod.name}}</h1>
+              <p class="text-xl text-gray-600 mb-8 leading-relaxed">{{prod.description}}</p>
+
+              <div class="text-3xl font-bold text-blue-600 mb-8">{{prod.price}}</div>
             </div>
 
             <div class="flex items-center gap-6 pt-8 border-t border-gray-100">

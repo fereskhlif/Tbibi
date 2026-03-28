@@ -24,7 +24,7 @@ public class ChronicConditionService {
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
     public ChronicConditionResponse create(ChronicConditionRequest req) {
-        User doctor = userRepo.findById(req.getDoctorId())
+        User doctor = userRepo.findById(req.getDoctorId().longValue())
                 .orElseThrow(() -> new EntityNotFoundException("Doctor not found: " + req.getDoctorId()));
 
         String severity = computeSeverity(req.getConditionType(), req.getValue(), req.getValue2());
@@ -44,7 +44,7 @@ public class ChronicConditionService {
 
         // Optionally link to a patient account if the ID is known
         if (req.getPatientId() != null) {
-            userRepo.findById(req.getPatientId()).ifPresent(p -> {
+            userRepo.findById(req.getPatientId().longValue()).ifPresent(p -> {
                 cc.setPatient(p);
                 // Use account name if no free-text name was provided
                 if (cc.getPatientName() == null || cc.getPatientName().isBlank()) {

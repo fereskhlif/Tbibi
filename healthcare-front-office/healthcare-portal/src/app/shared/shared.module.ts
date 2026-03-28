@@ -60,6 +60,7 @@ import {
     ],
     exports: [
         CommonModule,
+        RouterModule,
         FormsModule,
         LogoComponent,
         NavButtonComponent,

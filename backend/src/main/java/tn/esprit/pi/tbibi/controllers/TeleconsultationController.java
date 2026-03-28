@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/teleconsultation")
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class TeleconsultationController {
 
     private final ITeleconsultationService teleconsultationService;

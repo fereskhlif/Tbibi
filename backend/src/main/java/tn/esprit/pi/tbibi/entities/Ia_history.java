@@ -28,6 +28,7 @@ public class Ia_history {
     private String textChatbot;
     private String imageChatbot;
     @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "ia_history_id")
     private Set<Laboratory_Result> Laboratory_Results;
 
 }

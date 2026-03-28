@@ -27,8 +27,6 @@ public interface UserRepo extends JpaRepository<User, Long> {
                         "AND LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%'))", nativeQuery = true)
         List<User> searchPatientsByName(@Param("name") String name);
 
-        Optional<User> findByEmail(String email);
-
         // Returns all users whose role name contains "DOCTOR" (case-insensitive)
         @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE 'doct%'")
         List<User> findAllDoctors();

@@ -1,27 +1,8 @@
 package tn.esprit.pi.tbibi.controllers;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-import tn.esprit.pi.tbibi.DTO.AuthResponse;
-import tn.esprit.pi.tbibi.DTO.LoginRequest;
-import tn.esprit.pi.tbibi.DTO.RegisterRequest;
-import tn.esprit.pi.tbibi.security.CustomUserDetailsService;
-import tn.esprit.pi.tbibi.security.jwt.JwtService;
-import tn.esprit.pi.tbibi.services.IAuthService;
-
-import java.util.Map;
-
-@Slf4j
-@RestController
-@CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +10,8 @@ import tn.esprit.pi.tbibi.DTO.LoginRequest;
 import tn.esprit.pi.tbibi.DTO.RegisterRequest;
 import tn.esprit.pi.tbibi.services.IAuthService;
 
+@Slf4j
 @RestController
-@CrossOrigin("*")
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
@@ -45,6 +26,9 @@ public class AuthController {
             authService.register(request);
             return ResponseEntity.accepted().build();
         } catch (IllegalArgumentException e) {
+            if ("Email already used".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            }
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed.");

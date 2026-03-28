@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/consultation-rooms")
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class ConsultationRoomController {
 
     private final IConsultationRoomService consultationRoomService;

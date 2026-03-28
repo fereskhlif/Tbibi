@@ -42,17 +42,17 @@
   </ng-container>
 
   <!-- Stepper + booking flow (when doctor selected) -->
-  <ng-container *ngIf="selectedDoctor">
+  <ng-container *ngIf="selectedDoctor as doctor">
     <div class="booking-card bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden max-w-2xl mx-auto">
       <!-- Doctor header -->
       <div class="bg-blue-600 text-white p-6 flex items-center gap-4">
-        <img *ngIf="selectedDoctor.profilPicture" [src]="selectedDoctor.profilPicture" alt="" class="w-14 h-14 rounded-lg object-cover" />
-        <div *ngIf="!selectedDoctor.profilPicture" class="w-14 h-14 rounded-lg bg-white/20 flex items-center justify-center text-2xl">👨‍⚕️</div>
+        <img *ngIf="doctor.profilPicture" [src]="doctor.profilPicture" alt="" class="w-14 h-14 rounded-lg object-cover" />
+        <div *ngIf="!doctor.profilPicture" class="w-14 h-14 rounded-lg bg-white/20 flex items-center justify-center text-2xl">👨‍⚕️</div>
         <div>
-          <h2 class="font-bold text-xl">Dr {{ selectedDoctor.name }}</h2>
-          <p class="text-blue-100">{{ selectedDoctor.specialty }}</p>
-          <p *ngIf="selectedDoctor.adresse" class="text-sm flex items-center gap-1 mt-1">
-            <span>📍</span> {{ selectedDoctor.adresse }}
+          <h2 class="font-bold text-xl">Dr {{ doctor.name }}</h2>
+          <p class="text-blue-100">{{ doctor.specialty }}</p>
+          <p *ngIf="doctor.adresse" class="text-sm flex items-center gap-1 mt-1">
+            <span>📍</span> {{ doctor.adresse }}
           </p>
         </div>
       </div>
@@ -167,16 +167,16 @@
         </div>
 
         <!-- Step 3: Succès -->
-        <div *ngIf="currentStep === 3 && confirmedAppointment" class="text-center py-8">
+        <div *ngIf="currentStep === 3 && confirmedAppointment as appointment" class="text-center py-8">
           <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">🕐</div>
           <h3 class="text-xl font-bold text-gray-900 mb-2">Demande envoyée !</h3>
           <p class="text-gray-600 mb-2">Votre demande de rendez-vous a bien été reçue.</p>
           <p class="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-6">
-            ⏳ En attente de confirmation du médecin. Vous serez notifié(e) une fois que <strong>Dr {{ confirmedAppointment.doctor }}</strong> aura confirmé votre rendez-vous.
+            ⏳ En attente de confirmation du médecin. Vous serez notifié(e) une fois que <strong>Dr {{ appointment.doctor }}</strong> aura confirmé votre rendez-vous.
           </p>
           <div class="bg-blue-50 rounded-xl p-4 mb-6 text-left">
-            <p><strong>Dr {{ confirmedAppointment.doctor }}</strong> - {{ confirmedAppointment.specialty }}</p>
-            <p class="text-sm text-gray-600 mt-1">{{ confirmedAppointment.scheduleDate }} à {{ (confirmedAppointment.scheduleTime || '').toString().substring(0, 5) }}</p>
+            <p><strong>Dr {{ appointment.doctor }}</strong> - {{ appointment.specialty }}</p>
+            <p class="text-sm text-gray-600 mt-1">{{ appointment.scheduleDate }} à {{ (appointment.scheduleTime || '').toString().substring(0, 5) }}</p>
             <span class="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">EN ATTENTE</span>
           </div>
           <div class="flex justify-center gap-2">
