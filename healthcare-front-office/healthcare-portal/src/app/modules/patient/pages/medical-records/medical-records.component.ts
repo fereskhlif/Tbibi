@@ -29,8 +29,6 @@ export class MedicalRecordsComponent implements OnInit {
   imagePreviewUrl: string | null = null;  // base64 preview + sent as JSON field
 
   formMedicalRecord = new FormGroup({
-    imageLabo:        new FormControl(''),
-    result_ia:        new FormControl(''),
     medical_historuy: new FormControl('', [Validators.required, Validators.minLength(4)]),
     chronic_diseas:   new FormControl(''),
   });
@@ -116,8 +114,6 @@ export class MedicalRecordsComponent implements OnInit {
     this.imagePreviewUrl   = record.imageUrl ?? null;
 
     this.formMedicalRecord.patchValue({
-      imageLabo:        record.imageLabo,
-      result_ia:        record.result_ia,
       medical_historuy: record.medical_historuy,
       chronic_diseas:   record.chronic_diseas,
     });
@@ -167,7 +163,7 @@ export class MedicalRecordsComponent implements OnInit {
     }
 
     if (this.isEditing && this.editId !== null) {
-      this.service.updateMyRecord(payload).subscribe({
+      this.service.update(this.editId, payload).subscribe({
         next: (updated: any) => {
           const rec = this.buildRecord(updated, payload);
           this.records = this.records.map(r => r.medicalfile_id === this.editId ? rec : r);

@@ -80,3 +80,21 @@
 .rotate-180 {
   transform: rotate(180deg);
 }
+
+/* ── Table Styles (ported from Doctor UI) ── */
+.tbl-card { background:#fff;border-radius:18px;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,.06);overflow:hidden; }
+.ptbl { width:100%;border-collapse:collapse; }
+.ptbl thead tr { background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%); }
+.ptbl th { padding:1rem 1.25rem;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.9);white-space:nowrap; }
+.ptbl td { padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9; vertical-align: middle; }
+.prow { cursor:pointer;transition:background .15s; }
+.prow:hover { background:#f5f3ff; }
+.dos-badge { display:inline-flex;align-items:center;background:#ede9fe;color:#7c3aed;font-size:.8rem;font-weight:700;padding:.25rem .65rem;border-radius:8px; }
+
+/* Status tag & Sub-text */
+.ch-tag { display:inline-flex;align-items:center;padding:.3rem .65rem;border-radius:8px;font-size:.75rem;font-weight:700; }
+.em { color:#64748b;font-size:.8rem; }
+.med-count { font-size:.8rem;font-weight:500;color:#374151; }
+
+.empty-state { text-align:center;padding:2rem;color:#94a3b8;font-size:.85rem; }
+.empty-state svg { width:32px;height:32px;margin:0 auto .5rem; }

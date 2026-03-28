@@ -1,14 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-  ActeDTO,
-  PrescriptionRequest,
-  PrescriptionResponse,
-  PrescriptionService,
-  PrescriptionStatus,
-  STATUS_META,
-} from '../../../../services/prescription-service.service';
+import { ActeDTO, PrescriptionRequest, PrescriptionResponse, PrescriptionService, PrescriptionStatus, STATUS_META } from '../../../../services/prescription-service.service';
 import { interval, Subscription } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import jsPDF from 'jspdf';
 
 @Component({
   selector: 'app-prescriptions',
@@ -181,6 +175,65 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
         error: () => alert('Erreur lors de la suppression')
       });
     }
+  }
+
+  exportToPDF(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text('Ordonnance Médicale', 105, 20, { align: 'center' });
+    
+    // Prescription details
+    doc.setFontSize(12);
+    doc.setTextColor(71, 85, 105); // slate-500
+    doc.text(`Prescription #${rx.prescriptionID}`, 20, 40);
+    doc.text(`Date : ${new Date(rx.date).toLocaleDateString('fr-FR')}`, 20, 48);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Médecin : Dr. ${rx.doctorName || 'Non affecté'}`, 20, 60);
+    
+    doc.setFontSize(12);
+    doc.text('Note / Instructions :', 20, 75);
+    doc.setFontSize(11);
+    doc.setTextColor(100, 116, 139);
+    doc.text(rx.note || 'Aucune note.', 20, 82, { maxWidth: 170 });
+    
+    // Medicines List
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Médicaments prescrits :', 20, 105);
+    
+    doc.setFontSize(12);
+    let y = 115;
+    if (rx.medicines && rx.medicines.length > 0) {
+      rx.medicines.forEach((m, index) => {
+        doc.setTextColor(59, 130, 246); // blue-500
+        doc.text(`• ${m.medicineName}`, 25, y);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Quantité : ${m.quantity}`, 140, y);
+        y += 10;
+        
+        // Add page if too long
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+    } else {
+      doc.setTextColor(100, 116, 139);
+      doc.text('Aucun médicament prescrit.', 25, y);
+    }
+    
+    // Footer
+    doc.setFontSize(10);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text('Document généré via le portail Tbibi.', 105, 285, { align: 'center' });
+    
+    doc.save(`Prescription_${rx.prescriptionID}.pdf`);
   }
 
   showActesForRx(rx: PrescriptionResponse, event?: Event): void {
