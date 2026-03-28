@@ -94,110 +94,49 @@
     </p>
   </div>
 
-  <!-- ── Prescription cards ─────────────────────────────────────────────────── -->
-  <div class="space-y-3" *ngIf="!loading">
-    <div *ngFor="let rx of filtered; trackBy: trackById; let i = index"
-      class="rx-card bg-white rounded-xl border border-gray-200 overflow-hidden"
-      [style.animation-delay]="(i * 60) + 'ms'">
-
-      <!-- Card header -->
-      <div class="p-5 flex items-start gap-4">
-
-        <!-- Icon -->
-        <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
-          [style.background]="STATUS_META[rx.status]?.bg ?? '#f3f4f6'">
-          {{STATUS_META[rx.status]?.icon ?? '💊'}}
-        </div>
-
-        <!-- Info -->
-        <div class="flex-1 min-w-0">
-          <div class="flex flex-wrap items-center gap-2 mb-1">
-            <h3 class="font-bold text-gray-900">Prescription #{{rx.prescriptionID}}</h3>
-            <!-- Status badge -->
-            <span class="px-2.5 py-0.5 text-xs rounded-full font-semibold"
-              [class.status-pending]="rx.status === 'PENDING'"
-              [style.background]="STATUS_META[rx.status]?.bg"
-              [style.color]="STATUS_META[rx.status]?.color"
-              [style.border]="'1px solid ' + (STATUS_META[rx.status]?.border ?? '#e5e7eb')">
-              {{STATUS_META[rx.status]?.icon}} {{STATUS_META[rx.status]?.label}}
+  <!-- ── Prescription table (Doctor style) ──────────────────────────────────── -->
+  <div class="tbl-card" *ngIf="!loading && filtered.length > 0">
+    <table class="ptbl">
+      <thead><tr>
+        <th>ID</th><th>Médecin / Date</th><th>Médicaments</th><th>Statut</th><th>Dernière màj</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        <tr *ngFor="let rx of filtered; trackBy: trackById" class="prow" (click)="openDetail(rx, $event)">
+          <td><span class="dos-badge">#{{rx.prescriptionID}}</span></td>
+          <td>
+            <div style="display:flex; align-items:center; gap:.75rem;">
+              <div style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"
+                   [style.background]="STATUS_META[rx.status].bg ?? '#f3f4f6'">
+                {{STATUS_META[rx.status].icon ?? '💊'}}
+              </div>
+              <div style="display:flex; flex-direction:column">
+                <span style="font-weight:600; color:#1e293b">{{rx.doctorName ? 'Dr. ' + rx.doctorName : 'Non affecté'}}</span>
+                <span class="em" style="font-size:0.75rem">{{rx.date | date: 'dd MMM yyyy'}}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span *ngIf="rx.medicines?.length" class="med-count">💊 {{rx.medicines.length}} médicament(s)</span>
+            <span *ngIf="!rx.medicines?.length" class="em">Aucun médicament</span>
+          </td>
+          <td>
+            <span class="ch-tag"
+              [style.background]="STATUS_META[rx.status].bg"
+              [style.color]="STATUS_META[rx.status].color">
+              {{STATUS_META[rx.status].label}}
             </span>
-          </div>
-
-          <p class="text-sm text-gray-600 truncate mb-1.5">{{rx.note || '—'}}</p>
-
-          <div class="flex flex-wrap gap-3 text-xs text-gray-400">
-            <span>📅 {{rx.date | date: 'dd MMM yyyy'}}</span>
-            <span *ngIf="rx.doctorName" class="text-indigo-600 font-medium">
-              👨‍⚕️ Dr. {{rx.doctorName}}
-            </span>
-            <span *ngIf="rx.statusUpdatedAt">
-              🔄 màj {{rx.statusUpdatedAt | date: 'dd MMM, HH:mm'}}
-            </span>
-            <span *ngIf="rx.medicines?.length">
-              💊 {{rx.medicines.length}} médicament(s)
-            </span>
-          </div>
-
-          <!-- Medicine tags -->
-          <div class="mt-2 flex flex-wrap gap-1" *ngIf="rx.medicines?.length">
-            <span *ngFor="let m of rx.medicines.slice(0, 4)"
-              class="inline-block bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full border border-blue-100">
-              {{m.medicineName}} ×{{m.quantity}}
-            </span>
-            <span *ngIf="rx.medicines.length > 4" class="text-xs text-gray-400 py-0.5">
-              +{{rx.medicines.length - 4}} autres
-            </span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Mini progress bar (always visible, only for non-cancelled) -->
-      <div *ngIf="rx.status !== 'CANCELLED'" class="px-5 pb-3">
-        <div class="progress-track h-8">
-          <div class="progress-fill"
-            [style.width]="(stepOf(rx.status) >= 0 ? ((stepOf(rx.status)) / (STEPS.length - 1)) * 100 : 0) + '%'">
-          </div>
-          <div *ngFor="let step of STEPS; let si = index" class="step-dot"
-            [style.background]="si <= stepOf(rx.status) ? STATUS_META[step].color : '#e5e7eb'"
-            [style.color]="si <= stepOf(rx.status) ? 'white' : '#9ca3af'"
-            [title]="STATUS_META[step].label">
-            {{si <= stepOf(rx.status) ? '✓' : (si + 1)}}
-          </div>
-        </div>
-        <div class="flex justify-between mt-0.5">
-          <span *ngFor="let step of STEPS" class="text-[10px] text-gray-400 text-center" style="flex:1">
-            {{STATUS_META[step].label}}
-          </span>
-        </div>
-      </div>
-
-      <!-- Cancelled banner -->
-      <div *ngIf="rx.status === 'CANCELLED'"
-        class="mx-5 mb-3 px-3 py-2 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-medium flex items-center gap-2">
-        ❌ Cette prescription a été annulée
-      </div>
-
-      <!-- Card Action Buttons -->
-      <div class="border-t border-gray-100 bg-gray-50 px-5 py-3 flex flex-wrap gap-2">
-        <button (click)="openDetail(rx, $event)"
-          class="px-3.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors flex items-center gap-1.5">
-          🔍 Voir les détails
-        </button>
-        <button (click)="openEditModal(rx, $event)"
-          class="px-3.5 py-1.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors flex items-center gap-1.5">
-          ✏️ Modifier
-        </button>
-        <button (click)="deletePrescription(rx.prescriptionID, $event)"
-          class="px-3.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors flex items-center gap-1.5">
-          🗑️ Supprimer
-        </button>
-        <button (click)="showActesForRx(rx, $event)"
-          class="px-3.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5">
-          🩺 Actes
-        </button>
-      </div>
-    </div>
+          </td>
+          <td class="em">
+            {{rx.statusUpdatedAt ? (rx.statusUpdatedAt | date: 'dd MMM, HH:mm') : '—'}}
+          </td>
+          <td style="display:flex; gap:0.5rem; align-items:center;">
+            <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:linear-gradient(135deg,#0ea5e9,#3b82f6); color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="openDetail(rx, $event); $event.stopPropagation()">🔍 Voir</button>
+            <button class="btn-cancel" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:#4f46e5; color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="showActesForRx(rx, $event); $event.stopPropagation()">🩺 Actes</button>
+            <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:linear-gradient(135deg,#ec4899,#e11d48); color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="exportToPDF(rx, $event); $event.stopPropagation()">📄 PDF</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
 

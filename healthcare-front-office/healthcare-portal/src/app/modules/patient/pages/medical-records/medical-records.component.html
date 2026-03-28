@@ -171,14 +171,6 @@
       <div class="mb">
         <form [formGroup]="formMedicalRecord">
           <div class="fg">
-            <label class="fl">Image / Laboratoire (Lecture seule)</label>
-            <input formControlName="imageLabo" class="form-inp" style="background:#f1f5f9; color:#94a3b8" readonly/>
-          </div>
-          <div class="fg">
-            <label class="fl">Résultat IA (Lecture seule)</label>
-            <input formControlName="result_ia" class="form-inp" style="background:#f1f5f9; color:#94a3b8" readonly/>
-          </div>
-          <div class="fg">
             <label class="fl">Historique médical *</label>
             <textarea formControlName="medical_historuy" class="form-ta" rows="3" placeholder="Décrivez l'historique..."></textarea>
             <p *ngIf="formMedicalRecord.controls['medical_historuy'].invalid && formMedicalRecord.controls['medical_historuy'].touched"

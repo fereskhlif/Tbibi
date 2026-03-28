@@ -10,7 +10,7 @@ import { MedicalRecordsServiceService } from '../../../../services/medical-recor
 const mockService = {
   getMyRecord:        jasmine.createSpy('getMyRecord').and.returnValue(of([])),
   add:                jasmine.createSpy('add'),
-  updateMyRecord:     jasmine.createSpy('updateMyRecord'),
+  update:             jasmine.createSpy('update'),
   delete:             jasmine.createSpy('delete'),
   uploadPatientImage: jasmine.createSpy('uploadPatientImage'),
   deletePatientImage: jasmine.createSpy('deletePatientImage'),
@@ -51,7 +51,7 @@ describe('MedicalRecordsComponent', () => {
   beforeEach(async () => {
     mockService.getMyRecord.calls.reset();
     mockService.add.calls.reset();
-    mockService.updateMyRecord.calls.reset();
+    mockService.update.calls.reset();
     mockService.delete.calls.reset();
     mockService.uploadPatientImage.calls.reset();
     mockService.deletePatientImage.calls.reset();
@@ -125,7 +125,7 @@ describe('MedicalRecordsComponent', () => {
     it('doit afficher un message d\'erreur en cas d\'échec', () => {
       mockService.getMyRecord.and.returnValue(throwError(() => ({ status: 500 })));
       component.loadRecords();
-      expect(component.errorMessage).toBe('Impossible de charger les dossiers médicaux.');
+      expect(component.errorMessage).toBe('Impossible de charger vos dossiers médicaux.');
       expect(component.records).toEqual([]);
     });
 
@@ -387,7 +387,7 @@ describe('MedicalRecordsComponent', () => {
     });
 
     it('imageLabo est optionnel (lecture seule, pas de validator required)', () => {
-      component.formMedicalRecord.patchValue({ imageLabo: '', medical_historuy: 'Historique valide' });
+      component.formMedicalRecord.patchValue({ medical_historuy: 'Historique valide' });
       expect(component.formMedicalRecord.valid).toBeTrue();
     });
   });
@@ -452,27 +452,27 @@ describe('MedicalRecordsComponent', () => {
       });
     });
 
-    it('doit appeler service.updateMyRecord()', () => {
-      mockService.updateMyRecord.and.returnValue(of({ ...mockRecord }));
+    it('doit appeler service.update()', () => {
+      mockService.update.and.returnValue(of({ ...mockRecord }));
       component.saveForm();
-      expect(mockService.updateMyRecord).toHaveBeenCalledTimes(1);
+      expect(mockService.update).toHaveBeenCalledTimes(1);
     });
 
     it('doit mettre à jour le record correspondant dans la liste par medicalfile_id', () => {
-      mockService.updateMyRecord.and.returnValue(of({ ...mockRecord, medical_historuy: 'Historique modifié', type: 'Lab Reports' }));
+      mockService.update.and.returnValue(of({ ...mockRecord, medical_historuy: 'Historique modifié', type: 'Lab Reports' }));
       component.saveForm();
       expect(component.records[0].medical_historuy).toBe('Historique modifié');
     });
 
     it('doit mettre à jour selectedRecord si le même record est affiché', () => {
       component.selectedRecord = { ...mockRecord };
-      mockService.updateMyRecord.and.returnValue(of({ ...mockRecord, type: 'Lab Reports' }));
+      mockService.update.and.returnValue(of({ ...mockRecord, type: 'Lab Reports' }));
       component.saveForm();
       expect(component.selectedRecord).toBeDefined();
     });
 
     it('doit fermer le formulaire après succès', () => {
-      mockService.updateMyRecord.and.returnValue(of({ ...mockRecord }));
+      mockService.update.and.returnValue(of({ ...mockRecord }));
       component.saveForm();
       expect(component.showForm).toBeFalse();
     });
@@ -486,6 +486,7 @@ describe('MedicalRecordsComponent', () => {
 
     beforeEach(() => {
       component.records = [{ ...mockRecord }, { ...mockRecordAbnormal }];
+      mockService.getMyRecord.and.returnValue(of([{ ...mockRecordAbnormal }]));
       spyOn(window, 'confirm').and.returnValue(true);
     });
 
