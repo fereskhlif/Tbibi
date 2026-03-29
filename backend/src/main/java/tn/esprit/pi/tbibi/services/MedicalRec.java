@@ -235,12 +235,19 @@ public class MedicalRec implements IMedicalReccordsService {
             if (record.getActes() != null) {
                 record.getActes().forEach(acte -> {
                     if (acte.getPrescriptions() != null) {
+                        String docName = "Inconnu";
+                        if (acte.getDoctorId() != null) {
+                            User doc = userRepo.findById(acte.getDoctorId().longValue()).orElse(null);
+                            if (doc != null) docName = doc.getName();
+                        }
+                        final String finalDocName = docName;
                         acte.getPrescriptions().forEach(p -> {
                             prescriptions.add(new tn.esprit.pi.tbibi.DTO.PrescriptionMinimalDTO(
                                     p.getPrescriptionID(),
                                     p.getNote(),
                                     p.getDate(),
-                                    p.getStatus()
+                                    p.getStatus(),
+                                    finalDocName
                             ));
                         });
                     }

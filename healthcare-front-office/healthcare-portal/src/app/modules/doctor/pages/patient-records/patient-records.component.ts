@@ -1,13 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { debounceTime, Subject, interval, Subscription } from 'rxjs';
+import { PrescriptionService, PrescriptionResponse } from '../../../../services/prescription-service.service';
 
 export interface PrescriptionMinimalDTO {
   prescriptionId: number;
   note: string;
   date: string;
   status: string;
+  doctorName?: string;
 }
 
 export interface PatientRecordDTO {
@@ -54,7 +56,7 @@ export interface HistoryRequest {
   templateUrl: './patient-records.component.html',
   styleUrls: ['./patient-records.component.css']
 })
-export class PatientRecordsComponent implements OnInit {
+export class PatientRecordsComponent implements OnInit, OnDestroy {
 
   // ── Liste & Recherche ──────────────────────────────────────────────────────
   searchTerm = '';
@@ -62,6 +64,7 @@ export class PatientRecordsComponent implements OnInit {
   loading = false;
   error = '';
   sk = Array(5);
+  pollSub?: Subscription;
 
   // ── Modal principal ────────────────────────────────────────────────────────
   showModal = false;
@@ -74,8 +77,7 @@ export class PatientRecordsComponent implements OnInit {
   fullRecord: any = null;
   loadingFullRecord = false;
 
-  // ── Panneau dossier médical (collapsible) ──────────────────────────────────
-  showMedicalRecordSum = false;
+  showMedicalRecordSum = true;
 
   // ── Formulaire de visite ───────────────────────────────────────────────────
   form: HistoryRequest = {
@@ -104,9 +106,11 @@ export class PatientRecordsComponent implements OnInit {
 
   private search$ = new Subject<string>();
   private api = `${environment.baseUrl}/medical-records`;
-  private pollSub?: Subscription;
+  // ── Prescription details modal ──────────────────────────────────────────────
+  selectedPrescription: PrescriptionResponse | null = null;
+  loadingPrescription = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private prescriptionService: PrescriptionService) {}
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -186,6 +190,24 @@ export class PatientRecordsComponent implements OnInit {
     } else {
       this.form.prescriptions.push(id);
     }
+  }
+
+  openPrescription(id: number): void {
+    this.loadingPrescription = true;
+    this.prescriptionService.getById(id).subscribe({
+      next: (data) => {
+        this.selectedPrescription = data;
+        this.loadingPrescription = false;
+      },
+      error: (err) => {
+        console.error('Failed to load prescription', err);
+        this.loadingPrescription = false;
+      }
+    });
+  }
+
+  closePrescription(): void {
+    this.selectedPrescription = null;
   }
 
   // ── Dossier complet ────────────────────────────────────────────────────────
