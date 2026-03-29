@@ -147,8 +147,8 @@ export class AdminApprovalsComponent implements OnInit {
     if (!profilePicture) return '';
     // Already a full URL
     if (profilePicture.startsWith('http')) return profilePicture;
-    // Path stored as 'uploads/profiles/xxx.ext' — serve via backend
-    const cleanPath = profilePicture.startsWith('/') ? profilePicture : '/' + profilePicture;
-    return `${environment.baseUrl}${cleanPath}`;
+    // Path stored as just filename, serve via backend static handler
+    const filename = profilePicture.replace(/^.*[\\/]/, '');
+    return `${environment.baseUrl}/uploads/profiles/${filename}`;
   }
 }
