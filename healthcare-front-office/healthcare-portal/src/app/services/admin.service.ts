@@ -12,6 +12,7 @@ export interface AdminUser {
   gender: string;
   accountStatus: 'PENDING' | 'ACTIVE' | 'BLOCKED' | 'REJECTED';
   enabled: boolean;
+  profilePicture?: string;
 }
 
 export interface AdminStats {

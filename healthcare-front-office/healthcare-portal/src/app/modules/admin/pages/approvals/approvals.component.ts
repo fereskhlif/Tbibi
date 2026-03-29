@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService, AdminUser } from '../../../../services/admin.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-admin-approvals',
@@ -49,14 +50,11 @@ import { AdminService, AdminUser } from '../../../../services/admin.service';
           </div>
         </div>
 
-        <!-- Document Verification Box (Mocked visually) -->
-        <div class="mb-6 border border-dashed border-blue-200 bg-blue-50 rounded-xl p-4 flex items-center gap-3">
+        <!-- Document Verification Button -->
+        <button (click)="openDiploma(user, $event)" class="w-full mb-6 flex items-center justify-center gap-3 border-2 border-blue-300 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 transition-all rounded-xl p-4 cursor-pointer select-none font-medium text-blue-600">
           <span class="text-2xl">📄</span>
-          <div class="flex-1">
-            <p class="text-xs font-bold text-blue-800">Diplôme / Certificat (PJ)</p>
-            <a href="#" class="text-xs text-blue-600 underline hover:text-blue-700">document_verification.pdf</a>
-          </div>
-        </div>
+          <span>Diplôme / Certificat (PJ) - Ouvrir le document</span>
+        </button>
 
         <!-- Action Buttons -->
         <div class="flex gap-3">
@@ -134,5 +132,27 @@ export class AdminApprovalsComponent implements OnInit {
         this.pendingUsers = this.pendingUsers.filter(u => u.userId !== userId);
       }
     });
+  }
+
+  dummyClick(event: Event): void {
+    event.preventDefault();
+    window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
+  }
+
+  getDiplomaUrl(profilePicture: string): string {
+    if (!profilePicture) return '';
+    // Already a full URL
+    if (profilePicture.startsWith('http')) return profilePicture;
+    // If it's just a UUID or filename, construct the file download URL
+    return `${environment.baseUrl}/documents/${profilePicture}`;
+  }
+
+  openDiploma(user: AdminUser, event: Event): void {
+    if (user.profilePicture) {
+      window.open(this.getDiplomaUrl(user.profilePicture), '_blank');
+    } else {
+      // Si pas de diplôme, ouvrir un PDF de test
+      window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
+    }
   }
 }

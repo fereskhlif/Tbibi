@@ -22,4 +22,5 @@ public class UserAdminResponse {
     private String gender;
     private UserStatus accountStatus;
     private Boolean enabled;
+    private String profilePicture;
 }
