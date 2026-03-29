@@ -144,7 +144,7 @@ export class AdminApprovalsComponent implements OnInit {
     // Already a full URL
     if (profilePicture.startsWith('http')) return profilePicture;
     // If it's just a UUID or filename, construct the file download URL
-    return `${environment.baseUrl}/documents/${profilePicture}`;
+    return `${environment.baseUrl}/uploads/profiles/${profilePicture}`;
   }
 
   openDiploma(user: AdminUser, event: Event): void {
