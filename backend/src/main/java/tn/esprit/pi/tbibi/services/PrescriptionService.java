@@ -129,7 +129,7 @@ public class PrescriptionService implements IPrescriptionService {
     private User findPatientByActe(Acte acte) {
         if (acte == null || acte.getMedicalFile() == null) return null;
         int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
-        return userRepository.findUserByMedicalFileId(medicalFileId).orElse(null);
+        return userRepository.findPatientByMedicalFileId(medicalFileId).orElse(null);
     }
 
     // AJOUTER cette méthode privée pour enrichir le DTO avec les infos patient

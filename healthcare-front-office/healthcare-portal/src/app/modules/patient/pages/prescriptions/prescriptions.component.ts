@@ -180,60 +180,114 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
   exportToPDF(rx: PrescriptionResponse, event?: Event): void {
     event?.stopPropagation();
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
     
-    // Header
-    doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.text('Ordonnance Médicale', 105, 20, { align: 'center' });
+    // Header background
+    doc.setFillColor(14, 165, 233); // Cyan-500
+    doc.rect(0, 0, pageWidth, 35, 'F');
     
-    // Prescription details
-    doc.setFontSize(12);
-    doc.setTextColor(71, 85, 105); // slate-500
-    doc.text(`Prescription #${rx.prescriptionID}`, 20, 40);
-    doc.text(`Date : ${new Date(rx.date).toLocaleDateString('fr-FR')}`, 20, 48);
-    
-    doc.setFontSize(14);
-    doc.setTextColor(15, 23, 42);
-    doc.text(`Médecin : Dr. ${rx.doctorName || 'Non affecté'}`, 20, 60);
-    
-    doc.setFontSize(12);
-    doc.text('Note / Instructions :', 20, 75);
-    doc.setFontSize(11);
+    // Header Text
+    doc.setFontSize(24);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text("Medical Prescription", pageWidth / 2, 22, { align: "center" });
+
+    // Prescription Meta
+    doc.setFontSize(10);
     doc.setTextColor(100, 116, 139);
-    doc.text(rx.note || 'Aucune note.', 20, 82, { maxWidth: 170 });
-    
-    // Medicines List
+    doc.setFont("helvetica", "normal");
+    const dateStr = rx.date ? new Date(rx.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown Date';
+    doc.text(`Date: ${dateStr}`, 14, 50);
+    doc.text(`Prescription ID: #${rx.prescriptionID}`, pageWidth - 14, 50, { align: "right" });
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, 55, pageWidth - 14, 55);
+
+    // Doctor & Patient Info Block
     doc.setFontSize(14);
     doc.setTextColor(15, 23, 42);
-    doc.text('Médicaments prescrits :', 20, 105);
+    doc.setFont("helvetica", "bold");
+    doc.text("Prescribing Doctor", 14, 68);
+    doc.text("Patient Information", pageWidth / 2, 68);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Dr. ${rx.doctorName || 'Not Assigned'}`, 14, 76);
+    doc.text(`Patient: ${rx.patientName || 'Tbibi Patient'}`, pageWidth / 2, 76);
+
+    doc.line(14, 85, pageWidth - 14, 85);
+
+    // Note Section
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.text("Medical Notes & Instructions", 14, 98);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    const splitNote = doc.splitTextToSize(rx.note || 'No additional notes provided.', pageWidth - 28);
+    doc.text(splitNote, 14, 106);
     
-    doc.setFontSize(12);
-    let y = 115;
+    // Calculate new Y after notes
+    let currentY = 106 + (splitNote.length * 5) + 8;
+    doc.line(14, currentY, pageWidth - 14, currentY);
+
+    // Medicines List
+    currentY += 12;
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.text("Prescribed Medicines", 14, currentY);
+
+    currentY += 10;
     if (rx.medicines && rx.medicines.length > 0) {
-      rx.medicines.forEach((m, index) => {
-        doc.setTextColor(59, 130, 246); // blue-500
-        doc.text(`• ${m.medicineName}`, 25, y);
-        doc.setTextColor(71, 85, 105);
-        doc.text(`Quantité : ${m.quantity}`, 140, y);
-        y += 10;
-        
-        // Add page if too long
-        if (y > 270) {
+      // Table Header
+      doc.setFillColor(241, 245, 249); // slate-100
+      doc.rect(14, currentY, pageWidth - 28, 10, 'F');
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "bold");
+      doc.text("Medicine Name", 20, currentY + 7);
+      doc.text("Quantity", pageWidth - 20, currentY + 7, { align: "right" });
+      
+      currentY += 16;
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold"); // slight bold for meds
+      
+      rx.medicines.forEach((m) => {
+        // Add page if near bottom
+        if (currentY > 270) {
           doc.addPage();
-          y = 20;
+          currentY = 20;
         }
+        
+        doc.setTextColor(14, 165, 233); // cyan-500
+        doc.text(`• ${m.medicineName}`, 16, currentY);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`x${m.quantity}`, pageWidth - 20, currentY, { align: "right" });
+        currentY += 10;
       });
     } else {
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "italic");
       doc.setTextColor(100, 116, 139);
-      doc.text('Aucun médicament prescrit.', 25, y);
+      doc.text("No medicines prescribed.", 14, currentY);
+      currentY += 10;
+    }
+
+    // Footer
+    const totalPages = (<any>doc.internal).getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setTextColor(148, 163, 184);
+        doc.text('Document digitally generated securely via Tbibi Healthcare Portal.', pageWidth / 2, 285, { align: 'center' });
     }
     
-    // Footer
-    doc.setFontSize(10);
-    doc.setTextColor(148, 163, 184); // slate-400
-    doc.text('Document généré via le portail Tbibi.', 105, 285, { align: 'center' });
-    
-    doc.save(`Prescription_${rx.prescriptionID}.pdf`);
+    doc.save(`Medical_Prescription_${rx.prescriptionID}.pdf`);
   }
 
   showActesForRx(rx: PrescriptionResponse, event?: Event): void {

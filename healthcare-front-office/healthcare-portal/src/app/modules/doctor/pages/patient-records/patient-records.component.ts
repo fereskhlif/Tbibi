@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-import { debounceTime, Subject } from 'rxjs';
+import { debounceTime, Subject, interval, Subscription } from 'rxjs';
 
 export interface PrescriptionMinimalDTO {
   prescriptionId: number;
@@ -104,13 +104,30 @@ export class PatientRecordsComponent implements OnInit {
 
   private search$ = new Subject<string>();
   private api = `${environment.baseUrl}/medical-records`;
+  private pollSub?: Subscription;
 
   constructor(private http: HttpClient) {}
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   ngOnInit(): void {
-    this.search$.pipe(debounceTime(400)).subscribe(t => this.fetch(t));
+    this.search$.pipe(debounceTime(400)).subscribe(t => {
+      this.searchTerm = t;
+      this.fetch(t);
+    });
     this.fetch('');
+    
+    // Polling pour actualiser la liste automatiquement
+    this.pollSub = interval(30_000).subscribe(() => {
+      if (!this.showModal && !this.loading) {
+        this.fetchQuietly(this.searchTerm);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollSub) {
+      this.pollSub.unsubscribe();
+    }
   }
 
   // ── Recherche ──────────────────────────────────────────────────────────────
@@ -124,6 +141,13 @@ export class PatientRecordsComponent implements OnInit {
     this.http.get<PatientRecordDTO[]>(`${this.api}/patients/search?name=${encodeURIComponent(name)}`).subscribe({
       next: d => { this.patients = d; this.loading = false; },
       error: e => { this.error = 'Erreur chargement patients.'; this.loading = false; console.error(e); }
+    });
+  }
+  
+  fetchQuietly(name: string): void {
+    this.http.get<PatientRecordDTO[]>(`${this.api}/patients/search?name=${encodeURIComponent(name)}`).subscribe({
+      next: d => { this.patients = d; },
+      error: e => { console.error('Erreur refresh auto:', e); }
     });
   }
 
@@ -167,7 +191,7 @@ export class PatientRecordsComponent implements OnInit {
   // ── Dossier complet ────────────────────────────────────────────────────────
   openFullRecordTab(): void {
     this.tab = 'full';
-    if (!this.fullRecord && this.sel) {
+    if (this.sel) {
       this.loadingFullRecord = true;
       this.http.get(`${this.api}/${this.sel.medicalFileId}`).subscribe({
         next: (res) => { this.fullRecord = res; this.loadingFullRecord = false; },

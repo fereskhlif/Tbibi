@@ -141,42 +141,6 @@
           <div class="ii"><label>Chronic Disease</label><div class="iv">{{ sel?.chronicDisease || '—' }}</div></div>
         </div>
 
-        <!-- Collapsible Medical Record Section -->
-        <div class="expandable-panel" [class.open]="showMedicalRecordSum">
-          <button class="ep-hdr" (click)="showMedicalRecordSum = !showMedicalRecordSum">
-            <div class="ep-hdr-left">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3 12.75h6m-6-3h6M5.25 18.75h-.75A2.25 2.25 0 012.25 16.5V7.5A2.25 2.25 0 014.5 5.25h9a2.25 2.25 0 012.25 2.25v1.5"/>
-              </svg>
-              <span>View medical record</span>
-            </div>
-            <svg class="ep-arr" [class.rotate-180]="showMedicalRecordSum" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
-            </svg>
-          </button>
-          <div class="ep-body" *ngIf="showMedicalRecordSum">
-            <h4 class="ep-title">Existing Prescriptions</h4>
-            <div *ngIf="!sel?.existingPrescriptions?.length" class="text-xs text-gray-500 mb-4">No active prescriptions.</div>
-            <div *ngIf="sel?.existingPrescriptions?.length" class="pr-list-sm mb-4">
-              <div *ngFor="let pr of sel!.existingPrescriptions" class="pr-item-sm !border-blue-200 !bg-blue-50">
-                <strong>Prescription #{{pr.prescriptionId}}</strong> - {{ pr.date | date:'dd/MM/yyyy' }}
-                <span *ngIf="pr.note">({{pr.note}})</span>
-              </div>
-            </div>
-            <h4 class="ep-title">Visit History</h4>
-            <div *ngIf="histEntries.length === 0" class="text-xs text-gray-500">No past visits.</div>
-            <div *ngIf="histEntries.length > 0" class="mini-hist">
-              <div *ngFor="let entry of histEntries; let i = index" class="hist-card-sm">
-                <div class="hc-header-sm">
-                  <span class="hc-num">Visit #{{ histEntries.length - i }}</span>
-                  <span class="hc-date">{{ extractDate(entry) }}</span>
-                </div>
-                <pre class="hc-body-sm">{{ stripDate(entry) }}</pre>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Category dropdown -->
         <div class="fg">
           <label class="fl">
@@ -280,11 +244,11 @@
           </div>
         </div>
         <div class="fg">
-          <div class="vaccin-list" *ngIf="form.appareilUrinaire || form.urinaryExams.length > 0">
+          <div class="vaccin-list" *ngIf="form.appareilUrinaire">
             <div class="vaccin-item" style="border-left-color: #0ea5e9;">
               <div class="vi-info">
                 <strong>Urinary Details Recorded</strong>
-                <p>{{ form.urinaryExams.length }} exam(s) saved in the table.</p>
+                <p>Observations saved.</p>
               </div>
             </div>
           </div>
@@ -343,6 +307,43 @@
 
       <!-- ── FULL RECORD TAB ── -->
       <div class="mb" *ngIf="tab==='full'">
+
+        <!-- Collapsible Medical Record Section (Moved from New Visit tab) -->
+        <div class="expandable-panel" [class.open]="showMedicalRecordSum">
+          <button class="ep-hdr" (click)="showMedicalRecordSum = !showMedicalRecordSum">
+            <div class="ep-hdr-left">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3 12.75h6m-6-3h6M5.25 18.75h-.75A2.25 2.25 0 012.25 16.5V7.5A2.25 2.25 0 014.5 5.25h9a2.25 2.25 0 012.25 2.25v1.5"/>
+              </svg>
+              <span>View medical record</span>
+            </div>
+            <svg class="ep-arr" [class.rotate-180]="showMedicalRecordSum" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </button>
+          <div class="ep-body" *ngIf="showMedicalRecordSum">
+            <h4 class="ep-title">Existing Prescriptions</h4>
+            <div *ngIf="!sel?.existingPrescriptions?.length" class="text-xs text-gray-500 mb-4">No active prescriptions.</div>
+            <div *ngIf="sel?.existingPrescriptions?.length" class="pr-list-sm mb-4">
+              <div *ngFor="let pr of sel!.existingPrescriptions" class="pr-item-sm !border-blue-200 !bg-blue-50">
+                <strong>Prescription #{{pr.prescriptionId}}</strong> - {{ pr.date | date:'dd/MM/yyyy' }}
+                <span *ngIf="pr.note">({{pr.note}})</span>
+              </div>
+            </div>
+            <h4 class="ep-title">Visit History</h4>
+            <div *ngIf="histEntries.length === 0" class="text-xs text-gray-500">No past visits.</div>
+            <div *ngIf="histEntries.length > 0" class="mini-hist">
+              <div *ngFor="let entry of histEntries; let i = index" class="hist-card-sm">
+                <div class="hc-header-sm">
+                  <span class="hc-num">Visit #{{ histEntries.length - i }}</span>
+                  <span class="hc-date">{{ extractDate(entry) }}</span>
+                </div>
+                <pre class="hc-body-sm">{{ stripDate(entry) }}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div *ngIf="loadingFullRecord" class="no-hist">
           <div class="spinner-sm sp-white" style="position:relative; right:auto; border-top-color:#6366f1; border-width:3px; width:24px; height:24px; margin-bottom:1rem;"></div>
           <span>Loading...</span>
@@ -420,8 +421,6 @@
           <label class="fl">Vaccine</label>
           <div style="display:flex;gap:.5rem;">
             <input type="text" [(ngModel)]="vacForm.nom" class="form-inp" style="flex:1" placeholder="Vaccine name...">
-            <button class="btn-sec" (click)="vacForm.nom='Convention'">Convention</button>
-            <button class="btn-sec" (click)="vacForm.nom='All'">All</button>
           </div>
         </div>
         <div class="fg">
@@ -453,41 +452,6 @@
         <div class="fg">
           <label class="fl">Urinary System</label>
           <textarea [(ngModel)]="form.appareilUrinaire" rows="2" class="form-ta" style="border-color: #bae6fd;" placeholder="Observations..."></textarea>
-        </div>
-        <div class="fg">
-          <label class="fl" style="margin-top:1rem; border-top:1px dashed #bae6fd; padding-top:1rem;">Exam table (Add an entry)</label>
-          <div style="display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.75rem;">
-            <input type="text"  [(ngModel)]="urForm.libelle"   class="form-inp" style="flex:1; min-width: 130px;" placeholder="Label">
-            <input type="date"  [(ngModel)]="urForm.date"      class="form-inp" style="flex:1; min-width: 120px;">
-            <input type="text"  [(ngModel)]="urForm.malAnt"    class="form-inp" style="flex:1; min-width: 100px;" placeholder="Prior Illness">
-            <input type="text"  [(ngModel)]="urForm.categorie" class="form-inp" style="flex:1; min-width: 100px;" placeholder="Category">
-            <input type="text"  [(ngModel)]="urForm.nTabMp"    class="form-inp" style="flex:1; min-width: 90px;"  placeholder="Tab No. MP">
-            <input type="date"  [(ngModel)]="urForm.dDec"      class="form-inp" style="flex:1; min-width: 120px;">
-            <input type="text"  [(ngModel)]="urForm.aCausal"   class="form-inp" style="flex:1; min-width: 100px;" placeholder="Causal Agent">
-            <button class="btn-sec" style="background:#0284c7; color:white;" (click)="addUrinaryRow()">+</button>
-          </div>
-          <div class="tbl-card" style="max-height: 200px; overflow-y: auto;">
-            <table class="ptbl" style="font-size: .75rem;">
-              <thead style="background: #0284c7;">
-                <tr>
-                  <th>Label</th><th>Date</th><th>Prior Illness</th><th>Category</th>
-                  <th>Tab No. MP</th><th>Dec. Date</th><th>Causal Agent</th><th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngIf="form.urinaryExams.length === 0">
-                  <td colspan="8" style="text-align:center; padding:.75rem; color:#94a3b8;">No exams in the table</td>
-                </tr>
-                <tr *ngFor="let u of form.urinaryExams; let idx=index" style="background:white; border-bottom:1px solid #eee;">
-                  <td>{{u.libelle}}</td><td>{{u.date}}</td><td>{{u.malAnt}}</td><td>{{u.categorie}}</td>
-                  <td>{{u.nTabMp}}</td><td>{{u.dDec}}</td><td>{{u.aCausal}}</td>
-                  <td>
-                    <button class="vi-btn-del" (click)="removeUrinaryRow(idx)" style="color:#ef4444; border:none; background:none; font-size:1.1rem; cursor:pointer;">✕</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
       <div class="vm-foot">

@@ -19,6 +19,7 @@ import { of } from 'rxjs';
 })
 export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   acteSearch = '';
+  patientSearch = '';
   actes: ActeDTO[] = [];
   patients: PatientDTO[] = [];
   showAssignModal = false;
@@ -110,11 +111,21 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     let list = this.activeFilter === 'ALL'
       ? [...this.prescriptions]
       : this.prescriptions.filter(rx => rx.status === this.activeFilter);
+      
+    if (this.patientSearch.trim()) {
+      const q = this.patientSearch.toLowerCase();
+      list = list.filter(rx => rx.patientName?.toLowerCase().includes(q));
+    }
+
     list.sort((a, b) => {
       const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
       return this.sortDesc ? -diff : diff;
     });
     return list;
+  }
+
+  get minDate(): string {
+    return new Date().toISOString().slice(0, 16);
   }
 
   countByStatus(s: PrescriptionStatus): number {

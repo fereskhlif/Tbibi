@@ -17,12 +17,13 @@ public interface IMedicalReccordsService {
     MdicalReccordsResponse add(MdicalReccordsRequest request);
     MdicalReccordsResponse addActe(int recordId, ActeRequest request);
     List<PatientRecordDTO> searchPatientsByName(String name);
-    MdicalReccordsResponse appendHistory(int medicalFileId, HistoryRequest request);
+    MdicalReccordsResponse appendHistory(int medicalFileId, HistoryRequest request, String doctorEmail);
 
     // Patient self-service methods
-    MdicalReccordsResponse getMyRecord(String email);
+    List<MdicalReccordsResponse> getMyRecord(String email);
     MdicalReccordsResponse uploadPatientImage(String email, MultipartFile file);
     MdicalReccordsResponse updateMyRecord(String email, MdicalReccordsRequest request);
+    MdicalReccordsResponse addForPatient(String email, MdicalReccordsRequest request);
     void deletePatientImage(String email, String imagePath);
 }
 

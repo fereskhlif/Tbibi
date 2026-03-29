@@ -7,10 +7,13 @@ import { TestResultsComponent } from './pages/test-results/test-results.componen
 import { EquipmentManagementComponent } from './pages/equipment-management/equipment-management.component';
 import { QualityControlComponent } from './pages/quality-control/quality-control.component';
 
+import { LabPrescriptionsComponent } from './pages/prescriptions/prescriptions.component';
+
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     { path: 'dashboard', component: LabDashboardComponent },
     { path: 'profile', component: LabProfileComponent },
+    { path: 'prescriptions', component: LabPrescriptionsComponent },
     { path: 'samples', component: SampleManagementComponent },
     { path: 'results', component: TestResultsComponent },
     { path: 'equipment', component: EquipmentManagementComponent },

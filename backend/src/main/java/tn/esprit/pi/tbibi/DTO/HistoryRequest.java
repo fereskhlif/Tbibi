@@ -16,6 +16,9 @@ public class HistoryRequest {
     /** Filière sélectionnée: "Récupération des dépenses", "Filière public", "Médecin de famille" */
     private String filiere;
 
+    /** Nom du médecin traitant */
+    private String doctorName;
+
     /** Notes générales de la visite */
     private String visitNote;
 

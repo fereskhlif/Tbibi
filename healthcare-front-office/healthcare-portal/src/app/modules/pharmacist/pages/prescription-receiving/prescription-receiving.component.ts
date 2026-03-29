@@ -3,7 +3,8 @@ import { PrescriptionService, PrescriptionResponse, PatientDTO, STATUS_META, Pre
 
 @Component({
   selector: 'app-prescription-receiving',
-  templateUrl: './prescription-receiving.component.html'
+  templateUrl: './prescription-receiving.component.html',
+  styleUrls: ['./prescription-receiving.component.css']
 })
 export class PrescriptionReceivingComponent implements OnInit {
   patients: PatientDTO[] = [];
@@ -11,7 +12,16 @@ export class PrescriptionReceivingComponent implements OnInit {
   allPrescriptions: PrescriptionResponse[] = [];
   displayedPrescriptions: PrescriptionResponse[] = [];
 
+  // Detail modal
+  showDetail = false;
+  detailRx: PrescriptionResponse | null = null;
+
+  // Filter & sort
+  activeFilter: PrescriptionStatus | 'ALL' = 'ALL';
+
   readonly STATUS_META = STATUS_META;
+  readonly statusKeys: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED', 'CANCELLED'];
+  readonly STEPS: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED'];
 
   constructor(private prescriptionService: PrescriptionService) {}
 
@@ -40,6 +50,7 @@ export class PrescriptionReceivingComponent implements OnInit {
   onPatientSelect(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.selectedPatientId = value ? Number(value) : null;
+    this.activeFilter = 'ALL';
     this.filterPrescriptions();
   }
 
@@ -53,6 +64,29 @@ export class PrescriptionReceivingComponent implements OnInit {
     }
   }
 
+  get filtered(): PrescriptionResponse[] {
+    if (this.activeFilter === 'ALL') return this.displayedPrescriptions;
+    return this.displayedPrescriptions.filter(rx => rx.status === this.activeFilter);
+  }
+
+  countByStatus(s: PrescriptionStatus): number {
+    return this.displayedPrescriptions.filter(rx => rx.status === s).length;
+  }
+
+  stepOf(status: PrescriptionStatus): number {
+    return this.STEPS.indexOf(status);
+  }
+
+  openDetail(rx: PrescriptionResponse): void {
+    this.detailRx = { ...rx };
+    this.showDetail = true;
+  }
+
+  closeDetail(): void {
+    this.showDetail = false;
+    this.detailRx = null;
+  }
+
   updateStatus(rx: PrescriptionResponse, newStatus: PrescriptionStatus): void {
     this.prescriptionService.updateStatus(rx.prescriptionID, newStatus).subscribe({
       next: (updatedRx) => {
@@ -62,7 +96,6 @@ export class PrescriptionReceivingComponent implements OnInit {
           updatedRx.patientId = this.allPrescriptions[index].patientId;
           updatedRx.doctorName = this.allPrescriptions[index].doctorName;
           updatedRx.doctorId = this.allPrescriptions[index].doctorId;
-
           this.allPrescriptions[index] = updatedRx;
           this.filterPrescriptions();
         }

@@ -43,7 +43,7 @@ public class ActeService {
         // Retrouver le patient via medicalFile
         if (acte.getMedicalFile() != null) {
             int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
-            userRepository.findUserByMedicalFileId(medicalFileId)
+            userRepository.findPatientByMedicalFileId(medicalFileId)
                     .ifPresent(patient -> {
                         dto.setPatientId((int) patient.getUserId());
                         dto.setPatientName(patient.getName());
@@ -113,7 +113,7 @@ public class ActeService {
      * Used by the frontend patient dropdown.
      */
     public List<ActeDTO> getAllPatients() {
-        return userRepository.findAllByRoleName("PATIENT").stream()
+        return userRepository.findAllUsersByRoleName("PATIENT").stream()
                 .map(u -> {
                     ActeDTO dto = new ActeDTO();
                     dto.setPatientId(u.getUserId());
