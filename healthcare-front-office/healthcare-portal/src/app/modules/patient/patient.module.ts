@@ -4,7 +4,39 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PatientRoutingModule } from './patient-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 
-// Importez tous vos composants
+import {
+  LucideAngularModule,
+  ShoppingCart,
+  ShoppingBag,
+  Package,
+  Search,
+  SearchX,
+  X,
+  Trash2,
+  Eye,
+  Plus,
+  MapPin,
+  Loader2,
+  Check,
+  CheckCircle,
+  AlertCircle,
+  RotateCcw,
+  Pencil,
+  Image,
+  Bell,
+  User,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  Truck,
+  Filter,
+  ArrowUpDown,
+  ArrowLeft,
+  Info,
+  Calendar
+} from 'lucide-angular';
+
+// All components from both versions
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { AiChatComponent } from './pages/ai-chat/ai-chat.component';
 import { AppointmentsComponent } from './pages/appointments/appointments.component';
@@ -20,6 +52,13 @@ import { InteractionHistoryComponent } from './pages/interaction-history/interac
 import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
 import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
 import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic.component';
+import { MedicineCatalogComponent } from './pages/medicine-catalog/medicine-catalog.component';
+import { MedicineDetailsComponent } from './pages/medicine-details/medicine-details.component';
+import { MyOrdersComponent } from './pages/my-orders/my-orders.component';
+import { PharmacyListComponent } from './pages/pharmacy-list/pharmacy-list.component';
+import { CartPageComponent } from './pages/cart-page/cart-page.component';
+import { CheckoutPageComponent } from './pages/checkout-page/checkout-page.component';
+import { OrderSuccessComponent } from './pages/order-success/order-success.component';
 
 @NgModule({
   declarations: [
@@ -37,14 +76,51 @@ import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic
     InteractionHistoryComponent,
     ProductDetailsComponent,
     BookAppointmentComponent,
-    PatientChronicComponent
+    PatientChronicComponent,
+    MedicineCatalogComponent,
+    MedicineDetailsComponent,
+    MyOrdersComponent,
+    PharmacyListComponent,
+    CartPageComponent,
+    CheckoutPageComponent,
+    OrderSuccessComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    PatientRoutingModule,
     SharedModule,
-    PatientRoutingModule
+    LucideAngularModule.pick({
+      ShoppingCart,
+      ShoppingBag,
+      Package,
+      Search,
+      SearchX,
+      X,
+      Trash2,
+      Eye,
+      Plus,
+      MapPin,
+      Loader2,
+      Check,
+      CheckCircle,
+      AlertCircle,
+      RotateCcw,
+      Pencil,
+      Image,
+      Bell,
+      User,
+      ChevronLeft,
+      ChevronRight,
+      ShieldCheck,
+      Truck,
+      Filter,
+      ArrowUpDown,
+      ArrowLeft,
+      Info,
+      Calendar
+    })
   ]
 })
 export class PatientModule { }

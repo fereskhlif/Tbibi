@@ -1,18 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthService, AuthResponse, RegisterRequest } from '../../services/auth.service'; // Ajoutez AuthResponse ici
+import { AuthService, AuthResponse, RegisterRequest } from '../../services/auth.service';
 
-// Mettez à jour le type UserRole pour correspondre aux nouvelles valeurs
 type UserRole = 'PATIENT' | 'DOCTEUR' | 'PHARMASIS' | 'KINE' | 'LABORATORY';
-
-//type UserRole = 'ROLE_PATIENT' | 'ROLE_DOCTOR' | 'ROLE_PHARMACIST' | 'ROLE_PHYSIOTHERAPIST' | 'ROLE_LABORATORY';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
 
   isSignup = false;
   selectedRole = '';
@@ -23,33 +20,42 @@ export class LoginComponent {
   gender = '';
   adresse = '';
   uploadedDocument: string | null = null;
+
+  // Pharmacy specific fields
+  pharmacyName = '';
+  pharmacyAddress = '';
+  pharmacyPhone = '';
+
   isLoading = false;
   errorMessage = '';
 
   roles = [
-    { label: 'Patient', value: 'PATIENT', icon: '🧑‍⚕️' },  // Removed ROLE_ prefix
-    { label: 'Doctor', value: 'DOCTEUR', icon: '👨‍⚕️' },  // Changed to DOCTEUR
-    { label: 'Pharmacist', value: 'PHARMASIS', icon: '💊' },    // Changed to PHARMASIS
-    { label: 'Physiotherapist', value: 'KINE', icon: '🏃' },    // Changed to KINE
-    { label: 'Laboratory', value: 'LABORATORY', icon: '🔬' },    // LABORATORY matches
+    { label: 'Patient', value: 'PATIENT', icon: '🧑‍⚕️' },
+    { label: 'Doctor', value: 'DOCTEUR', icon: '👨‍⚕️' },
+    { label: 'Pharmacist', value: 'PHARMASIS', icon: '💊' },
+    { label: 'Physiotherapist', value: 'KINE', icon: '🏃' },
+    { label: 'Laboratory', value: 'LABORATORY', icon: '🔬' },
   ];
-
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
-  ) {
+  ) {}
+
+  ngOnInit(): void {
     this.isSignup = this.route.snapshot.data['signupMode'] ?? false;
   }
 
   toggleMode(): void {
     this.isSignup = !this.isSignup;
     this.errorMessage = '';
+    this.resetForm();
   }
 
   selectRole(role: string): void {
     this.selectedRole = role;
+    this.uploadedDocument = null;
   }
 
   isProfessionalRole(): boolean {
@@ -66,10 +72,6 @@ export class LoginComponent {
     return labels[this.selectedRole] ?? 'Document';
   }
 
-  getDocumentPlaceholder(): string {
-    return `Upload your ${this.getDocumentLabel()} (PDF, JPG, PNG)`;
-  }
-
   handleDocumentUpload(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -80,103 +82,38 @@ export class LoginComponent {
     this.errorMessage = '';
 
     if (this.isSignup) {
-      // Validations
-      if (!this.selectedRole) {
-        this.errorMessage = 'Please select a role.';
-        return;
-      }
-      if (!this.name || !this.name.trim()) {
-        this.errorMessage = 'Full name is required.';
-        return;
-      }
-      if (!this.email || !this.password) {
-        this.errorMessage = 'Email and password are required.';
-        return;
-      }
-      if (this.password.length < 6) {
-        this.errorMessage = 'Password must be at least 6 characters.';
-        return;
-      }
-
-      if (this.selectedRole === 'PATIENT') {
-        if (!this.dateOfBirth) {
-          this.errorMessage = 'Date of birth is required.';
-          return;
-        }
-        if (!this.gender) {
-          this.errorMessage = 'Gender is required.';
-          return;
-        }
-        if (!this.adresse || !this.adresse.trim()) {
-          this.errorMessage = 'Address is required.';
-          return;
-        }
-      }
+      if (!this.validateSignup()) return;
 
       this.isLoading = true;
 
       const registerData: RegisterRequest = {
-        name: this.name,  // Utilize the name variable
+        name: this.name,
         email: this.email,
         password: this.password,
-        roleName: this.selectedRole as string,  // ✅ Utilisez roleName, pas role
-        medicalLicense: this.isProfessionalRole() && this.uploadedDocument ? this.uploadedDocument : undefined,
-        ...(this.selectedRole === 'PATIENT' && {
-          dateOfBirth: this.dateOfBirth,
-          gender: this.gender,
-          adresse: this.adresse
-        })
+        roleName: this.selectedRole,
+        medicalLicense: this.isProfessionalRole() && this.uploadedDocument
+          ? this.uploadedDocument
+          : undefined,
+        dateOfBirth: this.dateOfBirth || undefined,
+        gender: this.gender || undefined,
+        adresse: this.adresse || undefined,
       };
 
-      if (this.isProfessionalRole() && this.uploadedDocument) {
-        registerData.medicalLicense = this.uploadedDocument;
-      }
-
-      console.log('Sending registration data:', registerData);
-
       this.authService.register(registerData).subscribe({
-        next: (response: any) => {
+        next: () => {
           this.isLoading = false;
-          console.log('Registration successful:', response);
-
           alert('Registration successful! Please log in.');
-
-          // Reset form and switch to login mode
           this.isSignup = false;
-          this.selectedRole = '';
-          this.password = '';
-          this.name = '';
-          this.uploadedDocument = null;
-          // Email is preserved for convenience
+          this.resetForm();
         },
         error: (error: HttpErrorResponse) => {
           this.isLoading = false;
-          console.error('Registration error:', error);
-
-          if (error.status === 409) {
-            // Email already exists - offer to login
-            const wantsToLogin = confirm(
-              `The email "${this.email}" is already registered.\n\nWould you like to login instead?`
-            );
-
-            if (wantsToLogin) {
-              // Switch to login mode with email preserved
-              this.isSignup = false;
-              this.errorMessage = '';
-            } else {
-              // Clear email for new registration
-              this.email = '';
-              this.errorMessage = 'Please use a different email address.';
-            }
-          } else {
-            const errorMsg = typeof error.error === 'string' ? error.error : error.error?.message;
-            this.errorMessage = errorMsg || 'Registration failed. Please try again.';
-          }
+          this.handleRegistrationError(error);
         }
       });
 
     } else {
-      // LOGIN MODE
+      // Login mode
       if (!this.email || !this.password) {
         this.errorMessage = 'Email and password are required.';
         return;
@@ -184,92 +121,107 @@ export class LoginComponent {
 
       this.isLoading = true;
 
-      this.authService.login({
-        email: this.email,
-        password: this.password
-      }).subscribe({
-        next: (response: AuthResponse) => {
-          this.isLoading = false;
-          console.log('✅ Login successful:', response);
-
-          // Décoder le token pour vérifier l'email
-          try {
-            const parts = response.token.split('.');
-            const payload = JSON.parse(atob(parts[1]));
-            console.log('📦 Token payload:', payload);
-
-            if (!payload.sub || !payload.sub.includes('@')) {
-              console.error('❌ Email invalide dans le token!');
-            }
-          } catch (e) {
-            console.error('❌ Erreur décodage token');
-          }
-
-          // Stocker
-          localStorage.setItem('TokenUserConnect', response.token);
-          localStorage.setItem('EmailUserConnect', response.email);
-          localStorage.setItem('RoleUserConnect', response.role);
-
-          // Redirection
-          const routes: Record<string, string> = {
-            'PATIENT': '/patient',
-            'ROLE_PATIENT': '/patient',
-            'DOCTEUR': '/doctor',
-            'DOCTOR': '/doctor',
-            'ROLE_DOCTEUR': '/doctor',
-            'ROLE_DOCTOR': '/doctor',
-            'KINE': '/physio',
-            'PHYSIOTHERAPIST': '/physio',
-            'ROLE_KINE': '/physio',
-            'PHARMASIS': '/pharmacist',
-            'PHARMACIST': '/pharmacist',
-            'ROLE_PHARMASIS': '/pharmacist',
-            'LABORATORY': '/laboratory',
-            'ROLE_LABORATORY': '/laboratory',
-            'ADMIN': '/admin/dashboard',
-            'ROLE_ADMIN': '/admin/dashboard'
-          };
-
-          // Clean up the role name
-          const roleKey = response.role ? response.role.toUpperCase().trim() : '';
-          const destination = routes[roleKey] || '/';
-          console.log(`Routing role '${roleKey}' to -> ${destination}`);
-          this.router.navigateByUrl(destination);
-        },
-        error: (error: HttpErrorResponse) => {
-          this.isLoading = false;
-          console.error('Login error:', error);
-
-          if (error.status === 401) {
-            const errorMsg = typeof error.error === 'string' ? error.error : error.error?.message;
-            this.errorMessage = errorMsg || 'Invalid email or password.';
-          } else {
-            this.errorMessage = error.error?.message || 'Login failed. Please try again.';
-          }
-        }
-      });
+      this.authService.login({ email: this.email, password: this.password })
+        .subscribe({
+          next: (response: AuthResponse) => this.handleSuccessfulLogin(response),
+          error: (error: HttpErrorResponse) => this.handleLoginError(error)
+        });
     }
   }
 
-  // Utility method to check token expiration
-  private isTokenExpired(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return Date.now() > payload.exp * 1000;
-    } catch {
-      return true;
+  private validateSignup(): boolean {
+    if (!this.selectedRole) {
+      this.errorMessage = 'Please select a role.';
+      return false;
+    }
+    if (!this.name?.trim()) {
+      this.errorMessage = 'Full name is required.';
+      return false;
+    }
+    if (!this.email || !this.password) {
+      this.errorMessage = 'Email and password are required.';
+      return false;
+    }
+    if (this.password.length < 6) {
+      this.errorMessage = 'Password must be at least 6 characters.';
+      return false;
+    }
+
+    if (this.selectedRole === 'PATIENT') {
+      if (!this.dateOfBirth) {
+        this.errorMessage = 'Date of birth is required for patients.';
+        return false;
+      }
+      if (!this.gender) {
+        this.errorMessage = 'Gender is required.';
+        return false;
+      }
+      if (!this.adresse?.trim()) {
+        this.errorMessage = 'Address is required.';
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private handleSuccessfulLogin(response: AuthResponse): void {
+    this.isLoading = false;
+
+    localStorage.setItem('TokenUserConnect', response.token);
+    localStorage.setItem('EmailUserConnect', response.email);
+    localStorage.setItem('RoleUserConnect', response.role);
+
+    const routes: Record<string, string> = {
+      'PATIENT': '/patient',
+      'DOCTEUR': '/doctor',
+      'KINE': '/physio',
+      'PHARMASIS': '/pharmacist',
+      'LABORATORY': '/laboratory',
+      'ADMIN': '/admin'
+    };
+
+    const roleKey = (response.role || '').toUpperCase().trim();
+    const destination = routes[roleKey] || '/';
+
+    console.log(`Login successful - Role: ${roleKey} → Redirecting to: ${destination}`);
+    this.router.navigateByUrl(destination);
+  }
+
+  private handleLoginError(error: HttpErrorResponse): void {
+    this.isLoading = false;
+    if (error.status === 401) {
+      this.errorMessage = 'Invalid email or password.';
+    } else {
+      this.errorMessage = error.error?.message || 'Login failed. Please try again.';
     }
   }
-  // Méthode pour réinitialiser le formulaire
+
+  private handleRegistrationError(error: HttpErrorResponse): void {
+    if (error.status === 409) {
+      const wantsToLogin = confirm(
+        `The email "${this.email}" is already registered.\n\nWould you like to login instead?`
+      );
+      if (wantsToLogin) this.isSignup = false;
+    } else {
+      this.errorMessage = typeof error.error === 'string'
+        ? error.error
+        : error.error?.message || 'Registration failed.';
+    }
+  }
+
   resetForm(): void {
+    this.name = '';
     this.email = '';
     this.password = '';
-    this.name = '';
     this.dateOfBirth = '';
     this.gender = '';
     this.adresse = '';
     this.selectedRole = '';
     this.uploadedDocument = null;
+    this.pharmacyName = '';
+    this.pharmacyAddress = '';
+    this.pharmacyPhone = '';
     this.errorMessage = '';
   }
 }

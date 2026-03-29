@@ -5,6 +5,8 @@ import { LoginComponent } from './pages/login/login.component';
 import { GraphicCharterComponent } from './pages/graphic-charter/graphic-charter.component';
 import { ActivateAccountComponent } from './pages/activate-account/activate-account.component';
 import { MainLayoutComponent } from './shared/layouts/main-layout/main-layout.component';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
 
@@ -13,6 +15,8 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: LoginComponent, data: { signupMode: true } },
   { path: 'activate-account', component: ActivateAccountComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'graphic-charter', component: GraphicCharterComponent },
   {
     path: 'patient',
@@ -50,12 +54,27 @@ const routes: Routes = [
     loadChildren: () => import('./modules/laboratory/laboratory.module').then(m => m.LaboratoryModule)
   },
   {
+    path: 'forum',
+    component: MainLayoutComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { role: 'PATIENT' },  // Accessible aux patients uniquement
+    loadChildren: () => import('./modules/forum/forum.module').then(m => m.ForumModule)
+  },
+  {
+    path: 'notifications',
+    component: MainLayoutComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { role: 'PATIENT' },  // TODO: Ajuster selon les rôles concernés (actuellement patient par défaut)
+    loadChildren: () => import('./modules/notifications/notifications.module').then(m => m.NotificationsModule)
+  },
+  {
     path: 'admin',
     component: MainLayoutComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { role: 'ADMIN' },
     loadChildren: () => import('./modules/admin/admin.module').then(m => m.AdminModule)
-  }
+  },
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({

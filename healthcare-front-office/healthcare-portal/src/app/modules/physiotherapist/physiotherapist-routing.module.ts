@@ -16,7 +16,12 @@ const routes: Routes = [
     { path: 'progress', component: PatientProgressComponent },
     { path: 'treatment-plan', component: TreatmentPlanComponent },
     { path: 'evaluation', component: PatientEvaluationComponent },
-    { path: 'session', component: TherapySessionComponent }
+    { path: 'session', component: TherapySessionComponent },
+    { 
+        path: 'forum', 
+        loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
+        data: { role: 'PHYSIO', userId: 5, userName: 'Physio Staff', expertCategory: 'Ask a Physiotherapist', title: 'Physiotherapy Forum' }
+    }
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })

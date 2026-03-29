@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-@ToString(exclude = "orders")  // Exclude to prevent circular reference
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -21,6 +21,4 @@ public class Pharmacy {
     String pharmacyName;
     String pharmacyAddress;
 
-    @OneToMany(mappedBy = "pharmacy")
-    List<Order> orders;
 }

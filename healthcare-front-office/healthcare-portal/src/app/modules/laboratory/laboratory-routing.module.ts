@@ -17,7 +17,12 @@ const routes: Routes = [
     { path: 'samples', component: SampleManagementComponent },
     { path: 'results', component: TestResultsComponent },
     { path: 'equipment', component: EquipmentManagementComponent },
-    { path: 'quality', component: QualityControlComponent }
+    { path: 'quality', component: QualityControlComponent },
+    { 
+        path: 'forum', 
+        loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
+        data: { role: 'LAB', userId: 4, userName: 'Lab Staff', expertCategory: 'Ask a Lab', title: 'Lab Results Forum' }
+    }
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })

@@ -71,4 +71,21 @@ export class AuthService {
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
+
+  // Nouvelles méthodes pour la réinitialisation de mot de passe
+  forgotPassword(email: string): Observable<string> {
+    return this.http.post(
+      `${environment.baseUrl}/auth/forgot-password`,
+      { email },
+      { responseType: 'text' }
+    );
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<string> {
+    return this.http.post(
+      `${environment.baseUrl}/auth/reset-password`,
+      { token, newPassword },
+      { responseType: 'text' }
+    );
+  }
 }

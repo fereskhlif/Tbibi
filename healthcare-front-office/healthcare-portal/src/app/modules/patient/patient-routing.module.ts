@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
+// Components from both versions
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { AppointmentsComponent } from './pages/appointments/appointments.component';
 import { MedicalRecordsComponent } from './pages/medical-records/medical-records.component';
@@ -15,63 +17,60 @@ import { InteractionHistoryComponent } from './pages/interaction-history/interac
 import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
 import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
 import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic.component';
+
+import { MedicineCatalogComponent } from './pages/medicine-catalog/medicine-catalog.component';
+import { MedicineDetailsComponent } from './pages/medicine-details/medicine-details.component';
+import { MyOrdersComponent } from './pages/my-orders/my-orders.component';
+import { PharmacyListComponent } from './pages/pharmacy-list/pharmacy-list.component';
+import { CartPageComponent } from './pages/cart-page/cart-page.component';
+import { CheckoutPageComponent } from './pages/checkout-page/checkout-page.component';
+import { OrderSuccessComponent } from './pages/order-success/order-success.component';
+
 const routes: Routes = [
-  {
-    path: '',
-    component: DashboardComponent,  // Page d'accueil du module patient
-  },
-  {
-    path: 'dashboard',
-    component: DashboardComponent,
-  },
-  {
-    path: 'appointments',
-    component: AppointmentsComponent,
-  },
-  {
-    path: 'medical-records',
-    component: MedicalRecordsComponent,
-  },
-  {
-    path: 'prescriptions',
-    component: PrescriptionsComponent,
-  },
-  {
-    path: 'lab-results',
-    component: LabResultsComponent,
-  },
-  {
-    path: 'pharmacy-shop',
-    component: PharmacyShopComponent,
-  },
-  {
-    path: 'ai-chat',
-    component: AiChatComponent,
-  },
-  {
-    path: 'profile',
-    component: ProfileComponent,
-  },
-  {
-    path: 'reminders',
-    component: RemindersComponent,
-  },
-  {
-    path: 'payment',
-    component: PaymentComponent,
-  },
-  {
-    path: 'doctor-schedules',
-    component: DoctorSchedulesComponent,
-  },
-  {
-    path: 'interaction-history',
-    component: InteractionHistoryComponent,
-  },
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: 'dashboard', component: DashboardComponent },
+  { path: 'profile', component: ProfileComponent },
+  { path: 'medical-records', component: MedicalRecordsComponent },
+  { path: 'appointments', component: AppointmentsComponent },
+  { path: 'doctor-schedules', component: DoctorSchedulesComponent },
+  { path: 'prescriptions', component: PrescriptionsComponent },
+  { path: 'lab-results', component: LabResultsComponent },
+  { path: 'reminders', component: RemindersComponent },
+  { path: 'payment', component: PaymentComponent },
+  { path: 'ai-chat', component: AiChatComponent },
+  { path: 'interaction-history', component: InteractionHistoryComponent },
+
+  // Pharmacy & Medicine Routes
+  { path: 'pharmacy-shop', component: PharmacyShopComponent },
+  { path: 'pharmacy-list', component: PharmacyListComponent },
+  { path: 'medicine-catalog', component: MedicineCatalogComponent },
+  { path: 'pharmacy/:pharmacyId/medicines', component: MedicineCatalogComponent },
+  { path: 'medicine/:id', component: MedicineDetailsComponent },
+  { path: 'pharmacy-shop/product/:id', component: ProductDetailsComponent },
+
+  // Cart & Checkout
+  { path: 'cart', component: CartPageComponent },
+  { path: 'checkout', component: CheckoutPageComponent },
+  { path: 'order-success/:orderId', component: OrderSuccessComponent },
+  { path: 'my-orders', component: MyOrdersComponent },
+
+  // Booking & Chronic
   { path: 'book-appointment', component: BookAppointmentComponent },
   { path: 'chronic-monitor', component: PatientChronicComponent },
-  { path: 'pharmacy-shop/product/:id', component: ProductDetailsComponent },]
 
+  // Forum (Lazy Loaded)
+  {
+    path: 'forum',
+    loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
+    data: {
+      role: 'PATIENT',
+      userId: 1,
+      userName: 'Karim Patient',
+      expertCategory: '',
+      title: 'Community Forum'
+    }
+  }
+];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],

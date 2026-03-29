@@ -8,12 +8,12 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -22,20 +22,25 @@ import tn.esprit.pi.tbibi.security.jwt.JwtAuthFilter;
 import java.util.List;
 
 @Configuration
+@EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
     private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
     public DaoAuthenticationProvider authProvider() {
-        DaoAuthenticationProvider p = new DaoAuthenticationProvider();
-        p.setUserDetailsService(userDetailsService);
-        p.setPasswordEncoder(passwordEncoder);
-        return p;
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 
     @Bean
@@ -47,68 +52,43 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authProvider())
                 .authorizeHttpRequests(auth -> auth
-                        // Permettre le forward vers /error par Spring MVC
-                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.FORWARD, jakarta.servlet.DispatcherType.ERROR).permitAll()
-
-                        // Public routes - no authentication needed
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-
-                        // Serve uploaded images publicly
                         .requestMatchers("/uploads/**").permitAll()
 
-                        // Appointment routes
-                        .requestMatchers("/appointement/**").permitAll()
-                        .requestMatchers("/appointment/**").permitAll()
+                        // Allow OPTIONS (CORS preflight)
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Schedule routes
+                        // Appointment & Schedule routes
+                        .requestMatchers("/appointement/**", "/appointment/**").permitAll()
                         .requestMatchers("/api/doctor/schedules/**").permitAll()
 
-                        // Chronic disease routes
-                        .requestMatchers("/api/chronic/**").permitAll()
+                        // Medical Records & Prescriptions
+                        .requestMatchers("/medical-records/**", "/prescriptions/**", "/actes/**").permitAll()
 
-                        // Notification routes
-                        .requestMatchers("/notifications/**").permitAll()
+                        // Chronic disease & Notifications
+                        .requestMatchers("/api/chronic/**", "/notifications/**").permitAll()
 
-                        // Allow doctor to append history and search patients without blocking on JwtAuthFilter missing auth
+                        // Specific allowed operations
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/medical-records/*/history").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/medical-records/patients/search").permitAll()
 
-                        // Patient self-service: view, upload, update, delete image
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/medical-records/my").authenticated()
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/medical-records/my/upload-image").authenticated()
-                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/medical-records/my").authenticated()
-                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/medical-records/my/image").authenticated()
-
-                        .requestMatchers("/medical-records/**").permitAll()
-                        .requestMatchers("/prescriptions/**").permitAll()
-                        .requestMatchers("/actes/**").permitAll()
-
-                        // Patient routes
+                        // Role-based access
                         .requestMatchers("/patient/**").hasRole("PATIENT")
-
-                        // Kine routes
                         .requestMatchers("/kine/**").hasRole("KINE")
-
-                        // Doctor routes
-                        .requestMatchers("/doctor/**").hasAnyRole("DOCTOR", "DOCTEUR")
-                        .requestMatchers("/docteur/**").hasRole("DOCTEUR")
-
-                        // Pharmacist routes
+                        .requestMatchers("/doctor/**", "/docteur/**").hasAnyRole("DOCTOR", "DOCTEUR")
                         .requestMatchers("/pharmasis/**").hasRole("PHARMASIS")
-
-                        // Laboratory routes
                         .requestMatchers("/laboratory/**").hasRole("LABORATORY")
 
-                        // Any other request must be authenticated
+                        // All other requests must be authenticated
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -126,7 +106,6 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-
         return source;
     }
 }
