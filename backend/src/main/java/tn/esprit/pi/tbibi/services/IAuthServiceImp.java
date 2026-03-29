@@ -85,6 +85,15 @@ public class IAuthServiceImp implements IAuthService {
             log.info("Role found with ID: {}", role.getRole_id());
         }
 
+        // Déterminer le statut selon le rôle
+        tn.esprit.pi.tbibi.entities.UserStatus status = tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE;
+        if (roleNameUpper.equals("MEDECIN") || roleNameUpper.equals("DOCTEUR") || roleNameUpper.equals("DOCTOR") ||
+            roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS") || roleNameUpper.equals("PHARMACIST") ||
+            roleNameUpper.equals("LABORATOIRE") || roleNameUpper.equals("LABORATORY") || 
+            roleNameUpper.equals("KINE") || roleNameUpper.equals("PHYSIOTHERAPIST")) {
+            status = tn.esprit.pi.tbibi.entities.UserStatus.PENDING;
+        }
+
         // Créer l'utilisateur avec le builder
         User user = User.builder()
                 .name(req.name() == null ? "Not Available" : req.name())
@@ -95,7 +104,7 @@ public class IAuthServiceImp implements IAuthService {
                 .adresse(req.adresse())
                 .specialty(req.specialty())
                 .role(role)
-                .accountStatus(tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE)
+                .accountStatus(status)
                 .enabled(true) // Email verification disabled, user is enabled by default
                 .build();
 
