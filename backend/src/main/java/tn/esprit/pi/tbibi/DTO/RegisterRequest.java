@@ -9,5 +9,7 @@ public record RegisterRequest(
                 String roleName,
                 java.time.LocalDate dateOfBirth,
                 String gender,
-                String adresse) {
+                String adresse,
+                String documentBase64,
+                String documentName) {
 }
