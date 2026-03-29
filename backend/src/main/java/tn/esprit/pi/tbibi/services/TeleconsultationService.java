@@ -1,19 +1,17 @@
 package tn.esprit.pi.tbibi.services;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.DTO.TeleconsultationRequest;
 import tn.esprit.pi.tbibi.DTO.TeleconsultationResponse;
-import tn.esprit.pi.tbibi.Mapper.IAppointementMapper;
 import tn.esprit.pi.tbibi.entities.Appointment;
-import tn.esprit.pi.tbibi.entities.Schedule;
 import tn.esprit.pi.tbibi.entities.Teleconsultation;
 import tn.esprit.pi.tbibi.repositories.AppointmentRepo;
 import tn.esprit.pi.tbibi.repositories.TeleconsultationRepo;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,63 +19,71 @@ public class TeleconsultationService implements ITeleconsultationService {
 
     private final TeleconsultationRepo teleconsultationRepo;
     private final AppointmentRepo appointmentRepo;
-    private final IAppointementMapper mapper;
 
     @Override
     public TeleconsultationResponse create(TeleconsultationRequest request) {
-        Appointment appointment = appointmentRepo.findById(request.getAppointmentId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Appointment not found with id: " + request.getAppointmentId()));
+        Appointment appointment = appointmentRepo.findById(request.getAppointmentId().intValue())
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        Teleconsultation teleconsultation = mapper.toTeleconsultationEntity(request);
-        teleconsultation.setAppointment(appointment);
+        Teleconsultation teleconsultation = Teleconsultation.builder()
+                .appointment(appointment)
+                .notes(request.getNotes())
+                .startDateTime(LocalDateTime.now())
+                .build();
 
-        // Derive startDateTime from the linked schedule
-        Schedule schedule = appointment.getSchedule();
-        if (schedule != null && schedule.getDate() != null && schedule.getStartTime() != null) {
-            teleconsultation.setStartDateTime(
-                    LocalDateTime.of(schedule.getDate(), schedule.getStartTime()));
-        } else {
-            teleconsultation.setStartDateTime(LocalDateTime.now());
-        }
-
-        return mapper.toTeleconsultationResponse(teleconsultationRepo.save(teleconsultation));
+        Teleconsultation saved = teleconsultationRepo.save(teleconsultation);
+        return mapToResponse(saved);
     }
 
     @Override
     public TeleconsultationResponse getById(Integer id) {
-        return mapper.toTeleconsultationResponse(findById(id));
+        Teleconsultation teleconsultation = teleconsultationRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Teleconsultation not found"));
+        return mapToResponse(teleconsultation);
     }
 
     @Override
     public TeleconsultationResponse getByAppointmentId(Long appointmentId) {
-        return teleconsultationRepo.findByAppointmentAppointmentId(appointmentId)
-                .map(mapper::toTeleconsultationResponse)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Teleconsultation not found for appointment id: " + appointmentId));
+        Teleconsultation teleconsultation = teleconsultationRepo.findByAppointmentAppointmentId(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Teleconsultation not found"));
+        return mapToResponse(teleconsultation);
     }
 
     @Override
     public List<TeleconsultationResponse> getAll() {
-        return mapper.toTeleconsultationResponseList(teleconsultationRepo.findAll());
+        return teleconsultationRepo.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public TeleconsultationResponse update(Integer id, TeleconsultationRequest request) {
-        Teleconsultation teleconsultation = findById(id);
+        Teleconsultation teleconsultation = teleconsultationRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Teleconsultation not found"));
+        
         teleconsultation.setNotes(request.getNotes());
-        return mapper.toTeleconsultationResponse(teleconsultationRepo.save(teleconsultation));
+        Teleconsultation updated = teleconsultationRepo.save(teleconsultation);
+        return mapToResponse(updated);
     }
 
     @Override
     public void delete(Integer id) {
-        findById(id);
         teleconsultationRepo.deleteById(id);
     }
 
-    private Teleconsultation findById(Integer id) {
-        return teleconsultationRepo.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Teleconsultation not found with id: " + id));
+    private TeleconsultationResponse mapToResponse(Teleconsultation teleconsultation) {
+        return TeleconsultationResponse.builder()
+                .id(teleconsultation.getId())
+                .appointmentId(teleconsultation.getAppointment() != null ? 
+                        teleconsultation.getAppointment().getAppointmentId() : null)
+                .roomUrl(teleconsultation.getRoomUrl())
+                .startDateTime(teleconsultation.getStartDateTime())
+                .endDateTime(teleconsultation.getEndDateTime())
+                .notes(teleconsultation.getNotes())
+                .roomId(teleconsultation.getConsultationRoom() != null ? 
+                        teleconsultation.getConsultationRoom().getRoomId() : null)
+                .roomCode(teleconsultation.getConsultationRoom() != null ? 
+                        teleconsultation.getConsultationRoom().getRoomCode() : null)
+                .build();
     }
 }

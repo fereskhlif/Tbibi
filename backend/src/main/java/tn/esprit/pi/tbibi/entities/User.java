@@ -9,7 +9,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = { "medicalFiles", "orders", "appointements" })
+@ToString(exclude = {"medicalFiles", "orders", "appointements", "laboratoryResults"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -22,11 +22,10 @@ public class User {
     private String email;
     private String password;
     private String adresse;
-    private String specialty;
-    private String profilePicture;
 
     private java.time.LocalDate dateOfBirth;
     private String gender;
+    private String profilePicture;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -34,16 +33,15 @@ public class User {
     private UserStatus accountStatus = UserStatus.PENDING;
 
     @Builder.Default
-    @Column(name = "enabled", nullable = false)
-    private Boolean enabled = true;
+    boolean enabled = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id")
+    private Role role;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "patient_id")
     private List<MedicalReccords> medicalFiles;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "roleName")
-    private Role role;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private List<Order> orders;
@@ -51,7 +49,9 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private List<Appointment> appointements;
 
+    @OneToMany(mappedBy = "laboratoryUser", cascade = CascadeType.ALL)
+    private List<Laboratory_Result> laboratoryResults;
+
     @OneToMany
-    @JoinColumn(name = "user_id")
     private List<Teleconsultation> consultationRooms;
 }

@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
-
 import java.util.List;
 
 @Service
@@ -26,14 +25,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + u.getRole().getRoleName()));
 
-        // Determine if user should be enabled
-        boolean isEnabled = u.getEnabled() != null ? u.getEnabled() : true;
-        tn.esprit.pi.tbibi.entities.UserStatus status = u.getAccountStatus();
-
-        // Block login if status is not ACTIVE (for old rows, assume ACTIVE if null)
-        if (status != null && status != tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE) {
-            isEnabled = false;
-        }
+        // ✅ Temporarily allow all users to login (including PENDING)
+        // TODO: Re-enable status check after admin approves users
+        boolean isEnabled = u.isEnabled();
+        // tn.esprit.pi.tbibi.entities.UserStatus status = u.getAccountStatus();
+        // if (status != null && status != tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE) {
+        //     isEnabled = false;
+        // }
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(u.getEmail())

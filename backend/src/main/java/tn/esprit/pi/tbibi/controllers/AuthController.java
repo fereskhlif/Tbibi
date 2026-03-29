@@ -1,66 +1,41 @@
 package tn.esprit.pi.tbibi.controllers;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tn.esprit.pi.tbibi.DTO.AuthResponse;
+import tn.esprit.pi.tbibi.DTO.GoogleAuthRequest;
 import tn.esprit.pi.tbibi.DTO.LoginRequest;
 import tn.esprit.pi.tbibi.DTO.RegisterRequest;
+import tn.esprit.pi.tbibi.services.GoogleAuthService;
 import tn.esprit.pi.tbibi.services.IAuthService;
 
-@Slf4j
 @RestController
+@CrossOrigin("*")
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final IAuthService authService;
+    private final GoogleAuthService googleAuthService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(
-            @RequestBody @Valid RegisterRequest request
-    ) {
-        try {
-            authService.register(request);
-            return ResponseEntity.accepted().build();
-        } catch (IllegalArgumentException e) {
-            if ("Email already used".equals(e.getMessage())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-            }
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed.");
-        }
+    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
+        var saved = authService.register(req);
+        return ResponseEntity.ok("User created: " + saved.getEmail());
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(
-            @RequestBody @Valid LoginRequest req) {
-        try {
-            return ResponseEntity.ok(authService.login(req));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
-        }
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
+        return ResponseEntity.ok(authService.login(req));
     }
 
-    @GetMapping("/activate-account")
-    public ResponseEntity<String> confirm(
-            @RequestParam String token
-    ) {
-        try {
-            authService.activateAccount(token);
-            return ResponseEntity.ok("Account activated successfully");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.GONE).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during activation.");
-        }
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleAuth(@RequestBody GoogleAuthRequest req) {
+        AuthResponse response = googleAuthService.authenticateWithGoogle(
+                req.getIdToken(),
+                req.getRole()
+        );
+        return ResponseEntity.ok(response);
     }
-
 }

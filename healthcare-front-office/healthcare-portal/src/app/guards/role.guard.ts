@@ -21,15 +21,20 @@ export class RoleGuard implements CanActivate {
     // Nettoyer les guillemets ajoutés par JSON.stringify
     userRole = userRole.replace(/"/g, '');
 
-    if (userRole === expectedRole) return true;
+    // Normaliser le rôle (enlever le préfixe ROLE_ si présent)
+    const normalizedUserRole = userRole.startsWith('ROLE_') ? userRole.substring(5) : userRole;
+    const normalizedExpectedRole = expectedRole.startsWith('ROLE_') ? expectedRole.substring(5) : expectedRole;
+
+    if (normalizedUserRole === normalizedExpectedRole) return true;
 
     // Rediriger vers la bonne page selon le rôle réel
-    switch (userRole) {
-      case 'ROLE_PATIENT': return this.router.parseUrl('/patient');
-      case 'ROLE_DOCTOR': return this.router.parseUrl('/doctor');
-      case 'ROLE_PHARMACIST': return this.router.parseUrl('/pharmacist');
-      case 'ROLE_PHYSIOTHERAPIST': return this.router.parseUrl('/physio');
-      case 'ROLE_LABORATORY': return this.router.parseUrl('/laboratory');
+    switch (normalizedUserRole) {
+      case 'PATIENT': return this.router.parseUrl('/patient');
+      case 'DOCTEUR': return this.router.parseUrl('/doctor');
+      case 'PHARMASIS': return this.router.parseUrl('/pharmacist');
+      case 'KINE': return this.router.parseUrl('/physio');
+      case 'LABORATORY': return this.router.parseUrl('/laboratory');
+      case 'ADMIN': return this.router.parseUrl('/admin/dashboard');
       default: return this.router.parseUrl('/login');
     }
   }

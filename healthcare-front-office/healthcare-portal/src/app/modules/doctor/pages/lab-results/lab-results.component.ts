@@ -1,24 +1,181 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+interface LaboratoryResult {
+  labId: number;
+  testName: string;
+  location: string;
+  nameLabo: string;
+  resultValue: string;
+  status: string;
+  testDate: string;
+  notificationMessage?: string;
+  patient?: {
+    userId: number;
+    name: string;
+  };
+}
+
+interface Notification {
+  notificationId: number;
+  message: string;
+  read: boolean;
+  createdDate: string;
+}
+
 @Component({
-    selector: 'app-doctor-lab-results', template: `
-  <div class="p-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">Lab Results</h1><p class="text-gray-600 mb-6">Review and manage patient laboratory results</p>
-    <div class="space-y-4">
-      <div *ngFor="let result of results" class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-3"><span class="text-2xl">🔬</span><div><h3 class="font-semibold text-gray-900">{{result.test}}</h3><p class="text-sm text-gray-500">Patient: {{result.patient}} • {{result.date}}</p></div></div>
-          <div class="flex items-center gap-2"><span [class]="'px-3 py-1 text-xs rounded-full ' + result.statusClass">{{result.status}}</span><button class="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg">Review</button></div>
-        </div>
-        <div *ngIf="result.findings" class="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 mt-2">{{result.findings}}</div>
-      </div>
-    </div>
-  </div>
-` })
-export class DoctorLabResultsComponent {
-    results = [
-        { test: 'Complete Blood Count', patient: 'John Doe', date: 'Jan 15, 2024', status: 'Requires Review', statusClass: 'bg-yellow-100 text-yellow-700', findings: 'Elevated WBC count at 14,000/μL. Possible infection.' },
-        { test: 'Lipid Panel', patient: 'Jane Smith', date: 'Jan 14, 2024', status: 'Reviewed', statusClass: 'bg-green-100 text-green-700', findings: 'LDL at 165 mg/dL - above optimal range. Consider statin therapy adjustment.' },
-        { test: 'HbA1c', patient: 'Mike Brown', date: 'Jan 12, 2024', status: 'Requires Review', statusClass: 'bg-yellow-100 text-yellow-700', findings: 'HbA1c at 8.2% - above target of 7%. Diabetes management needs optimization.' },
-        { test: 'Thyroid Panel', patient: 'Sarah Wilson', date: 'Jan 10, 2024', status: 'Reviewed', statusClass: 'bg-green-100 text-green-700', findings: 'All values within normal range. Continue current thyroid medication.' }
-    ];
+  selector: 'app-doctor-lab-results',
+  templateUrl: './lab-results.component.html',
+  styleUrls: ['./lab-results.component.css']
+})
+export class DoctorLabResultsComponent implements OnInit {
+  results: LaboratoryResult[] = [];
+  notifications: Notification[] = [];
+  unreadCount: number = 0;
+  currentUserId: number = 7; // Doctor ID par défaut
+
+  // ✅ Request test form
+  showRequestForm = false;
+  requestForm = {
+    patientId: null as number | null,
+    testName: '',
+    priority: 'Normal',
+    requestNotes: ''
+  };
+
+  private apiUrl = 'http://localhost:8088/api/laboratory-results';
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    this.loadLabResults();
+    this.loadNotifications();
+  }
+
+  loadLabResults() {
+    // ✅ CORRIGÉ - URL correcte sans duplication
+    this.http.get<LaboratoryResult[]>(`${this.apiUrl}/doctor/${this.currentUserId}`)
+      .subscribe({
+        next: (data: LaboratoryResult[]) => {
+          this.results = data;
+          console.log('Doctor lab results loaded:', data);
+        },
+        error: (err: any) => {
+          console.error('Error loading lab results:', err);
+        }
+      });
+  }
+
+  loadNotifications() {
+    this.http.get<Notification[]>(`http://localhost:8088/api/notifications/user/${this.currentUserId}`)
+      .subscribe({
+        next: (data: Notification[]) => {
+          this.notifications = data;
+          this.updateUnreadCount();
+          console.log('Doctor notifications loaded:', data);
+        },
+        error: (err: any) => {
+          console.warn('Notifications not available:', err.message);
+          // Don't show error to user, just continue without notifications
+          this.notifications = [];
+          this.unreadCount = 0;
+        }
+      });
+  }
+
+  updateUnreadCount() {
+    this.unreadCount = this.notifications.filter(n => !n.read).length;
+  }
+
+  markNotificationAsRead(notification: Notification) {
+    if (!notification.read) {
+      // ✅ CORRIGÉ - URL pour notifications
+      this.http.put(`http://localhost:8088/api/notifications/${notification.notificationId}/read`, {})
+        .subscribe({
+          next: () => {
+            notification.read = true;
+            this.updateUnreadCount();
+          },
+          error: (err: any) => {
+            console.error('Error marking notification as read:', err);
+          }
+        });
+    }
+  }
+
+  markAllAsRead() {
+    // ✅ CORRIGÉ - URL pour notifications
+    this.http.put(`http://localhost:8088/api/notifications/user/${this.currentUserId}/read-all`, {})
+      .subscribe({
+        next: () => {
+          this.notifications.forEach(n => n.read = true);
+          this.updateUnreadCount();
+        },
+        error: (err: any) => {
+          console.error('Error marking all as read:', err);
+        }
+      });
+  }
+
+  getStatusClass(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'Completed': 'bg-green-100 text-green-700',
+      'Pending': 'bg-yellow-100 text-yellow-700',
+      'In Progress': 'bg-blue-100 text-blue-700',
+      'Cancelled': 'bg-red-100 text-red-700'
+    };
+    return statusMap[status] || 'bg-gray-100 text-gray-700';
+  }
+
+  reviewResult(result: LaboratoryResult) {
+    alert(`Reviewing lab result for ${result.testName}...`);
+  }
+
+  // ✅ Request a new lab test
+  openRequestForm() {
+    this.showRequestForm = true;
+    this.requestForm = {
+      patientId: null,
+      testName: '',
+      priority: 'Normal',
+      requestNotes: ''
+    };
+  }
+
+  closeRequestForm() {
+    this.showRequestForm = false;
+  }
+
+  submitTestRequest() {
+    if (!this.requestForm.patientId || !this.requestForm.testName) {
+      alert('Please fill in Patient ID and Test Name');
+      return;
+    }
+
+    const request = {
+      testName: this.requestForm.testName,
+      location: 'To be determined',
+      nameLabo: 'Central Laboratory',
+      resultValue: 'Pending analysis',
+      status: 'Pending',
+      testDate: new Date().toISOString().split('T')[0],
+      laboratoryUserId: 4, // Default lab technician
+      patientId: this.requestForm.patientId,
+      prescribedByDoctorId: this.currentUserId,
+      priority: this.requestForm.priority,
+      requestNotes: this.requestForm.requestNotes
+    };
+
+    this.http.post(`${this.apiUrl}`, request).subscribe({
+      next: () => {
+        alert('✅ Test request sent to laboratory successfully!');
+        this.closeRequestForm();
+        this.loadLabResults();
+      },
+      error: (err) => {
+        console.error('Error requesting test:', err);
+        alert('Error sending test request. Please try again.');
+      }
+    });
+  }
 }

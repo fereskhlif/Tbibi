@@ -62,7 +62,7 @@ public class IAdminServiceImp implements IAdminService {
         
         long activeProfessionals = allUsers.stream()
                 .filter(u -> UserStatus.ACTIVE.equals(u.getAccountStatus()) && 
-                             u.getRole() != null && 
+                             u.getRole() != null &&
                              !u.getRole().getRoleName().equalsIgnoreCase("PATIENT") &&
                              !u.getRole().getRoleName().equalsIgnoreCase("ADMIN"))
                 .count();
@@ -83,11 +83,11 @@ public class IAdminServiceImp implements IAdminService {
                 .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .role(user.getRole())
+                .roleName(user.getRole() != null ? user.getRole().getRoleName() : "UNKNOWN")
                 .dateOfBirth(user.getDateOfBirth())
                 .gender(user.getGender())
                 .accountStatus(user.getAccountStatus() != null ? user.getAccountStatus() : UserStatus.ACTIVE)
-                .enabled(user.getEnabled() != null ? user.getEnabled() : true)
+                .enabled(user.isEnabled())
                 .build();
     }
 }

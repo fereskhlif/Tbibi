@@ -3,6 +3,7 @@ package tn.esprit.pi.tbibi.services;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.pi.tbibi.DTO.ActeRequest;
 import tn.esprit.pi.tbibi.DTO.HistoryRequest;
@@ -11,7 +12,6 @@ import tn.esprit.pi.tbibi.DTO.MdicalReccordsResponse;
 import tn.esprit.pi.tbibi.DTO.PatientRecordDTO;
 import tn.esprit.pi.tbibi.entities.Acte;
 import tn.esprit.pi.tbibi.entities.MedicalReccords;
-import tn.esprit.pi.tbibi.entities.Prescription;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.repositories.ActeRepo;
 import tn.esprit.pi.tbibi.repositories.MedicalReccordsRepo;
@@ -28,6 +28,7 @@ import java.util.List;
 @Slf4j  // ← AJOUTER CETTE ANNOTATION
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class MedicalRec implements IMedicalReccordsService {
 
     private final MedRec_Mapper mapper;
@@ -36,7 +37,6 @@ public class MedicalRec implements IMedicalReccordsService {
     private final ActeRepo acteRepo;
     private final Acte_Mapper acteMapper;
     private final UserRepo userRepo;
-    private final tn.esprit.pi.tbibi.repositories.PrescriptionRepo prescriptionRepo;
 
     // ── File helper (PDF) ────────────────────────────────────────────────────
 
@@ -111,46 +111,6 @@ public class MedicalRec implements IMedicalReccordsService {
         log.info("Record sauvegardé avec ID: {}", saved.getMedicalfile_id());
         return mapper.toResponse(saved);
     }
-
-    @Override
-    @org.springframework.transaction.annotation.Transactional
-    public MdicalReccordsResponse addForPatient(String email, MdicalReccordsRequest request) {
-        log.info("=== ADD RECORD FOR PATIENT ===");
-        User patient = userRepo.findByEmail(email).orElse(null);
-        MedicalReccords entity = mapper.toEntity(request);
-        entity.setImageUrl(request.getImageUrl());
-        MedicalReccords saved = repository.save(entity);
-        if (patient != null) {
-            if (patient.getMedicalFiles() == null) {
-                patient.setMedicalFiles(new ArrayList<>());
-            }
-            patient.getMedicalFiles().add(saved);
-
-            // Append patient's note to the Master Record (get(0)) so the Doctor automatically sees it in "History"
-            if (patient.getMedicalFiles().size() > 1) {
-                MedicalReccords master = patient.getMedicalFiles().get(0);
-                String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-                
-                StringBuilder sb = new StringBuilder();
-                sb.append("─── Visite du ").append(timestamp).append(" (Note Patient) ───");
-                
-                if (request.getMedical_historuy() != null && !request.getMedical_historuy().isBlank()) {
-                    sb.append("\nNotes         : ").append(request.getMedical_historuy());
-                }
-                if (request.getChronic_diseas() != null && !request.getChronic_diseas().isBlank()) {
-                    sb.append("\nMaladies ch.  : ").append(request.getChronic_diseas());
-                }
-
-                String existing = master.getMedical_historuy();
-                master.setMedical_historuy(existing == null || existing.isBlank() ? sb.toString() : existing + "\n\n" + sb.toString());
-                repository.save(master);
-            }
-
-            userRepo.save(patient);
-        }
-        return mapper.toResponse(saved);
-    }
-
     @Override
     public MdicalReccordsResponse update(int id, MdicalReccordsRequest request) {
         log.info("=== UPDATE ID: {} ===", id);
@@ -212,8 +172,8 @@ public class MedicalRec implements IMedicalReccordsService {
     public List<PatientRecordDTO> searchPatientsByName(String name) {
         log.info("=== SEARCH PATIENTS BY NAME: {} ===", name);
         List<User> patients = (name == null || name.isBlank())
-                ? userRepo.findAllUsersByRoleName("PATIENT")
-                : userRepo.searchAllPatientsByName(name);
+                ? userRepo.findAllByRoleName("PATIENT")
+                : userRepo.searchPatientsByName(name);
 
         List<PatientRecordDTO> result = new ArrayList<>();
         for (User patient : patients) {
@@ -262,19 +222,10 @@ public class MedicalRec implements IMedicalReccordsService {
     }
 
     @Override
-    @jakarta.transaction.Transactional
-    public MdicalReccordsResponse appendHistory(int medicalFileId, HistoryRequest request, String doctorEmail) {
+    public MdicalReccordsResponse appendHistory(int medicalFileId, HistoryRequest request) {
         log.info("=== APPEND HISTORY TO RECORD {} ===", medicalFileId);
         MedicalReccords record = repository.findById(medicalFileId)
                 .orElseThrow(() -> new RuntimeException("Record not found: " + medicalFileId));
-
-        String doctorName = request.getDoctorName();
-        if ((doctorName == null || doctorName.isBlank()) && doctorEmail != null) {
-            User doctor = userRepo.findByEmail(doctorEmail).orElse(null);
-            if (doctor != null) {
-                doctorName = doctor.getName();
-            }
-        }
 
         String timestamp = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
@@ -282,9 +233,6 @@ public class MedicalRec implements IMedicalReccordsService {
         // Build a structured history entry
         StringBuilder entry = new StringBuilder();
         entry.append("─── Visite du ").append(timestamp).append(" ───");
-        if (doctorName != null && !doctorName.isBlank()) {
-            entry.append("\nMédecin       : Dr. ").append(doctorName);
-        }
         if (request.getFiliere() != null && !request.getFiliere().isBlank()) {
             entry.append("\nFilière       : ").append(request.getFiliere());
         }
@@ -327,40 +275,6 @@ public class MedicalRec implements IMedicalReccordsService {
                         .append(" | A.Causal: ").append(u.getACausal() != null ? u.getACausal() : "");
             }
         }
-
-        // Créer l'Acte correspondant à la visite
-        Acte newVisitActe = new Acte();
-        newVisitActe.setDate(new java.util.Date());
-        newVisitActe.setTypeOfActe(request.getFiliere() != null && !request.getFiliere().isBlank() ? request.getFiliere() : "Visite Médicale");
-        newVisitActe.setDescription(request.getVisitNote() != null ? request.getVisitNote() : "Nouvelle visite");
-        newVisitActe.setMedicalFile(record);
-        if (doctorEmail != null) {
-            User doc = userRepo.findByEmail(doctorEmail).orElse(null);
-            if (doc != null) newVisitActe.setDoctorId(doc.getUserId());
-        }
-
-        // Lier l'acte aux prescriptions s'il y en a
-        List<Prescription> linkedPrescriptions = new ArrayList<>();
-        if (request.getPrescriptions() != null && !request.getPrescriptions().isEmpty()) {
-            for (String pIdStr : request.getPrescriptions()) {
-                try {
-                    int pId = Integer.parseInt(pIdStr.trim());
-                    Prescription p = prescriptionRepo.findById(pId).orElse(null);
-                    if (p != null) {
-                        p.setActe(newVisitActe);
-                        linkedPrescriptions.add(p);
-                    }
-                } catch (NumberFormatException e) {
-                    log.warn("Invalid prescription ID: {}", pIdStr);
-                }
-            }
-        }
-        newVisitActe.setPrescriptions(linkedPrescriptions);
-
-        if (record.getActes() == null) {
-            record.setActes(new ArrayList<>());
-        }
-        record.getActes().add(newVisitActe);
         String existing = record.getMedical_historuy();
         String updated = (existing == null || existing.isBlank())
                 ? entry.toString()
@@ -378,20 +292,25 @@ public class MedicalRec implements IMedicalReccordsService {
 
     /** Returns (or auto-creates) the medical record for the authenticated patient. */
     @Override
-    public List<MdicalReccordsResponse> getMyRecord(String email) {
+    @org.springframework.transaction.annotation.Transactional
+    public MdicalReccordsResponse getMyRecord(String email) {
         log.info("=== GET MY RECORD for email: {} ===", email);
         User patient = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found: " + email));
 
-        if (patient.getMedicalFiles() == null || patient.getMedicalFiles().isEmpty()) {
-            return new ArrayList<>();
+        MedicalReccords record;
+        if (patient.getMedicalFiles() != null && !patient.getMedicalFiles().isEmpty()) {
+            record = patient.getMedicalFiles().get(0);
+        } else {
+            record = new MedicalReccords();
+            record = repository.save(record);
+            if (patient.getMedicalFiles() == null) {
+                patient.setMedicalFiles(new ArrayList<>());
+            }
+            patient.getMedicalFiles().add(record);
+            userRepo.save(patient);
         }
-
-        List<MdicalReccordsResponse> responses = new ArrayList<>();
-        for (MedicalReccords record : patient.getMedicalFiles()) {
-            responses.add(mapper.toResponse(record));
-        }
-        return responses;
+        return mapper.toResponse(record);
     }
 
     /** Saves one image file and appends its serving URL to the patient's record. */
@@ -450,13 +369,7 @@ public class MedicalRec implements IMedicalReccordsService {
         }
 
         if (request.getMedical_historuy() != null) {
-            String existing = record.getMedical_historuy();
-            // Append instead of overwrite to protect any doctor notes if this is the master record
-            if (existing != null && existing.contains("─── Visite du")) {
-                record.setMedical_historuy(existing + "\n\n─── Modification Patient ───\n" + request.getMedical_historuy());
-            } else {
-                record.setMedical_historuy(request.getMedical_historuy());
-            }
+            record.setMedical_historuy(request.getMedical_historuy());
         }
         if (request.getChronic_diseas() != null) {
             record.setChronic_diseas(request.getChronic_diseas());

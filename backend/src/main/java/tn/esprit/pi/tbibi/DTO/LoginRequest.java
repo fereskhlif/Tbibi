@@ -1,7 +1,9 @@
 package tn.esprit.pi.tbibi.DTO;
 
-public record LoginRequest(
-                String email,
-                String password) {
+public record LoginRequest (
+        String email,
+        String password
+)
+{
 
 }

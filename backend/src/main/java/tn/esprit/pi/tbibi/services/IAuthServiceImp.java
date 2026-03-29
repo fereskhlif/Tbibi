@@ -1,9 +1,7 @@
 package tn.esprit.pi.tbibi.services;
 
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,18 +10,13 @@ import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.DTO.AuthResponse;
 import tn.esprit.pi.tbibi.DTO.LoginRequest;
 import tn.esprit.pi.tbibi.DTO.RegisterRequest;
-import tn.esprit.pi.tbibi.entities.EmailTemplateName;
 import tn.esprit.pi.tbibi.entities.Role;
-import tn.esprit.pi.tbibi.entities.Token;
 import tn.esprit.pi.tbibi.entities.User;
+import tn.esprit.pi.tbibi.entities.UserStatus;
 import tn.esprit.pi.tbibi.repositories.RoleRepo;
-import tn.esprit.pi.tbibi.repositories.TokenRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
 import tn.esprit.pi.tbibi.security.CustomUserDetailsService;
 import tn.esprit.pi.tbibi.security.jwt.JwtService;
-
-import java.security.SecureRandom;
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -32,183 +25,95 @@ public class IAuthServiceImp implements IAuthService {
 
     private final UserRepo userRepository;
     private final RoleRepo roleRepository;
-    private final TokenRepo tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final JwtService jwtService;
-    private final EmailService emailService;
-
-    @Value("${application.mailing.frontend.activation-url}")
-    private String activationUrl;
 
     @Override
-    public void register(RegisterRequest req) throws MessagingException {
-        log.info("=== REGISTRATION ATTEMPT ===");
-        log.info("Email: {}", req.email());
-
-        // Validation de l'email
+    public User register(RegisterRequest req) {
         if (req.email() == null || req.email().isBlank()) {
             throw new IllegalArgumentException("Email required");
         }
 
-        // Vérifier si l'email existe déjà
         if (userRepository.findByEmail(req.email()).isPresent()) {
             throw new IllegalArgumentException("Email already used");
         }
 
-        // Validation du mot de passe
         if (req.password() == null || req.password().length() < 6) {
             throw new IllegalArgumentException("Password must contain at least 6 characters");
         }
 
-        // Validation du rôle
-        if (req.roleName() == null || req.roleName().isBlank()) {
+        if (req.roleName() == null) {
             throw new IllegalArgumentException("Role required");
         }
 
-        // Convertir le nom du rôle en majuscules
         String roleNameUpper = req.roleName().toUpperCase();
-        log.info("Looking for role: {}", roleNameUpper);
-
-        // Chercher le rôle par son nom
         Role role = roleRepository.findByRoleName(roleNameUpper);
-
-        // Si le rôle n'existe pas, le créer
         if (role == null) {
-            log.info("Role not found, creating new role: {}", roleNameUpper);
             role = new Role();
             role.setRoleName(roleNameUpper);
             role = roleRepository.save(role);
-            log.info("New role created with ID: {}", role.getRole_id());
-        } else {
-            log.info("Role found with ID: {}", role.getRole_id());
         }
 
-        // Créer l'utilisateur avec le builder
+        // PATIENT → ACTIVE directement, autres rôles → PENDING (validation admin)
+        UserStatus initialStatus = roleNameUpper.equals("PATIENT")
+                ? UserStatus.ACTIVE
+                : UserStatus.PENDING;
+
         User user = User.builder()
                 .name(req.name() == null ? "Not Available" : req.name())
                 .email(req.email())
                 .password(passwordEncoder.encode(req.password()))
+                .role(role)
                 .dateOfBirth(req.dateOfBirth())
                 .gender(req.gender())
                 .adresse(req.adresse())
-                .role(role)
-                .accountStatus(roleNameUpper.equals("PATIENT") ? tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE : tn.esprit.pi.tbibi.entities.UserStatus.PENDING)
-                .enabled(true) // Email verification disabled, user is enabled by default
+                .accountStatus(initialStatus)
+                .enabled(true)
                 .build();
 
-        log.info("Saving user with role: {}", role.getRoleName());
-
-        // Sauvegarder l'utilisateur
+        log.info("Saving user with role: {}, initial status: {}", role.getRoleName(), initialStatus);
         User savedUser = userRepository.save(user);
         log.info("User saved successfully with ID: {}", savedUser.getUserId());
 
-        // sendValidationEmail(savedUser); // Disabled email verification
-    }
-
-    private void sendValidationEmail(User u) throws MessagingException {
-        // just generates and saves the token, nothing else
-        String newToken = generateAndSaveActivationToken(u);
-
-        emailService.sendEmail(
-                u.getEmail(),
-                u.getName(),
-                EmailTemplateName.ACTIVATE_ACCOUNT,
-                activationUrl + "?token=" + newToken,
-                newToken,
-                "Account activation");
-    }
-
-    private String generateAndSaveActivationToken(User u) {
-        // generates the code, saves it as a Token entity, returns it
-        String generatedCode = generateActivationCode(6);
-
-        Token token = Token.builder()
-                .token(generatedCode)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(15))
-                .user(u)
-                .build();
-
-        tokenRepository.save(token);
-        return generatedCode;
-    }
-
-    private String generateActivationCode(int length) {
-        String characters = "0123456789";
-        StringBuilder codeBuilder = new StringBuilder();
-        SecureRandom secureRandom = new SecureRandom();
-
-        for (int i = 0; i < length; i++) {
-            int randomIndex = secureRandom.nextInt(characters.length());
-            codeBuilder.append(characters.charAt(randomIndex));
-        }
-
-        return codeBuilder.toString();
-    }
-
-    public void activateAccount(String code) throws MessagingException {
-        log.info("=== ACTIVATION ATTEMPT ===");
-        Token token = tokenRepository.findByToken(code)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid activation code"));
-
-        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
-            sendValidationEmail(token.getUser());
-            throw new IllegalStateException("Activation code expired. A new code has been sent to your email.");
-        }
-
-        User user = token.getUser();
-        user.setEnabled(true);
-        userRepository.save(user);
-
-        token.setValidatedAt(LocalDateTime.now());
-        tokenRepository.save(token);
-        log.info("Account activated for user: {}", user.getEmail());
+        return savedUser;
     }
 
     @Override
     public AuthResponse login(LoginRequest req) {
-        log.info("=== LOGIN ATTEMPT ===");
-        log.info("Email: {}", req.email());
-
+        log.info("Login attempt for email: {}", req.email());
+        
         try {
-            // Authentifier l'utilisateur
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(req.email(), req.password())
             );
-
-            // Charger les détails de l'utilisateur
-            UserDetails userDetails = userDetailsService.loadUserByUsername(req.email());
-
-            // Générer le token JWT
-            String token = jwtService.generateToken(userDetails);
-
-            // Récupérer le rôle
-            String role = userDetails.getAuthorities().stream()
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No roles found"))
-                    .getAuthority();
-
-            // Nettoyer le rôle (enlever "ROLE_" si présent)
-            if (role.startsWith("ROLE_")) {
-                role = role.substring(5);
-            }
-
-            // Récupérer l'utilisateur pour son ID
-            User user = userRepository.findByEmail(req.email())
-                    .orElseThrow(() -> new IllegalStateException("User not found"));
-
-            log.info("Login successful for user: {}, role: {}", req.email(), role);
-
-            return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId());
-
-        } catch (org.springframework.security.authentication.DisabledException e) {
-            log.error("Login disabled for user {}: account not activated or approved yet.", req.email());
-            throw new IllegalStateException("Your account is not activated. Please check your email to confirm, or wait for admin approval.");
+            log.info("Authentication successful for: {}", req.email());
         } catch (Exception e) {
-            log.error("Login failed for user {}: {}", req.email(), e.getMessage());
-            throw new RuntimeException("Bad credentials");
+            log.error("Authentication failed for {}: {}", req.email(), e.getMessage());
+            throw e;
         }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(req.email());
+        String token = jwtService.generateToken(userDetails);
+
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No roles found"))
+                .getAuthority();
+
+        // ✅ Get userId from database
+        User user = userRepository.findByEmail(req.email())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        return new AuthResponse(
+            token, 
+            userDetails.getUsername(), 
+            role, 
+            user.getUserId(),
+            user.getName(),
+            user.getProfilePicture(),
+            user.getAccountStatus() != null ? user.getAccountStatus().toString() : "ACTIVE"
+        );
     }
 }

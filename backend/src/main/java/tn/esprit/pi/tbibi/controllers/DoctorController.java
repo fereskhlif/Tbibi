@@ -10,44 +10,35 @@ import tn.esprit.pi.tbibi.services.DoctorService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/public/doctors")
+@RequestMapping("/api/doctors")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class DoctorController {
 
     private final DoctorService doctorService;
 
-    /** GET /api/public/doctors/specialties → list of distinct doctor specialties */
     @GetMapping("/specialties")
     public ResponseEntity<List<String>> getAllSpecialties() {
         return ResponseEntity.ok(doctorService.getAllSpecialties());
     }
 
-    /** GET /api/public/doctors?specialty=... OR ?name=... → doctors filtered by specialty or name */
-    @GetMapping
-    public ResponseEntity<List<DoctorDTO>> getDoctors(
-            @RequestParam(value = "specialty", required = false) String specialty,
-            @RequestParam(value = "name", required = false) String name) {
-        if (name != null && !name.trim().isEmpty()) {
-            return ResponseEntity.ok(doctorService.getDoctorsByName(name.trim()));
-        }
-        if (specialty != null && !specialty.trim().isEmpty()) {
-            return ResponseEntity.ok(doctorService.getDoctorsBySpecialty(specialty.trim()));
-        }
-        return ResponseEntity.ok(java.util.Collections.emptyList());
+    @GetMapping("/by-specialty")
+    public ResponseEntity<List<DoctorDTO>> getDoctorsBySpecialty(@RequestParam String specialty) {
+        return ResponseEntity.ok(doctorService.getDoctorsBySpecialty(specialty));
     }
 
-    /**
-     * GET /api/public/doctors/{doctorId}/schedules/available → available schedule
-     * slots
-     */
-    @GetMapping("/{doctorId}/schedules/available")
-    public ResponseEntity<List<ScheduleResponse>> getAvailableSchedules(@PathVariable("doctorId") Integer doctorId) {
+    @GetMapping("/search")
+    public ResponseEntity<List<DoctorDTO>> searchDoctorsByName(@RequestParam String name) {
+        return ResponseEntity.ok(doctorService.getDoctorsByName(name));
+    }
+
+    @GetMapping("/{doctorId}/schedules")
+    public ResponseEntity<List<ScheduleResponse>> getAvailableSchedules(@PathVariable Integer doctorId) {
         return ResponseEntity.ok(doctorService.getAvailableSchedules(doctorId));
     }
 
-    /** GET /api/public/doctors/debug → diagnostic info */
     @GetMapping("/debug")
-    public ResponseEntity<List<?>> debugUsers() {
+    public ResponseEntity<List<?>> getDebugInfo() {
         return ResponseEntity.ok(doctorService.getDebugInfo());
     }
 }

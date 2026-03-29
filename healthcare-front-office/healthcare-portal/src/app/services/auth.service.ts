@@ -71,4 +71,23 @@ export class AuthService {
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
+
+  getCurrentUserId(): number {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      const id = parseInt(storedUserId, 10);
+      if (!isNaN(id) && id > 0) {
+        return id;
+      }
+    }
+    
+    const token = this.getToken();
+    if (!token) return 0;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.userId || payload.id || 0;
+    } catch {
+      return 0;
+    }
+  }
 }
