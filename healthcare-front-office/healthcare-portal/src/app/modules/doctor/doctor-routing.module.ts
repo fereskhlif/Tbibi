@@ -13,6 +13,7 @@ import { DoctorLabResultsComponent } from './pages/lab-results/lab-results.compo
 import { DoctorNotificationsComponent } from './pages/notifications/notifications.component';
 import { DoctorAllAppointmentsComponent } from './pages/all-appointments/all-appointments.component';
 import { ManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
+import { DoctorChatComponent } from './pages/doctor-chat/doctor-chat.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -28,7 +29,8 @@ const routes: Routes = [
     { path: 'lab-results', component: DoctorLabResultsComponent },
     { path: 'notifications', component: DoctorNotificationsComponent },
     { path: 'all-appointments', component: DoctorAllAppointmentsComponent },
-    { path: 'manage-schedules', component: ManageSchedulesComponent }
+    { path: 'manage-schedules', component: ManageSchedulesComponent },
+    { path: 'messages', component: DoctorChatComponent }
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })

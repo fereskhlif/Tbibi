@@ -15,6 +15,8 @@ import { InteractionHistoryComponent } from './pages/interaction-history/interac
 import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
 import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
 import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic.component';
+import { HealthGoalsComponent } from './pages/health-goals/health-goals.component';
+import { PatientChatComponent } from './pages/patient-chat/patient-chat.component';
 const routes: Routes = [
   {
     path: '',
@@ -70,7 +72,10 @@ const routes: Routes = [
   },
   { path: 'book-appointment', component: BookAppointmentComponent },
   { path: 'chronic-monitor', component: PatientChronicComponent },
-  { path: 'pharmacy-shop/product/:id', component: ProductDetailsComponent },]
+  { path: 'health-goals', component: HealthGoalsComponent },
+  { path: 'pharmacy-shop/product/:id', component: ProductDetailsComponent },
+  { path: 'messages', component: PatientChatComponent },
+]
 
 
 @NgModule({
