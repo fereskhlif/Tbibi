@@ -50,19 +50,11 @@ import { environment } from '../../../../../environments/environment';
           </div>
         </div>
 
-        <!-- Document Verification Box -->
-        <div (click)="user.profilePicture ? null : dummyClick($event)" class="mb-6 block border border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 transition-all rounded-xl p-4 flex items-center gap-3 cursor-pointer select-none">
+        <!-- Document Verification Button -->
+        <button (click)="openDiploma(user, $event)" class="w-full mb-6 flex items-center justify-center gap-3 border-2 border-blue-300 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 transition-all rounded-xl p-4 cursor-pointer select-none font-medium text-blue-600">
           <span class="text-2xl">📄</span>
-          <div class="flex-1">
-            <p class="text-sm font-bold text-blue-900">Diplôme / Certificat (PJ)</p>
-            <a [href]="user.profilePicture ? getDiplomaUrl(user.profilePicture) : null"
-               target="_blank"
-               class="text-xs font-medium"
-               [ngClass]="user.profilePicture ? 'text-blue-600 underline' : 'text-gray-500'">
-              {{ user.profilePicture ? 'Ouvrir le document ↗' : 'Aucun fichier (Cliquer pour ouvrir un PDF de test)' }}
-            </a>
-          </div>
-        </div>
+          <span>Diplôme / Certificat (PJ) - Ouvrir le document</span>
+        </button>
 
         <!-- Action Buttons -->
         <div class="flex gap-3">
@@ -151,8 +143,16 @@ export class AdminApprovalsComponent implements OnInit {
     if (!profilePicture) return '';
     // Already a full URL
     if (profilePicture.startsWith('http')) return profilePicture;
-    // Path stored as 'uploads/profiles/xxx.ext' — serve via backend
-    const cleanPath = profilePicture.startsWith('/') ? profilePicture : '/' + profilePicture;
-    return `${environment.baseUrl}${cleanPath}`;
+    // If it's just a UUID or filename, construct the file download URL
+    return `${environment.baseUrl}/documents/${profilePicture}`;
+  }
+
+  openDiploma(user: AdminUser, event: Event): void {
+    if (user.profilePicture) {
+      window.open(this.getDiplomaUrl(user.profilePicture), '_blank');
+    } else {
+      // Si pas de diplôme, ouvrir un PDF de test
+      window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
+    }
   }
 }
