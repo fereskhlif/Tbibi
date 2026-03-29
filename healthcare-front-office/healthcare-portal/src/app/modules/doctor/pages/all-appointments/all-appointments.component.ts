@@ -224,9 +224,15 @@ export class DoctorAllAppointmentsComponent implements OnInit {
     rescheduleTime = '';
     todayStr = new Date().toISOString().split('T')[0];
 
-    private doctorId: number = Number(localStorage.getItem('userId') ?? 0);
+    get doctorId(): number {
+        return Number(localStorage.getItem('userId') || 0);
+    }
 
-    constructor(private svc: DoctorAppointmentService) { }
+    constructor(private svc: DoctorAppointmentService) { 
+        if (!this.doctorId) {
+            console.warn('doctorId is missing or 0 in All Appointments!');
+        }
+    }
 
     ngOnInit() { this.load(); }
 

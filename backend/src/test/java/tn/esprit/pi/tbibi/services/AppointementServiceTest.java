@@ -19,6 +19,7 @@ import tn.esprit.pi.tbibi.repositories.NotificationRepo;
 import tn.esprit.pi.tbibi.repositories.ScheduleRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -144,5 +145,81 @@ public class AppointementServiceTest {
         verify(appointmentRepository, times(2)).save(any(Appointment.class)); // 1 inside create, 1 inside verifyAndConfirm
         assertNotNull(appointment.getMeetingLink());
         assertEquals("Jane Doe", appointment.getPatientName());
+    }
+
+    @Test
+    void testGetByUserId_Success() {
+        when(appointmentRepository.findByUserUserId(1)).thenReturn(List.of(appointment));
+        
+        AppointmentResponse res = new AppointmentResponse();
+        res.setAppointmentId(100L);
+        when(mapper.toResponseList(anyList())).thenReturn(List.of(res));
+        
+        List<AppointmentResponse> results = appointementService.getByUserId(1);
+        
+        assertNotNull(results);
+        assertEquals(1, results.size());
+        assertEquals(100L, results.get(0).getAppointmentId());
+        verify(appointmentRepository).findByUserUserId(1);
+    }
+    
+    @Test
+    void testGetByDoctorId_Success() {
+        when(appointmentRepository.findByDoctorUserId(2)).thenReturn(List.of(appointment));
+        
+        AppointmentResponse res = new AppointmentResponse();
+        res.setAppointmentId(100L);
+        when(mapper.toResponseList(anyList())).thenReturn(List.of(res));
+        
+        List<AppointmentResponse> results = appointementService.getByDoctorId(2);
+        
+        assertNotNull(results);
+        assertEquals(1, results.size());
+        assertEquals(100L, results.get(0).getAppointmentId());
+        verify(appointmentRepository).findByDoctorUserId(2);
+    }
+    
+    @Test
+    void testUpdateStatus_Cancelled_ReopensSchedule() {
+        appointment.setSchedule(schedule);
+        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(appointment);
+        
+        AppointmentResponse res = new AppointmentResponse();
+        res.setAppointmentId(100L);
+        res.setStatusAppointement(StatusAppointement.CANCELLED);
+        when(mapper.toResponse(any(Appointment.class))).thenReturn(res);
+        
+        AppointmentResponse result = appointementService.updateStatus(100L, StatusAppointement.CANCELLED);
+        
+        assertEquals(StatusAppointement.CANCELLED, result.getStatusAppointement());
+        assertTrue(schedule.getIsAvailable());
+        verify(scheduleRepository).save(schedule);
+    }
+    
+    @Test
+    void testReschedule_Success() {
+        Schedule newSchedule = new Schedule();
+        newSchedule.setScheduleId(20L);
+        newSchedule.setIsAvailable(true);
+        
+        appointment.setSchedule(schedule); // currently holds old schedule
+        
+        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(scheduleRepository.findById(20L)).thenReturn(Optional.of(newSchedule));
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(appointment);
+        
+        AppointmentResponse res = new AppointmentResponse();
+        res.setAppointmentId(100L);
+        res.setStatusAppointement(StatusAppointement.PENDING);
+        when(mapper.toResponse(any(Appointment.class))).thenReturn(res);
+        
+        AppointmentResponse result = appointementService.reschedule(100L, 20L);
+        
+        assertEquals(StatusAppointement.PENDING, result.getStatusAppointement());
+        assertTrue(schedule.getIsAvailable()); // Old freed
+        assertFalse(newSchedule.getIsAvailable()); // New booked
+        verify(scheduleRepository).save(schedule);
+        verify(scheduleRepository).save(newSchedule);
     }
 }

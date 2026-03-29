@@ -24,6 +24,9 @@ public class ChronicConditionService {
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
     public ChronicConditionResponse create(ChronicConditionRequest req) {
+        if (req.getDoctorId() == null) {
+            throw new IllegalArgumentException("Doctor ID is required");
+        }
         User doctor = userRepo.findById(req.getDoctorId().longValue())
                 .orElseThrow(() -> new EntityNotFoundException("Doctor not found: " + req.getDoctorId()));
 

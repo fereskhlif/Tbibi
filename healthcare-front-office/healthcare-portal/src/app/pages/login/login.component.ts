@@ -209,6 +209,11 @@ export class LoginComponent {
           localStorage.setItem('TokenUserConnect', response.token);
           localStorage.setItem('EmailUserConnect', response.email);
           localStorage.setItem('RoleUserConnect', response.role);
+          if (response.userId) {
+            localStorage.setItem('userId', response.userId.toString());
+          } else {
+            localStorage.setItem('userId', "0");
+          }
 
           // Redirection
           const routes: Record<string, string> = {

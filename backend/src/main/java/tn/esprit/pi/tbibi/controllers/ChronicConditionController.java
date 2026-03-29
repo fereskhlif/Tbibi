@@ -5,20 +5,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.DTO.ChronicConditionRequest;
 import tn.esprit.pi.tbibi.DTO.ChronicConditionResponse;
+import tn.esprit.pi.tbibi.entities.User;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 import tn.esprit.pi.tbibi.services.ChronicConditionService;
 import tn.esprit.pi.tbibi.services.EmailService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/chronic")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ChronicConditionController {
 
     private final ChronicConditionService service;
     private final EmailService emailService;
+    private final UserRepo userRepo;
 
     /** Create a new reading */
     @PostMapping
@@ -70,9 +73,19 @@ public class ChronicConditionController {
      *         "value": "105 mg/dL", "message": "..." }
      */
     @PostMapping("/warn-email")
-    public ResponseEntity<Void> sendWarningEmail(@RequestBody Map<String, String> body) {
+    public ResponseEntity<String> sendWarningEmail(@RequestBody Map<String, String> body) {
         try {
-            String to = body.get("to");
+            Long patientId = body.containsKey("patientId") ? Long.parseLong(body.get("patientId")) : null;
+            String to = body.get("to"); // Fallback if provided
+
+            // Use patient ID to get real email if available
+            if (patientId != null) {
+                Optional<User> patient = userRepo.findById(patientId);
+                if (patient.isPresent() && patient.get().getEmail() != null) {
+                    to = patient.get().getEmail();
+                }
+            }
+
             String patientName = body.getOrDefault("patientName", "Patient");
             String vitalType = body.getOrDefault("vitalType", "Vital");
             String value = body.getOrDefault("value", "");
@@ -100,8 +113,9 @@ public class ChronicConditionController {
             helper.setText(html, true);
             emailService.getMailSender().send(mimeMessage);
         } catch (Exception e) {
-            // log but don't fail the request
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error sending email: " + e.getMessage());
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Email sent successfully");
     }
 }

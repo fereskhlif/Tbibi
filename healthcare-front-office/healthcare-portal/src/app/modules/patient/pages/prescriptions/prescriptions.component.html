@@ -105,8 +105,8 @@
 
         <!-- Icon -->
         <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
-          [style.background]="STATUS_META[rx.status]?.bg ?? '#f3f4f6'">
-          {{STATUS_META[rx.status]?.icon ?? '💊'}}
+          [style.background]="STATUS_META[rx.status].bg">
+          {{STATUS_META[rx.status].icon}}
         </div>
 
         <!-- Info -->
@@ -116,10 +116,10 @@
             <!-- Status badge -->
             <span class="px-2.5 py-0.5 text-xs rounded-full font-semibold"
               [class.status-pending]="rx.status === 'PENDING'"
-              [style.background]="STATUS_META[rx.status]?.bg"
-              [style.color]="STATUS_META[rx.status]?.color"
-              [style.border]="'1px solid ' + (STATUS_META[rx.status]?.border ?? '#e5e7eb')">
-              {{STATUS_META[rx.status]?.icon}} {{STATUS_META[rx.status]?.label}}
+              [style.background]="STATUS_META[rx.status].bg"
+              [style.color]="STATUS_META[rx.status].color"
+              [style.border]="'1px solid ' + (STATUS_META[rx.status].border ?? '#e5e7eb')">
+              {{STATUS_META[rx.status].icon}} {{STATUS_META[rx.status].label}}
             </span>
           </div>
 
@@ -265,9 +265,9 @@
         <!-- Status badge large -->
         <span class="px-3 py-1 rounded-full text-sm font-bold"
           [class.status-pending]="detailRx.status === 'PENDING'"
-          [style.background]="STATUS_META[detailRx.status]?.bg"
-          [style.color]="STATUS_META[detailRx.status]?.color">
-          {{STATUS_META[detailRx.status]?.icon}} {{STATUS_META[detailRx.status]?.label}}
+          [style.background]="STATUS_META[detailRx.status].bg"
+          [style.color]="STATUS_META[detailRx.status].color">
+          {{STATUS_META[detailRx.status].icon}} {{STATUS_META[detailRx.status].label}}
         </span>
       </div>
 
