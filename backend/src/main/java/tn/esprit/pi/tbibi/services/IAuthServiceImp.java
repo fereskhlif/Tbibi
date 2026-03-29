@@ -94,7 +94,7 @@ public class IAuthServiceImp implements IAuthService {
                 .gender(req.gender())
                 .adresse(req.adresse())
                 .role(role)
-                .accountStatus(roleNameUpper.equals("PATIENT") ? tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE : tn.esprit.pi.tbibi.entities.UserStatus.PENDING)
+                .accountStatus(tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE)
                 .enabled(true) // Email verification disabled, user is enabled by default
                 .build();
 

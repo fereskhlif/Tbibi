@@ -1,4 +1,11 @@
 package tn.esprit.pi.tbibi.repositories;
 
-public interface HealthGoalRepo {
+import org.springframework.data.jpa.repository.JpaRepository;
+import tn.esprit.pi.tbibi.entities.HealthGoal;
+
+import java.util.List;
+
+public interface HealthGoalRepo extends JpaRepository<HealthGoal, Long> {
+
+    List<HealthGoal> findByUserUserId(Long userId);
 }
