@@ -20,6 +20,8 @@ import { InteractionHistoryComponent } from './pages/interaction-history/interac
 import { ProductDetailsComponent } from './pages/pharmacy-shop/product-details/product-details.component';
 import { BookAppointmentComponent } from './pages/book-appointment/book-appointment.component';
 import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic.component';
+import { HealthGoalsComponent } from './pages/health-goals/health-goals.component';
+import { PatientChatComponent } from './pages/patient-chat/patient-chat.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +39,9 @@ import { PatientChronicComponent } from './pages/chronic-monitor/patient-chronic
     InteractionHistoryComponent,
     ProductDetailsComponent,
     BookAppointmentComponent,
-    PatientChronicComponent
+    PatientChronicComponent,
+    HealthGoalsComponent,
+    PatientChatComponent
   ],
   imports: [
     CommonModule,
