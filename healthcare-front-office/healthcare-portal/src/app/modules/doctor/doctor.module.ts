@@ -16,6 +16,8 @@ import { DoctorLabResultsComponent } from './pages/lab-results/lab-results.compo
 import { DoctorNotificationsComponent } from './pages/notifications/notifications.component';
 import { DoctorAllAppointmentsComponent } from './pages/all-appointments/all-appointments.component';
 import { ManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
+import { SharedModule } from '../../shared/shared.module';
+import { DoctorChatComponent } from './pages/doctor-chat/doctor-chat.component';
 
 @NgModule({
     declarations: [
@@ -23,9 +25,10 @@ import { ManageSchedulesComponent } from './pages/manage-schedules/manage-schedu
         TeleconsultationComponent, DiseaseDetectionComponent, DoctorPrescriptionsComponent,
         AiImageAnalysisComponent, ChronicDiseaseComponent, CriticalAlertsComponent,
         DoctorLabResultsComponent, DoctorNotificationsComponent,
-        DoctorAllAppointmentsComponent, ManageSchedulesComponent
+        DoctorAllAppointmentsComponent, ManageSchedulesComponent,
+        DoctorChatComponent
     ],
-    imports: [CommonModule, FormsModule, HttpClientModule, DoctorRoutingModule]
+    imports: [CommonModule, FormsModule, HttpClientModule, DoctorRoutingModule, SharedModule]
 })
 export class DoctorModule { }
 

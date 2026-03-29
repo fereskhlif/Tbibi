@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { LogoComponent } from './components/logo/logo.component';
 import { NavButtonComponent } from './components/nav-button/nav-button.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
+import { ChatInterfaceComponent } from './components/chat-interface/chat-interface.component';
 
 import {
     LucideAngularModule,
@@ -45,7 +46,8 @@ import {
     declarations: [
         LogoComponent,
         NavButtonComponent,
-        MainLayoutComponent
+        MainLayoutComponent,
+        ChatInterfaceComponent
     ],
     imports: [
         CommonModule,
@@ -65,6 +67,7 @@ import {
         LogoComponent,
         NavButtonComponent,
         MainLayoutComponent,
+        ChatInterfaceComponent,
         LucideAngularModule
     ]
 })
