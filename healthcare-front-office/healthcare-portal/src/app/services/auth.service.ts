@@ -21,13 +21,13 @@ export interface LoginRequest {
   password: string;
 }
 
-// Interface pour la réponse - CORRIGÉE
 export interface AuthResponse {
   token: string;
   email: string;
-  role: string;  // ✅ Pas de @JsonProperty, c'est du TypeScript pur !
+  role: string;
   firstName?: string;
   lastName?: string;
+  userId?: number;
 }
 
 @Injectable({
@@ -35,7 +35,7 @@ export interface AuthResponse {
 })
 export class AuthService {
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   register(req: RegisterRequest): Observable<string> {
     console.log('Register request:', req); // Pour debug

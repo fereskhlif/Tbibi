@@ -26,10 +26,11 @@ public class ChronicCondition {
     private String conditionType;
 
     /** Numeric reading value (e.g. 120 for mmHg, 5.5 for mmol/L, 98 for %) */
-    @Column(nullable = false)
+    @Column(name = "reading_value", nullable = false)
     private Double value;
 
     /** Secondary value — used for diastolic blood pressure */
+    @Column(name = "reading_value2")
     private Double value2;
 
     /** Unit: mg/dL, mmHg, %, bpm */

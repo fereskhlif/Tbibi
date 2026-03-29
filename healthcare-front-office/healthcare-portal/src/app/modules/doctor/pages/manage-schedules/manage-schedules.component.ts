@@ -120,9 +120,6 @@ interface ScheduleSlot {
   `
 })
 export class ManageSchedulesComponent implements OnInit {
-  private readonly base = 'http://localhost:8088';
-  private readonly doctorId: number = Number(localStorage.getItem('userId') ?? 0);
-
   slots: ScheduleSlot[] = [];
   loading = false;
 
@@ -135,7 +132,14 @@ export class ManageSchedulesComponent implements OnInit {
 
   todayStr = new Date().toISOString().split('T')[0];
 
-  constructor(private http: HttpClient) {}
+  private readonly base = 'http://localhost:8088';
+  get doctorId(): number { return Number(localStorage.getItem('userId') || 0); }
+
+  constructor(private http: HttpClient) {
+    if (!this.doctorId) {
+      console.warn('doctorId is 0 or invalid. Check localStorage userId.');
+    }
+  }
 
   ngOnInit() {
     this.load();
@@ -187,9 +191,12 @@ export class ManageSchedulesComponent implements OnInit {
         this.formSuccess = '✅ Slot added successfully!';
         setTimeout(() => this.formSuccess = '', 3000);
       },
-      error: () => {
+      error: (err) => {
         this.saving = false;
-        this.formError = 'Failed to save slot. Please try again.';
+        console.error('Error saving slot:', err);
+        const backendMsg = err.error?.message || err.message || 'Unknown error';
+        alert('Server Error: ' + backendMsg);
+        this.formError = 'Failed to save slot: ' + backendMsg;
       }
     });
   }

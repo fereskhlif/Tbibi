@@ -24,6 +24,7 @@ interface LiveVital {
   value: number | null;
   value2?: number | null;
   severity: string;
+  previousSeverity?: string;  // Track previous severity to detect changes
 }
 
 
@@ -62,6 +63,7 @@ interface LiveVital {
       <div class="flex items-center gap-3 flex-wrap">
         <!-- Patient selector from real application patients -->
         <select [(ngModel)]="selectedPatient"
+          (change)="onPatientSelected()"
           class="bg-slate-800 text-black border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
           [disabled]="monitoring || loadingPatients">
           <option [ngValue]="null">{{loadingPatients ? 'Loading patients…' : '— Select patient —'}}</option>
@@ -228,11 +230,14 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
   private alertIdCounter = 0;
   alerts: AlertToast[] = [];
 
+  // Track if we sent email for current tracking session, to avoid spam
+  private emailsSent = { WARNING: false, CRITICAL: false };
+
   liveVitals: LiveVital[] = [
-    { type: 'BLOOD_SUGAR', icon: '🩸', label: 'Blood Sugar', unit: 'mg/dL', value: null, severity: '' },
-    { type: 'BLOOD_PRESSURE', icon: '💓', label: 'Blood Pressure', unit: 'mmHg', value: null, value2: null, severity: '' },
-    { type: 'OXYGEN_SATURATION', icon: '🫁', label: 'Oxygen Saturation', unit: '%', value: null, severity: '' },
-    { type: 'HEART_RATE', icon: '❤️', label: 'Heart Rate', unit: 'bpm', value: null, severity: '' },
+    { type: 'BLOOD_SUGAR', icon: '🩸', label: 'Blood Sugar', unit: 'mg/dL', value: null, severity: '', previousSeverity: '' },
+    { type: 'BLOOD_PRESSURE', icon: '💓', label: 'Blood Pressure', unit: 'mmHg', value: null, value2: null, severity: '', previousSeverity: '' },
+    { type: 'OXYGEN_SATURATION', icon: '🫁', label: 'Oxygen Saturation', unit: '%', value: null, severity: '', previousSeverity: '' },
+    { type: 'HEART_RATE', icon: '❤️', label: 'Heart Rate', unit: 'bpm', value: null, severity: '', previousSeverity: '' },
   ];
 
   constructor(
@@ -277,6 +282,18 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Called when patient is selected/changed ────────────────────────────────
+  onPatientSelected() {
+    if (!this.selectedPatient) {
+      this.stopMonitor();
+      return;
+    }
+    // Automatically create cards and begin tracking when a patient is selected
+    if (!this.monitoring) {
+      this.startMonitor();
+    }
+  }
+
   // ── Computed ────────────────────────────────────────────────────────────────
   get filteredRecords(): ChronicConditionResponse[] {
     let result = this.records;
@@ -296,7 +313,15 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
   startMonitor() {
     if (!this.selectedPatient || this.monitoring) return;
     this.monitoring = true;
-    this.liveVitals.forEach(v => { v.value = null; v.value2 = null; v.severity = ''; });
+    this.emailsSent = { WARNING: false, CRITICAL: false };
+    this.liveVitals.forEach(v => {
+      v.value = null;
+      v.value2 = null;
+      v.severity = '';
+      v.previousSeverity = '';  // Reset previous severity
+    });
+    // Save all vital types at start of monitoring
+    this.saveAllVitalTypes();
     this.monitorInterval = setInterval(() => this.simulateTick(), 3000);
     this.simulateTick();
   }
@@ -311,13 +336,30 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
       const { val, val2 } = this.generateReading(v.type);
       v.value = val;
       if (v.type === 'BLOOD_PRESSURE') v.value2 = val2 ?? null;
-      v.severity = this.computeSeverity(v.type, val, val2);
 
-      if (v.severity === 'CRITICAL') {
+      const newSeverity = this.computeSeverity(v.type, val, val2);
+      const severityChanged = newSeverity !== v.severity;
+
+      v.previousSeverity = v.severity;
+      v.severity = newSeverity;
+
+      // Fire alert for WARNING and CRITICAL
+      if (v.severity !== 'NORMAL') {
         this.fireAlert(v, val, val2);
-        this.autoSave(v, val, val2);   // ← only on CRITICAL
-      } else if (v.severity === 'WARNING') {
-        this.fireAlert(v, val, val2);  // alert only, no save
+
+        // Send email only for the FIRST warning and FIRST critical reading
+        if (v.severity === 'WARNING' && !this.emailsSent.WARNING) {
+          this.sendAlertEmail(v, val, val2, 'WARNING');
+          this.emailsSent.WARNING = true;
+        } else if (v.severity === 'CRITICAL' && !this.emailsSent.CRITICAL) {
+          this.sendAlertEmail(v, val, val2, 'CRITICAL');
+          this.emailsSent.CRITICAL = true;
+        }
+      }
+
+      // Save whenever severity changes
+      if (severityChanged && newSeverity !== '') {
+        this.autoSave(v, val, val2, v.previousSeverity);
       }
     }
   }
@@ -369,6 +411,25 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
     setTimeout(() => this.dismissAlert(toast.id), 7000);
   }
 
+  private sendAlertEmail(v: LiveVital, val: number, val2: number | undefined | null, level: string) {
+    if (!this.selectedPatient) return;
+    const displayVal = v.type === 'BLOOD_PRESSURE' && val2 ? `${val}/${val2} mmHg` : `${val} ${v.unit}`;
+    const msg = this.buildAlertMessage(v.type, level, val);
+
+    const payload = {
+      patientId: this.selectedPatient.id.toString(),
+      patientName: this.selectedPatient.name,
+      vitalType: v.label,
+      value: displayVal,
+      message: msg
+    };
+
+    this.http.post('http://localhost:8088/api/chronic/warn-email', payload).subscribe({
+      next: () => console.log(`${level} email sent to patient successfully`),
+      error: err => console.error(`Failed to send ${level} email`, err)
+    });
+  }
+
   private buildAlertMessage(type: string, severity: string, val: number): string {
     const prefix = severity === 'CRITICAL' ? '' : '⚠️ Warning: ';
     switch (type) {
@@ -384,9 +445,16 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Auto-save CRITICAL readings to DB for permanent record */
-  private autoSave(v: LiveVital, val: number, val2?: number) {
+  /** Auto-save readings to DB whenever severity changes */
+  private autoSave(v: LiveVital, val: number, val2?: number, previousSeverity?: string) {
     if (!this.selectedPatient) return;
+
+    // Build note with severity transition info
+    let notes = `[Smartwatch] Reading recorded`;
+    if (previousSeverity && previousSeverity !== v.severity) {
+      notes = `[Smartwatch] Severity changed: ${previousSeverity || 'INITIAL'} → ${v.severity}`;
+    }
+
     const req: ChronicConditionRequest = {
       patientId: this.selectedPatient.id,
       patientName: this.selectedPatient.name,
@@ -394,7 +462,7 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
       conditionType: v.type,
       value: val,
       value2: val2,
-      notes: `[Smartwatch] CRITICAL alert auto-recorded`,
+      notes: notes,
       recordedAt: this.nowDatetime()
     };
     this.svc.create(req).subscribe({
@@ -408,6 +476,34 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
   deleteRecord(id: number) {
     if (!confirm('Delete this reading?')) return;
     this.svc.delete(id).subscribe({ next: () => this.load() });
+  }
+
+  /** Save all 4 vital card types when patient is selected/changed */
+  private saveAllVitalTypes() {
+    if (!this.selectedPatient) return;
+
+    // Save each vital type as a baseline record
+    for (const vital of this.liveVitals) {
+      const req: ChronicConditionRequest = {
+        patientId: this.selectedPatient.id,
+        patientName: this.selectedPatient.name,
+        doctorId: this.doctorId,
+        conditionType: vital.type,
+        value: vital.value || 0,  // Use current value or 0 as baseline
+        value2: vital.value2 ?? undefined,
+        notes: `[Patient Selected] Vital type card saved for patient monitoring`,
+        recordedAt: this.nowDatetime()
+      };
+      this.svc.create(req).subscribe({
+        next: () => {
+          // Record saved, no action needed
+        },
+        error: () => { }
+      });
+    }
+
+    // Reload records after saving all types
+    setTimeout(() => this.load(), 500);
   }
 
   // ── UI helpers ─────────────────────────────────────────────────────────────

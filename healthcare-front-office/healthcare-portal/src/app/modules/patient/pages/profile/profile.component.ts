@@ -137,7 +137,7 @@ export class ProfileComponent implements OnInit {
   profileImageUrl: string | null = null;
   uploadingPic = false;
   personalInfo: any[] = [];
-  
+
   passwords = { oldPassword: '', newPassword: '', confirmPassword: '' };
   changingPw = false;
   pwMessage = '';
@@ -212,10 +212,10 @@ export class ProfileComponent implements OnInit {
       this.pwSuccess = false;
       return;
     }
-    
+
     this.changingPw = true;
     this.pwMessage = '';
-    
+
     this.userService.changePassword(this.passwords.oldPassword, this.passwords.newPassword).subscribe({
       next: () => {
         this.changingPw = false;
