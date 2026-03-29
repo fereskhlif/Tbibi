@@ -1,94 +1,221 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+interface LaboratoryResult {
+  labId: number;
+  testName: string;
+  location: string;
+  nameLabo: string;
+  resultValue: string;
+  status: string;
+  testDate: string;
+  priority?: string;
+  prescribedByDoctorName?: string;
+  laboratoryUserName?: string;
+  notificationMessage?: string;
+  expanded?: boolean;
+  showExplanation?: boolean;
+}
+
+interface Notification {
+  notificationId: number;
+  message: string;
+  read: boolean;
+  createdDate: string;
+}
 
 @Component({
   selector: 'app-lab-results',
-  template: `
-    <div class="p-8">
-      <div class="flex items-center justify-between mb-6">
-        <div><h1 class="text-2xl font-bold text-gray-900">Lab Results</h1><p class="text-gray-600">View and track your test results</p></div>
-        <button (click)="downloadAll()" class="px-4 py-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium transition-colors">Download All</button>
-      </div>
-
-      <div class="space-y-4">
-        <div *ngFor="let result of results" class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-          <!-- Header (Clickable) -->
-          <div class="p-6 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors" (click)="toggleResult(result)">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
-                 <lucide-icon name="microscope" class="w-6 h-6 text-blue-600"></lucide-icon>
-              </div>
-              <div>
-                <h3 class="font-semibold text-gray-900">{{result.test}}</h3>
-                <p class="text-xs text-gray-500">{{result.lab}} • {{result.date}}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-4">
-              <span [class]="'px-3 py-1 text-xs rounded-full font-medium ' + result.statusClass">{{result.status}}</span>
-              <lucide-icon name="chevron-down" [class]="'w-5 h-5 text-gray-400 transform transition-transform duration-200 ' + (result.expanded ? 'rotate-180' : '')"></lucide-icon>
-            </div>
-          </div>
-
-          <!-- Expanded Details -->
-          <div *ngIf="result.expanded" class="border-t border-gray-100 bg-gray-50/50 p-6 animate-slide-down">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div *ngFor="let item of result.items" class="bg-white p-4 rounded-lg border border-gray-200 flex items-center justify-between">
-                <div>
-                  <p class="font-medium text-gray-900">{{item.name}}</p>
-                  <p class="text-xs text-gray-500">Range: {{item.range}}</p>
-                </div>
-                <div class="text-right">
-                  <p [class]="'font-bold ' + (item.normal ? 'text-gray-900' : 'text-red-600')">{{item.value}}</p>
-                  <p *ngIf="!item.normal" class="text-xs text-red-500 font-medium">Abnormal</p>
-                </div>
-              </div>
-            </div>
-            <div class="mt-4 flex justify-end gap-3">
-               <button (click)="viewChart(result)" class="text-sm text-blue-600 font-medium hover:underline">View Analysis Chart</button>
-               <button (click)="downloadResult(result)" class="text-sm text-gray-600 font-medium hover:text-gray-900">Download PDF</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .rotate-180 { transform: rotate(180deg); }
-    @keyframes slide-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-slide-down { animation: slide-down 0.2s ease-out; }
-  `]
+  templateUrl: './lab-results.component.html',
+  styleUrls: ['./lab-results.component.css']
 })
-export class LabResultsComponent {
-  results = [
-    {
-      test: 'Complete Blood Count', lab: 'Central Lab', date: 'Jan 15, 2024', status: 'Completed', statusClass: 'bg-green-100 text-green-700',
-      expanded: false,
-      items: [{ name: 'Hemoglobin', value: '14.2 g/dL', range: '13.5-17.5', normal: true }, { name: 'WBC', value: '7,500 /μL', range: '4,500-11,000', normal: true }, { name: 'Platelets', value: '250,000 /μL', range: '150,000-400,000', normal: true }, { name: 'RBC', value: '5.1 M/μL', range: '4.5-5.5', normal: true }]
-    },
-    {
-      test: 'Thyroid Panel', lab: 'Endocrine Lab', date: 'Jan 10, 2024', status: 'Completed', statusClass: 'bg-green-100 text-green-700',
-      expanded: false,
-      items: [{ name: 'TSH', value: '2.5 mIU/L', range: '0.4-4.0', normal: true }, { name: 'Free T4', value: '1.2 ng/dL', range: '0.8-1.8', normal: true }, { name: 'Free T3', value: '3.1 pg/mL', range: '2.3-4.2', normal: true }]
-    },
-    {
-      test: 'Lipid Panel', lab: 'Central Lab', date: 'Dec 28, 2023', status: 'Completed', statusClass: 'bg-green-100 text-green-700',
-      expanded: false,
-      items: [{ name: 'Total Cholesterol', value: '210 mg/dL', range: '<200', normal: false }, { name: 'HDL', value: '55 mg/dL', range: '>40', normal: true }, { name: 'LDL', value: '130 mg/dL', range: '<100', normal: false }, { name: 'Triglycerides', value: '150 mg/dL', range: '<150', normal: true }]
-    }
-  ];
+export class LabResultsComponent implements OnInit {
+  results: LaboratoryResult[] = [];
+  notifications: Notification[] = [];
+  unreadCount: number = 0;
+  currentUserId: number = 6; // Patient ID par défaut
 
-  toggleResult(result: any) {
+  // ✅ CORRIGÉ - URL complète avec /laboratory-results
+  private apiUrl = 'http://localhost:8088/api/laboratory-results';
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    this.loadLabResults();
+    this.loadNotifications();
+  }
+
+  loadLabResults() {
+    console.log('Loading lab results for patient:', this.currentUserId);
+    
+    this.http.get<LaboratoryResult[]>(`${this.apiUrl}/patient/${this.currentUserId}`)
+      .subscribe({
+        next: (data: LaboratoryResult[]) => {
+          console.log('Lab results loaded successfully:', data);
+          this.results = data.map(result => ({ 
+            ...result, 
+            expanded: false,
+            showExplanation: false 
+          }));
+          
+          // ✅ Check for critical results and show alert
+          this.checkForCriticalResults(data);
+        },
+        error: (err: any) => {
+          console.error('Error loading lab results:', err);
+        }
+      });
+  }
+
+  // ✅ Check for critical results and alert patient
+  checkForCriticalResults(results: LaboratoryResult[]) {
+    const criticalResults = results.filter(r => 
+      r.priority === 'Critical' && 
+      (r.status === 'Completed' || r.status === 'Validated')
+    );
+    
+    if (criticalResults.length > 0) {
+      const message = criticalResults.length === 1
+        ? `⚠️ CRITICAL ALERT: You have 1 critical test result that requires immediate attention!`
+        : `⚠️ CRITICAL ALERT: You have ${criticalResults.length} critical test results that require immediate attention!`;
+      
+      alert(message + '\n\nPlease contact your doctor immediately.');
+    }
+  }
+
+  loadNotifications() {
+    this.http.get<Notification[]>(`http://localhost:8088/api/notifications/user/${this.currentUserId}`)
+      .subscribe({
+        next: (data: Notification[]) => {
+          this.notifications = data;
+          this.updateUnreadCount();
+        },
+        error: (err: any) => {
+          console.warn('Notifications not available:', err.message);
+          // Don't show error to user, just continue without notifications
+          this.notifications = [];
+          this.unreadCount = 0;
+        }
+      });
+  }
+
+  updateUnreadCount() {
+    this.unreadCount = this.notifications.filter(n => !n.read).length;
+  }
+
+  markNotificationAsRead(notification: Notification) {
+    if (!notification.read) {
+      // ✅ CORRIGÉ - URL pour notifications
+      this.http.put(`http://localhost:8088/api/notifications/${notification.notificationId}/read`, {})
+        .subscribe({
+          next: () => {
+            notification.read = true;
+            this.updateUnreadCount();
+          },
+          error: (err: any) => {
+            console.error('Error marking notification as read:', err);
+          }
+        });
+    }
+  }
+
+  markAllAsRead() {
+    // ✅ CORRIGÉ - URL pour notifications
+    this.http.put(`http://localhost:8088/api/notifications/user/${this.currentUserId}/read-all`, {})
+      .subscribe({
+        next: () => {
+          this.notifications.forEach(n => n.read = true);
+          this.updateUnreadCount();
+        },
+        error: (err: any) => {
+          console.error('Error marking all as read:', err);
+        }
+      });
+  }
+
+  toggleResult(result: LaboratoryResult) {
     result.expanded = !result.expanded;
+  }
+
+  // ✅ Toggle simple explanation
+  toggleExplanation(result: LaboratoryResult) {
+    result.showExplanation = !result.showExplanation;
+  }
+
+  // ✅ Get simple explanation for test results
+  getSimpleExplanation(result: LaboratoryResult): string {
+    const testType = result.testName.toLowerCase();
+    
+    if (testType.includes('blood') || testType.includes('hemoglobin') || testType.includes('cbc')) {
+      return `This blood test checks your overall health by measuring different components in your blood. 
+              Normal results mean your blood cells are healthy. High or low values may indicate anemia, 
+              infection, or other conditions. Your doctor will explain any abnormal results.`;
+    }
+    
+    if (testType.includes('glucose') || testType.includes('sugar')) {
+      return `This test measures the sugar (glucose) level in your blood. Normal levels indicate good blood 
+              sugar control. High levels may suggest diabetes or prediabetes. Low levels can cause dizziness 
+              and weakness. Consult your doctor about the results.`;
+    }
+    
+    if (testType.includes('cholesterol') || testType.includes('lipid')) {
+      return `This test measures fats in your blood including cholesterol. Normal levels reduce heart disease 
+              risk. High cholesterol can lead to heart problems. Your doctor may recommend diet changes or 
+              medication if levels are high.`;
+    }
+    
+    if (testType.includes('urine') || testType.includes('urinalysis')) {
+      return `This test examines your urine for signs of kidney problems, infections, or diabetes. Normal 
+              results mean your kidneys are working well. Abnormal results may require further testing.`;
+    }
+    
+    return `This test helps your doctor understand your health condition. Normal results are good news. 
+            If any values are outside the normal range, your doctor will discuss what this means and 
+            any necessary next steps. Don't hesitate to ask questions!`;
+  }
+
+  // ✅ Check if result has abnormal values
+  hasAbnormalValues(resultValue: string): boolean {
+    const lower = resultValue.toLowerCase();
+    return lower.includes('high') || lower.includes('low') || 
+           lower.includes('abnormal') || lower.includes('critical');
+  }
+
+  // ✅ Share result with doctor
+  shareWithDoctor(result: LaboratoryResult) {
+    if (!result.prescribedByDoctorName) {
+      alert('No prescribing doctor assigned to this result.');
+      return;
+    }
+    
+    const confirmed = confirm(
+      `Share this result with Dr. ${result.prescribedByDoctorName}?\n\n` +
+      `Test: ${result.testName}\n` +
+      `Status: ${result.status}\n\n` +
+      `The doctor will be notified and can view your results securely.`
+    );
+    
+    if (confirmed) {
+      // In a real app, this would call an API endpoint
+      alert(`✅ Result shared successfully with Dr. ${result.prescribedByDoctorName}!\n\nYour doctor has been notified and can now access this result.`);
+    }
+  }
+
+  getStatusClass(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'Completed': 'status-completed',
+      'Pending': 'status-pending',
+      'In Progress': 'status-progress',
+      'Cancelled': 'status-cancelled'
+    };
+    return statusMap[status] || 'status-default';
   }
 
   downloadAll() {
     alert('Downloading all lab results as a ZIP archive...');
   }
 
-  viewChart(result: any) {
-    alert(`Generating analysis chart for ${result.test}...`);
-  }
-
-  downloadResult(result: any) {
-    alert(`Downloading PDF report for ${result.test}...`);
+  downloadResult(result: LaboratoryResult) {
+    alert(`Downloading PDF report for ${result.testName}...`);
   }
 }

@@ -38,7 +38,9 @@ import {
     Phone,
     Mail,
     MapPin,
-    Star
+    Star,
+    FlaskConical,
+    Scan
 } from 'lucide-angular';
 
 @NgModule({
@@ -55,7 +57,8 @@ import {
             LayoutDashboard, User, FileText, MessageSquare, Calendar, Users, Pill, ShoppingBag,
             Activity, Clock, CreditCard, History, Video, Search, Bell, Menu, X, Plus,
             Home, Settings, LogOut, ChevronDown, ChevronRight, Stethoscope, Microscope,
-            Clipboard, ShieldCheck, Phone, Mail, MapPin, Star
+            Clipboard, ShieldCheck, Phone, Mail, MapPin, Star,
+            FlaskConical, Scan
         })
     ],
     exports: [

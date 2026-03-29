@@ -118,7 +118,7 @@
               [class.status-pending]="rx.status === 'PENDING'"
               [style.background]="STATUS_META[rx.status].bg"
               [style.color]="STATUS_META[rx.status].color"
-              [style.border]="'1px solid ' + (STATUS_META[rx.status].border ?? '#e5e7eb')">
+              [style.border]="'1px solid ' + STATUS_META[rx.status].border">>
               {{STATUS_META[rx.status].icon}} {{STATUS_META[rx.status].label}}
             </span>
           </div>

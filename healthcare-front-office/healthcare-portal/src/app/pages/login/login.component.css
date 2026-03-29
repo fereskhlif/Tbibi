@@ -1,0 +1,16 @@
+/* login.component.css */
+/* Tailwind handles most styling — add custom overrides here if needed */
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+input:focus {
+  outline: none;
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

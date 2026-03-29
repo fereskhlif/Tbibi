@@ -1,0 +1,297 @@
+<div class="treatment-plan-container">
+  <div class="header">
+    <div>
+      <h1>💊 Plans de Traitement Personnalisés</h1>
+      <p class="subtitle">Créez et gérez des programmes de récupération sur mesure</p>
+    </div>
+    <button (click)="openCreateModal()" class="btn btn-primary">
+      ➕ Nouveau Plan
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>🔍 Rechercher</label>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (ngModelChange)="onFilterChange()"
+        placeholder="Nom du plan, patient ou diagnostic..."
+        class="filter-input">
+    </div>
+
+    <div class="filter-group">
+      <label>📊 Statut</label>
+      <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()" class="filter-select">
+        <option value="all">Tous</option>
+        <option value="Active">Actifs</option>
+        <option value="Completed">Terminés</option>
+        <option value="Suspended">Suspendus</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Liste des plans -->
+  <div class="plans-grid">
+    <div *ngIf="filteredPlans.length === 0" class="no-plans">
+      <p>Aucun plan de traitement trouvé</p>
+    </div>
+
+    <div *ngFor="let plan of filteredPlans" class="plan-card">
+      <div class="plan-header">
+        <div>
+          <h3>{{ plan.planName }}</h3>
+          <p class="patient-name">👤 {{ plan.patientName }}</p>
+        </div>
+        <span [class]="'status-badge ' + getStatusBadgeClass(plan.status)">
+          {{ plan.status }}
+        </span>
+      </div>
+
+      <div class="plan-info">
+        <div class="info-item">
+          <span class="info-label">🩺 Diagnostic:</span>
+          <span class="info-value">{{ plan.diagnosis }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">📅 Durée:</span>
+          <span class="info-value">{{ plan.durationWeeks }} semaines</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">🗓️ Début:</span>
+          <span class="info-value">{{ plan.startDate | date: 'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="info-item" *ngIf="plan.endDate">
+          <span class="info-label">🏁 Fin:</span>
+          <span class="info-value">{{ plan.endDate | date: 'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+
+      <div class="plan-goals">
+        <strong>🎯 Objectifs thérapeutiques:</strong>
+        <p>{{ plan.therapeuticGoals }}</p>
+      </div>
+
+      <div class="plan-actions">
+        <button (click)="openDetailModal(plan)" class="btn btn-info">
+          👁️ Détails
+        </button>
+        <button (click)="openEditModal(plan)" class="btn btn-secondary">
+          ✏️ Modifier
+        </button>
+        <button (click)="deletePlan(plan.planId!)" class="btn btn-danger">
+          🗑️ Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Créer -->
+  <div *ngIf="showCreateModal" class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>➕ Créer un Plan de Traitement</h2>
+        <button (click)="closeCreateModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Patient *</label>
+            <select [(ngModel)]="newPlan.patientId" class="form-control" required>
+              <option [value]="0">Sélectionner un patient</option>
+              <option *ngFor="let patient of patients" [value]="patient.userId">
+                {{ patient.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Nom du Plan *</label>
+            <input type="text" [(ngModel)]="newPlan.planName" class="form-control" 
+                   placeholder="Ex: Rééducation post-opératoire du genou" required>
+          </div>
+
+          <div class="form-group">
+            <label>Diagnostic *</label>
+            <input type="text" [(ngModel)]="newPlan.diagnosis" class="form-control" 
+                   placeholder="Ex: Reconstruction LCA" required>
+          </div>
+
+          <div class="form-group">
+            <label>Durée (semaines) *</label>
+            <input type="number" [(ngModel)]="newPlan.durationWeeks" class="form-control" 
+                   min="1" max="52" required>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Objectifs Thérapeutiques *</label>
+            <textarea [(ngModel)]="newPlan.therapeuticGoals" class="form-control" rows="3"
+                      placeholder="Décrivez les objectifs du traitement..." required></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Exercices *</label>
+            <textarea [(ngModel)]="newPlan.exercises" class="form-control" rows="4"
+                      placeholder="Listez les exercices recommandés..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Date de Début *</label>
+            <input type="date" [(ngModel)]="newPlan.startDate" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Statut</label>
+            <select [(ngModel)]="newPlan.status" class="form-control">
+              <option value="Active">Actif</option>
+              <option value="Suspended">Suspendu</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Notes</label>
+            <textarea [(ngModel)]="newPlan.notes" class="form-control" rows="2"
+                      placeholder="Notes additionnelles..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeCreateModal()" class="btn btn-secondary">
+          Annuler
+        </button>
+        <button (click)="createPlan()" class="btn btn-primary">
+          ✅ Créer le Plan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Éditer -->
+  <div *ngIf="showEditModal" class="modal-overlay" (click)="closeEditModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>✏️ Modifier le Plan de Traitement</h2>
+        <button (click)="closeEditModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nom du Plan *</label>
+            <input type="text" [(ngModel)]="editPlan.planName" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Diagnostic *</label>
+            <input type="text" [(ngModel)]="editPlan.diagnosis" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Durée (semaines) *</label>
+            <input type="number" [(ngModel)]="editPlan.durationWeeks" class="form-control" 
+                   min="1" max="52" required>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Objectifs Thérapeutiques *</label>
+            <textarea [(ngModel)]="editPlan.therapeuticGoals" class="form-control" rows="3" required></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Exercices *</label>
+            <textarea [(ngModel)]="editPlan.exercises" class="form-control" rows="4" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Date de Début *</label>
+            <input type="date" [(ngModel)]="editPlan.startDate" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Statut</label>
+            <select [(ngModel)]="editPlan.status" class="form-control">
+              <option value="Active">Actif</option>
+              <option value="Completed">Terminé</option>
+              <option value="Suspended">Suspendu</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Notes</label>
+            <textarea [(ngModel)]="editPlan.notes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeEditModal()" class="btn btn-secondary">
+          Annuler
+        </button>
+        <button (click)="updatePlan()" class="btn btn-primary">
+          💾 Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Détails -->
+  <div *ngIf="showDetailModal && selectedPlan" class="modal-overlay" (click)="closeDetailModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📋 Détails du Plan de Traitement</h2>
+        <button (click)="closeDetailModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-section">
+          <h3>{{ selectedPlan.planName }}</h3>
+          <span [class]="'status-badge ' + getStatusBadgeClass(selectedPlan.status)">
+            {{ selectedPlan.status }}
+          </span>
+        </div>
+
+        <div class="detail-section">
+          <h4>👤 Patient</h4>
+          <p>{{ selectedPlan.patientName }}</p>
+          <p class="text-sm">{{ selectedPlan.patientEmail }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>🩺 Diagnostic</h4>
+          <p>{{ selectedPlan.diagnosis }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>🎯 Objectifs Thérapeutiques</h4>
+          <p>{{ selectedPlan.therapeuticGoals }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>💪 Exercices</h4>
+          <p class="whitespace-pre-line">{{ selectedPlan.exercises }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>📅 Calendrier</h4>
+          <p><strong>Durée:</strong> {{ selectedPlan.durationWeeks }} semaines</p>
+          <p><strong>Début:</strong> {{ selectedPlan.startDate | date: 'dd/MM/yyyy' }}</p>
+          <p *ngIf="selectedPlan.endDate"><strong>Fin:</strong> {{ selectedPlan.endDate | date: 'dd/MM/yyyy' }}</p>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedPlan.notes">
+          <h4>📝 Notes</h4>
+          <p>{{ selectedPlan.notes }}</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeDetailModal()" class="btn btn-secondary">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

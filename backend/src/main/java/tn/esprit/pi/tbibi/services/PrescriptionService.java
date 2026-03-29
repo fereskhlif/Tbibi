@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.pi.tbibi.DTO.PrescriptionRequest;
 import tn.esprit.pi.tbibi.DTO.PrescriptionResponse;
 import tn.esprit.pi.tbibi.entities.Acte;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j  // ← AJOUTER CETTE ANNOTATION
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class PrescriptionService implements IPrescriptionService {
 
     private final PrescriptionRepo repository;
@@ -129,7 +131,7 @@ public class PrescriptionService implements IPrescriptionService {
     private User findPatientByActe(Acte acte) {
         if (acte == null || acte.getMedicalFile() == null) return null;
         int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
-        return userRepository.findPatientByMedicalFileId(medicalFileId).orElse(null);
+        return userRepository.findUserByMedicalFileId(medicalFileId).orElse(null);
     }
 
     // AJOUTER cette méthode privée pour enrichir le DTO avec les infos patient

@@ -1,32 +1,237 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { TreatmentPlanService } from '../../services/treatment-plan.service';
+import { TreatmentPlan, TreatmentPlanRequest } from '../../models/treatment-plan.model';
+import { HttpClient } from '@angular/common/http';
+
+interface Patient {
+  userId: number;
+  name: string;
+  email: string;
+}
+
 @Component({
-    selector: 'app-treatment-plan', template: `
-  <div class="p-8">
-    <div class="flex items-center justify-between mb-6"><div><h1 class="text-2xl font-bold text-gray-900">Treatment Plans</h1><p class="text-gray-600">Create and manage treatment protocols</p></div>
-    <button class="px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700">+ New Plan</button></div>
-    <div class="space-y-4">
-      <div *ngFor="let plan of plans" class="bg-white rounded-xl border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-4"><div><h3 class="font-semibold text-gray-900">{{plan.patient}} - {{plan.condition}}</h3><p class="text-sm text-gray-500">Created: {{plan.created}} • Duration: {{plan.duration}}</p></div>
-        <span [class]="'px-3 py-1 text-xs rounded-full ' + plan.statusClass">{{plan.status}}</span></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div *ngFor="let phase of plan.phases" class="bg-gray-50 rounded-lg p-4">
-            <div class="flex items-center gap-2 mb-2"><span [class]="'w-2 h-2 rounded-full ' + phase.dotClass"></span><h4 class="font-medium text-gray-900 text-sm">{{phase.name}}</h4></div>
-            <p class="text-xs text-gray-600">{{phase.description}}</p><p class="text-xs text-gray-400 mt-1">{{phase.weeks}}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-` })
-export class TreatmentPlanComponent {
-    plans = [
-        {
-            patient: 'John Doe', condition: 'ACL Reconstruction', created: 'Dec 1, 2023', duration: '16 weeks', status: 'Active', statusClass: 'bg-green-100 text-green-700',
-            phases: [{ name: 'Phase 1: Protection', description: 'ROM exercises, pain management, swelling control', weeks: 'Weeks 1-4', dotClass: 'bg-green-500' }, { name: 'Phase 2: Strengthening', description: 'Progressive resistance, balance training', weeks: 'Weeks 5-10', dotClass: 'bg-blue-500' }, { name: 'Phase 3: Function', description: 'Sport-specific exercises, agility drills', weeks: 'Weeks 11-14', dotClass: 'bg-purple-500' }, { name: 'Phase 4: Return', description: 'Full activity return, maintenance program', weeks: 'Weeks 15-16', dotClass: 'bg-orange-500' }]
+  selector: 'app-treatment-plan',
+  templateUrl: './treatment-plan.component.html',
+  styleUrls: ['./treatment-plan.component.css']
+})
+export class TreatmentPlanComponent implements OnInit {
+  plans: TreatmentPlan[] = [];
+  filteredPlans: TreatmentPlan[] = [];
+  patients: Patient[] = [];
+  currentPhysioId: number = 9;
+  
+  filterStatus: string = 'all';
+  searchTerm: string = '';
+  
+  showCreateModal: boolean = false;
+  showEditModal: boolean = false;
+  showDetailModal: boolean = false;
+  selectedPlan: TreatmentPlan | null = null;
+  
+  newPlan: TreatmentPlanRequest = this.getEmptyPlan();
+  editPlan: TreatmentPlanRequest = this.getEmptyPlan();
+
+  private apiUrl = 'http://localhost:8088/api';
+
+  constructor(
+    private treatmentPlanService: TreatmentPlanService,
+    private http: HttpClient
+  ) {}
+
+  ngOnInit(): void {
+    this.loadPlans();
+    this.loadPatients();
+  }
+
+  loadPlans(): void {
+    this.treatmentPlanService.getByPhysiotherapist(this.currentPhysioId)
+      .subscribe({
+        next: (data) => {
+          this.plans = data;
+          this.applyFilters();
         },
-        {
-            patient: 'Jane Smith', condition: 'Rotator Cuff Repair', created: 'Dec 15, 2023', duration: '15 weeks', status: 'Active', statusClass: 'bg-green-100 text-green-700',
-            phases: [{ name: 'Phase 1: Immobilization', description: 'Passive ROM, pendulum exercises', weeks: 'Weeks 1-6', dotClass: 'bg-green-500' }, { name: 'Phase 2: Active ROM', description: 'Gentle active motion, isometric exercises', weeks: 'Weeks 7-12', dotClass: 'bg-blue-500' }]
-        }
-    ];
+        error: (err) => console.error('Error loading plans:', err)
+      });
+  }
+
+  loadPatients(): void {
+    this.http.get<any[]>(`${this.apiUrl}/therapy-session/physiotherapist/${this.currentPhysioId}`)
+      .subscribe({
+        next: (sessions) => {
+          const patientMap = new Map<number, Patient>();
+          sessions.forEach(session => {
+            if (!patientMap.has(session.patientId)) {
+              patientMap.set(session.patientId, {
+                userId: session.patientId,
+                name: session.patientName,
+                email: session.patientEmail || ''
+              });
+            }
+          });
+          this.patients = Array.from(patientMap.values());
+        },
+        error: (err) => console.error('Error loading patients:', err)
+      });
+  }
+
+  applyFilters(): void {
+    this.filteredPlans = this.plans.filter(plan => {
+      const matchesStatus = this.filterStatus === 'all' || plan.status === this.filterStatus;
+      const matchesSearch = !this.searchTerm || 
+        plan.planName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        plan.patientName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        plan.diagnosis?.toLowerCase().includes(this.searchTerm.toLowerCase());
+      
+      return matchesStatus && matchesSearch;
+    });
+  }
+
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  openCreateModal(): void {
+    this.newPlan = this.getEmptyPlan();
+    this.showCreateModal = true;
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal = false;
+  }
+
+  openEditModal(plan: TreatmentPlan): void {
+    this.selectedPlan = plan;
+    this.editPlan = {
+      patientId: plan.patientId,
+      physiotherapistId: plan.physiotherapistId,
+      planName: plan.planName,
+      diagnosis: plan.diagnosis,
+      therapeuticGoals: plan.therapeuticGoals,
+      exercises: plan.exercises,
+      durationWeeks: plan.durationWeeks,
+      startDate: plan.startDate,
+      status: plan.status,
+      notes: plan.notes || ''
+    };
+    this.showEditModal = true;
+  }
+
+  closeEditModal(): void {
+    this.showEditModal = false;
+    this.selectedPlan = null;
+  }
+
+  openDetailModal(plan: TreatmentPlan): void {
+    this.selectedPlan = plan;
+    this.showDetailModal = true;
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedPlan = null;
+  }
+
+  createPlan(): void {
+    if (!this.validatePlan(this.newPlan)) return;
+    
+    this.treatmentPlanService.create(this.newPlan).subscribe({
+      next: () => {
+        this.loadPlans();
+        this.closeCreateModal();
+        alert('Plan de traitement créé avec succès!');
+      },
+      error: (err) => {
+        console.error('Error creating plan:', err);
+        alert('Erreur lors de la création du plan');
+      }
+    });
+  }
+
+  updatePlan(): void {
+    if (!this.selectedPlan || !this.validatePlan(this.editPlan)) return;
+    
+    this.treatmentPlanService.update(this.selectedPlan.planId!, this.editPlan).subscribe({
+      next: () => {
+        this.loadPlans();
+        this.closeEditModal();
+        alert('Plan de traitement mis à jour avec succès!');
+      },
+      error: (err) => {
+        console.error('Error updating plan:', err);
+        alert('Erreur lors de la mise à jour du plan');
+      }
+    });
+  }
+
+  updateStatus(planId: number, status: string): void {
+    if (!confirm(`Voulez-vous vraiment changer le statut à "${status}"?`)) return;
+    
+    this.treatmentPlanService.updateStatus(planId, status).subscribe({
+      next: () => {
+        this.loadPlans();
+        alert('Statut mis à jour avec succès!');
+      },
+      error: (err) => {
+        console.error('Error updating status:', err);
+        alert('Erreur lors de la mise à jour du statut');
+      }
+    });
+  }
+
+  deletePlan(planId: number): void {
+    if (!confirm('Voulez-vous vraiment supprimer ce plan de traitement?')) return;
+    
+    this.treatmentPlanService.delete(planId).subscribe({
+      next: () => {
+        this.loadPlans();
+        alert('Plan de traitement supprimé avec succès!');
+      },
+      error: (err) => {
+        console.error('Error deleting plan:', err);
+        alert('Erreur lors de la suppression du plan');
+      }
+    });
+  }
+
+  validatePlan(plan: TreatmentPlanRequest): boolean {
+    if (!plan.patientId || !plan.planName || !plan.diagnosis || !plan.therapeuticGoals || 
+        !plan.exercises || !plan.durationWeeks || !plan.startDate) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return false;
+    }
+    return true;
+  }
+
+  getEmptyPlan(): TreatmentPlanRequest {
+    return {
+      patientId: 0,
+      physiotherapistId: this.currentPhysioId,
+      planName: '',
+      diagnosis: '',
+      therapeuticGoals: '',
+      exercises: '',
+      durationWeeks: 8,
+      startDate: new Date().toISOString().split('T')[0],
+      status: 'Active',
+      notes: ''
+    };
+  }
+
+  getStatusClass(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'Active': 'status-active',
+      'Completed': 'status-completed',
+      'Suspended': 'status-suspended'
+    };
+    return statusMap[status] || 'status-default';
+  }
+
+  getStatusBadgeClass(status: string): string {
+    const badgeMap: { [key: string]: string } = {
+      'Active': 'bg-green-100 text-green-700',
+      'Completed': 'bg-blue-100 text-blue-700',
+      'Suspended': 'bg-orange-100 text-orange-700'
+    };
+    return badgeMap[status] || 'bg-gray-100 text-gray-700';
+  }
 }

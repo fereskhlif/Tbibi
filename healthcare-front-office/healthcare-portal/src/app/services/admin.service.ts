@@ -7,7 +7,7 @@ export interface AdminUser {
   userId: number;
   name: string;
   email: string;
-  role: { roleName: string };
+  roleName: string;
   dateOfBirth: string;
   gender: string;
   accountStatus: 'PENDING' | 'ACTIVE' | 'BLOCKED' | 'REJECTED';

@@ -57,8 +57,8 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
             />
           </label>
 
-          <h2 class="text-xl font-bold text-gray-900 mt-4">{{ userProfile?.name || 'Inconnu' }}</h2>
-          <p class="text-gray-500 mt-1 uppercase text-sm font-semibold tracking-wide">{{ userProfile?.roleName }}</p>
+          <h2 class="text-xl font-bold text-gray-900 mt-4">{{ userProfile.name || 'Inconnu' }}</h2>
+          <p class="text-gray-500 mt-1 uppercase text-sm font-semibold tracking-wide">{{ userProfile.roleName }}</p>
         </div>
 
         <!-- Personal Info -->

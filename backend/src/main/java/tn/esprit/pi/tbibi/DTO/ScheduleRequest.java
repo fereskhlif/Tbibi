@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.DTO;
 
+
 import lombok.*;
 
 import java.time.LocalDate;
@@ -11,7 +12,6 @@ import java.time.LocalTime;
 @Builder
 public class ScheduleRequest {
 
-    private Integer doctorId;
     private LocalDate date;
     private LocalTime startTime;
     private Boolean isAvailable;

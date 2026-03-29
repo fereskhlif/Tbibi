@@ -1,28 +1,137 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+interface PatientProgress {
+  patientId: number;
+  patientName: string;
+  patientEmail: string;
+  currentTherapyType: string;
+  totalSessions: number;
+  completedSessions: number;
+  scheduledSessions: number;
+  cancelledSessions: number;
+  progressPercentage: number;
+  lastSessionDate: string | null;
+  lastSessionType: string | null;
+  lastSessionNote: string | null;
+  nextSessionDate: string | null;
+  nextSessionTime: string | null;
+  nextSessionType: string | null;
+  status: string;
+}
+
 @Component({
-    selector: 'app-patient-progress', template: `
-  <div class="p-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Patient Progress</h1>
-    <div class="space-y-6">
-      <div *ngFor="let p of patients" class="bg-white rounded-xl border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-3"><div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center"><span>👤</span></div><div><h3 class="font-semibold text-gray-900">{{p.name}}</h3><p class="text-sm text-gray-500">{{p.condition}}</p></div></div>
-          <span [class]="'px-3 py-1 text-xs rounded-full ' + p.trendClass">{{p.trend}}</span>
-        </div>
-        <div class="grid grid-cols-3 gap-4 mb-4">
-          <div *ngFor="let m of p.metrics" class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">{{m.label}}</p><p class="text-lg font-bold text-gray-900">{{m.value}}</p></div>
-        </div>
-        <div class="space-y-1"><div class="flex justify-between text-sm"><span class="text-gray-500">Overall Recovery</span><span class="font-medium text-purple-600">{{p.recovery}}%</span></div>
-        <div class="w-full bg-gray-200 rounded-full h-3"><div class="bg-purple-500 h-3 rounded-full transition-all" [style.width.%]="p.recovery"></div></div></div>
-      </div>
-    </div>
-  </div>
-` })
-export class PatientProgressComponent {
-    patients = [
-        { name: 'John Doe', condition: 'ACL Reconstruction Recovery', recovery: 75, trend: '↑ Improving', trendClass: 'bg-green-100 text-green-700', metrics: [{ label: 'Sessions Done', value: '12/16' }, { label: 'Pain Level', value: '3/10' }, { label: 'ROM', value: '120°' }] },
-        { name: 'Jane Smith', condition: 'Rotator Cuff Repair', recovery: 60, trend: '↑ Improving', trendClass: 'bg-green-100 text-green-700', metrics: [{ label: 'Sessions Done', value: '8/15' }, { label: 'Pain Level', value: '5/10' }, { label: 'ROM', value: '90°' }] },
-        { name: 'Sarah Wilson', condition: 'Chronic Lower Back Pain', recovery: 45, trend: '→ Stable', trendClass: 'bg-yellow-100 text-yellow-700', metrics: [{ label: 'Sessions Done', value: '6/20' }, { label: 'Pain Level', value: '6/10' }, { label: 'Flexibility', value: '65%' }] },
-        { name: 'Mike Brown', condition: 'Total Knee Replacement', recovery: 30, trend: '↑ Improving', trendClass: 'bg-green-100 text-green-700', metrics: [{ label: 'Sessions Done', value: '4/18' }, { label: 'Pain Level', value: '7/10' }, { label: 'ROM', value: '75°' }] }
-    ];
+  selector: 'app-patient-progress',
+  templateUrl: './patient-progress.component.html',
+  styleUrls: ['./patient-progress.component.css']
+})
+export class PatientProgressComponent implements OnInit {
+  patients: PatientProgress[] = [];
+  filteredPatients: PatientProgress[] = [];
+  currentPhysioId: number = 9; // ID du kinésithérapeute connecté
+  
+  filterStatus: string = 'all';
+  searchTerm: string = '';
+  sortBy: string = 'progress'; // progress, name, sessions
+  
+  selectedPatient: PatientProgress | null = null;
+  showDetailModal: boolean = false;
+
+  private apiUrl = 'http://localhost:8088/api/therapy-session';
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.loadPatientProgress();
+  }
+
+  loadPatientProgress(): void {
+    this.http.get<PatientProgress[]>(`${this.apiUrl}/physiotherapist/${this.currentPhysioId}/patient-progress`)
+      .subscribe({
+        next: (data) => {
+          this.patients = data;
+          this.applyFilters();
+        },
+        error: (err) => {
+          console.error('Error loading patient progress:', err);
+        }
+      });
+  }
+
+  applyFilters(): void {
+    this.filteredPatients = this.patients.filter(patient => {
+      const matchesStatus = this.filterStatus === 'all' || patient.status === this.filterStatus;
+      const matchesSearch = !this.searchTerm || 
+        patient.patientName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        patient.currentTherapyType.toLowerCase().includes(this.searchTerm.toLowerCase());
+      
+      return matchesStatus && matchesSearch;
+    });
+
+    // Appliquer le tri
+    this.applySorting();
+  }
+
+  applySorting(): void {
+    switch (this.sortBy) {
+      case 'progress':
+        this.filteredPatients.sort((a, b) => b.progressPercentage - a.progressPercentage);
+        break;
+      case 'name':
+        this.filteredPatients.sort((a, b) => a.patientName.localeCompare(b.patientName));
+        break;
+      case 'sessions':
+        this.filteredPatients.sort((a, b) => b.totalSessions - a.totalSessions);
+        break;
+    }
+  }
+
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  openDetailModal(patient: PatientProgress): void {
+    this.selectedPatient = patient;
+    this.showDetailModal = true;
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedPatient = null;
+  }
+
+  getProgressColor(percentage: number): string {
+    if (percentage >= 75) return '#10b981'; // Green
+    if (percentage >= 50) return '#3b82f6'; // Blue
+    if (percentage >= 25) return '#f59e0b'; // Orange
+    return '#ef4444'; // Red
+  }
+
+  getStatusClass(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'Active': 'status-active',
+      'Completed': 'status-completed',
+      'Inactive': 'status-inactive'
+    };
+    return statusMap[status] || 'status-default';
+  }
+
+  getStatusBadgeClass(status: string): string {
+    const badgeMap: { [key: string]: string } = {
+      'Active': 'bg-green-100 text-green-700',
+      'Completed': 'bg-blue-100 text-blue-700',
+      'Inactive': 'bg-gray-100 text-gray-700'
+    };
+    return badgeMap[status] || 'bg-gray-100 text-gray-700';
+  }
+
+  getAverageProgress(): string {
+    if (this.patients.length === 0) return '0';
+    const sum = this.patients.reduce((acc, p) => acc + p.progressPercentage, 0);
+    return (sum / this.patients.length).toFixed(1);
+  }
+
+  getActivePatientCount(): number {
+    return this.patients.filter(p => p.status === 'Active').length;
+  }
 }

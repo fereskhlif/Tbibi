@@ -24,7 +24,7 @@ import { AdminService, AdminUser } from '../../../../services/admin.service';
       <div *ngFor="let user of pendingUsers" class="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
         <div class="absolute top-0 right-0 p-4">
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-50 text-orange-600 border border-orange-200">
-            {{user.role.roleName}}
+            {{user.roleName}}
           </span>
         </div>
         
@@ -106,9 +106,9 @@ export class AdminApprovalsComponent implements OnInit {
         
         // Mock data for UI development
         this.pendingUsers = [
-          { userId: 2, name: 'Dr. Karim Mansouri', email: 'karim@clinic.tn', role: { roleName: 'DOCTOR' }, accountStatus: 'PENDING', gender: 'Male', enabled: true, dateOfBirth: '1985-06-12' },
-          { userId: 5, name: 'Laboratoire Central', email: 'contact@labocentral.tn', role: { roleName: 'LABORATORY' }, accountStatus: 'PENDING', gender: 'Male', enabled: true, dateOfBirth: '2000-01-01' },
-          { userId: 7, name: 'Dr. Sonia Kine', email: 'sonia.k@kine.tn', role: { roleName: 'PHYSIOTHERAPIST' }, accountStatus: 'PENDING', gender: 'Female', enabled: true, dateOfBirth: '1990-03-24' },
+          { userId: 2, name: 'Dr. Karim Mansouri', email: 'karim@clinic.tn', roleName: 'DOCTOR', accountStatus: 'PENDING', gender: 'Male', enabled: true, dateOfBirth: '1985-06-12' },
+          { userId: 5, name: 'Laboratoire Central', email: 'contact@labocentral.tn', roleName: 'LABORATORY', accountStatus: 'PENDING', gender: 'Male', enabled: true, dateOfBirth: '2000-01-01' },
+          { userId: 7, name: 'Dr. Sonia Kine', email: 'sonia.k@kine.tn', roleName: 'PHYSIOTHERAPIST', accountStatus: 'PENDING', gender: 'Female', enabled: true, dateOfBirth: '1990-03-24' },
         ];
       }
     });

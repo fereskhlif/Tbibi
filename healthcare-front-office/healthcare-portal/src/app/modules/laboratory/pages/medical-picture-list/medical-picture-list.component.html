@@ -1,0 +1,429 @@
+<div class="medical-pictures-container">
+  
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-title">
+      <h1>Medical Picture Analysis</h1>
+      <p class="subtitle">Review and manage medical image analyses and AI diagnostics</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateForm()">+ New Analysis</button>
+  </header>
+
+  <!-- Alerts -->
+  <div class="alerts-area" *ngIf="successMessage || errorMessage">
+    <div *ngIf="successMessage" class="alert alert-success">
+      <span class="alert-icon">✓</span>
+      {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage && !showForm" class="alert alert-error">
+      <span class="alert-icon">!</span>
+      {{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <button 
+      *ngFor="let filter of filterOptions" 
+      class="filter-btn"
+      [class.active]="activeFilter === filter"
+      (click)="setFilter(filter)"
+    >
+      {{ filter }}
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.35-4.35"></path>
+    </svg>
+    <input 
+      type="text" 
+      placeholder="Search by test, lab, category, status, analysis result..." 
+      [(ngModel)]="searchTerm"
+    />
+  </div>
+
+  <!-- View Toggle -->
+  <div class="view-toggle">
+    <button 
+      class="toggle-btn" 
+      [class.active]="viewMode === 'table'"
+      (click)="viewMode = 'table'"
+      title="Table View">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      Table
+    </button>
+    <button 
+      class="toggle-btn" 
+      [class.active]="viewMode === 'cards'"
+      (click)="viewMode = 'cards'"
+      title="Cards View">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="7"></rect>
+        <rect x="3" y="14" width="18" height="7"></rect>
+      </svg>
+      Cards
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading analyses...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && filteredAnalyses.length === 0" class="empty-state">
+    <p>No medical image analyses found</p>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container" *ngIf="!isLoading && filteredAnalyses.length > 0 && viewMode === 'table'">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Analysis ID</th>
+          <th>Image</th>
+          <th>Category</th>
+          <th>Lab Result ID</th>
+          <th>AI Confidence</th>
+          <th>Status</th>
+          <th>Upload Date</th>
+          <th>AI Analysis</th>
+          <th>Doctor Note</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of filteredAnalyses" class="table-row">
+          <!-- Analysis ID -->
+          <td class="analysis-id">ANL-{{ a.picId | number:'3.0' }}</td>
+          
+          <!-- Image Preview -->
+          <td class="image-cell">
+            <div class="image-thumb" *ngIf="a.imageName" (click)="openImage(a.imageName)">
+              <img [src]="getImageUrl(a.imageName)" [alt]="a.imageName" />
+              <div class="image-overlay">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+                </svg>
+              </div>
+            </div>
+            <span *ngIf="!a.imageName" class="no-image">—</span>
+          </td>
+          
+          <!-- Category -->
+          <td>
+            <span class="category-badge" [class]="'cat-' + (a.category ? a.category.toLowerCase() : 'none')">
+              {{ a.category || 'N/A' }}
+            </span>
+          </td>
+          
+          <!-- Lab Result Link -->
+          <td class="lab-link">LAB-{{ a.laboratoryResultId | number:'3.0' }}</td>
+          
+          <!-- AI Confidence -->
+          <td class="confidence-cell">
+            <div class="confidence-wrapper" *ngIf="a.confidenceScore">
+              <div class="confidence-bar-bg">
+                <div 
+                  class="confidence-bar-fill" 
+                  [style.width.%]="a.confidenceScore * 100"
+                  [class.high]="a.confidenceScore >= 0.8"
+                  [class.medium]="a.confidenceScore >= 0.6 && a.confidenceScore < 0.8"
+                  [class.low]="a.confidenceScore < 0.6"
+                ></div>
+              </div>
+              <span class="confidence-text">{{ getConfidencePercent(a.confidenceScore) }}</span>
+            </div>
+            <span *ngIf="!a.confidenceScore" class="no-data">—</span>
+          </td>
+          
+          <!-- Status -->
+          <td>
+            <span class="status-badge" [ngClass]="getStatusClass(a.status)">
+              {{ a.status || 'Pending' }}
+            </span>
+          </td>
+          
+          <!-- Date -->
+          <td class="date">{{ formatDate(a.uploadDate) }}</td>
+          
+          <!-- AI Analysis Result -->
+          <td class="analysis-text">
+            <span [title]="a.analysisResult">{{ a.analysisResult || '—' }}</span>
+          </td>
+          
+          <!-- Doctor Note -->
+          <td class="doctor-text">
+            <span [title]="a.doctorNote">{{ a.doctorNote || '—' }}</span>
+          </td>
+          
+          <!-- Actions -->
+          <td class="actions">
+            <button class="btn-action" (click)="openEditForm(a)" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="btn-action delete" (click)="onDelete(a.picId)" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Cards View -->
+  <div class="cards-container" *ngIf="!isLoading && filteredAnalyses.length > 0 && viewMode === 'cards'">
+    <div class="analysis-card" *ngFor="let a of filteredAnalyses">
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="card-id">
+          <span class="id-badge">ANL-{{ a.picId | number:'3.0' }}</span>
+          <span class="category-badge" [class]="'cat-' + (a.category ? a.category.toLowerCase() : 'none')">
+            {{ a.category || 'N/A' }}
+          </span>
+        </div>
+        <span class="status-badge" [ngClass]="getStatusClass(a.status)">
+          {{ a.status || 'Pending' }}
+        </span>
+      </div>
+
+      <!-- Card Image -->
+      <div class="card-image" *ngIf="a.imageName" (click)="openImage(a.imageName)">
+        <img [src]="getImageUrl(a.imageName)" [alt]="a.imageName" />
+        <div class="image-overlay-card">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+          </svg>
+          <span>View Full Image</span>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="card-body">
+        <!-- Lab Result Link -->
+        <div class="card-info-row">
+          <span class="info-label">Lab Result:</span>
+          <span class="lab-link">LAB-{{ a.laboratoryResultId | number:'3.0' }}</span>
+        </div>
+
+        <!-- AI Confidence -->
+        <div class="card-info-row" *ngIf="a.confidenceScore">
+          <span class="info-label">AI Confidence:</span>
+          <div class="confidence-wrapper">
+            <div class="confidence-bar-bg">
+              <div 
+                class="confidence-bar-fill" 
+                [style.width.%]="a.confidenceScore * 100"
+                [class.high]="a.confidenceScore >= 0.8"
+                [class.medium]="a.confidenceScore >= 0.6 && a.confidenceScore < 0.8"
+                [class.low]="a.confidenceScore < 0.6"
+              ></div>
+            </div>
+            <span class="confidence-text">{{ getConfidencePercent(a.confidenceScore) }}</span>
+          </div>
+        </div>
+
+        <!-- Upload Date -->
+        <div class="card-info-row">
+          <span class="info-label">Upload Date:</span>
+          <span class="date">{{ formatDate(a.uploadDate) }}</span>
+        </div>
+
+        <!-- AI Analysis -->
+        <div class="card-section" *ngIf="a.analysisResult">
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            AI Analysis
+          </div>
+          <p class="section-content">{{ a.analysisResult }}</p>
+        </div>
+
+        <!-- Doctor Note -->
+        <div class="card-section" *ngIf="a.doctorNote">
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Doctor Note
+          </div>
+          <p class="section-content doctor-note">{{ a.doctorNote }}</p>
+        </div>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="card-footer">
+        <button class="btn-card-action" (click)="openEditForm(a)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit
+        </button>
+        <button class="btn-card-action delete" (click)="onDelete(a.picId)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Form -->
+<div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Edit Analysis' : 'New Analysis' }}</h2>
+      <button class="btn-close" (click)="closeForm()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="errorMessage" class="alert alert-error">
+        <span class="alert-icon">!</span>
+        {{ errorMessage }}
+      </div>
+
+      <form class="form-grid">
+        <!-- Section 1: Basic Information -->
+        <div class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Lab Result ID *</label>
+              <input type="number" [(ngModel)]="formData.laboratoryResultId" name="labId" placeholder="Enter ID" />
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select [(ngModel)]="formData.category" name="category">
+                <option value="">Select category</option>
+                <option *ngFor="let c of categoryOptions" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Clinical History *</label>
+            <textarea [(ngModel)]="formData.history" name="history" rows="3" placeholder="Enter clinical history..."></textarea>
+          </div>
+        </div>
+
+        <!-- Section 2: Image Upload -->
+        <div class="form-section">
+          <h3>Medical Image</h3>
+          
+          <!-- Current Image Preview (Edit Mode) -->
+          <div class="current-image" *ngIf="isEditMode && formData.imageName && !selectedFile">
+            <label>Current Image</label>
+            <div class="image-preview-box" (click)="openImage(formData.imageName)">
+              <img [src]="getImageUrl(formData.imageName)" [alt]="formData.imageName" />
+              <span class="filename">{{ formData.imageName }}</span>
+            </div>
+          </div>
+
+          <div class="upload-area" (click)="fileInput.click()">
+            <input #fileInput type="file" accept="image/*,.dcm" (change)="onFileSelected($event)" hidden />
+            <div *ngIf="!selectedFile" class="upload-placeholder">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>Click to upload image</span>
+              <small>JPG, PNG, DICOM accepted</small>
+            </div>
+            <div *ngIf="selectedFile" class="upload-file">
+              <div class="file-info">
+                <strong>{{ selectedFile.name }}</strong>
+                <small>{{ (selectedFile.size / 1024).toFixed(1) }} KB</small>
+              </div>
+              <button type="button" class="btn-remove" (click)="$event.stopPropagation(); selectedFile = null; formData.imageName = ''; formData.imageType = ''">
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row" *ngIf="selectedFile">
+            <div class="form-group">
+              <label>Image Name</label>
+              <input type="text" [(ngModel)]="formData.imageName" name="imageName" readonly class="readonly" />
+            </div>
+            <div class="form-group">
+              <label>Image Type</label>
+              <input type="text" [(ngModel)]="formData.imageType" name="imageType" readonly class="readonly" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Analysis Results -->
+        <div class="form-section">
+          <h3>Analysis Results</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status</label>
+              <select [(ngModel)]="formData.status" name="status">
+                <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Confidence Score (0-1)</label>
+              <input type="number" step="0.01" min="0" max="1" [(ngModel)]="formData.confidenceScore" name="confidence" placeholder="0.95" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>AI Analysis Result</label>
+            <input type="text" [(ngModel)]="formData.analysisResult" name="analysis" placeholder="Enter AI analysis result..." />
+          </div>
+          <div class="form-group">
+            <label>Doctor Notes</label>
+            <textarea [(ngModel)]="formData.doctorNote" name="notes" rows="2" placeholder="Enter doctor observations..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Upload Date</label>
+              <input type="date" [(ngModel)]="formData.uploadDate" name="uploadDate" />
+            </div>
+            <div class="form-group">
+              <label>Validation Date</label>
+              <input type="date" [(ngModel)]="formData.validationDate" name="validationDate" />
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeForm()">Cancel</button>
+      <button class="btn-primary" (click)="onSubmit()" [disabled]="isSaving">
+        <span *ngIf="isSaving" class="spinner-small"></span>
+        {{ isSaving ? 'Saving...' : (isEditMode ? 'Update' : 'Create') }}
+      </button>
+    </div>
+
+  </div>
+</div>

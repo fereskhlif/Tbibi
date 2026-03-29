@@ -1,51 +1,144 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { TherapySessionResponse, TherapySessionRequest } from '../../models/therapy-session.model';
+import { TherapySessionService } from '../../services/therapy-session.service';
+
 @Component({
-    selector: 'app-therapy-session', template: `
-  <div class="p-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Active Therapy Session</h1>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 space-y-6">
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-          <div class="flex items-center justify-between mb-4"><h3 class="font-semibold text-gray-900">Session: Post-Surgery Rehabilitation</h3><span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700">In Progress</span></div>
-          <div class="grid grid-cols-3 gap-4 mb-6">
-            <div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">Duration</p><p class="text-lg font-bold text-purple-600">{{sessionTimer}}</p></div>
-            <div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">Exercises Done</p><p class="text-lg font-bold text-gray-900">3/6</p></div>
-            <div class="bg-gray-50 rounded-lg p-3 text-center"><p class="text-xs text-gray-500">Progress</p><p class="text-lg font-bold text-green-600">50%</p></div>
-          </div>
-          <h4 class="font-medium text-gray-900 mb-3">Exercise Program</h4>
-          <div class="space-y-3">
-            <div *ngFor="let ex of exercises" class="flex items-center gap-4 p-3 rounded-lg" [class]="ex.done ? 'bg-green-50' : 'bg-gray-50'">
-              <button (click)="ex.done = !ex.done" [class]="'w-6 h-6 rounded-full border-2 flex items-center justify-center ' + (ex.done ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300')">
-                <span *ngIf="ex.done">✓</span>
-              </button>
-              <div class="flex-1"><p class="font-medium text-gray-900">{{ex.name}}</p><p class="text-sm text-gray-500">{{ex.sets}} sets × {{ex.reps}} reps</p></div>
-              <span class="text-sm text-gray-500">{{ex.duration}}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="space-y-4">
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 class="font-semibold text-gray-900 mb-3">Patient: John Doe</h3>
-          <div class="space-y-2 text-sm"><div class="flex justify-between"><span class="text-gray-500">Condition</span><span>ACL Reconstruction</span></div><div class="flex justify-between"><span class="text-gray-500">Session #</span><span>12 of 16</span></div><div class="flex justify-between"><span class="text-gray-500">Pain Level</span><span class="text-orange-600">3/10</span></div></div>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 class="font-semibold text-gray-900 mb-3">Session Notes</h3>
-          <textarea class="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg resize-none text-sm" placeholder="Add session notes..."></textarea>
-          <button class="mt-3 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">End Session</button>
-        </div>
-      </div>
-    </div>
-  </div>
-` })
-export class TherapySessionComponent {
-    sessionTimer = '00:23:45';
-    exercises = [
-        { name: 'Quad Sets', sets: 3, reps: 10, duration: '5 min', done: true },
-        { name: 'Straight Leg Raises', sets: 3, reps: 10, duration: '5 min', done: true },
-        { name: 'Heel Slides', sets: 3, reps: 15, duration: '5 min', done: true },
-        { name: 'Wall Squats', sets: 3, reps: 10, duration: '8 min', done: false },
-        { name: 'Step-Ups', sets: 3, reps: 10, duration: '8 min', done: false },
-        { name: 'Balance Board', sets: 2, reps: 1, duration: '10 min', done: false }
-    ];
+  selector: 'app-therapy-session',
+  templateUrl: './therapy-session.component.html',
+  styleUrls: ['./therapy-session.component.css']
+})
+export class TherapySessionComponent implements OnInit {
+  sessions: TherapySessionResponse[] = [];
+  isLoading = false;
+  errorMessage = '';
+  successMessage = '';
+  searchTerm = '';
+
+  showForm = false;
+  isEditMode = false;
+  isSaving = false;
+  editingId: number | null = null;
+
+  formData = {
+    progressNote: '',
+    scheduledDate: '',
+    evaluationResult: '',
+    startTime: '',
+    endTime: '',
+    patientId: null as number | null,
+    physiotherapistId: null as number | null
+  };
+
+  constructor(private service: TherapySessionService, private router: Router) {}
+
+  ngOnInit(): void { this.loadAll(); }
+
+  loadAll(): void {
+    this.isLoading = true;
+    this.service.getAll().subscribe({
+      next: (data: TherapySessionResponse[]) => { this.sessions = data; this.isLoading = false; },
+      error: () => { this.errorMessage = 'Erreur de chargement des séances.'; this.isLoading = false; }
+    });
+  }
+
+  get filteredSessions(): TherapySessionResponse[] {
+    if (!this.searchTerm.trim()) return this.sessions;
+    const t = this.searchTerm.toLowerCase();
+    return this.sessions.filter((s: TherapySessionResponse) =>
+      s.patientFullName?.toLowerCase().includes(t) ||
+      s.physiotherapistFullName?.toLowerCase().includes(t) ||
+      s.evaluationResult?.toLowerCase().includes(t) ||
+      s.progressNote?.toLowerCase().includes(t)
+    );
+  }
+
+  openCreateForm(): void {
+    this.isEditMode = false;
+    this.editingId = null;
+    this.resetForm();
+    this.showForm = true;
+  }
+
+  openEditForm(session: TherapySessionResponse): void {
+    this.isEditMode = true;
+    this.editingId = session.sessionId;
+    this.formData = {
+      progressNote: session.progressNote || '',
+      scheduledDate: session.scheduledDate,
+      evaluationResult: session.evaluationResult || '',
+      startTime: session.startTime,
+      endTime: session.endTime,
+      patientId: session.patientId,
+      physiotherapistId: session.physiotherapistId
+    };
+    this.showForm = true;
+  }
+
+  closeForm(): void { this.showForm = false; this.resetForm(); }
+
+  resetForm(): void {
+    this.formData = {
+      progressNote: '', scheduledDate: '', evaluationResult: '',
+      startTime: '', endTime: '', patientId: null, physiotherapistId: null
+    };
+    this.errorMessage = '';
+  }
+
+  onSubmit(): void {
+    if (!this.formData.patientId || !this.formData.physiotherapistId ||
+        !this.formData.scheduledDate || !this.formData.startTime ||
+        !this.formData.endTime || !this.formData.progressNote || !this.formData.evaluationResult) {
+      this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
+      return;
+    }
+
+    this.isSaving = true;
+    this.errorMessage = '';
+    const payload: TherapySessionRequest = {
+      progressNote: this.formData.progressNote,
+      scheduledDate: this.formData.scheduledDate,
+      evaluationResult: this.formData.evaluationResult,
+      startTime: this.formData.startTime,
+      endTime: this.formData.endTime,
+      patientId: this.formData.patientId!,
+      physiotherapistId: this.formData.physiotherapistId!
+    };
+
+    const req$ = this.isEditMode && this.editingId
+      ? this.service.update(this.editingId, payload)
+      : this.service.create(payload);
+
+    req$.subscribe({
+      next: (_: TherapySessionResponse) => {
+        this.successMessage = this.isEditMode ? 'Séance mise à jour !' : 'Séance créée !';
+        this.isSaving = false;
+        this.showForm = false;
+        this.loadAll();
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: () => { this.errorMessage = 'Erreur lors de la sauvegarde.'; this.isSaving = false; }
+    });
+  }
+
+  onDelete(id: number): void {
+    if (confirm('Supprimer cette séance de thérapie ?')) {
+      this.service.delete(id).subscribe({
+        next: () => {
+          this.successMessage = 'Séance supprimée.';
+          this.loadAll();
+          setTimeout(() => this.successMessage = '', 3000);
+        },
+        error: () => { this.errorMessage = 'Erreur lors de la suppression.'; }
+      });
+    }
+  }
+
+  getDuration(start: string, end: string): string {
+    if (!start || !end) return '-';
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    const total = (eh * 60 + em) - (sh * 60 + sm);
+    return total > 0 ? `${total} min` : '-';
+  }
 }

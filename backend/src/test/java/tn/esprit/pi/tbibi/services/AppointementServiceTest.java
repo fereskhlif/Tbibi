@@ -15,7 +15,7 @@ import tn.esprit.pi.tbibi.entities.Schedule;
 import tn.esprit.pi.tbibi.entities.StatusAppointement;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.repositories.AppointmentRepo;
-import tn.esprit.pi.tbibi.repositories.NotificationRepo;
+import tn.esprit.pi.tbibi.repositories.NotificationRepository;
 import tn.esprit.pi.tbibi.repositories.ScheduleRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
 
@@ -42,7 +42,7 @@ public class AppointementServiceTest {
     private IAppointementMapper mapper;
 
     @Mock
-    private NotificationRepo notificationRepo;
+    private NotificationRepository notificationRepo;
 
     @Mock
     private VerificationService verificationService;

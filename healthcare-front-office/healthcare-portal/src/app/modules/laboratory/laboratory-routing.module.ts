@@ -6,8 +6,9 @@ import { SampleManagementComponent } from './pages/sample-management/sample-mana
 import { TestResultsComponent } from './pages/test-results/test-results.component';
 import { EquipmentManagementComponent } from './pages/equipment-management/equipment-management.component';
 import { QualityControlComponent } from './pages/quality-control/quality-control.component';
-
 import { LabPrescriptionsComponent } from './pages/prescriptions/prescriptions.component';
+import { LaboratoryResultListComponent } from './pages/laboratory-result-list/laboratory-result-list.component';
+import { MedicalPictureListComponent } from './pages/medical-picture-list/medical-picture-list.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -17,7 +18,9 @@ const routes: Routes = [
     { path: 'samples', component: SampleManagementComponent },
     { path: 'results', component: TestResultsComponent },
     { path: 'equipment', component: EquipmentManagementComponent },
-    { path: 'quality', component: QualityControlComponent }
+    { path: 'quality', component: QualityControlComponent },
+    { path: 'lab-results', component: LaboratoryResultListComponent },
+    { path: 'medical-pictures', component: MedicalPictureListComponent }
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })

@@ -19,12 +19,14 @@ export class LoginComponent {
   email = '';
   password = '';
   name = '';
+  fullName = '';
   dateOfBirth = '';
   gender = '';
   adresse = '';
   uploadedDocument: string | null = null;
   isLoading = false;
   errorMessage = '';
+  successMessage = '';
 
   roles = [
     { label: 'Patient', value: 'PATIENT', icon: '🧑‍⚕️' },  // Removed ROLE_ prefix
@@ -85,7 +87,7 @@ export class LoginComponent {
         this.errorMessage = 'Please select a role.';
         return;
       }
-      if (!this.name || !this.name.trim()) {
+      if (!this.fullName && !this.name || !(this.fullName || this.name).trim()) {
         this.errorMessage = 'Full name is required.';
         return;
       }
@@ -116,7 +118,7 @@ export class LoginComponent {
       this.isLoading = true;
 
       const registerData: RegisterRequest = {
-        name: this.name,  // Utilize the name variable
+        name: this.fullName || this.name,  // Use fullName if available, fallback to name
         email: this.email,
         password: this.password,
         roleName: this.selectedRole as string,  // ✅ Utilisez roleName, pas role

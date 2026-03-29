@@ -3,6 +3,7 @@ package tn.esprit.pi.tbibi.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.pi.tbibi.DTO.ActeDTO;
 import tn.esprit.pi.tbibi.entities.Acte;
 import tn.esprit.pi.tbibi.entities.MedicalReccords;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ActeService {
 
     private final ActeRepo acteRepository;
@@ -43,7 +45,7 @@ public class ActeService {
         // Retrouver le patient via medicalFile
         if (acte.getMedicalFile() != null) {
             int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
-            userRepository.findPatientByMedicalFileId(medicalFileId)
+            userRepository.findUserByMedicalFileId(medicalFileId)
                     .ifPresent(patient -> {
                         dto.setPatientId((int) patient.getUserId());
                         dto.setPatientName(patient.getName());
@@ -113,7 +115,7 @@ public class ActeService {
      * Used by the frontend patient dropdown.
      */
     public List<ActeDTO> getAllPatients() {
-        return userRepository.findAllUsersByRoleName("PATIENT").stream()
+        return userRepository.findAllByRoleName("PATIENT").stream()
                 .map(u -> {
                     ActeDTO dto = new ActeDTO();
                     dto.setPatientId(u.getUserId());

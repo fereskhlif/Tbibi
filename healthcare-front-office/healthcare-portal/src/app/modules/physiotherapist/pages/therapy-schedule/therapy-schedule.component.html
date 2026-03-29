@@ -1,0 +1,232 @@
+<div class="therapy-schedule-container">
+  <div class="header">
+    <h1>📅 Planification des Séances</h1>
+    <p class="subtitle">Gérez vos séances de kinésithérapie à venir</p>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>🔍 Rechercher</label>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (ngModelChange)="onFilterChange()"
+        placeholder="Patient ou type de thérapie..."
+        class="filter-input">
+    </div>
+
+    <div class="filter-group">
+      <label>📊 Statut</label>
+      <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()" class="filter-select">
+        <option value="all">Tous</option>
+        <option value="Scheduled">Planifiées</option>
+        <option value="In Progress">En cours</option>
+        <option value="Rescheduled">Reprogrammées</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>📅 Date</label>
+      <input 
+        type="date" 
+        [(ngModel)]="selectedDate" 
+        (ngModelChange)="onFilterChange()"
+        class="filter-input">
+    </div>
+
+    <button (click)="selectedDate = ''; onFilterChange()" class="btn-clear">
+      Effacer les filtres
+    </button>
+  </div>
+
+  <!-- Liste des séances -->
+  <div class="sessions-grid">
+    <div *ngIf="filteredSessions.length === 0" class="no-sessions">
+      <p>Aucune séance à venir</p>
+    </div>
+
+    <div *ngFor="let session of filteredSessions" class="session-card">
+      <div class="session-header">
+        <div class="session-info">
+          <h3>{{ session.patientFullName }}</h3>
+          <span class="therapy-type" *ngIf="session.therapyType">
+            {{ session.therapyType }}
+          </span>
+        </div>
+        <span [class]="'status-badge ' + getStatusBadgeClass(session.status)">
+          {{ session.status }}
+        </span>
+      </div>
+
+      <div class="session-details">
+        <div class="detail-item">
+          <span class="icon">📅</span>
+          <span>{{ session.scheduledDate | date: 'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="icon">🕐</span>
+          <span>{{ session.startTime }} - {{ session.endTime }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="icon">⏱️</span>
+          <span>{{ formatDuration(session) }}</span>
+        </div>
+      </div>
+
+      <div class="session-notes" *ngIf="session.progressNote">
+        <strong>Notes:</strong> {{ session.progressNote }}
+      </div>
+
+      <div class="session-actions">
+        <button 
+          *ngIf="session.status === 'Scheduled' || session.status === 'Rescheduled'"
+          (click)="startSession(session)" 
+          class="btn btn-start">
+          ▶️ Démarrer
+        </button>
+        
+        <button 
+          *ngIf="session.status === 'In Progress'"
+          (click)="openDocumentModal(session)" 
+          class="btn btn-document">
+          📝 Documenter
+        </button>
+        
+        <button 
+          *ngIf="session.status === 'In Progress'"
+          (click)="completeSession(session)" 
+          class="btn btn-complete">
+          ✅ Terminer
+        </button>
+        
+        <button 
+          *ngIf="session.status === 'Scheduled' || session.status === 'Rescheduled'"
+          (click)="openRescheduleModal(session)" 
+          class="btn btn-reschedule">
+          🔄 Reprogrammer
+        </button>
+        
+        <button 
+          *ngIf="session.status === 'Scheduled' || session.status === 'Rescheduled'"
+          (click)="cancelSession(session)" 
+          class="btn btn-cancel">
+          ❌ Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de reprogrammation -->
+  <div *ngIf="showRescheduleModal" class="modal-overlay" (click)="closeRescheduleModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>🔄 Reprogrammer la séance</h2>
+        <button (click)="closeRescheduleModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="patient-name">Patient: <strong>{{ selectedSession?.patientFullName }}</strong></p>
+
+        <div class="form-group">
+          <label>Nouvelle date</label>
+          <input 
+            type="date" 
+            [(ngModel)]="rescheduleForm.newDate" 
+            class="form-input">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Heure de début</label>
+            <input 
+              type="time" 
+              [(ngModel)]="rescheduleForm.newStartTime" 
+              class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Heure de fin</label>
+            <input 
+              type="time" 
+              [(ngModel)]="rescheduleForm.newEndTime" 
+              class="form-input">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeRescheduleModal()" class="btn btn-secondary">
+          Annuler
+        </button>
+        <button (click)="rescheduleSession()" class="btn btn-primary">
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal de documentation de séance -->
+<div *ngIf="showDocumentModal" class="modal-overlay" (click)="closeDocumentModal()">
+  <div class="modal-content large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>📝 Documenter la séance</h2>
+      <button class="close-btn" (click)="closeDocumentModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="selectedSession" class="session-info-box">
+        <p><strong>Patient:</strong> {{ selectedSession.patientFullName }}</p>
+        <p><strong>Type:</strong> {{ selectedSession.therapyType }}</p>
+        <p><strong>Date:</strong> {{ selectedSession.scheduledDate | date: 'dd/MM/yyyy' }}</p>
+        <p><strong>Horaire:</strong> {{ selectedSession.startTime }} - {{ selectedSession.endTime }}</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Exercices effectués *</label>
+          <textarea 
+            [(ngModel)]="documentForm.exercisesPerformed" 
+            class="form-control"
+            rows="4"
+            placeholder="Décrivez les exercices réalisés pendant la séance..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Notes de session *</label>
+          <textarea 
+            [(ngModel)]="documentForm.sessionNotes" 
+            class="form-control"
+            rows="4"
+            placeholder="Notes détaillées sur le déroulement de la séance..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Note de progression</label>
+          <textarea 
+            [(ngModel)]="documentForm.progressNote" 
+            class="form-control"
+            rows="3"
+            placeholder="Observations sur les progrès du patient..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Résultat d'évaluation</label>
+          <textarea 
+            [(ngModel)]="documentForm.evaluationResult" 
+            class="form-control"
+            rows="3"
+            placeholder="Évaluation des résultats de la séance..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeDocumentModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="saveDocumentation()">💾 Enregistrer</button>
+      <button class="btn btn-success" (click)="completeSessionFromModal()">✅ Enregistrer et Terminer</button>
+    </div>
+  </div>
+</div>

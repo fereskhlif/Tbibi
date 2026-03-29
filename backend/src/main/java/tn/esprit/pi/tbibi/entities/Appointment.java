@@ -8,36 +8,33 @@ import java.util.ArrayList;
 
 @Entity
 @Table(name = "Appointement")
-@Getter
-@Setter
-@ToString
-@EqualsAndHashCode
-@NoArgsConstructor //
-@AllArgsConstructor
-@Builder
+@Getter @Setter @ToString @EqualsAndHashCode
+@NoArgsConstructor @AllArgsConstructor @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Appointment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "schedue_id")
     private Long appointmentId;
     private String service;
     private String specialty;
     private String doctor;
-    private String patientName;
-
     private String reasonForVisit;
-    private String meetingLink;
 
     @Enumerated(EnumType.STRING)
     private StatusAppointement statusAppointement;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Schedule schedule;
+
     @ManyToOne
     private User user;
+
     @OneToMany(mappedBy = "appointments", cascade = CascadeType.ALL)
     private List<Notification> notification = new ArrayList<>();
-    @OneToOne(mappedBy = "appointment", cascade = CascadeType.ALL)
-    private Teleconsultation teleconsultation;
 
+    // ✅ Ajouté pour corriger l'erreur Teleconsultation
+    @OneToOne(mappedBy = "appointment")
+    private Teleconsultation teleconsultation;
 }
