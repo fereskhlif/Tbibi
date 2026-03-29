@@ -140,6 +140,7 @@ export class MainLayoutComponent implements OnInit {
   private patientNav: NavItem[] = [
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'My Profile' },
+    { path: 'health-goals', icon: 'target', label: 'Health Goals' },
     { path: 'medical-records', icon: 'file-text', label: 'Medical Records' },
     { path: 'chat', icon: 'message-square', label: 'AI Health Assistant' },
     { path: 'appointments', icon: 'calendar', label: 'Appointments' },

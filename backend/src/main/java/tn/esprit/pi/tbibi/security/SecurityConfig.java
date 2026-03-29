@@ -75,6 +75,12 @@ public class SecurityConfig {
                         // Chronic disease routes
                         .requestMatchers("/api/chronic/**").permitAll()
 
+                        // Websocket chat
+                        .requestMatchers("/ws-chat/**").permitAll()
+
+                        // Health goals routes
+                        .requestMatchers("/api/health-goals", "/api/health-goals/**").permitAll()
+
                         // Notification routes
                         .requestMatchers("/notifications/**").permitAll()
 
@@ -119,7 +125,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:4201"));
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

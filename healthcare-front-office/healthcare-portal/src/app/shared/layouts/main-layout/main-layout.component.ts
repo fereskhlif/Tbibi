@@ -141,7 +141,8 @@ export class MainLayoutComponent implements OnInit {
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'My Profile' },
     { path: 'medical-records', icon: 'file-text', label: 'Medical Records' },
-    { path: 'chat', icon: 'message-square', label: 'AI Health Assistant' },
+    { path: 'ai-chat', icon: 'message-square', label: 'AI Health Assistant' },
+    { path: 'messages', icon: 'user', label: 'My Doctor Chat' },
     { path: 'book-appointment', icon: 'calendar', label: 'Book Appointment' },
     { path: 'appointments', icon: 'calendar', label: 'Appointments' },
     { path: 'doctor-schedules', icon: 'users', label: 'Doctor Schedules' },
@@ -151,7 +152,8 @@ export class MainLayoutComponent implements OnInit {
     { path: 'reminders', icon: 'clock', label: 'Reminders' },
     { path: 'payment', icon: 'credit-card', label: 'Payment' },
     { path: 'history', icon: 'history', label: 'History' },
-    { path: 'chronic-monitor', icon: 'activity', label: 'Health Monitor' }
+    { path: 'chronic-monitor', icon: 'activity', label: 'Health Monitor' },
+    { path: 'health-goals', icon: 'target', label: 'Health Goals' }
   ];
 
   private doctorNav: NavItem[] = [
@@ -160,6 +162,7 @@ export class MainLayoutComponent implements OnInit {
     { path: 'manage-schedules', icon: 'clock', label: 'Manage Schedules' },
     { path: 'notifications', icon: 'bell', label: 'Notifications' },
     { path: 'profile', icon: 'user', label: 'Professional Profile' },
+    { path: 'messages', icon: 'message-square', label: 'Patient Chat' },
     { path: 'patient-records', icon: 'users', label: 'Patient Records' },
     { path: 'teleconsultation', icon: 'video', label: 'Teleconsultation' },
     { path: 'disease-detection', icon: 'search', label: 'Disease Detection' },
