@@ -22,10 +22,34 @@ export class LoginComponent {
   dateOfBirth = '';
   gender = '';
   adresse = '';
+  specialty = '';
   uploadedDocument: string | null = null;
   uploadedDocumentBase64: string | null = null;
   isLoading = false;
   errorMessage = '';
+
+  specialties = [
+    'Cardiology',
+    'Dermatology',
+    'Endocrinology',
+    'Gastroenterology',
+    'General Practice',
+    'Gynecology',
+    'Hematology',
+    'Neurology',
+    'Nephrology',
+    'Oncology',
+    'Ophthalmology',
+    'Orthopedics',
+    'Otolaryngology (ENT)',
+    'Pediatrics',
+    'Psychiatry',
+    'Pulmonology',
+    'Radiology',
+    'Rheumatology',
+    'Surgery',
+    'Urology'
+  ];
 
   roles = [
     { label: 'Patient', value: 'PATIENT', icon: '🧑‍⚕️' },  // Removed ROLE_ prefix
@@ -132,6 +156,9 @@ export class LoginComponent {
           dateOfBirth: this.dateOfBirth,
           gender: this.gender,
           adresse: this.adresse
+        }),
+        ...(this.selectedRole === 'DOCTEUR' && this.specialty && {
+          specialty: this.specialty
         })
       };
 
@@ -281,6 +308,7 @@ export class LoginComponent {
     this.dateOfBirth = '';
     this.gender = '';
     this.adresse = '';
+    this.specialty = '';
     this.selectedRole = '';
     this.uploadedDocument = null;
     this.uploadedDocumentBase64 = null;
