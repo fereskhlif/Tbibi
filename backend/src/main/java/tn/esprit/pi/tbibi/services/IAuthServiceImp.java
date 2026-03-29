@@ -85,48 +85,15 @@ public class IAuthServiceImp implements IAuthService {
             log.info("Role found with ID: {}", role.getRole_id());
         }
 
-        // Save the document if provided
-        String profilePicturePath = null;
-        if (req.documentBase64() != null && !req.documentBase64().trim().isEmpty()) {
-            try {
-                // Ensure upload directory exists
-                String uploadDir = "uploads/profiles/";
-                java.nio.file.Path uploadPath = java.nio.file.Paths.get(uploadDir);
-                if (!java.nio.file.Files.exists(uploadPath)) {
-                    java.nio.file.Files.createDirectories(uploadPath);
-                }
-
-                // Parse base64
-                String base64Data = req.documentBase64().contains(",") ?
-                        req.documentBase64().split(",")[1] : req.documentBase64();
-                byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Data);
-
-                // Generate filename
-                String originalFilename = req.documentName() != null ? req.documentName() : "document.pdf";
-                String extension = originalFilename.contains(".") ? originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
-                String fileName = java.util.UUID.randomUUID().toString() + extension;
-                
-                // Save to file
-                java.nio.file.Path filePath = uploadPath.resolve(fileName);
-                java.nio.file.Files.write(filePath, decodedBytes);
-                
-                // Set path
-                profilePicturePath = fileName;
-                log.info("Document saved as: {}", fileName);
-            } catch (Exception e) {
-                log.error("Failed to save document: {}", e.getMessage());
-            }
-        }
-
         // Créer l'utilisateur avec le builder
-        tn.esprit.pi.tbibi.entities.User user = tn.esprit.pi.tbibi.entities.User.builder()
+        User user = User.builder()
                 .name(req.name() == null ? "Not Available" : req.name())
                 .email(req.email())
                 .password(passwordEncoder.encode(req.password()))
                 .dateOfBirth(req.dateOfBirth())
                 .gender(req.gender())
                 .adresse(req.adresse())
-                .profilePicture(profilePicturePath)
+                .specialty(req.specialty())
                 .role(role)
                 .accountStatus(roleNameUpper.equals("PATIENT") ? tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE : tn.esprit.pi.tbibi.entities.UserStatus.PENDING)
                 .enabled(true) // Email verification disabled, user is enabled by default
@@ -135,7 +102,7 @@ public class IAuthServiceImp implements IAuthService {
         log.info("Saving user with role: {}", role.getRoleName());
 
         // Sauvegarder l'utilisateur
-        tn.esprit.pi.tbibi.entities.User savedUser = userRepository.save(user);
+        User savedUser = userRepository.save(user);
         log.info("User saved successfully with ID: {}", savedUser.getUserId());
 
         // sendValidationEmail(savedUser); // Disabled email verification
