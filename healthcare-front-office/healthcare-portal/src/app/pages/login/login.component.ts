@@ -23,6 +23,7 @@ export class LoginComponent {
   gender = '';
   adresse = '';
   uploadedDocument: string | null = null;
+  uploadedDocumentBase64: string | null = null;
   isLoading = false;
   errorMessage = '';
 
@@ -73,7 +74,14 @@ export class LoginComponent {
   handleDocumentUpload(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) this.uploadedDocument = file.name;
+    if (file) {
+      this.uploadedDocument = file.name;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.uploadedDocumentBase64 = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   handleSubmit(): void {
@@ -115,12 +123,11 @@ export class LoginComponent {
 
       this.isLoading = true;
 
-      const registerData: RegisterRequest = {
-        name: this.name,  // Utilize the name variable
+      const registerData: any = {
+        name: this.name,
         email: this.email,
         password: this.password,
-        roleName: this.selectedRole as string,  // ✅ Utilisez roleName, pas role
-        medicalLicense: this.isProfessionalRole() && this.uploadedDocument ? this.uploadedDocument : undefined,
+        roleName: this.selectedRole as string,
         ...(this.selectedRole === 'PATIENT' && {
           dateOfBirth: this.dateOfBirth,
           gender: this.gender,
@@ -128,8 +135,9 @@ export class LoginComponent {
         })
       };
 
-      if (this.isProfessionalRole() && this.uploadedDocument) {
-        registerData.medicalLicense = this.uploadedDocument;
+      if (this.isProfessionalRole() && this.uploadedDocumentBase64) {
+        registerData.documentBase64 = this.uploadedDocumentBase64;
+        registerData.documentName = this.uploadedDocument;
       }
 
       console.log('Sending registration data:', registerData);
@@ -270,6 +278,7 @@ export class LoginComponent {
     this.adresse = '';
     this.selectedRole = '';
     this.uploadedDocument = null;
+    this.uploadedDocumentBase64 = null;
     this.errorMessage = '';
   }
 }

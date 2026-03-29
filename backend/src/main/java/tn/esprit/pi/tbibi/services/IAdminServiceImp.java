@@ -79,15 +79,23 @@ public class IAdminServiceImp implements IAdminService {
     }
 
     private UserAdminResponse mapToAdminResponse(User user) {
+        tn.esprit.pi.tbibi.entities.Role cleanRole = null;
+        if (user.getRole() != null) {
+            cleanRole = new tn.esprit.pi.tbibi.entities.Role();
+            cleanRole.setRole_id(user.getRole().getRole_id());
+            cleanRole.setRoleName(user.getRole().getRoleName());
+        }
+
         return UserAdminResponse.builder()
                 .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .role(user.getRole())
+                .role(cleanRole)
                 .dateOfBirth(user.getDateOfBirth())
                 .gender(user.getGender())
                 .accountStatus(user.getAccountStatus() != null ? user.getAccountStatus() : UserStatus.ACTIVE)
                 .enabled(user.getEnabled() != null ? user.getEnabled() : true)
+                .profilePicture(user.getProfilePicture())
                 .build();
     }
 }

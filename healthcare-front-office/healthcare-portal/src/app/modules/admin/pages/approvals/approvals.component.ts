@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService, AdminUser } from '../../../../services/admin.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-admin-approvals',
@@ -49,12 +50,17 @@ import { AdminService, AdminUser } from '../../../../services/admin.service';
           </div>
         </div>
 
-        <!-- Document Verification Box (Mocked visually) -->
-        <div class="mb-6 border border-dashed border-blue-200 bg-blue-50 rounded-xl p-4 flex items-center gap-3">
+        <!-- Document Verification Box -->
+        <div (click)="user.profilePicture ? null : dummyClick($event)" class="mb-6 block border border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 transition-all rounded-xl p-4 flex items-center gap-3 cursor-pointer select-none">
           <span class="text-2xl">📄</span>
           <div class="flex-1">
-            <p class="text-xs font-bold text-blue-800">Diplôme / Certificat (PJ)</p>
-            <a href="#" class="text-xs text-blue-600 underline hover:text-blue-700">document_verification.pdf</a>
+            <p class="text-sm font-bold text-blue-900">Diplôme / Certificat (PJ)</p>
+            <a [href]="user.profilePicture ? getDiplomaUrl(user.profilePicture) : null"
+               target="_blank"
+               class="text-xs font-medium"
+               [ngClass]="user.profilePicture ? 'text-blue-600 underline' : 'text-gray-500'">
+              {{ user.profilePicture ? 'Ouvrir le document ↗' : 'Aucun fichier (Cliquer pour ouvrir un PDF de test)' }}
+            </a>
           </div>
         </div>
 
@@ -134,5 +140,19 @@ export class AdminApprovalsComponent implements OnInit {
         this.pendingUsers = this.pendingUsers.filter(u => u.userId !== userId);
       }
     });
+  }
+
+  dummyClick(event: Event): void {
+    event.preventDefault();
+    window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
+  }
+
+  getDiplomaUrl(profilePicture: string): string {
+    if (!profilePicture) return '';
+    // Already a full URL
+    if (profilePicture.startsWith('http')) return profilePicture;
+    // Path stored as 'uploads/profiles/xxx.ext' — serve via backend
+    const cleanPath = profilePicture.startsWith('/') ? profilePicture : '/' + profilePicture;
+    return `${environment.baseUrl}${cleanPath}`;
   }
 }

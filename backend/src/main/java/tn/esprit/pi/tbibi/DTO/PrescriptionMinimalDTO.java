@@ -17,4 +17,5 @@ public class PrescriptionMinimalDTO {
     private String note;
     private Date date;
     private PrescriptionStatus status;
+    private String doctorName;
 }
