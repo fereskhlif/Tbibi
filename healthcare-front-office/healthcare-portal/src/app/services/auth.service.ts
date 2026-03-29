@@ -13,6 +13,7 @@ export interface RegisterRequest {
   dateOfBirth?: string;
   gender?: string;
   adresse?: string;
+  specialty?: string;      // Spécialité pour les médecins (DOCTEUR)
 }
 
 // Interface pour la connexion
