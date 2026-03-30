@@ -5,6 +5,7 @@ pipeline {
 
     environment {
         PATH = "/usr/bin:${env.PATH}"
+        CHROME_BIN = '/usr/bin/google-chrome-stable'
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
 
         DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/tbibi-frontend"
