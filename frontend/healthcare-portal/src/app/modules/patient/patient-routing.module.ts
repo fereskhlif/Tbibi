@@ -12,6 +12,7 @@ import { RemindersComponent } from './pages/reminders/reminders.component';
 import { PaymentComponent } from './pages/payment/payment.component';
 import { DoctorSchedulesComponent } from './pages/doctor-schedules/doctor-schedules.component';
 import { InteractionHistoryComponent } from './pages/interaction-history/interaction-history.component';
+import { HealthGoalsComponent } from './pages/health-goals/health-goals.component';
 
 const routes: Routes = [
   {
@@ -65,6 +66,10 @@ const routes: Routes = [
   {
     path: 'interaction-history',
     component: InteractionHistoryComponent,
+  },
+  {
+    path: 'health-goals',
+    component: HealthGoalsComponent,
   }
 ];
 

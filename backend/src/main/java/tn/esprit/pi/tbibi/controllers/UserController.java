@@ -18,10 +18,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping("/user")
+@RequestMapping({"/users", "/user"})
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
 public class UserController {
@@ -140,5 +142,105 @@ public class UserController {
         userRepository.save(user);
 
         return ResponseEntity.ok().build(); 
+    }
+
+    @GetMapping("/doctors")
+    public ResponseEntity<List<UserProfileDTO>> getAllDoctors() {
+        log.info("=== GET ALL DOCTORS ===");
+        List<User> doctors = userRepository.findAllDoctors();
+        
+        List<UserProfileDTO> doctorDtos = doctors.stream()
+                .map(doctor -> new UserProfileDTO(
+                        doctor.getUserId(),
+                        doctor.getName(),
+                        doctor.getEmail(),
+                        doctor.getAdresse(),
+                        doctor.getDateOfBirth(),
+                        doctor.getGender(),
+                        doctor.getProfilePicture(),
+                        doctor.getRole() != null ? doctor.getRole().getRoleName() : null
+                ))
+                .collect(Collectors.toList());
+        
+        log.info("Found {} doctors", doctorDtos.size());
+        return ResponseEntity.ok(doctorDtos);
+    }
+
+    @GetMapping("/patients")
+    public ResponseEntity<List<UserProfileDTO>> getAllPatients() {
+        log.info("=== GET ALL PATIENTS ===");
+        List<User> patients = userRepository.findAllByRoleName("PATIENT");
+        
+        List<UserProfileDTO> patientDtos = patients.stream()
+                .map(patient -> new UserProfileDTO(
+                        patient.getUserId(),
+                        patient.getName(),
+                        patient.getEmail(),
+                        patient.getAdresse(),
+                        patient.getDateOfBirth(),
+                        patient.getGender(),
+                        patient.getProfilePicture(),
+                        patient.getRole() != null ? patient.getRole().getRoleName() : null
+                ))
+                .collect(Collectors.toList());
+        
+        log.info("Found {} patients", patientDtos.size());
+        return ResponseEntity.ok(patientDtos);
+    }
+
+    @GetMapping("/doctors/search")
+    public ResponseEntity<List<UserProfileDTO>> searchDoctors(@RequestParam(value = "name", defaultValue = "") String name) {
+        log.info("=== SEARCH DOCTORS ===");
+        List<User> doctors;
+        
+        if (name == null || name.trim().isEmpty()) {
+            doctors = userRepository.findAllDoctors();
+        } else {
+            doctors = userRepository.findDoctorsByNameContaining("%" + name + "%");
+        }
+        
+        List<UserProfileDTO> doctorDtos = doctors.stream()
+                .map(doctor -> new UserProfileDTO(
+                        doctor.getUserId(),
+                        doctor.getName(),
+                        doctor.getEmail(),
+                        doctor.getAdresse(),
+                        doctor.getDateOfBirth(),
+                        doctor.getGender(),
+                        doctor.getProfilePicture(),
+                        doctor.getRole() != null ? doctor.getRole().getRoleName() : null
+                ))
+                .collect(Collectors.toList());
+        
+        log.info("Found {} doctors matching '{}'", doctorDtos.size(), name);
+        return ResponseEntity.ok(doctorDtos);
+    }
+
+    @GetMapping("/patients/search")
+    public ResponseEntity<List<UserProfileDTO>> searchPatients(@RequestParam(value = "name", defaultValue = "") String name) {
+        log.info("=== SEARCH PATIENTS ===");
+        List<User> patients;
+        
+        if (name == null || name.trim().isEmpty()) {
+            patients = userRepository.findAllByRoleName("PATIENT");
+        } else {
+            patients = userRepository.searchPatientsByName(name);
+        }
+        
+        List<UserProfileDTO> patientDtos = patients.stream()
+                .map(patient -> new UserProfileDTO(
+                        patient.getUserId(),
+                        patient.getName(),
+                        patient.getEmail(),
+                        patient.getAdresse(),
+                        patient.getDateOfBirth(),
+                        patient.getGender(),
+                        patient.getProfilePicture(),
+                        patient.getRole() != null ? patient.getRole().getRoleName() : null
+                ))
+                .collect(Collectors.toList());
+        
+        log.info("Found {} patients matching '{}'", patientDtos.size(), name);
+        return ResponseEntity.ok(patientDtos);
     }
 }

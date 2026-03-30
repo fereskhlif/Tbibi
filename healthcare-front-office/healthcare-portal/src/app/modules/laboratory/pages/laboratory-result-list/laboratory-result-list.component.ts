@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { LaboratoryResultResponse, LaboratoryResultRequest } from '../../models/laboratory-result.model';
 import { LaboratoryResultService } from '../../services/laboratory-result.service';
-import { AuthService } from '../../../../services/auth.service';
+import { AuthService } from '../../../patient/services/auth.service';
 
 @Component({
   selector: 'app-laboratory-result-list',

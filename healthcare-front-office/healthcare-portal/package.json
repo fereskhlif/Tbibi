@@ -19,7 +19,6 @@
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
     "@stomp/stompjs": "^7.3.0",
-    "jspdf": "^4.2.1",
     "lucide-angular": "^0.564.0",
     "rxjs": "~7.8.0",
     "sockjs-client": "^1.6.1",

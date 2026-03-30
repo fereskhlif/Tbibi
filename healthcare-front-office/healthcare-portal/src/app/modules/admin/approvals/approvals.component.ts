@@ -94,12 +94,12 @@ export class AdminApprovalsComponent implements OnInit {
   loadPending(): void {
     this.loading = true;
     this.adminService.getPendingApprovals().subscribe({
-      next: (data) => {
+      next: (data: AdminUser[]) => {
         this.pendingUsers = data;
         this.loading = false;
         this.error = '';
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error(err);
         this.error = "Erreur de connexion (Mock data injectée).";
         this.loading = false;

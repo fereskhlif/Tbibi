@@ -1,7 +1,7 @@
 package tn.esprit.pi.tbibi.services;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.pi.tbibi.DTO.AdminDashboardStats;
@@ -79,15 +79,23 @@ public class IAdminServiceImp implements IAdminService {
     }
 
     private UserAdminResponse mapToAdminResponse(User user) {
+        tn.esprit.pi.tbibi.entities.Role cleanRole = null;
+        if (user.getRole() != null) {
+            cleanRole = new tn.esprit.pi.tbibi.entities.Role();
+            cleanRole.setRole_id(user.getRole().getRole_id());
+            cleanRole.setRoleName(user.getRole().getRoleName());
+        }
+
         return UserAdminResponse.builder()
                 .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .roleName(user.getRole() != null ? user.getRole().getRoleName() : "UNKNOWN")
+                .role(cleanRole)
                 .dateOfBirth(user.getDateOfBirth())
                 .gender(user.getGender())
                 .accountStatus(user.getAccountStatus() != null ? user.getAccountStatus() : UserStatus.ACTIVE)
-                .enabled(user.isEnabled())
+                .enabled(user.getEnabled() != null ? user.getEnabled() : true)
+                .profilePicture(user.getProfilePicture())
                 .build();
     }
 }

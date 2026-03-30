@@ -39,8 +39,8 @@ import {
     Mail,
     MapPin,
     Star,
-    FlaskConical,
-    Scan
+    FlaskConical, // ✅ AJOUTÉ
+    Scan          // ✅ AJOUTÉ
 } from 'lucide-angular';
 
 @NgModule({
@@ -58,12 +58,11 @@ import {
             Activity, Clock, CreditCard, History, Video, Search, Bell, Menu, X, Plus,
             Home, Settings, LogOut, ChevronDown, ChevronRight, Stethoscope, Microscope,
             Clipboard, ShieldCheck, Phone, Mail, MapPin, Star,
-            FlaskConical, Scan
+            FlaskConical, Scan // ✅ AJOUTÉ
         })
     ],
     exports: [
         CommonModule,
-        RouterModule,
         FormsModule,
         LogoComponent,
         NavButtonComponent,

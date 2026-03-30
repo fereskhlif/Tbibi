@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AuthService } from '../../../modules/patient/services/auth.service';
 
 interface NavItem {
   path: string;
@@ -32,7 +33,7 @@ interface NavItem {
         <div class="p-4 border-t border-gray-200 bg-gray-50/50">
           <div class="flex items-center gap-3 mb-3 px-2">
             <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
-              {{role.charAt(0).toUpperCase()}}
+              {{role ? role.charAt(0).toUpperCase() : 'U'}}
             </div>
             <div class="overflow-hidden">
               <p class="text-sm font-medium text-gray-900 truncate capitalize">{{role}}</p>
@@ -92,7 +93,7 @@ interface NavItem {
 
              <div class="flex items-center gap-3">
                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
-                 {{role.charAt(0).toUpperCase()}}
+                 {{role ? role.charAt(0).toUpperCase() : 'U'}}
                </div>
              </div>
           </div>
@@ -140,9 +141,8 @@ export class MainLayoutComponent implements OnInit {
   private patientNav: NavItem[] = [
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'My Profile' },
-    { path: 'medical-records', icon: 'file-text', label: 'Medical Records' },
+    { path: 'records', icon: 'file-text', label: 'Medical Records' },
     { path: 'chat', icon: 'message-square', label: 'AI Health Assistant' },
-    { path: 'book-appointment', icon: 'calendar', label: 'Book Appointment' },
     { path: 'appointments', icon: 'calendar', label: 'Appointments' },
     { path: 'doctor-schedules', icon: 'users', label: 'Doctor Schedules' },
     { path: 'prescriptions', icon: 'pill', label: 'Prescriptions' },
@@ -150,15 +150,11 @@ export class MainLayoutComponent implements OnInit {
     { path: 'lab-results', icon: 'microscope', label: 'Lab Results' },
     { path: 'reminders', icon: 'clock', label: 'Reminders' },
     { path: 'payment', icon: 'credit-card', label: 'Payment' },
-    { path: 'history', icon: 'history', label: 'History' },
-    { path: 'chronic-monitor', icon: 'activity', label: 'Health Monitor' }
+    { path: 'history', icon: 'history', label: 'History' }
   ];
 
   private doctorNav: NavItem[] = [
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
-    { path: 'all-appointments', icon: 'calendar', label: 'All Appointments' },
-    { path: 'manage-schedules', icon: 'clock', label: 'Manage Schedules' },
-    { path: 'notifications', icon: 'bell', label: 'Notifications' },
     { path: 'profile', icon: 'user', label: 'Professional Profile' },
     { path: 'patient-records', icon: 'users', label: 'Patient Records' },
     { path: 'teleconsultation', icon: 'video', label: 'Teleconsultation' },
@@ -191,47 +187,43 @@ export class MainLayoutComponent implements OnInit {
   ];
 
   private laboratoryNav: NavItem[] = [
-    { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
-    { path: 'profile', icon: 'user', label: 'Professional Profile' },
-    { path: 'prescriptions', icon: 'flask-conical', label: 'Prescriptions reçues' },
-    { path: 'samples', icon: 'microscope', label: 'Sample Management' },
-    { path: 'results', icon: 'file-text', label: 'Test Results' },
-    { path: 'equipment', icon: 'settings', label: 'Equipment Management' },
-    { path: 'quality', icon: 'shield-check', label: 'Quality Control' }
-  ];
+  { path: 'dashboard',        icon: 'layout-dashboard', label: 'Dashboard' },
+  { path: 'profile',          icon: 'user',             label: 'Professional Profile' },
+  { path: 'samples',          icon: 'microscope',       label: 'Sample Management' },
+  { path: 'results',          icon: 'file-text',        label: 'Test Results' },
+  { path: 'equipment',        icon: 'settings',         label: 'Equipment Management' },
+  { path: 'quality',          icon: 'shield-check',     label: 'Quality Control' },
+ 
+ { path: 'lab-results',      icon: 'flask-conical', label: 'Laboratory Results' },
+{ path: 'medical-pictures', icon: 'scan',          label: 'Medical Image Analysis' },
+
+];
 
   private adminNav: NavItem[] = [
-    { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard Admin' },
-    { path: 'users', icon: 'users', label: 'Utilisateurs' },
-    { path: 'approvals', icon: 'check-circle', label: 'Approbations' },
-    { path: 'settings', icon: 'settings', label: 'Configuration' }
+    { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
+    { path: 'users', icon: 'users', label: 'User Management' },
+    { path: 'statistics', icon: 'bar-chart', label: 'Statistics' },
+    { path: 'settings', icon: 'settings', label: 'System Settings' }
   ];
 
-  constructor(private router: Router, private route: ActivatedRoute) { }
+  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) { }
 
   ngOnInit() {
-    const rawRole = this.route.snapshot.data['role'] || 'patient';
-    // Map possible role tokens from routing/auth to the normalized keys used below
+    // Get the actual user role from localStorage (stored during login)
+    const userRole = this.authService.getCurrentUserRole(); // Returns ROLE_ADMIN, ROLE_PATIENT, etc.
+    
+    // Map backend role format to frontend role format
     const roleMap: Record<string, string> = {
-      'PATIENT': 'patient',
-      'DOCTEUR': 'doctor',
-      'DOCTOR': 'doctor',
-      'KINE': 'physiotherapist',
-      'PHYSIOTHERAPIST': 'physiotherapist',
-      'PHARMASIS': 'pharmacist',
-      'PHARMACIST': 'pharmacist',
-      'LABORATORY': 'laboratory',
-      'ADMIN': 'admin'
+      'ROLE_PATIENT': 'patient',
+      'ROLE_DOCTEUR': 'doctor',
+      'ROLE_KINE': 'physiotherapist',
+      'ROLE_PHARMASIS': 'pharmacist',
+      'ROLE_LABORATORY': 'laboratory',
+      'ROLE_ADMIN': 'admin'
     };
-
-    let key = rawRole;
-    if (typeof key === 'string' && key.startsWith('ROLE_')) key = key.replace(/^ROLE_/, '');
-    if (typeof key === 'string') {
-      const up = key.toUpperCase();
-      this.role = roleMap[up] || key.toLowerCase();
-    } else {
-      this.role = key as any;
-    }
+    
+    this.role = roleMap[userRole] || 'patient';
+    
     this.setupNavigation();
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -274,7 +266,7 @@ export class MainLayoutComponent implements OnInit {
         break;
       case 'admin':
         this.navItems = this.adminNav;
-        this.floatingButton = { path: 'approvals', bgClass: 'bg-emerald-600 hover:bg-emerald-700', title: 'En Attente', count: 5 };
+        this.floatingButton = { path: 'users', bgClass: 'bg-indigo-600 hover:bg-indigo-700', title: 'Pending Users', count: 5 };
         break;
     }
   }
@@ -291,7 +283,7 @@ export class MainLayoutComponent implements OnInit {
   }
 
   logout() {
-    this.router.navigate(['/']);
+    this.authService.logout();
   }
 
   // Static helper for simple toasts (in a real app, use a Service)
