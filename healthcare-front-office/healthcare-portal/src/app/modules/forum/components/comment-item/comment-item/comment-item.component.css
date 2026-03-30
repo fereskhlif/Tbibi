@@ -1,0 +1,134 @@
+.pinned-border {
+    border-left: 3px solid #ef4444 !important;
+    /* red-500 */
+    background: rgba(254, 242, 242, 0.4);
+    /* red-50 shadow */
+    margin-bottom: 8px !important;
+    border-radius: 12px;
+}
+
+.pinned-bubble {
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    background-color: white !important;
+}
+
+:host ::ng-deep .fill-red-600 {
+    fill: #dc2626 !important;
+}
+
+/* Thread Line Styling */
+.thread-line-container {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 32px !important; /* Extremely wide hit area */
+    top: 36px !important; 
+    bottom: -20px !important; 
+    display: flex !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 9999 !important; /* Top layer */
+    background: transparent !important;
+}
+
+/* Adjust top for nested comments (smaller avatars) */
+:host-context([depth="1"]), 
+:host-context([depth="2"]), 
+:host-context([depth="3"]),
+:host-context([depth="4"]) .thread-line-container {
+    top: 28px !important;
+}
+
+.thread-line {
+    width: 3px !important;
+    background-color: #000 !important; /* Solid Black for debug */
+    height: 100% !important;
+    border-radius: 9999px !important;
+    transition: all 0.15s ease-in-out !important;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.thread-line-container:hover .thread-line {
+    background-color: #2563eb !important; /* Deep Blue hover */
+    width: 5px !important;
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.6) !important;
+}
+
+/* 
+   ==========================================================================
+   YouTube-Style "Show more answers" (Split-Column Version)
+   ========================================================================== 
+*/
+
+/* LEFT SIDE: L-Connector Drawer */
+.connector-l-column {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 16px !important;
+    position: relative !important;
+}
+
+.connector-l-draw {
+    width: 20px !important;
+    height: 12px !important;
+    border-left: 2px solid #94a3b8 !important; /* same as thread line */
+    border-bottom: 2px solid #94a3b8 !important;
+    border-bottom-left-radius: 12px !important;
+    /* This pushes the horizontal tail 100% to the right edge of the avatar column */
+    position: absolute !important;
+    left: 50% !important;
+    top: -8px !important;
+}
+
+/* RIGHT SIDE: Clean Button Layout */
+.show-more-container-clean {
+    display: flex !important;
+    align-items: center !important;
+    margin-top: -6px !important;
+    margin-bottom: 12px !important;
+    height: 32px !important;
+}
+
+.show-more-btn-v3 {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    color: #2563eb !important;
+    padding: 6px 16px !important;
+    border-radius: 9999px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    background: transparent !important;
+    border: none !important;
+    white-space: nowrap !important;
+    margin-left: -12px !important; /* Pull slightly left to close gap with connector */
+}
+
+.show-more-btn-v3:hover {
+    background-color: #eff6ff !important;
+    transform: translateX(4px) !important;
+}
+
+.btn-text {
+    line-height: 1 !important;
+    display: block !important;
+    white-space: nowrap !important;
+}
+
+.btn-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.btn-icon lucide-icon {
+    stroke-width: 3.5 !important;
+    width: 14px !important;
+    height: 14px !important;
+}

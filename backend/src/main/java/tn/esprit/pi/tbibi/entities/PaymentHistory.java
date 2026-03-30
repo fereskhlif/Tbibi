@@ -22,7 +22,7 @@ import java.util.Set;
     double amount;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy="paymenthistory")
-    private Set<Payment> Payments;;
+    private Set<Payment> payments;
 
 
 

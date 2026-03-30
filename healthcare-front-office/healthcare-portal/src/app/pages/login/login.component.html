@@ -93,7 +93,7 @@
                 <input type="checkbox" class="rounded" />
                 <span class="text-gray-600">Remember me</span>
               </label>
-              <a href="#" class="text-blue-600 hover:text-blue-700">Forgot password?</a>
+              <a [routerLink]="['/forgot-password']" class="text-blue-600 hover:text-blue-700">Forgot password?</a>
             </div>
 
             <div *ngIf="errorMessage" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
