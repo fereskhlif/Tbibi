@@ -174,9 +174,8 @@
             <label *ngFor="let pr of sel!.existingPrescriptions" class="pr-item">
               <input type="checkbox" [checked]="isPrescriptionSelected(pr)" (change)="togglePrescription(pr)" />
               <div class="pr-info">
-                <strong>Prescription #{{pr.prescriptionId}}</strong>
-                <span class="pr-date">{{ pr.date | date:'dd/MM/yyyy' }}</span>
-                <p class="pr-note" *ngIf="pr.note">{{pr.note}}</p>
+                <strong>{{ pr.note ? pr.note : ('Prescription du ' + (pr.date | date:'dd/MM/yyyy')) }}</strong>
+                <span class="pr-date">#{{ pr.prescriptionId }} - {{ pr.date | date:'dd/MM/yyyy' }}</span>
               </div>
             </label>
           </div>
@@ -331,7 +330,7 @@
                 <div style="display:flex; flex-direction:column; gap:2px;">
                   <strong class="text-indigo-900 group-hover:text-indigo-700 flex items-center justify-between">
                     <span>📄 Prescription</span>
-                    <span class="text-xs font-normal text-blue-400">Voir détails ↗</span>
+                    <span class="text-xs font-normal text-blue-400">View details ↗</span>
                   </strong>
                   <span style="font-size:0.75rem; color:#64748b;">
                     {{ pr.date | date:'dd/MM/yyyy' }}
@@ -476,7 +475,7 @@
     <div class="modal" style="max-width: 600px; padding: 0" (click)="$event.stopPropagation()">
       <div style="background: linear-gradient(90deg, #4f46e5, #3b82f6); color: white; padding: 1.5rem; border-top-left-radius: 12px; border-top-right-radius: 12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <h2 style="margin:0; font-size:1.25rem; font-weight:700;">Détails de la Prescription</h2>
+          <h2 style="margin:0; font-size:1.25rem; font-weight:700;">Prescription Details</h2>
           <div *ngIf="selectedPrescription" style="font-size:0.875rem; opacity:0.9;">
             {{ selectedPrescription?.date | date:'dd/MM/yyyy' }}
           </div>
@@ -486,26 +485,26 @@
 
       <div style="padding: 1.5rem;">
         <div *ngIf="loadingPrescription" style="text-align:center; padding: 2rem;">
-          <span class="spinner-sm sp-blue"></span> Chargement...
+          <span class="spinner-sm sp-blue"></span> Loading...
         </div>
 
         <div *ngIf="selectedPrescription && !loadingPrescription">
           <div style="margin-bottom: 1.5rem;">
-            <strong>Statut : </strong>
+            <strong>Status: </strong>
             <span style="display:inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight:bold; background: #e0e7ff; color: #4338ca;">
               {{ selectedPrescription.status }}
             </span>
           </div>
           
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
-            <strong style="color: #475569; display:block; margin-bottom: 0.5rem; font-size:0.85rem; text-transform:uppercase;">Note du Médecin</strong>
-            <p style="margin:0; color:#1e293b;">{{ selectedPrescription.note || 'Aucune note.' }}</p>
+            <strong style="color: #475569; display:block; margin-bottom: 0.5rem; font-size:0.85rem; text-transform:uppercase;">Doctor's Note</strong>
+            <p style="margin:0; color:#1e293b;">{{ selectedPrescription.note || 'No note available.' }}</p>
           </div>
 
-          <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin-bottom: 1rem;">Médicaments prescrits</h4>
+          <h4 style="font-size:1rem; font-weight:700; color:#1e293b; margin-bottom: 1rem;">Prescribed Medicines</h4>
           
           <div *ngIf="!selectedPrescription.medicines?.length" style="color:#64748b; font-style:italic;">
-            Aucun médicament lié à cette prescription.
+            No medicines linked to this prescription.
           </div>
 
           <div *ngIf="selectedPrescription.medicines?.length" style="display:flex; flex-direction:column; gap:0.5rem;">
@@ -515,7 +514,7 @@
                 <strong style="color: #3b82f6;">💊 {{ med.medicineName }}</strong>
               </div>
               <div style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight:600; font-size:0.85rem; color:#475569;">
-                Qté: {{ med.quantity }}
+                Qty: {{ med.quantity }}
               </div>
             </div>
           </div>
@@ -523,7 +522,7 @@
       </div>
       
       <div style="padding: 1rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; text-align:right;">
-        <button class="btn-cancel" (click)="closePrescription()">Fermer</button>
+        <button class="btn-cancel" (click)="closePrescription()">Close</button>
       </div>
     </div>
   </div>

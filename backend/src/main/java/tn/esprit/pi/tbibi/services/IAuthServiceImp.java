@@ -97,6 +97,52 @@ public class IAuthServiceImp implements IAuthService {
             log.info("Role found with ID: {}", role.getRole_id());
         }
 
+        // Déterminer le statut selon le rôle
+        tn.esprit.pi.tbibi.entities.UserStatus status = tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE;
+        if (roleNameUpper.equals("MEDECIN") || roleNameUpper.equals("DOCTEUR") || roleNameUpper.equals("DOCTOR") ||
+            roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS") || roleNameUpper.equals("PHARMACIST") ||
+            roleNameUpper.equals("LABORATOIRE") || roleNameUpper.equals("LABORATORY") || 
+            roleNameUpper.equals("KINE") || roleNameUpper.equals("PHYSIOTHERAPIST")) {
+            status = tn.esprit.pi.tbibi.entities.UserStatus.PENDING;
+        }
+
+        // Sauvegarder le document s'il existe
+        String documentPath = null;
+        if (req.documentBase64() != null && !req.documentBase64().isBlank() && 
+            req.documentName() != null && !req.documentName().isBlank()) {
+            
+            try {
+                // S'assurer que le dossier existe
+                java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/documents");
+                if (!java.nio.file.Files.exists(uploadDir)) {
+                    java.nio.file.Files.createDirectories(uploadDir);
+                }
+
+                // Générer un nom unique
+                String extension = "";
+                int extIndex = req.documentName().lastIndexOf('.');
+                if (extIndex > 0) {
+                    extension = req.documentName().substring(extIndex);
+                }
+                String uniqueFilename = java.util.UUID.randomUUID().toString() + extension;
+                java.nio.file.Path targetPath = uploadDir.resolve(uniqueFilename);
+
+                // Décoder la chaîne Base64 (extraire les données s'il y a un en-tête data URI)
+                String base64Data = req.documentBase64();
+                if (base64Data.contains(",")) {
+                    base64Data = base64Data.split(",")[1];
+                }
+                
+                byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Data);
+                java.nio.file.Files.write(targetPath, decodedBytes);
+                
+                documentPath = uniqueFilename;
+                log.info("Document saved successfully: {}", documentPath);
+            } catch (Exception e) {
+                log.error("Failed to save document for user {}", req.email(), e);
+            }
+        }
+
         // Créer l'utilisateur avec le builder
         User user = User.builder()
                 .name(req.name() == null ? "Not Available" : req.name())
@@ -107,8 +153,9 @@ public class IAuthServiceImp implements IAuthService {
                 .adresse(req.adresse())
                 .specialty(req.specialty())
                 .role(role)
-                .accountStatus(tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE)
+                .accountStatus(status)
                 .enabled(true) // Email verification disabled, user is enabled by default
+                .profilePicture(documentPath) // Save document name in profilePicture for admin view
                 .build();
 
         log.info("Saving user with role: {}", role.getRoleName());
