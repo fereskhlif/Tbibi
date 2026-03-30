@@ -58,8 +58,8 @@ export class MedicalRecordsComponent implements OnInit {
         }));
       },
       error: (err: HttpErrorResponse) => {
-        console.error('Erreur chargement:', err);
-        this.errorMessage = 'Impossible de charger vos dossiers médicaux.';
+        console.error('Loading error:', err);
+        this.errorMessage = 'Unable to load your medical records.';
         this.records = [];
       }
     });
@@ -69,7 +69,7 @@ export class MedicalRecordsComponent implements OnInit {
     let score = 100;
     if (record.chronic_diseas && record.chronic_diseas.trim().length > 0) score -= 20;
     if (record.medical_historuy && record.medical_historuy.length > 50)    score -= 10;
-    if (record.result_ia && /abnormal|positive|élevé|risque/i.test(record.result_ia)) score -= 30;
+    if (record.result_ia && /abnormal|positive|high|risk/i.test(record.result_ia)) score -= 30;
     return Math.max(0, Math.min(100, score));
   }
 
@@ -170,7 +170,7 @@ export class MedicalRecordsComponent implements OnInit {
           if (this.selectedRecord)     this.selectedRecord = rec;
           this.cancelForm();
         },
-        error: (err) => console.error('Erreur update:', err)
+        error: (err) => console.error('Update error:', err)
       });
     } else {
       this.service.add(payload).subscribe({
@@ -178,7 +178,7 @@ export class MedicalRecordsComponent implements OnInit {
           this.records = [this.buildRecord(created, payload), ...this.records];
           this.cancelForm();
         },
-        error: (err) => console.error('Erreur add:', err)
+        error: (err) => console.error('Add error:', err)
       });
     }
   }
@@ -223,12 +223,12 @@ saveActe(): void {
  this.http.post(`${environment.baseUrl}/medical-records/${medicalFileId}/actes`, payload)
     .subscribe({
       next: () => {
-        alert('✅ Acte ajouté avec succès !');
+        alert('✅ Procedure added successfully!');
         this.cancelActeForm();
       },
       error: (err) => {
-        console.error('Erreur ajout acte:', err);
-        alert('❌ Erreur lors de l\'ajout de l\'acte.');
+        console.error('Error adding procedure:', err);
+        alert('❌ Error adding the procedure.');
       }
     });
   }
@@ -272,11 +272,11 @@ onPatientImageSelected(event: Event): void {
 uploadPatientImage(file: File): void {
   const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
   if (!allowed.includes(file.type)) {
-    alert('Format non supporté. Utilisez: JPG, PNG, GIF, WEBP, PDF');
+    alert('Unsupported format. Use: JPG, PNG, GIF, WEBP, PDF');
     return;
   }
   if (file.size > 10 * 1024 * 1024) {
-    alert('Fichier trop grand. Maximum 10 MB.');
+    alert('File too large. Maximum 10 MB.');
     return;
   }
 
@@ -288,30 +288,30 @@ uploadPatientImage(file: File): void {
       if (this.selectedRecord && data.medicalfile_id === this.selectedRecord.medicalfile_id) {
         this.selectedRecord.patientImages = data.patientImages;
       }
-      alert('Image ajoutée avec succès !');
+      alert('Image added successfully!');
     },
     error: (err) => {
       this.isUploadingPatientImage = false;
-      console.error('Erreur upload image:', err);
-      alert('Erreur lors de l\'upload de l\'image.');
+      console.error('Image upload error:', err);
+      alert('Error uploading the image.');
     }
   });
 }
 
 deletePatientImage(imagePath: string, event: Event): void {
   event.stopPropagation();
-  if (!confirm('Voulez-vous vraiment supprimer ce document ?')) return;
+  if (!confirm('Are you sure you want to delete this document?')) return;
 
   this.service.deletePatientImage(imagePath).subscribe({
     next: () => {
       if (this.selectedRecord && this.selectedRecord.patientImages) {
         this.selectedRecord.patientImages = this.selectedRecord.patientImages.filter((p: string) => p !== imagePath);
       }
-      alert('Image supprimée avec succès.');
+      alert('Document deleted successfully.');
     },
     error: (err) => {
-      console.error('Erreur suppression image:', err);
-      alert('Erreur lors de la suppression de l\'image.');
+      console.error('Document deletion error:', err);
+      alert('Error deleting the document.');
     }
   });
 }
@@ -344,7 +344,7 @@ getImageUrl(path: string): string {
         if (this.selectedRecord?.medicalfile_id === record.medicalfile_id) this.selectedRecord = null;
         if (this.isEditing && this.editId === record.medicalfile_id) this.cancelForm();
       },
-      error: (err: HttpErrorResponse) => console.error('Erreur delete:', err)
+      error: (err: HttpErrorResponse) => console.error('Deletion error:', err)
     });
   }
 }
