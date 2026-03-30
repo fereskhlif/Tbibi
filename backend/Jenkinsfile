@@ -113,65 +113,69 @@ pipeline {
             }
         }
 
-        /* // ═══════════════════════════════════════════════════════════════
-        // 7. DÉPLOIEMENT SUR KUBERNETES (kubeadm)
-        // ═══════════════════════════════════════════════════════════════
-        stage('Déploiement Kubernetes') {
-            steps {
-                echo '☸️ Déploiement sur le cluster Kubernetes...'
+        /* 
+        // ═══════════════════════════════════════════════════════════════ 
+        // 7. DÉPLOIEMENT SUR KUBERNETES (kubeadm) 
+        // ═══════════════════════════════════════════════════════════════ 
+        stage('Déploiement Kubernetes') { 
+            steps { 
+                echo '☸️ Déploiement sur le cluster Kubernetes...' 
+ 
+                // Créer le namespace 
+                sh "kubectl create namespace ${KUBE_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -" 
+ 
+                // Injecter l'image Docker dans le manifest 
+                sh "sed -i 's|BACKEND_IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${DOCKER_TAG}|g' k8s/backend-deployment.yaml" 
+ 
+                // Déployer MySQL 
+                sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}" 
+                sh "kubectl rollout status deployment/tbibi-mysql -n ${KUBE_NAMESPACE} --timeout=120s" 
+ 
+                // Déployer le Backend 
+                sh "kubectl apply -f k8s/backend-deployment.yaml -n ${KUBE_NAMESPACE}" 
+                sh "kubectl rollout status deployment/tbibi-backend -n ${KUBE_NAMESPACE} --timeout=180s" 
+            } 
+        } 
+ 
+        // ═══════════════════════════════════════════════════════════════ 
+        // 8. DÉPLOIEMENT DU MONITORING (Prometheus + Grafana) 
+        // ═══════════════════════════════════════════════════════════════ 
+        stage('Déploiement Monitoring') { 
+            steps { 
+                echo '📊 Déploiement de Prometheus & Grafana...' 
+ 
+                // Créer le namespace monitoring 
+                sh "kubectl create namespace ${MONITORING_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -" 
+ 
+                // Déployer Prometheus & Grafana 
+                sh 'kubectl apply -f k8s/monitoring/prometheus.yaml' 
+                sh 'kubectl apply -f k8s/monitoring/grafana.yaml' 
+ 
+                // Vérifier les déploiements 
+                sh "kubectl rollout status deployment/prometheus -n ${MONITORING_NAMESPACE} --timeout=120s" 
+                sh "kubectl rollout status deployment/grafana -n ${MONITORING_NAMESPACE} --timeout=120s" 
+ 
+                echo '📊 Prometheus → NodePort 30090' 
+                echo '📊 Grafana   → NodePort 30030 (admin/admin)' 
+            } 
+        } 
+        */   //  CLOSE COMMENT HERE (ONLY for stages 7 & 8)
 
-                // Créer le namespace
-                sh "kubectl create namespace ${KUBE_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
+    }   //  end stages
 
-                // Injecter l'image Docker dans le manifest
-                sh "sed -i 's|BACKEND_IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${DOCKER_TAG}|g' k8s/backend-deployment.yaml"
+    post { 
+        always { 
+            sh 'docker logout || true' 
+            sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true" 
+            sh "docker rmi ${DOCKER_IMAGE}:latest || true" 
+            cleanWs() 
+        } 
+        success { 
+            echo ' Pipeline CI/CD Backend exécuté avec succès !' 
+        } 
+        failure { 
+            echo ' Le pipeline CI/CD Backend a échoué !' 
+        } 
+    }    THIS MUST NOT BE COMMENTED
 
-                // Déployer MySQL
-                sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}"
-                sh "kubectl rollout status deployment/tbibi-mysql -n ${KUBE_NAMESPACE} --timeout=120s"
-
-                // Déployer le Backend
-                sh "kubectl apply -f k8s/backend-deployment.yaml -n ${KUBE_NAMESPACE}"
-                sh "kubectl rollout status deployment/tbibi-backend -n ${KUBE_NAMESPACE} --timeout=180s"
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // 8. DÉPLOIEMENT DU MONITORING (Prometheus + Grafana)
-        // ═══════════════════════════════════════════════════════════════
-        stage('Déploiement Monitoring') {
-            steps {
-                echo '📊 Déploiement de Prometheus & Grafana...'
-
-                // Créer le namespace monitoring
-                sh "kubectl create namespace ${MONITORING_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
-
-                // Déployer Prometheus & Grafana
-                sh 'kubectl apply -f k8s/monitoring/prometheus.yaml'
-                sh 'kubectl apply -f k8s/monitoring/grafana.yaml'
-
-                // Vérifier les déploiements
-                sh "kubectl rollout status deployment/prometheus -n ${MONITORING_NAMESPACE} --timeout=120s"
-                sh "kubectl rollout status deployment/grafana -n ${MONITORING_NAMESPACE} --timeout=120s"
-
-                echo '📊 Prometheus → NodePort 30090'
-                echo '📊 Grafana   → NodePort 30030 (admin/admin)'
-            }
-        }
-    }
-
-    post {
-        always {
-            sh 'docker logout || true'
-            sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true"
-            sh "docker rmi ${DOCKER_IMAGE}:latest || true"
-            cleanWs()
-        }
-        success {
-            echo '✅ Pipeline CI/CD Backend exécuté avec succès !'
-        }
-        failure {
-            echo '❌ Le pipeline CI/CD Backend a échoué !'
-        }
-    }*/
-}
+}    end pipeline
