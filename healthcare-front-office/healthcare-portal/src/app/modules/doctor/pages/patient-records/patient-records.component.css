@@ -78,7 +78,7 @@
 .hist-count { background:rgba(255,255,255,.3);border-radius:20px;padding:.05rem .45rem;font-size:.7rem;font-weight:700; }
 .tabs button:not(.active) .hist-count { background:#e0e7ff;color:#6366f1; }
 
-.mb { padding:1.25rem 1.75rem;flex:1;overflow-y:auto; }
+.mb { padding:1.25rem 1.75rem;flex:1;overflow-y:auto; display:block; }
 
 /* ── Info grid ───────────────────────────────────────────────────────────────*/
 .info-grid { display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.25rem; }
@@ -145,11 +145,11 @@
 /* ── History ─────────────────────────────────────────────────────────────────*/
 .no-hist   { display:flex;flex-direction:column;align-items:center;gap:.75rem;color:#94a3b8;padding:2rem 0;text-align:center; }
 .no-hist svg { width:48px;height:48px; }
-.hist-card { background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;margin-bottom:1rem;overflow:hidden; }
+.hist-card { background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;margin-bottom:1rem;overflow:hidden; flex-shrink:0; }
 .hc-header { display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;background:#6366f1;color:#fff; }
 .hc-num    { font-size:.8rem;font-weight:700; }
 .hc-date   { font-size:.75rem;opacity:.85; }
-.hc-body   { margin:0;padding:.85rem 1rem;font-size:.82rem;color:#334155;white-space:pre-wrap;font-family:'Courier New',monospace;line-height:1.7;max-height:200px;overflow-y:auto; }
+.hc-body   { margin:0;padding:.85rem 1rem;font-size:.82rem;color:#334155;white-space:pre-wrap;word-break:break-word;font-family:'Courier New',monospace;line-height:1.7;flex-shrink:0; }
 
 /* ── Expandable panel ────────────────────────────────────────────────────────*/
 .expandable-panel { background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:1.25rem;overflow:hidden;transition:all .3s ease;box-shadow:0 1px 3px rgba(0,0,0,.05); }

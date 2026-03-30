@@ -144,14 +144,14 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
     this.error = '';
     this.http.get<PatientRecordDTO[]>(`${this.api}/patients/search?name=${encodeURIComponent(name)}`).subscribe({
       next: d => { this.patients = d; this.loading = false; },
-      error: e => { this.error = 'Erreur chargement patients.'; this.loading = false; console.error(e); }
+      error: e => { this.error = 'Error loading patients.'; this.loading = false; console.error(e); }
     });
   }
   
   fetchQuietly(name: string): void {
     this.http.get<PatientRecordDTO[]>(`${this.api}/patients/search?name=${encodeURIComponent(name)}`).subscribe({
       next: d => { this.patients = d; },
-      error: e => { console.error('Erreur refresh auto:', e); }
+      error: e => { console.error('Auto refresh error:', e); }
     });
   }
 
@@ -167,7 +167,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
     this.saveSuccess = false;
     this.saveError = '';
     this.histEntries = this.parseHistory(p.medicalHistory);
-    this.derniereVisite = this.histEntries.length > 0 ? this.extractDate(this.histEntries[0]) : 'Jamais';
+    this.derniereVisite = this.histEntries.length > 0 ? this.extractDate(this.histEntries[0]) : 'Never';
     this.showModal = true;
   }
 
@@ -217,7 +217,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
       this.loadingFullRecord = true;
       this.http.get(`${this.api}/${this.sel.medicalFileId}`).subscribe({
         next: (res) => { this.fullRecord = res; this.loadingFullRecord = false; },
-        error: (err) => { console.error('Erreur chargement dossier complet:', err); this.loadingFullRecord = false; }
+        error: (err) => { console.error('Error loading full record:', err); this.loadingFullRecord = false; }
       });
     }
   }
@@ -299,23 +299,23 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
           this.sel.medicalHistory = res.medical_historuy;
         } else if (this.sel) {
           // Fallback : construction locale de l'entrée d'historique
-          const ts = new Date().toLocaleDateString('fr-FR', {
+          const ts = new Date().toLocaleDateString('en-GB', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
           });
-          let built = `─── Visite du ${ts} ───`;
-          if (this.form.filiere)         built += `\nFilière       : ${this.form.filiere}`;
+          let built = `─── Visit on ${ts} ───`;
+          if (this.form.filiere)         built += `\nCategory      : ${this.form.filiere}`;
           if (this.form.visitNote)       built += `\nNotes         : ${this.form.visitNote}`;
-          if (this.form.analyseSanguine) built += `\nAnalyse sang. : ${this.form.analyseSanguine}`;
+          if (this.form.analyseSanguine) built += `\nBlood Test    : ${this.form.analyseSanguine}`;
           if (this.form.prescriptions?.length) built += `\nPrescriptions : ${this.form.prescriptions.join(' | ')}`;
-          if (this.form.autre)           built += `\nA Signaler    : ${this.form.autre}`;
+          if (this.form.autre)           built += `\nReport        : ${this.form.autre}`;
           this.sel.medicalHistory = this.sel.medicalHistory
             ? this.sel.medicalHistory + '\n\n' + built
             : built;
         }
 
         this.histEntries = this.parseHistory(this.sel?.medicalHistory || '');
-        this.derniereVisite = this.histEntries.length > 0 ? this.extractDate(this.histEntries[0]) : 'Jamais';
+        this.derniereVisite = this.histEntries.length > 0 ? this.extractDate(this.histEntries[0]) : 'Never';
         this.lastSavedPrescriptions = [...this.form.prescriptions];
 
         // Réinitialisation du formulaire
@@ -329,7 +329,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
       },
       error: e => {
         this.saving = false;
-        this.saveError = `Erreur enregistrement (${e.status}).`;
+        this.saveError = `Failed to record visit (${e.status}).`;
         console.error(e);
       }
     });
@@ -342,12 +342,12 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
   }
 
   extractDate(entry: string): string {
-    const m = entry.match(/─{3} Visite du (.+?) ─{3}/);
+    const m = entry.match(/─{3} (?:Visite du|Visit on) (.+?) ─{3}/);
     return m ? m[1] : '';
   }
 
   stripDate(entry: string): string {
-    return entry.replace(/─{3} Visite du .+? ─{3}\n?/, '').trim();
+    return entry.replace(/─{3} (?:Visite du|Visit on) .+? ─{3}\n?/, '').trim();
   }
 
   // ── Utilitaire affichage ───────────────────────────────────────────────────
