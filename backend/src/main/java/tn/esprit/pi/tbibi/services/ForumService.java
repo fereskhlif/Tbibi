@@ -223,7 +223,7 @@ public class ForumService implements IForumService {
     public Page<PostResponse> getPostsByCategoryPaginated(Long categoryId, String status, Pageable pageable) {
         Category category = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + categoryId));
-        
+
         if (status != null && !status.equalsIgnoreCase("all")) {
             try {
                 PostStatus postStatus = PostStatus.valueOf(status.toUpperCase());
@@ -278,7 +278,7 @@ public class ForumService implements IForumService {
     public java.util.Map<String, Long> getCategoryStats(Long categoryId) {
         Category category = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
-        
+
         long totalPosts = postRepo.countByCategoryAndDeletedFalse(category);
         long unansweredCount = postRepo.countUnansweredByCategory(category, PostStatus.OPEN);
 
@@ -424,17 +424,17 @@ public class ForumService implements IForumService {
     public CommentResponse togglePinComment(Long commentId, Integer currentUserId) {
         Comment comment = commentRepo.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
-        
+
         // 1. Authorization: Only the POST author can pin comments in that post
         if (!comment.getPost().getAuthor().getUserId().equals(currentUserId)) {
             throw new BusinessException("Only the post author can pin comments");
         }
-        
+
         // 2. Structural: Only parent comments can be pinned
         if (comment.getParentComment() != null) {
             throw new BusinessException("Only parent comments can be pinned");
         }
-        
+
         // 3. Logic: Toggle pinned state
         if (!comment.isPinned()) {
             // Check limit if pinning
@@ -446,7 +446,7 @@ public class ForumService implements IForumService {
         } else {
             comment.setPinned(false);
         }
-        
+
         Comment saved = commentRepo.save(comment);
         return mapCommentWithReplies(saved);
     }

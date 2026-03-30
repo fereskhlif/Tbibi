@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class Teleconsultation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
     private String roomUrl;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;

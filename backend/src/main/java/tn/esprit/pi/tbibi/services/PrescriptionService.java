@@ -174,7 +174,7 @@ public class PrescriptionService implements IPrescriptionService {
         if (prescription.getActe() == null) return dto;
         Integer doctorId = prescription.getActe().getDoctorId();
         if (doctorId == null) return dto;
-        userRepository.findById((long) doctorId).ifPresent(doctor -> {
+        userRepository.findById(doctorId).ifPresent(doctor -> {
             dto.setDoctorId(doctor.getUserId());
             dto.setDoctorName(doctor.getName());
         });

@@ -35,7 +35,7 @@ public class Appointment {
     private Schedule schedule;
     @ManyToOne
     private User user;
-    @OneToMany(mappedBy = "appointments", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "appointment", cascade = CascadeType.ALL)
     private List<Notification> notification = new ArrayList<>();
     @OneToOne(mappedBy = "appointment", cascade = CascadeType.ALL)
     private Teleconsultation teleconsultation;

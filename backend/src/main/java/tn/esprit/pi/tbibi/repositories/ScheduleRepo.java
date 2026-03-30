@@ -9,9 +9,9 @@ import java.util.List;
 public interface ScheduleRepo extends JpaRepository<Schedule, Long> {
     List<Schedule> findByDate(LocalDate date);
 
-    List<Schedule> findByDoctorUserIdAndIsAvailableTrue(int doctorId);
+    List<Schedule> findByDoctorUserIdAndIsAvailableTrue(Integer doctorId);
 
-    List<Schedule> findByDoctorUserId(int doctorId);
+    List<Schedule> findByDoctorUserId(Integer doctorId);
 
-    List<Schedule> findByDoctorUserIdAndDate(int doctorId, LocalDate date);
+    List<Schedule> findByDoctorUserIdAndDate(Integer doctorId, LocalDate date);
 }

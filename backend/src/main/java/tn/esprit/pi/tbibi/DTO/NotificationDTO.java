@@ -25,5 +25,5 @@ public class NotificationDTO {
     private String scheduleTime;
 
     // Doctor
-    private int doctorId;
+    private Long doctorId;
 }
