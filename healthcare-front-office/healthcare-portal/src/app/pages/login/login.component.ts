@@ -125,8 +125,24 @@ export class LoginComponent {
         this.errorMessage = 'Email and password are required.';
         return;
       }
-      if (this.password.length < 6) {
-        this.errorMessage = 'Password must be at least 6 characters.';
+      if (this.password.length < 8) {
+        this.errorMessage = 'Password must be at least 8 characters.';
+        return;
+      }
+      if (!/[A-Z]/.test(this.password)) {
+        this.errorMessage = 'Password must contain at least one uppercase letter.';
+        return;
+      }
+      if (!/[a-z]/.test(this.password)) {
+        this.errorMessage = 'Password must contain at least one lowercase letter.';
+        return;
+      }
+      if (!/\d/.test(this.password)) {
+        this.errorMessage = 'Password must contain at least one number.';
+        return;
+      }
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(this.password)) {
+        this.errorMessage = 'Password must contain at least one special character.';
         return;
       }
 
