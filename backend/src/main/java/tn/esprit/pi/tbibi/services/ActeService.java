@@ -52,7 +52,7 @@ public class ActeService {
 
         // Enrichir avec le médecin
         if (acte.getDoctorId() != null) {
-            userRepository.findById((long) acte.getDoctorId()).ifPresent(doctor -> {
+            userRepository.findById(acte.getDoctorId()).ifPresent(doctor -> {
                 dto.setDoctorId(doctor.getUserId());
                 dto.setDoctorName(doctor.getName());
             });
@@ -81,7 +81,7 @@ public class ActeService {
      * Called from the controller when the authenticated user is a doctor.
      */
     public Acte addActeForPatient(int patientId, Acte acte, Integer doctorId) {
-        User patient = userRepository.findById((long) patientId)
+        User patient = userRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Patient not found: " + patientId));
 
         List<MedicalReccords> files = patient.getMedicalFiles();

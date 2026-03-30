@@ -1,0 +1,369 @@
+<div class="w-full max-w-[1400px] mx-auto px-6 py-6 font-sans">
+
+  <!-- ═══════ HERO BANNER ═══════ -->
+  <div
+    style="background: linear-gradient(135deg, #1d4ed8, #2563eb, #3b82f6); border-radius: 16px; padding: 32px; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px;">
+    <div
+      style="position:absolute; top:-32px; right:-32px; width:160px; height:160px; background:rgba(255,255,255,0.08); border-radius:50%;">
+    </div>
+    <div style="position: relative; z-index: 10;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <div
+          style="width:40px; height:40px; background:rgba(255,255,255,0.2); border-radius:10px; display:flex; align-items:center; justify-content:center;">
+          <lucide-icon name="message-circle" [size]="22" style="color:white"></lucide-icon>
+        </div>
+        <h1 style="font-size:28px; font-weight:700; color:white; margin:0;">
+          {{ bannerTitle }}
+        </h1>
+      </div>
+      <p style="color: #bfdbfe; font-size:14px; margin-bottom:12px;">
+        <ng-container *ngIf="isPatient">
+          Welcome! Ask our healthcare professionals anything about your health
+        </ng-container>
+        <ng-container *ngIf="!isPatient">
+          {{ bannerSubtitle }}
+        </ng-container>
+      </p>
+
+      <!-- For professionals: show unanswered count -->
+      <div *ngIf="isProfessional && unansweredCount > 0"
+        class="mt-3 inline-flex items-center gap-2 bg-amber-400/20 text-amber-200 px-4 py-2 rounded-full text-sm font-semibold">
+        <lucide-icon name="alert-circle" [size]="14"></lucide-icon>
+        ⚠️ {{ unansweredCount }} unanswered questions waiting for you!
+      </div>
+
+      <div *ngIf="isProfessional && unansweredCount === 0 && expertCategoryPostCount > 0"
+        class="mt-3 inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm">
+        ✅ All questions answered! Great job.
+      </div>
+
+      <div *ngIf="isProfessional && expertCategoryPostCount === 0"
+        class="mt-3 inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm">
+        💬 No questions yet in your category. Be ready to help when patients ask!
+      </div>
+
+      <!-- Experts available row (Patient Only) -->
+      <div *ngIf="isPatient" class="flex items-center gap-3 mt-4">
+        <span class="text-blue-200 text-xs font-medium">
+          Experts available:
+        </span>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10">🩺
+            Doctors</span>
+          <span class="px-2 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10">💊
+            Pharmacists</span>
+          <span class="px-2 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10">🧪
+            Lab Staff</span>
+          <span class="px-2 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10">💪
+            Physios</span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:16px; margin-top: 12px;">
+        <span style="color:#93c5fd; font-size:12px; display:flex; align-items:center; gap:4px;">
+          💬 {{ totalElements }} discussions
+        </span>
+        <span style="color:#93c5fd; font-size:12px;">·</span>
+        <span style="color:#93c5fd; font-size:12px; display:flex; align-items:center; gap:4px;">
+          🏷️ {{ visibleCategories.length }} categories
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ LOADING SPINNER ═══════ -->
+  <div *ngIf="loading" class="flex justify-center py-20">
+    <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- ═══════ ERROR ═══════ -->
+  <div *ngIf="error && !loading" class="bg-white rounded-xl border border-red-100 shadow-sm p-10 text-center">
+    <lucide-icon name="alert-circle" [size]="44" class="text-red-400 mx-auto mb-4"></lucide-icon>
+    <p class="text-red-600 font-bold text-base mb-1">Something went wrong</p>
+    <p class="text-gray-500 text-sm mb-4">{{ error }}</p>
+    <button (click)="loadData()" style="background-color: #2563EB;"
+      class="px-6 py-2.5 text-white text-sm font-bold rounded-xl hover:brightness-110 transition-all active:scale-95">
+      Try Again
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  MAIN CONTENT — uses [hidden] instead of *ngIf               -->
+  <!--  This keeps the DOM alive so Angular doesn't have to create   -->
+  <!--  100+ elements in a single change detection burst             -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div [hidden]="loading || !!error">
+
+    <!-- ═══════ Search + Filters + New Post ═══════ -->
+    <div class="flex items-center gap-3 mb-6 w-full">
+      <!-- Search -->
+      <div
+        class="relative flex-1 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex items-center">
+        <lucide-icon name="search" class="absolute left-3 text-gray-400" [size]="16"></lucide-icon>
+        <input [ngModel]="searchQuery" (input)="onSearch($any($event.target).value)"
+          class="w-full pl-10 pr-4 py-2.5 bg-transparent border-none text-sm focus:outline-none focus:ring-0 transition-all h-full outline-none"
+          placeholder="Search discussions..." />
+      </div>
+
+      <!-- Sort -->
+      <div class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center">
+        <select [ngModel]="sortBy" (change)="onSortChange($event)"
+          class="appearance-none bg-transparent pl-4 pr-8 py-2.5 border-none text-sm font-medium text-gray-700 cursor-pointer focus:outline-none focus:ring-0 transition-all w-full outline-none">
+          <option value="latest">Latest activity</option>
+          <option value="newest">Newest</option>
+          <option value="most_voted">Most voted</option>
+        </select>
+        <lucide-icon name="chevron-down" [size]="14"
+          class="absolute right-2.5 text-gray-400 pointer-events-none"></lucide-icon>
+      </div>
+
+      <!-- Filter -->
+      <div class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center">
+        <select [ngModel]="filterStatus" (change)="onFilterChange($event)"
+          class="appearance-none bg-transparent pl-4 pr-8 py-2.5 border-none text-sm font-medium text-gray-700 cursor-pointer focus:outline-none focus:ring-0 transition-all w-full outline-none">
+          <option value="all">All</option>
+          <option value="OPEN">Open</option>
+          <option value="RESOLVED">Resolved</option>
+          <option value="CLOSED">Closed</option>
+        </select>
+        <lucide-icon name="chevron-down" [size]="14"
+          class="absolute right-2.5 text-gray-400 pointer-events-none"></lucide-icon>
+      </div>
+
+      <!-- New Post button -->
+      <button *ngIf="isPatient" (click)="goNewPost()"
+        class="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap active:scale-95">
+        <lucide-icon name="plus" [size]="16"></lucide-icon>
+        New Post
+      </button>
+      <span *ngIf="isProfessional" class="text-xs text-gray-400 italic px-2">
+        Answer questions to help patients
+      </span>
+    </div>
+
+    <!-- ═══════ Two columns ═══════ -->
+    <div class="flex gap-6 items-start w-full">
+
+      <!-- ═══════ LEFT: Categories sidebar ═══════ -->
+      <div class="w-56 shrink-0 sticky top-4">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-w-[200px] max-w-[224px]">
+
+          <!-- Sidebar content container -->
+          <div class="relative py-2">
+            <!-- Sliding Indicator -->
+            <div class="sidebar-indicator" 
+                 [style.top.px]="getSelectedIndex() * 40 + 8" 
+                 [style.height.px]="32"></div>
+
+            <!-- View all -->
+            <div (click)="selectCategory(null)"
+              class="flex items-center justify-between px-4 py-2 cursor-pointer transition-all relative z-20"
+              [ngClass]="selectedCategoryId === null ? 'bg-blue-50/50' : 'hover:bg-gray-50/50'">
+
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-gray-100 transition-colors"
+                [class.bg-blue-100]="selectedCategoryId === null">
+                <lucide-icon name="layout-grid" [size]="14" class="text-gray-500"
+                  [class.text-blue-600]="selectedCategoryId === null">
+                </lucide-icon>
+              </div>
+              <span class="text-sm font-semibold" [class.text-blue-700]="selectedCategoryId === null"
+                [class.text-gray-700]="selectedCategoryId !== null">
+                View all
+              </span>
+            </div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
+              [class.bg-blue-600]="selectedCategoryId === null" [class.text-white]="selectedCategoryId === null"
+              [class.bg-gray-100]="selectedCategoryId !== null" [class.text-gray-500]="selectedCategoryId !== null">
+              {{ globalTotalPosts }}
+            </span>
+          </div>
+
+            <!-- Divider -->
+            <div class="h-px bg-gray-100 mx-4 my-2"></div>
+
+            <!-- Category items -->
+            <div *ngFor="let cat of filteredCategories; let i = index; trackBy: trackByCat" 
+              (click)="selectCategory(cat.categoryName)"
+              class="transition-all cursor-pointer relative z-20 animate-fade-in-up stagger-item"
+              [style.--index]="i">
+
+              <div class="flex items-center justify-between px-4 py-2"
+                [ngClass]="{
+                  'bg-amber-50/30': cat.categoryName === expertCategory && isProfessional,
+                  'bg-blue-50/50': selectedCategoryId === cat.categoryId,
+                  'hover:bg-gray-50/50': selectedCategoryId !== cat.categoryId && !(cat.categoryName === expertCategory && isProfessional)
+                }">
+              <div class="flex items-center gap-3 pr-2 overflow-hidden">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  [ngClass]="getCategoryIconBg(cat.categoryName)">
+                  <lucide-icon [name]="getCategoryIcon(cat.categoryName)" [size]="14"
+                    [ngClass]="getCategoryIconColor(cat.categoryName)">
+                  </lucide-icon>
+                </div>
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-sm truncate"
+                    [class.text-amber-800]="cat.categoryName === expertCategory && isProfessional"
+                    [class.text-blue-700]="selectedCategoryId === cat.categoryId"
+                    [class.font-semibold]="selectedCategoryId === cat.categoryId"
+                    [class.text-gray-700]="selectedCategoryId !== cat.categoryId">
+                    {{ cat.categoryName }}
+                  </span>
+                  <span *ngIf="cat.categoryName === expertCategory && isProfessional"
+                    class="text-amber-400 text-xs shrink-0" title="Your Expertise">⭐</span>
+                </div>
+              </div>
+
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                [class.bg-blue-100]="selectedCategoryId === cat.categoryId"
+                [class.text-blue-700]="selectedCategoryId === cat.categoryId"
+                [class.bg-gray-100]="selectedCategoryId !== cat.categoryId"
+                [class.text-gray-500]="selectedCategoryId !== cat.categoryId">
+                {{ cat.postCount || 0 }}
+              </span>
+            </div>
+          </div>
+
+          <div class="h-2"></div>
+          </div> <!-- End relative py-2 -->
+        </div> <!-- End card -->
+      </div> <!-- End sidebar -->
+
+      <!-- ═══════ RIGHT: Posts list ═══════ -->
+      <div class="flex-1 min-w-0">
+
+        <!-- Post count info -->
+        <div class="flex items-center justify-between mb-3 px-1">
+          <span class="text-xs font-bold text-gray-400 tracking-wider">
+            {{ totalElements }} discussions
+            <span *ngIf="selectedCategoryId !== null" class="font-normal text-gray-400">in this category</span>
+          </span>
+        </div>
+
+        <!-- Posts container -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+          <!-- Empty State -->
+          <div *ngIf="posts.length === 0 && !loading" class="p-16 text-center">
+            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <lucide-icon name="message-square" [size]="32" class="text-gray-300"></lucide-icon>
+            </div>
+            <p class="text-gray-600 text-base font-semibold">No discussions found</p>
+            <p class="text-gray-400 text-sm mt-1">Try adjusting your filters or start a new discussion.</p>
+            <button *ngIf="isPatient" (click)="goNewPost()" style="background-color: #2563EB;"
+              class="mt-6 px-5 py-2.5 text-white font-bold text-sm rounded-xl hover:brightness-110 transition-all inline-flex items-center gap-2">
+              <lucide-icon name="plus" [size]="16"></lucide-icon>
+              Start a Discussion
+            </button>
+          </div>
+
+          <!-- Post rows -->
+          <div *ngFor="let post of paginatedPosts; let i = index; trackBy: trackByPost" (click)="openPost(post.postId)"
+            class="flex items-start gap-4 px-5 py-4 hover:bg-blue-50/60 transition-all border-b border-gray-100 last:border-0 cursor-pointer group animate-fade-in-up stagger-item hover-lift"
+            [style.--index]="i">
+
+            <!-- VOTE SECTION -->
+            <div class="flex flex-col items-center gap-0.5 min-w-[36px] pt-0.5">
+              <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all"
+                [class.border-blue-500]="post.voteCount > 0" [class.bg-blue-50]="post.voteCount > 0"
+                [class.border-gray-200]="post.voteCount === 0">
+                <lucide-icon name="arrow-up" [size]="12" [class.text-blue-600]="post.voteCount > 0"
+                  [class.text-gray-400]="post.voteCount === 0">
+                </lucide-icon>
+              </div>
+              <span class="text-xs font-bold leading-none" [class.text-blue-600]="post.voteCount > 0"
+                [class.text-gray-400]="post.voteCount === 0">
+                {{ post.voteCount }}
+              </span>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="flex-1 min-w-0">
+              <h3
+                class="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors leading-snug mb-1.5 truncate">
+                <span *ngIf="post.isPinned" class="text-amber-500 mr-1">📌</span>
+                {{ post.title }}
+              </h3>
+              <span *ngIf="needsAnswer(post)"
+                class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-600 rounded-full mb-1.5 animate-pulse">
+                Needs Answer
+              </span>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="px-2 py-0.5 text-xs font-semibold rounded-full"
+                  [ngClass]="getCategoryColor(post.categoryName)">
+                  {{ post.categoryName }}
+                </span>
+                <span class="text-gray-300 text-xs">·</span>
+                <span style="padding: 2px 8px; border-radius:9999px; font-size:11px; font-weight:600;"
+                  [style.background]="post.postStatus==='OPEN' ? '#dcfce7' : post.postStatus==='RESOLVED' ? '#dbeafe' : '#f3f4f6'"
+                  [style.color]="post.postStatus==='OPEN' ? '#15803d' : post.postStatus==='RESOLVED' ? '#1d4ed8' : '#4b5563'">
+                  {{ post.postStatus }}
+                </span>
+                <span class="text-gray-300 text-xs">·</span>
+                <span class="text-xs text-gray-500">
+                  {{ post.authorName }} asked {{ timeAgo(post.createdDate) }}
+                </span>
+                <span class="text-gray-300 text-xs">·</span>
+                <span class="flex items-center gap-1 text-xs text-gray-400">
+                  <lucide-icon name="eye" [size]="11"></lucide-icon>
+                  {{ post.views }}
+                </span>
+              </div>
+            </div>
+
+            <!-- RIGHT: comment count -->
+            <div class="flex items-center gap-1.5 shrink-0 text-xs text-gray-500 mt-1">
+              <lucide-icon name="message-circle" [size]="14" class="text-gray-400"></lucide-icon>
+              <span class="font-medium">{{ post.commentCount }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════ PAGINATION ═══════ -->
+        <div *ngIf="posts.length > 0" class="flex items-center justify-between mt-6">
+
+          <div class="flex items-center gap-4">
+            <span class="text-xs text-gray-400 font-bold uppercase tracking-widest whitespace-nowrap">
+              Page {{ currentPage }} of {{ totalPages }}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1"
+              style="border: none !important; outline: none !important; box-shadow: none !important;"
+              class="px-4 py-2 text-sm text-gray-600 font-medium rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
+              ← Previous
+            </button>
+
+            <button *ngFor="let p of pageNumbers; trackBy: trackByPage" (click)="changePage(p)"
+              style="border: none !important; outline: none !important; box-shadow: none !important;"
+              class="w-9 h-9 text-sm rounded-lg font-semibold transition-all focus:outline-none"
+              [class.bg-blue-600]="p === currentPage" [class.text-white]="p === currentPage"
+              [class.text-gray-600]="p !== currentPage" [class.hover:bg-gray-100]="p !== currentPage">
+              {{ p }}
+            </button>
+
+            <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages"
+              style="border: none !important; outline: none !important; box-shadow: none !important;"
+              class="px-4 py-2 text-sm text-gray-600 font-medium rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
+              Next →
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <span>Per page:</span>
+            <select [(ngModel)]="postsPerPage" (ngModelChange)="onPerPageChange()"
+              class="appearance-none border border-gray-200 rounded-lg px-2.5 py-1.5 pr-8 text-sm focus:outline-none focus:ring-0 cursor-pointer bg-white bg-no-repeat bg-[center_right_0.5rem] [background-image:url('data:image/svg+xml;charset=UTF-8,%3csvg%20xmlns=\'http://www.w3.org/2000/svg\'%20viewBox=\'0%200%2024%2024\'%20fill=\'none\'%20stroke=\'%239ca3af\'%20stroke-width=\'2\'%20stroke-linecap=\'round\'%20stroke-linejoin=\'round\'%3e%3cpolyline%20points=\'6%209%2012%2015%2018%209\'%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:14px_14px]">
+              <option [value]="12">12</option>
+              <option [value]="24">24</option>
+              <option [value]="48">48</option>
+            </select>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

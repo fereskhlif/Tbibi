@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.DTO.NotificationDTO;
+import tn.esprit.pi.tbibi.DTO.notification.NotificationResponse;
 import tn.esprit.pi.tbibi.entities.Appointment;
 import tn.esprit.pi.tbibi.entities.Notification;
 import tn.esprit.pi.tbibi.entities.Schedule;
@@ -12,20 +13,46 @@ import tn.esprit.pi.tbibi.entities.StatusAppointement;
 import tn.esprit.pi.tbibi.repositories.AppointmentRepo;
 import tn.esprit.pi.tbibi.repositories.NotificationRepo;
 import tn.esprit.pi.tbibi.repositories.ScheduleRepo;
+import tn.esprit.pi.tbibi.services.NotificationService;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/notifications")
+@RequestMapping("/api/notifications")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationRepo notificationRepo;
     private final AppointmentRepo appointmentRepo;
     private final ScheduleRepo scheduleRepo;
+    private final NotificationService notificationService;
 
-    /** Get all notifications for a doctor */
+    // ── e-pharmacy endpoints ──────────────────────────────────────────────────
+
+    @GetMapping("/user/{userId}")
+    public List<NotificationResponse> getForUser(@PathVariable("userId") Integer userId) {
+        return notificationService.getForUser(userId);
+    }
+
+    @GetMapping("/unread-count/{userId}")
+    public long getUnreadCount(@PathVariable("userId") Integer userId) {
+        return notificationService.getUnreadCount(userId);
+    }
+
+    @PutMapping("/{id}/read")
+    public NotificationResponse markAsRead(@PathVariable("id") Long id) {
+        return notificationService.markAsRead(id);
+    }
+
+    @PutMapping("/read-all/{userId}")
+    public void markAllAsRead(@PathVariable("userId") Integer userId) {
+        notificationService.markAllAsRead(userId);
+    }
+
+    // ── Doctor / Appointment endpoints ───────────────────────────────────────
+
     @GetMapping("/doctor/{doctorId}")
     @Transactional
     public ResponseEntity<List<NotificationDTO>> getForDoctor(@PathVariable int doctorId) {
@@ -34,23 +61,11 @@ public class NotificationController {
         return ResponseEntity.ok(dtos);
     }
 
-    /** Count unread notifications for a doctor */
     @GetMapping("/doctor/{doctorId}/unread-count")
-    public ResponseEntity<Long> getUnreadCount(@PathVariable int doctorId) {
+    public ResponseEntity<Long> getDoctorUnreadCount(@PathVariable int doctorId) {
         return ResponseEntity.ok(notificationRepo.countByDoctorUserIdAndRead(doctorId, false));
     }
 
-    /** Mark a notification as read */
-    @PatchMapping("/{id}/read")
-    public ResponseEntity<Void> markRead(@PathVariable Long id) {
-        notificationRepo.findById(id).ifPresent(n -> {
-            n.setRead(true);
-            notificationRepo.save(n);
-        });
-        return ResponseEntity.noContent().build();
-    }
-
-    /** Accept the appointment linked to a notification → status = CONFIRMED */
     @PatchMapping("/{id}/accept")
     @Transactional
     public ResponseEntity<NotificationDTO> accept(@PathVariable Long id) {
@@ -67,7 +82,6 @@ public class NotificationController {
         return ResponseEntity.ok(toDTO(notif));
     }
 
-    /** Refuse the appointment → status = CANCELLED, re-open schedule slot */
     @PatchMapping("/{id}/refuse")
     @Transactional
     public ResponseEntity<NotificationDTO> refuse(@PathVariable Long id) {
@@ -78,7 +92,6 @@ public class NotificationController {
         if (apt != null) {
             apt.setStatusAppointement(StatusAppointement.CANCELLED);
             appointmentRepo.save(apt);
-            // Free up the schedule slot
             Schedule schedule = apt.getSchedule();
             if (schedule != null) {
                 schedule.setIsAvailable(true);
@@ -91,6 +104,7 @@ public class NotificationController {
     }
 
     // ── Mapper ────────────────────────────────────────────────────────────────
+
     private NotificationDTO toDTO(Notification n) {
         NotificationDTO dto = NotificationDTO.builder()
                 .notificationId(n.getNotificationId())

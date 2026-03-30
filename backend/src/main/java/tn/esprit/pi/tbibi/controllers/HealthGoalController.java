@@ -35,7 +35,7 @@ public class HealthGoalController {
         HealthGoal goal = mapper.toEntity(dto);
 
         if (dto.getUserId() != null) {
-            User user = userRepo.findById(dto.getUserId())
+            User user = userRepo.findById(dto.getUserId().intValue())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             goal.setUser(user);
         }

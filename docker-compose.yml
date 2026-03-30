@@ -1,0 +1,81 @@
+# version: '3.8'
+
+services:
+
+  # ═══════════════════════════════════════════════════════
+  # MySQL 8.0
+  # ═══════════════════════════════════════════════════════
+  mysql:
+    image: mysql:8.0
+    container_name: tbibi-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════
+  # Spring Boot 3.2.5 + Java 17
+  # ═══════════════════════════════════════════════════════
+  backend:
+    build: ./backend
+    container_name: tbibi-backend
+    ports:
+      - "8088:8088"
+    environment:
+      # Server
+      SPRING_PROFILE: prod
+      SERVER_PORT: 8088
+
+      # Database (mysql = container name used as hostname)
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?createDatabaseIfNotExist=true&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC"
+      SPRING_DATASOURCE_USERNAME: "${DB_USERNAME}"
+      SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD}"
+
+      # JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+
+      # Tesseract OCR (Linux path inside container)
+      TESSERACT_DATAPATH: /usr/share/tesseract-ocr/5/tessdata
+
+      # Cloudinary
+      CLOUDINARY_CLOUD_NAME: "${CLOUDINARY_CLOUD_NAME}"
+      CLOUDINARY_API_KEY: "${CLOUDINARY_API_KEY}"
+      CLOUDINARY_API_SECRET: "${CLOUDINARY_API_SECRET}"
+
+      # Groq AI
+      GROQ_API_KEY: "${GROQ_API_KEY}"
+
+      # Mail
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: "${MAIL_USERNAME}"
+      SPRING_MAIL_PASSWORD: "${MAIL_PASSWORD}"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ═══════════════════════════════════════════════════════
+  # Angular 18.2.0
+  # ═══════════════════════════════════════════════════════
+  frontend:
+    build: ./healthcare-front-office/healthcare-portal
+    container_name: tbibi-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

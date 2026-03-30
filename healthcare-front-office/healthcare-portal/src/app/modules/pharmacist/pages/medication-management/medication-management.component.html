@@ -1,0 +1,818 @@
+<div class="min-h-screen bg-[#F8FAFC] p-6 lg:p-10 font-sans">
+    <div class="max-w-7xl mx-auto flex flex-col gap-8">
+
+        <!-- ─── Page Header ─────────────────────────────────────────────── -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Medications</h1>
+                <p class="text-sm text-gray-500 mt-1 font-medium">Manage your pharmacy's medication catalog and
+                    inventory</p>
+            </div>
+            <button (click)="openAddModal()"
+                style="background-color: #2563EB !important; color: white !important; height: 40px !important; max-height: 40px !important;"
+                class="whitespace-nowrap inline-flex items-center justify-center px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-sm active:scale-95 text-sm outline-none">
+                + Add Medicine
+            </button>
+        </div>
+
+        <!-- ─── Toolbar (White Card) ─────────────────────────────────────── -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+            <div class="relative w-full max-w-[400px]">
+                <lucide-icon name="search"
+                    class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></lucide-icon>
+                <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+                    placeholder="Search by name, dosage or composition..."
+                    class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 rounded-lg text-sm transition-all outline-none font-medium placeholder:text-gray-400" />
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-50 pt-6">
+                <div class="flex items-center gap-3">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sort by:</label>
+                    <select (change)="setSort($any($event.target).value)"
+                        class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-700 focus:outline-none cursor-pointer hover:border-gray-300 transition-colors">
+                        <option [selected]="sortBy === 'medicineName'" value="medicineName">Name</option>
+                        <option [selected]="sortBy === 'stock'" value="stock">Stock</option>
+                        <option [selected]="sortBy === 'dateOfExpiration'" value="dateOfExpiration">Expiry</option>
+                        <option [selected]="sortBy === 'price'" value="price">Price</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                    <button (click)="onTabChange('all')"
+                        class="px-5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2.5 border border-transparent"
+                        [style.background-color]="activeTab === 'all' ? '#EBF1FB' : 'transparent'"
+                        [style.color]="activeTab === 'all' ? '#2563EB' : '#6B7280'"
+                        [style.border-color]="activeTab === 'all' ? '#DBEAFE' : 'transparent'"
+                        [class.shadow-sm]="activeTab === 'all'">
+                        All <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight"
+                            [style.background-color]="activeTab === 'all' ? '#DBEAFE' : 'rgba(209, 213, 219, 0.6)'"
+                            [style.color]="activeTab === 'all' ? '#2563EB' : '#4B5563'">{{allCount}}</span>
+                    </button>
+                    <button (click)="onTabChange('lowstock')"
+                        class="px-5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2.5 border border-transparent"
+                        [style.background-color]="activeTab === 'lowstock' ? '#FFFBEB' : 'transparent'"
+                        [style.color]="activeTab === 'lowstock' ? '#D97706' : '#6B7280'"
+                        [style.border-color]="activeTab === 'lowstock' ? '#FEF3C7' : 'transparent'"
+                        [class.shadow-sm]="activeTab === 'lowstock'">
+                        Low Stock <span
+                            class="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-[#B45309] font-bold tracking-tight">{{lowStockCount}}</span>
+                    </button>
+                    <button (click)="onTabChange('expired')"
+                        class="px-5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2.5 border border-transparent"
+                        [style.background-color]="activeTab === 'expired' ? '#FEF2F2' : 'transparent'"
+                        [style.color]="activeTab === 'expired' ? '#DC2626' : '#6B7280'"
+                        [style.border-color]="activeTab === 'expired' ? '#FEE2E2' : 'transparent'"
+                        [class.shadow-sm]="activeTab === 'expired'">
+                        Expired <span
+                            class="px-2 py-0.5 rounded-full text-[10px] bg-red-100 text-[#B91C1C] font-bold tracking-tight">{{expiredCount}}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Table ──────────────────────────────── -->
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+
+            <div *ngIf="paginatedMedicines.length > 0" class="flex flex-col h-full">
+                <div class="grid items-center px-6 py-4 bg-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 sticky top-0 z-10 box-border"
+                    style="grid-template-columns: 40px 2.5fr 1fr 1.2fr 0.8fr 140px; min-width: 900px;">
+                    <div class="flex justify-center"><input type="checkbox" [checked]="isAllSelected()"
+                            (change)="toggleSelectAll()" class="rounded border-gray-300 text-blue-600 cursor-pointer" />
+                    </div>
+                    <div class="px-4">PRODUCT INFO</div>
+                    <div class="px-4 text-center">INVENTORY</div>
+                    <div class="px-4 text-center">EXPIRY</div>
+                    <div class="px-4 text-center">UNIT PRICE</div>
+                    <div class="px-4 text-right">ACTIONS</div>
+                </div>
+
+                <div class="divide-y divide-gray-50">
+                    <ng-container *ngFor="let med of paginatedMedicines; trackBy: trackByMed">
+                        <div class="grid items-center px-6 py-5 hover:bg-gray-50/50 transition-all group"
+                            style="grid-template-columns: 40px 2.5fr 1fr 1.2fr 0.8fr 140px; min-width: 900px;">
+                            <div class="flex justify-center">
+                                <input type="checkbox" [checked]="isSelected(med.medicineId)"
+                                    (change)="toggleSelect(med.medicineId)"
+                                    class="rounded border-gray-300 text-blue-600 cursor-pointer" />
+                            </div>
+                            <div class="flex items-center gap-4 px-4 overflow-hidden">
+                                <div style="width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important;"
+                                    class="rounded-lg border border-gray-100 bg-gray-50 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner translate-y-0 group-hover:-translate-y-0.5 transition-transform duration-300">
+                                    <img *ngIf="getFirstImage(med)" [src]="getFirstImage(med)"
+                                        style="width: 44px !important; height: 44px !important; object-fit: cover !important;">
+                                    <lucide-icon *ngIf="!getFirstImage(med)" name="image"
+                                        class="w-5 h-5 text-gray-200"></lucide-icon>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-bold text-gray-900 text-sm truncate leading-tight">
+                                            {{med.medicineName}}</h3>
+                                    </div>
+                                    <p *ngIf="med.dosage" class="text-[11px] text-gray-400 mt-0.5 leading-none">
+                                        {{med.dosage}}</p>
+                                    <div class="flex gap-1.5 mt-2">
+                                        <span *ngIf="med.form"
+                                            style="background-color: #E0E7FF !important; color: #4338CA !important; border-radius: 9999px !important; padding: 2px 10px !important; text-transform: none !important;"
+                                            class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">
+                                            {{med.form | titlecase}}
+                                        </span>
+                                        <span *ngIf="isExpired(med)"
+                                            style="background-color: #FEE2E2 !important; color: #DC2626 !important; border-radius: 9999px !important; padding: 2px 10px !important; text-transform: none !important;"
+                                            class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">Expired</span>
+                                        <span *ngIf="isLowStock(med)"
+                                            style="background-color: #FEF3C7 !important; color: #D97706 !important; border-radius: 9999px !important; padding: 2px 10px !important; text-transform: none !important;"
+                                            class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">Low
+                                            Stock</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="px-4 text-center">
+                                <div class="text-sm font-bold text-gray-900 leading-none">{{med.stock}}</div>
+                                <div class="text-[10px] text-gray-400 mt-1 lowercase tracking-tight">units</div>
+                            </div>
+                            <div class="px-4 text-center">
+                                <div class="text-sm font-medium leading-none" [class.text-red-500]="isExpired(med)">
+                                    {{formatDate(med.dateOfExpiration)}}</div>
+                            </div>
+                            <div class="px-4 text-center">
+                                <div class="text-sm font-bold text-gray-900 leading-none">{{med.price | number:'1.2-2'}}
+                                    DT</div>
+                            </div>
+                            <div class="flex items-center justify-end gap-1 px-4">
+                                <button (click)="openEditModal(med)" title="Edit"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg transition-all text-gray-500 hover:text-blue-600 hover:bg-blue-50">
+                                    <lucide-icon name="pencil" [size]="16"></lucide-icon>
+                                </button>
+                                <button (click)="openRestockModal(med)" title="Restock"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg transition-all text-gray-500 hover:text-emerald-600 hover:bg-emerald-50">
+                                    <lucide-icon name="rotate-ccw" [size]="16"></lucide-icon>
+                                </button>
+                                <button (click)="openImageModal(med)" title="Images"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg transition-all text-gray-500 hover:text-purple-600 hover:bg-purple-50">
+                                    <lucide-icon name="image" [size]="16"></lucide-icon>
+                                </button>
+                                <button (click)="deleteMedicine(med)" title="Delete"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg transition-all text-red-500 hover:bg-red-50">
+                                    <lucide-icon name="trash-2" [size]="16"></lucide-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
+
+                <div class="mt-auto flex items-center justify-between px-8 py-5 border-t border-gray-100">
+                    <div class="text-xs text-gray-500 font-medium">
+                        Showing {{paginatedMedicines.length}} of {{totalFiltered}} medications
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button (click)="onPagePrev()" [disabled]="currentPage === 1"
+                            class="px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-blue-600 disabled:opacity-30 transition-all uppercase tracking-widest outline-none">
+                            Prev
+                        </button>
+                        <div
+                            class="w-8 h-8 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center text-xs font-bold border border-blue-100 shadow-sm">
+                            {{currentPage}}
+                        </div>
+                        <button (click)="onPageNext()" [disabled]="currentPage === totalPages"
+                            class="px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-blue-600 disabled:opacity-30 transition-all uppercase tracking-widest outline-none">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="paginatedMedicines.length === 0"
+                class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                <div
+                    class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 border border-gray-100">
+                    <svg class="w-8 h-8 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-1">No medications found</h3>
+                <p class="text-xs text-gray-500 max-w-xs mb-6 font-medium">Try adjusting your filters or search
+                    keywords.</p>
+                <button (click)="clearSearch(); activeTab='all'"
+                    class="text-[#2563EB] font-bold text-xs uppercase tracking-widest hover:underline decoration-2 underline-offset-4">Clear
+                    All Filters</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Add / Edit Modal ────────────────────────────────────────── -->
+<div *ngIf="activeModal === 'add' || activeModal === 'edit'"
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;"
+    class="animate-in fade-in duration-200">
+    <div style="background: #fff; border-radius: 12px; width: 560px; max-width: 90vw; max-height: 85vh; overflow-y: auto; padding: 28px; position: relative;"
+        class="shadow-xl flex flex-col border border-gray-100 animate-in zoom-in duration-200">
+
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between pb-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+
+            <h2 class="text-xl font-bold text-gray-900">
+                {{activeModal === 'add' ? 'Add New Medicine' : 'Edit Medicine'}}
+            </h2>
+            <button (click)="closeModal()" class="p-2 text-gray-400 hover:text-gray-900 rounded-lg transition-colors">
+                <lucide-icon name="x" [size]="20"></lucide-icon>
+            </button>
+        </div>
+
+        <!-- ─── OCR Scan Section (Add mode only) ─────────────────────── -->
+        <div *ngIf="activeModal === 'add'" class="mt-6 rounded-xl border border-blue-100 overflow-visible">
+
+            <!-- Header -->
+            <div
+                class="bg-gradient-to-r from-blue-600 to-blue-500 px-5 py-3 flex items-center justify-between rounded-t-xl">
+                <div class="flex items-center gap-2">
+                    <span class="text-white text-sm">📷</span>
+                    <span class="text-white text-xs font-bold uppercase tracking-wider">Smart Scan</span>
+                </div>
+                <span class="text-blue-100 text-[10px] font-medium">OCR + Vision AI</span>
+            </div>
+
+            <div class="bg-blue-50 p-4 rounded-b-xl">
+
+                <!-- Scan Button (initial state) -->
+                <div *ngIf="!showWebcam && !isScanning && !medicineForm.get('medicineName')?.value"
+                    class="text-center py-2">
+                    <p class="text-xs text-gray-500 mb-3 font-medium">
+                        Point camera at medicine box to auto-fill the form instantly
+                    </p>
+                    <button type="button" (click)="openWebcam()"
+                        style="background-color: #2563EB !important; color: white !important;"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all hover:bg-blue-700 active:scale-95 shadow-sm">
+                        📷 Scan Medicine Box
+                    </button>
+                </div>
+
+                <!-- Webcam with guide overlay -->
+                <div *ngIf="showWebcam && !isScanning">
+
+                    <!-- Instruction label — above webcam -->
+                    <div class="text-center mb-2">
+                        <span class="bg-gray-800 text-white text-[10px] font-bold px-3 py-1.5 rounded-full">
+                            📦 Place medicine box inside the frame
+                        </span>
+                    </div>
+
+                    <!-- Webcam + corner overlay -->
+                    <div class="relative">
+                        <webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)" [width]="500"
+                            [height]="340" [imageQuality]="1" [captureImageData]="true" [imageType]="'image/jpeg'"
+                            [mirrorImage]="'never'" class="rounded-lg w-full border border-blue-200 block">
+                        </webcam>
+
+                        <!-- Corner markers only -->
+                        <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                            <div class="relative border-2 border-blue-400 border-dashed rounded-lg"
+                                style="width: 75%; height: 70%;">
+                                <div
+                                    class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-blue-500 rounded-tl-sm">
+                                </div>
+                                <div
+                                    class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-blue-500 rounded-tr-sm">
+                                </div>
+                                <div
+                                    class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-blue-500 rounded-bl-sm">
+                                </div>
+                                <div
+                                    class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-blue-500 rounded-br-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons — below webcam, no overlap -->
+                    <div class="flex gap-2 mt-3 justify-center">
+                        <button type="button" (click)="capture()"
+                            style="background-color: #2563EB !important; color: white !important;"
+                            class="px-6 py-2 rounded-lg text-sm font-bold active:scale-95 shadow-sm">
+                            📸 Capture
+                        </button>
+                        <button type="button" (click)="closeWebcam()"
+                            class="px-4 py-2 rounded-lg text-sm font-bold border border-gray-200 text-gray-500 hover:text-gray-700 bg-white">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scanning spinner -->
+                <div *ngIf="isScanning" class="text-center py-6">
+                    <div
+                        class="inline-block w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3">
+                    </div>
+                    <p class="text-sm text-blue-700 font-bold">Analyzing medicine box...</p>
+                    <p class="text-[10px] text-blue-400 mt-1">OCR + Vision AI working together</p>
+                </div>
+
+                <!-- Scan error -->
+                <div *ngIf="scanError && !isScanning"
+                    class="text-center py-2 bg-red-50 rounded-lg border border-red-100 p-3">
+                    <p class="text-xs text-red-500 font-bold mb-2">❌ {{ scanError }}</p>
+                    <button type="button" (click)="openWebcam()"
+                        style="background-color: #2563EB !important; color: white !important;"
+                        class="px-4 py-1.5 rounded-lg text-xs font-bold">
+                        Try Again
+                    </button>
+                </div>
+
+                <!-- Success state -->
+                <div *ngIf="!showWebcam && !isScanning && !scanError && medicineForm.get('medicineName')?.value"
+                    class="flex items-center justify-between bg-green-50 rounded-lg border border-green-100 px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-green-500 text-lg">✅</span>
+                        <div>
+                            <p class="text-xs text-green-700 font-bold">Medicine detected successfully!</p>
+                            <p style="font-size: 10px; color: #22C55E;">Review and complete the form below</p>
+                        </div>
+                    </div>
+                    <button type="button" (click)="openWebcam()"
+                        style="font-size: 12px; color: #2563EB; font-weight: 700; background: none; border: none; cursor: pointer; white-space: nowrap;">
+                        🔄 Rescan
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ─── Form ──────────────────────────────────────────────────── -->
+        <div style="padding-top: 24px;">
+            <form [formGroup]="medicineForm">
+
+                <!-- ── Scanned Fields Group ──────────────────────────── -->
+                <div *ngIf="activeModal === 'add'"
+                    style="border: 1px solid #E0E7FF; border-radius: 12px; overflow: hidden; margin-bottom: 20px;">
+
+                    <!-- Group Header -->
+                    <div
+                        style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); padding: 10px 16px; display: flex; align-items: center; justify-content: between; border-bottom: 1px solid #E0E7FF;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                            <span style="font-size: 13px;">🔒</span>
+                            <span
+                                style="font-size: 11px; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Auto-filled
+                                by Scan</span>
+                        </div>
+                        <span *ngIf="!scannedSuccessfully"
+                            style="font-size: 10px; color: #6366F1; background: white; padding: 2px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #E0E7FF;">
+                            Scan to fill
+                        </span>
+                        <span *ngIf="scannedSuccessfully"
+                            style="font-size: 10px; color: #059669; background: #ECFDF5; padding: 2px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #A7F3D0;">
+                            ✓ Filled
+                        </span>
+                    </div>
+
+                    <!-- Scanned Fields Container -->
+                    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;"
+                        [style.background-color]="scannedSuccessfully ? '#F0FDF4' : '#FAFBFF'">
+
+                        <!-- Medicine Name -->
+                        <div>
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                Medicine Name
+                            </label>
+                            <input formControlName="medicineName" type="text"
+                                placeholder="Will be filled by camera scan"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
+                                [style.background-color]="scannedSuccessfully ? '#DCFCE7' : (hasError('medicineName') ? '#FEF2F2' : '#F3F4F6')"
+                                [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : (hasError('medicineName') ? '1px solid #FECACA' : '1px solid #E5E7EB')"
+                                [style.color]="scannedSuccessfully ? '#166534' : '#111827'" />
+                            <p *ngIf="hasError('medicineName')" class="text-[10px] text-red-500 font-bold mt-1 ml-1">Name is required (min 2 characters)</p>
+                        </div>
+
+                        <!-- Active Ingredient + Form Row -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                    Active Ingredient
+                                </label>
+                                <input formControlName="activeIngredient" type="text" placeholder="From scan"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
+                                    [style.background-color]="scannedSuccessfully ? '#DCFCE7' : '#F3F4F6'"
+                                    [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : '1px solid #E5E7EB'"
+                                    [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'" />
+                            </div>
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                    Form
+                                </label>
+                                <select formControlName="form"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s; cursor: not-allowed;"
+                                    [style.background-color]="scannedSuccessfully ? '#DCFCE7' : '#F3F4F6'"
+                                    [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : '1px solid #E5E7EB'"
+                                    [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'">
+                                    <option value="">From scan</option>
+                                    <option value="TABLET">Tablet</option>
+                                    <option value="CAPSULE">Capsule</option>
+                                    <option value="SYRUP">Syrup</option>
+                                    <option value="INJECTION">Injection</option>
+                                    <option value="CREAM">Cream</option>
+                                    <option value="OINTMENT">Ointment</option>
+                                    <option value="SUPPOSITORY">Suppository</option>
+                                    <option value="EYE_DROPS">Eye Drops</option>
+                                    <option value="SPRAY">Spray</option>
+                                    <option value="PATCH">Patch</option>
+                                    <option value="SACHET">Sachet</option>
+                                    <option value="POWDER">Powder</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Dosage -->
+                        <div>
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                Dosage
+                            </label>
+                            <input formControlName="dosage" type="text" placeholder="From scan (e.g. 500mg)"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
+                                [style.background-color]="scannedSuccessfully ? '#DCFCE7' : '#F3F4F6'"
+                                [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : '1px solid #E5E7EB'"
+                                [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Edit mode: regular fields (no grouping) ───────── -->
+                <ng-container *ngIf="activeModal === 'edit'">
+                    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px;">
+                        <div>
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Medicine
+                                Name</label>
+                            <input formControlName="medicineName" type="text"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Active
+                                    Ingredient</label>
+                                <input formControlName="activeIngredient" type="text"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                            </div>
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Form</label>
+                                <select formControlName="form"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;">
+                                    <option value="">-- Select --</option>
+                                    <option value="TABLET">Tablet</option>
+                                    <option value="CAPSULE">Capsule</option>
+                                    <option value="SYRUP">Syrup</option>
+                                    <option value="INJECTION">Injection</option>
+                                    <option value="CREAM">Cream</option>
+                                    <option value="OINTMENT">Ointment</option>
+                                    <option value="SUPPOSITORY">Suppository</option>
+                                    <option value="EYE_DROPS">Eye Drops</option>
+                                    <option value="SPRAY">Spray</option>
+                                    <option value="PATCH">Patch</option>
+                                    <option value="SACHET">Sachet</option>
+                                    <option value="POWDER">Powder</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Dosage</label>
+                            <input formControlName="dosage" type="text" placeholder="e.g. 500mg"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                        </div>
+                    </div>
+                </ng-container>
+
+                <!-- ── Description ───────────────────────────────────── -->
+                <div style="margin-bottom: 14px;">
+                    <label
+                        style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Description</label>
+                    <textarea formControlName="description" rows="2" placeholder="Optional description..."
+                        style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827; resize: none;"></textarea>
+                </div>
+
+                <!-- ── Manual Fields Group ───────────────────────────── -->
+                <div style="border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
+
+                    <!-- Group Header -->
+                    <div
+                        style="background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E5E7EB;">
+                        <span style="font-size: 13px;">✏️</span>
+                        <span
+                            style="font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">Inventory
+                            Details</span>
+                        <span style="font-size: 10px; color: #9CA3AF; margin-left: auto; font-weight: 500;">Fill
+                            manually</span>
+                    </div>
+
+                    <!-- Manual Fields Container -->
+                    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; background: #FFFFFF;">
+
+                        <!-- Price & Stock -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                    Unit Price (DT)
+                                </label>
+                                <input formControlName="price" type="number" step="0.01" placeholder="0.00"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; transition: all 0.2s;"
+                                    [style.background-color]="hasError('price') ? '#FEF2F2' : '#F9FAFB'"
+                                    [style.border]="hasError('price') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
+                                <p *ngIf="hasError('price')" class="text-[10px] text-red-500 font-bold mt-1 ml-1">Valid price required (dt)</p>
+                            </div>
+                            <div *ngIf="activeModal === 'add'">
+                                <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                    Stock Quantity
+                                </label>
+                                <input formControlName="stock" type="number" placeholder="0"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; transition: all 0.2s;"
+                                    [style.background-color]="hasError('stock') ? '#FEF2F2' : '#F9FAFB'"
+                                    [style.border]="hasError('stock') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
+                                <p *ngIf="hasError('stock')" class="text-[10px] text-red-500 font-bold mt-1 ml-1">Stock required</p>
+                            </div>
+                        </div>
+
+                        <!-- Min Stock & Expiration -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                    Low Stock Threshold
+                                </label>
+                                <input formControlName="minStockAlert" type="number"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                            </div>
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                    Expiration Date
+                                </label>
+                                <div style="position: relative;">
+                                    <input #expDate formControlName="dateOfExpiration" type="date"
+                                        (click)="expDate.showPicker()" [min]="minDate"
+                                        style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s; cursor: pointer;"
+                                        [style.background-color]="hasError('dateOfExpiration') ? '#FEF2F2' : '#F9FAFB'"
+                                        [style.border]="hasError('dateOfExpiration') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
+                                    <p *ngIf="hasError('dateOfExpiration')" class="text-[10px] text-red-500 font-bold mt-1 ml-1">Expiry date is required</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    input[type="date"]::-webkit-calendar-picker-indicator {
+                        background: transparent;
+                        bottom: 0;
+                        color: transparent;
+                        cursor: pointer;
+                        height: auto;
+                        left: 0;
+                        position: absolute;
+                        right: 0;
+                        top: 0;
+                        width: auto;
+                    }
+                </style>
+
+                <!-- Image Upload (Add mode only) -->
+                <div *ngIf="activeModal === 'add'" style="padding-top: 4px;">
+                    <label
+                        style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 8px;">Upload
+                        Images</label>
+                    <div appFilePicker #addPicker="appFilePicker" [multiple]="true"
+                        (filesChanged)="onFilesChanged($event)"
+                        style="border: 2px dashed #DDE3EE; border-radius: 12px; padding: 24px; background: #F8FAFD; text-align: center; cursor: pointer; transition: all 0.2s; position: relative;">
+                        <lucide-icon name="plus" class="w-8 h-8 text-gray-300 mx-auto mb-2"></lucide-icon>
+                        <p style="font-size: 12px; color: #9CA3AF; font-weight: 500;">Drop images here or click to
+                            browse</p>
+                    </div>
+                    <div *ngIf="filePreviews.length > 0"
+                        style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px;">
+                        <div *ngFor="let prev of filePreviews; let i = index" class="relative group">
+                            <img [src]="prev"
+                                style="width: 56px; height: 56px; object-fit: cover; border-radius: 10px; border: 1px solid #E5E7EB;" />
+                            <button (click)="removeSelectedFile(i)"
+                                style="position: absolute; top: -6px; right: -6px; background: #EF4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; font-size: 10px;">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="formError"
+                    style="font-size: 11px; color: #EF4444; font-weight: 700; background: #FEF2F2; padding: 10px 14px; border-radius: 8px; border: 1px solid #FECACA; margin-top: 8px;">
+                    {{formError}}
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-6 border-t border-gray-50 bg-gray-50/30 flex gap-3">
+            <button (click)="closeModal()"
+                style="height: 40px !important; border-radius: 8px !important; border-color: #E5E7EB !important; color: #6B7280 !important;"
+                class="flex-1 text-xs font-bold bg-white border hover:text-gray-900 transition-all active:scale-95 shadow-sm">
+                Cancel
+            </button>
+            <button (click)="submitMedicine()" [disabled]="submitting"
+                style="height: 40px !important; border-radius: 8px !important; background-color: #2563EB !important; font-weight: 600 !important;"
+                class="flex-1 bg-[#2563EB] text-white text-xs uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-md shadow-blue-100 disabled:opacity-50">
+                {{activeModal === 'add' ? 'Add Medicine' : 'Save Changes'}}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Restock Modal ────────────────────────────────────────────────── -->
+<div *ngIf="activeModal === 'restock'"
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;"
+    class="animate-in fade-in duration-200">
+    <div style="background: #fff; border-radius: 12px; width: 560px; max-width: 90vw; max-height: 85vh; overflow-y: auto; padding: 28px; position: relative;"
+        class="shadow-xl flex flex-col border border-gray-100 animate-in zoom-in duration-200">
+        <div class="flex items-center justify-between pb-6 border-b border-gray-100">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Restock Inventory</h2>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">
+                    {{selectedMedicine?.medicineName | titlecase}}</p>
+            </div>
+            <button (click)="closeModal()" class="p-2 text-gray-400 hover:text-gray-900 rounded-lg transition-colors">
+                <lucide-icon name="x" [size]="20"></lucide-icon>
+            </button>
+        </div>
+        <div class="p-8">
+            <form [formGroup]="restockForm" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 tracking-wider">New total stock quantity</label>
+                    <input formControlName="stock" type="number"
+                        class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all" />
+                    <p class="text-center text-[10px] text-gray-400 font-medium">Update the current inventory count for
+                        this medication.</p>
+                </div>
+                <div *ngIf="restockError"
+                    class="text-[10px] text-red-500 font-bold bg-red-50 p-3 rounded-lg border border-red-100 text-center">
+                    {{restockError}}</div>
+            </form>
+        </div>
+        <div class="p-6 border-t border-gray-50 bg-gray-50/30 flex gap-3">
+            <button (click)="closeModal()"
+                class="flex-1 py-3 text-xs font-bold text-gray-500 hover:text-gray-900 border border-gray-200 rounded-xl bg-white transition-all active:scale-95">Cancel</button>
+            <button (click)="submitRestock()" [disabled]="submitting"
+                style="background-color: #2563EB !important; padding-left: 24px !important; padding-right: 24px !important;"
+                class="flex-[2] py-3 text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-md shadow-blue-100 disabled:opacity-50 whitespace-nowrap">
+                Update Stock
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Image Manager Modal ──────────────────────────────────────────── -->
+<div *ngIf="activeModal === 'images'"
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;"
+    class="animate-in fade-in duration-200">
+    <div style="background: #fff; border-radius: 12px; width: 640px; max-width: 90vw; max-height: 85vh; overflow-y: auto; padding: 28px; position: relative;"
+        class="shadow-xl flex flex-col border border-gray-100 animate-in zoom-in duration-200">
+        <div class="flex items-center justify-between pb-6 border-b border-gray-100">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Manage Images</h2>
+                <p class="text-xs text-gray-400 mt-1">
+                    {{selectedMedicine?.medicineName | titlecase}} · {{selectedMedicine?.imageUrls?.length || 0}}
+                    image{{selectedMedicine?.imageUrls?.length === 1 ? '' : 's'}}
+                </p>
+            </div>
+            <button (click)="closeModal()" class="p-2 text-gray-400 hover:text-gray-900 rounded-lg transition-colors">
+                <lucide-icon name="x" [size]="20"></lucide-icon>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto space-y-8">
+            <div class="space-y-4">
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Current Images</h3>
+                <div class="flex flex-wrap gap-4">
+                    <div *ngFor="let url of selectedMedicine?.imageUrls" style="width: 120px; height: 120px;"
+                        class="relative rounded-lg overflow-hidden border border-gray-100 group shadow-sm bg-gray-50">
+                        <img [src]="url" class="w-full h-full object-cover">
+                        <button (click)="deleteImage(url)" [disabled]="imageDeleting === url"
+                            style="background-color: #DC2626 !important; width: 22px; height: 22px;"
+                            class="absolute top-1 right-1 rounded-full text-white flex items-center justify-center transition-opacity shadow-sm border border-white/20">
+                            <lucide-icon *ngIf="imageDeleting !== url" name="x" [size]="14"></lucide-icon>
+                            <div *ngIf="imageDeleting === url"
+                                class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin">
+                            </div>
+                        </button>
+                    </div>
+                    <div *ngIf="!selectedMedicine?.imageUrls?.length"
+                        class="w-full py-12 text-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                        <lucide-icon name="image" class="w-8 h-8 text-gray-200 mx-auto mb-2"></lucide-icon>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">No images uploaded</p>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4 pt-6 border-t border-gray-50">
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Upload New Images</h3>
+                <div appFilePicker #imagePicker="appFilePicker" [multiple]="true"
+                    (filesChanged)="onAddImagesChanged($event)"
+                    class="border-2 border-dashed border-[#DDE3EE] rounded-lg p-8 bg-[#F8FAFD] text-center cursor-pointer hover:border-blue-300 transition-all relative group shadow-inner">
+                    <lucide-icon name="plus"
+                        class="w-10 h-10 text-gray-300 mx-auto mb-3 group-hover:text-blue-400 transition-colors"></lucide-icon>
+                    <p class="text-sm text-gray-400">Drop images here or click to browse</p>
+                </div>
+                <div *ngIf="addImagePreviews.length > 0" class="flex flex-wrap gap-3 mt-4">
+                    <div *ngFor="let prev of addImagePreviews; let i = index" class="relative group">
+                        <img [src]="prev" class="w-20 h-20 object-cover rounded-xl border border-gray-100 shadow-md" />
+                        <button (click)="removeAddImageFile(i)"
+                            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110">
+                            <lucide-icon name="x" [size]="10"></lucide-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-gray-50 bg-gray-50/30 flex gap-3 h-[88px] box-border">
+            <button (click)="closeModal()"
+                class="flex-1 h-10 text-xs font-bold text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg bg-white transition-all active:scale-95 shadow-sm">Cancel</button>
+            <button (click)="uploadImages()" [disabled]="submitting || addImageFiles.length === 0"
+                style="background-color: #2563EB !important;"
+                class="flex-1 h-10 text-white font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all active:scale-95 shadow-md shadow-blue-100 disabled:opacity-50">
+                Upload Images
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Duplicate Warning Modal ────────────────────────────────────── -->
+<div *ngIf="activeModal === 'duplicate'"
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;"
+    class="animate-in fade-in duration-200">
+    <div style="background: #fff; border-radius: 12px; width: 440px; max-width: 90vw; padding: 28px; position: relative;"
+        class="shadow-xl flex flex-col border border-gray-100 animate-in zoom-in duration-200">
+
+        <div class="text-center pb-6 border-b border-gray-50">
+            <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span style="font-size: 32px;">⚠️</span>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Medicine Already Exists</h2>
+            <p class="text-[11px] text-gray-500 mt-2 leading-relaxed px-4">
+                <span class="font-bold text-gray-900">{{duplicateData?.medicineName}}
+                    {{duplicateData?.dosage}}</span>
+                already exists in your pharmacy catalog.
+            </p>
+            <p class="text-[11px] text-gray-500 mt-1">What would you like to do?</p>
+        </div>
+
+        <div class="pt-6 flex flex-col gap-3">
+
+            <!-- Option 1: Update stock -->
+            <button (click)="updateExistingStock()"
+                style="background-color: #2563EB !important; color: white !important; border-radius: 10px !important; padding: 14px !important; border: none; cursor: pointer;"
+                class="w-full text-sm font-bold text-left flex items-center gap-3 hover:bg-blue-700 transition-all">
+                <span style="font-size: 20px;">📦</span>
+                <div>
+                    <div class="font-bold">Update Stock Only</div>
+                    <div style="font-size: 10px; opacity: 0.8;">Add {{duplicateData?.stock}} units to existing
+                        stock</div>
+                </div>
+            </button>
+
+            <!-- Cancel -->
+            <button (click)="activeModal = 'add'" style="background: none; border: none; cursor: pointer; width: 100%;"
+                class="text-xs font-bold text-gray-400 hover:text-gray-600 pt-2 text-center">
+                ← Go back to form
+            </button>
+
+        </div>
+    </div>
+</div>
+
+<!-- ─── Delete Confirmation Modal ────────────────────────────────────── -->
+<div *ngIf="activeModal === 'delete'"
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;"
+    class="animate-in fade-in duration-200">
+    <div style="background: #fff; border-radius: 12px; width: 400px; max-width: 90vw; max-height: 85vh; overflow-y: auto; padding: 28px; position: relative;"
+        class="shadow-xl flex flex-col border border-gray-100 animate-in zoom-in duration-200">
+        <div class="p-8 text-center border-b border-gray-50">
+            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <lucide-icon name="trash-2" class="w-8 h-8 text-red-500"></lucide-icon>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Delete Medicine?</h2>
+            <p class="text-[11px] text-gray-500 mt-2 leading-relaxed px-4">Are you sure you want to remove <span
+                    class="font-bold text-gray-900 italic">"{{selectedMedicine?.medicineName}}"</span> from your
+                catalog? This action cannot be undone.</p>
+        </div>
+        <div class="p-6 bg-gray-50/50 flex gap-3">
+            <button (click)="closeModal()"
+                class="flex-1 py-3 text-xs font-bold text-gray-500 hover:text-gray-900 border border-gray-200 rounded-xl bg-white transition-all active:scale-95">No,
+                Keep it</button>
+            <button (click)="confirmDelete()" [disabled]="submitting" style="background-color: #DC2626 !important;"
+                class="flex-1 py-3 text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all active:scale-95 shadow-md shadow-red-100 disabled:opacity-50">
+                Yes, Delete
+            </button>
+        </div>
+    </div>
+</div>

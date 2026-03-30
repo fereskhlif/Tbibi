@@ -55,6 +55,20 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post<any>(
+      `${environment.baseUrl}/auth/forgot-password`,
+      { email }
+    );
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post<any>(
+      `${environment.baseUrl}/auth/reset-password`,
+      { token, newPassword }
+    );
+  }
+
   logout(): void {
     localStorage.clear();
   }

@@ -10,14 +10,19 @@ import { QualityControlComponent } from './pages/quality-control/quality-control
 import { LabPrescriptionsComponent } from './pages/prescriptions/prescriptions.component';
 
 const routes: Routes = [
+    { path: 'prescriptions', component: LabPrescriptionsComponent },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     { path: 'dashboard', component: LabDashboardComponent },
     { path: 'profile', component: LabProfileComponent },
-    { path: 'prescriptions', component: LabPrescriptionsComponent },
     { path: 'samples', component: SampleManagementComponent },
     { path: 'results', component: TestResultsComponent },
     { path: 'equipment', component: EquipmentManagementComponent },
-    { path: 'quality', component: QualityControlComponent }
+    { path: 'quality', component: QualityControlComponent },
+    {
+        path: 'forum',
+        loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
+        data: { role: 'LAB', userId: 4, userName: 'Lab Staff', expertCategory: 'Ask a Lab', title: 'Lab Results Forum' }
+    }
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })

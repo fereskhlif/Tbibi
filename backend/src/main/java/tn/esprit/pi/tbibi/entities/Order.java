@@ -24,15 +24,11 @@ public class Order {
     float totalAmount;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", length = 20)
     Status orderStatus;
     Date orderDate;
 
-    @ManyToMany
-    @JoinTable(
-            name = "order_orderline",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "orderline_id")
-    )
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     List<OrderLine> orderLines;
 
     @ManyToOne
