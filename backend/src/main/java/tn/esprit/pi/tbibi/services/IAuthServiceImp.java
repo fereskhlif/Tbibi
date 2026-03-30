@@ -1,7 +1,7 @@
 package tn.esprit.pi.tbibi.services;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -56,10 +56,53 @@ public class IAuthServiceImp implements IAuthService {
             role = roleRepository.save(role);
         }
 
-        UserStatus initialStatus = roleNameUpper.equals("PATIENT")
-                ? UserStatus.ACTIVE
-                : UserStatus.PENDING;
+        // Determine status based on role
+        tn.esprit.pi.tbibi.entities.UserStatus status = tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE;
+        if (roleNameUpper.equals("MEDECIN") || roleNameUpper.equals("DOCTEUR") || roleNameUpper.equals("DOCTOR") ||
+            roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS") || roleNameUpper.equals("PHARMACIST") ||
+            roleNameUpper.equals("LABORATOIRE") || roleNameUpper.equals("LABORATORY") || 
+            roleNameUpper.equals("KINE") || roleNameUpper.equals("PHYSIOTHERAPIST")) {
+            status = tn.esprit.pi.tbibi.entities.UserStatus.PENDING;
+        }
 
+        // Save document if provided
+        String documentPath = null;
+        if (req.documentBase64() != null && !req.documentBase64().isBlank() && 
+            req.documentName() != null && !req.documentName().isBlank()) {
+            
+            try {
+                // Ensure directory exists
+                java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/documents");
+                if (!java.nio.file.Files.exists(uploadDir)) {
+                    java.nio.file.Files.createDirectories(uploadDir);
+                }
+
+                // Generate unique filename
+                String extension = "";
+                int extIndex = req.documentName().lastIndexOf('.');
+                if (extIndex > 0) {
+                    extension = req.documentName().substring(extIndex);
+                }
+                String uniqueFilename = java.util.UUID.randomUUID().toString() + extension;
+                java.nio.file.Path targetPath = uploadDir.resolve(uniqueFilename);
+
+                // Decode Base64 (extract data if there's a data URI header)
+                String base64Data = req.documentBase64();
+                if (base64Data.contains(",")) {
+                    base64Data = base64Data.split(",")[1];
+                }
+                
+                byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Data);
+                java.nio.file.Files.write(targetPath, decodedBytes);
+                
+                documentPath = uniqueFilename;
+                log.info("Document saved successfully: {}", documentPath);
+            } catch (Exception e) {
+                log.error("Failed to save document for user {}", req.email(), e);
+            }
+        }
+
+        // Create user with builder
         User user = User.builder()
                 .name(req.name() == null ? "Not Available" : req.name())
                 .email(req.email())
@@ -68,11 +111,13 @@ public class IAuthServiceImp implements IAuthService {
                 .dateOfBirth(req.dateOfBirth())
                 .gender(req.gender())
                 .adresse(req.adresse())
-                .accountStatus(initialStatus)
+                .specialty(req.specialty())
+                .accountStatus(status)
                 .enabled(true)
+                .profilePicture(documentPath)
                 .build();
 
-        log.info("Saving user with role: {}, initial status: {}", role.getRoleName(), initialStatus);
+        log.info("Saving user with role: {}, initial status: {}", role.getRoleName(), status);
         User savedUser = userRepository.save(user);
         log.info("User saved successfully with ID: {}", savedUser.getUserId());
 

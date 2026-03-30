@@ -61,8 +61,8 @@
           <td>
             <div style="display:flex; align-items:center; gap:.75rem;">
               <div class="avatar"
-                [style.background]="getRoleBadgeColor(user.role.roleName)"
-                [style.color]="getRoleBadgeText(user.role.roleName)">
+                [style.background]="getRoleBadgeColor(user.roleName || '')"
+                [style.color]="getRoleBadgeText(user.roleName || '')">
                 {{getInitial(user.name)}}
               </div>
               <div style="display:flex;flex-direction:column;">
@@ -73,9 +73,9 @@
           </td>
           <td>
             <span class="ch-tag"
-              [style.background]="getRoleBadgeColor(user.role.roleName)"
-              [style.color]="getRoleBadgeText(user.role.roleName)">
-              {{user.role.roleName || 'INCONNU'}}
+              [style.background]="getRoleBadgeColor(user.roleName || '')"
+              [style.color]="getRoleBadgeText(user.roleName || '')">
+              {{user.roleName || 'INCONNU'}}
             </span>
           </td>
           <td>

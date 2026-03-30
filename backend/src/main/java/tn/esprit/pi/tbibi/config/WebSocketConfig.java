@@ -1,26 +1,39 @@
 package tn.esprit.pi.tbibi.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
+import tn.esprit.pi.tbibi.security.WebSocketSecurityInterceptor;
 
 @Configuration
-@EnableWebSocketMessageBroker  // ✅ Active SimpMessagingTemplate
+@EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    @Autowired
+    private WebSocketSecurityInterceptor securityInterceptor;
+
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
-        // ✅ Canal d'écoute du client (Angular s'abonne à /topic/...)
-        config.enableSimpleBroker("/topic");
-        // ✅ Préfixe pour les messages envoyés au serveur
-        config.setApplicationDestinationPrefixes("/app");
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.setApplicationDestinationPrefixes("/app");
+        registry.enableSimpleBroker("/topic", "/queue");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // ✅ Point de connexion WebSocket depuis Angular
+        // Support both endpoints for compatibility
+        registry.addEndpoint("/ws-chat")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+        
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")  // autorise Angular localhost:4200
-                .withSockJS();                  // support navigateur
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(securityInterceptor);
     }
 }

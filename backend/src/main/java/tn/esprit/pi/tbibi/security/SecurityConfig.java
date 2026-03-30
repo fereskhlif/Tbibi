@@ -60,6 +60,25 @@ public class SecurityConfig {
                         // Serve uploaded images publicly
                         .requestMatchers("/uploads/**").permitAll()
 
+                        // Appointment routes
+                        .requestMatchers("/appointement/**").permitAll()
+                        .requestMatchers("/appointment/**").permitAll()
+
+                        // Schedule routes
+                        .requestMatchers("/api/doctor/schedules/**").permitAll()
+
+                        // Chronic disease routes
+                        .requestMatchers("/api/chronic/**").permitAll()
+
+                        // Websocket chat
+                        .requestMatchers("/ws-chat/**").permitAll()
+
+                        // Health goals routes
+                        .requestMatchers("/api/health-goals", "/api/health-goals/**").permitAll()
+
+                        // Notification routes
+                        .requestMatchers("/notifications/**").permitAll()
+
                         // Doctor routes
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/medical-records/*/history").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/medical-records/patients/search").permitAll()
@@ -97,10 +116,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*"
-        ));
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

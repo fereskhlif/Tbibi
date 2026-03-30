@@ -38,7 +38,7 @@ export class AdminUsersComponent implements OnInit {
 
   get filteredUsers() {
     return this.users.filter(u => {
-      const roleName = (u.role?.roleName ?? '').toUpperCase();
+      const roleName = (u.roleName ?? '').toUpperCase();
       const matchRole = this.roleFilter === 'ALL' || roleName === this.roleFilter.toUpperCase();
       const matchStatus = this.statusFilter === 'ALL' || u.accountStatus === this.statusFilter;
       return matchRole && matchStatus;

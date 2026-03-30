@@ -27,14 +27,14 @@ public class PrescriptionController {
 //        return ResponseEntity.ok(service.getAll());
 //    }
 
-//    @GetMapping("/get/{id}")
-//    public ResponseEntity<PrescriptionResponse> getById(@PathVariable int id) {
-//        try {
-//            return ResponseEntity.ok(service.getById(id));
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
+    @GetMapping("/get/{id}")
+    public ResponseEntity<PrescriptionResponse> getById(@PathVariable int id) {
+        try {
+            return ResponseEntity.ok(service.getById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
     @PostMapping("/add")
     public ResponseEntity<PrescriptionResponse> add(@RequestBody PrescriptionRequest request) {

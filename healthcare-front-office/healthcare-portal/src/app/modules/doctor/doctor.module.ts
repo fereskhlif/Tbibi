@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { DoctorRoutingModule } from './doctor-routing.module';
 import { DoctorDashboardComponent } from './pages/dashboard/dashboard.component';
 import { DoctorProfileComponent } from './pages/profile/profile.component';
@@ -13,19 +12,13 @@ import { AiImageAnalysisComponent } from './pages/ai-image-analysis/ai-image-ana
 import { ChronicDiseaseComponent } from './pages/chronic-disease/chronic-disease.component';
 import { CriticalAlertsComponent } from './pages/critical-alerts/critical-alerts.component';
 import { DoctorLabResultsComponent } from './pages/lab-results/lab-results.component';
-import { DoctorNotificationsComponent } from './pages/notifications/notifications.component';
-import { DoctorAllAppointmentsComponent } from './pages/all-appointments/all-appointments.component';
-import { ManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
 
 @NgModule({
     declarations: [
         DoctorDashboardComponent, DoctorProfileComponent, PatientRecordsComponent,
         TeleconsultationComponent, DiseaseDetectionComponent, DoctorPrescriptionsComponent,
-        AiImageAnalysisComponent, ChronicDiseaseComponent, CriticalAlertsComponent,
-        DoctorLabResultsComponent, DoctorNotificationsComponent,
-        DoctorAllAppointmentsComponent, ManageSchedulesComponent
+        AiImageAnalysisComponent, ChronicDiseaseComponent, CriticalAlertsComponent, DoctorLabResultsComponent
     ],
-    imports: [CommonModule, FormsModule, HttpClientModule, DoctorRoutingModule]
+    imports: [CommonModule, FormsModule, DoctorRoutingModule]
 })
 export class DoctorModule { }
-
