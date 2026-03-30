@@ -207,6 +207,7 @@ export class MainLayoutComponent implements OnInit {
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard Admin' },
     { path: 'users', icon: 'users', label: 'Utilisateurs' },
     { path: 'approvals', icon: 'check-circle', label: 'Approbations' },
+    { path: 'monitoring', icon: 'activity', label: 'Monitoring' },
     { path: 'settings', icon: 'settings', label: 'Configuration' }
   ];
 
