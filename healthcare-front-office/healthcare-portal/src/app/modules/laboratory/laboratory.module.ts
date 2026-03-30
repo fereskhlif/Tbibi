@@ -12,6 +12,7 @@ import { SampleManagementComponent } from './pages/sample-management/sample-mana
 import { TestResultsComponent } from './pages/test-results/test-results.component';
 import { EquipmentManagementComponent } from './pages/equipment-management/equipment-management.component';
 import { QualityControlComponent } from './pages/quality-control/quality-control.component';
+import { LabPrescriptionsComponent } from './pages/prescriptions/prescriptions.component';
 
 // ✅ Nouveaux composants CRUD
 import { LaboratoryResultListComponent } from './pages/laboratory-result-list/laboratory-result-list.component';
@@ -26,6 +27,7 @@ import { MedicalPictureListComponent } from './pages/medical-picture-list/medica
     TestResultsComponent,
     EquipmentManagementComponent,
     QualityControlComponent,
+    LabPrescriptionsComponent,
     // ✅ Nouveaux
     LaboratoryResultListComponent,
     MedicalPictureListComponent,

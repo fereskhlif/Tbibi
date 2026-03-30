@@ -65,4 +65,10 @@ public class Laboratory_Result {
     @OneToOne(mappedBy = "laboratoryResult", cascade = CascadeType.ALL)
     @ToString.Exclude
     private MedicalPictureAnalysis medicalPictureAnalysis;
+
+    // ✅ Relation avec MedicalReccords
+    @ManyToOne
+    @JoinColumn(name = "medical_file_id")
+    @ToString.Exclude
+    private MedicalReccords medicalReccords;
 }
