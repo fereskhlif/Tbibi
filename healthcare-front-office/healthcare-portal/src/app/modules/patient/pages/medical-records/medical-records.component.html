@@ -9,17 +9,17 @@
         </svg>
       </div>
       <div>
-        <h1>Dossiers Médicaux</h1>
-        <p>Consultez et gérez votre carnet de santé</p>
+        <h1>Medical Records</h1>
+        <p>View and manage your health records</p>
       </div>
     </div>
     <div style="display:flex; gap:1rem; align-items:center;">
       <button class="btn-visite" style="padding:.6rem 1.2rem; font-size:.85rem; background:linear-gradient(135deg,#0ea5e9,#3b82f6);" (click)="openAddForm()">
-        Nouveau Dossier / Laboratoire
+        New Record / Laboratory
       </button>
       <div class="stat-badge">
         <span class="sn">{{ records.length }}</span>
-        <span class="sl">dossier(s)</span>
+        <span class="sl">record(s)</span>
       </div>
     </div>
   </div>
@@ -38,12 +38,12 @@
   <div class="tbl-card">
     <table class="ptbl">
       <thead><tr>
-        <th>ID</th><th>Laboratoire / Image</th><th>Score</th><th>Type</th><th>Maladie Chronique</th><th>Action</th>
+        <th>ID</th><th>Laboratory / Image</th><th>Score</th><th>Type</th><th>Chronic Disease</th><th>Action</th>
       </tr></thead>
       <tbody>
         <tr *ngIf="filteredRecords.length === 0 && !errorMessage"><td colspan="6" class="empty-state">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-          Aucun dossier trouvé
+          No records found
         </td></tr>
         <tr *ngFor="let record of filteredRecords; let i = index" class="prow" (click)="viewRecord(record)">
           <td><span class="dos-badge">#{{record.medicalfile_id || 'N/A'}}</span></td>
@@ -53,7 +53,7 @@
                 {{record.icon}}
               </div>
               <div style="display:flex; flex-direction:column">
-                <span style="font-weight:600; color:#1e293b">{{record.imageLabo || 'Dossier non nommé'}}</span>
+                <span style="font-weight:600; color:#1e293b">{{record.imageLabo || 'Unnamed record'}}</span>
                 <span class="em" style="font-size:0.75rem">{{record.type}}</span>
               </div>
             </div>
@@ -66,8 +66,8 @@
             {{record.chronic_diseas || '—'}}
           </td>
           <td style="display:flex; gap:0.5rem; align-items:center;">
-            <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem;" (click)="viewRecord(record); $event.stopPropagation()">Ouvrir</button>
-            <button class="btn-cancel" style="padding:0.3rem 0.6rem; font-size:0.75rem;" (click)="openEditForm(record); $event.stopPropagation()">Editer</button>
+            <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem;" (click)="viewRecord(record); $event.stopPropagation()">Open</button>
+            <button class="btn-cancel" style="padding:0.3rem 0.6rem; font-size:0.75rem;" (click)="openEditForm(record); $event.stopPropagation()">Edit</button>
             <button class="btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" (click)="deleteRecord(record); $event.stopPropagation()">X</button>
           </td>
         </tr>
@@ -84,7 +84,7 @@
              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
           </div>
           <div>
-            <h2>Détails du dossier #{{selectedRecord.medicalfile_id}}</h2>
+            <h2>Record details #{{selectedRecord.medicalfile_id}}</h2>
             <p>{{selectedRecord.imageLabo}}</p>
           </div>
         </div>
@@ -93,30 +93,30 @@
 
       <div class="mb">
         <div class="info-grid">
-          <div class="ii"><label>Résultat IA</label><div class="iv">{{selectedRecord.result_ia || '—'}}</div></div>
-          <div class="ii"><label>Maladies chroniques</label><div class="iv">{{selectedRecord.chronic_diseas || '—'}}</div></div>
-          <div class="ii"><label>Type / Catégorie</label><div class="iv">{{selectedRecord.type || selectedRecord.category || '—'}}</div></div>
-          <div class="ii"><label>Score de santé global</label><div class="iv last-v" [class]="getScoreColor(selectedRecord.healthScore)">{{selectedRecord.healthScore}}<span style="font-size:0.75rem; color:#94a3b8">/100</span> ({{getScoreLabel(selectedRecord.healthScore)}})</div></div>
+          <div class="ii"><label>AI Result</label><div class="iv">{{selectedRecord.result_ia || '—'}}</div></div>
+          <div class="ii"><label>Chronic diseases</label><div class="iv">{{selectedRecord.chronic_diseas || '—'}}</div></div>
+          <div class="ii"><label>Type / Category</label><div class="iv">{{selectedRecord.type || selectedRecord.category || '—'}}</div></div>
+          <div class="ii"><label>Overall health score</label><div class="iv last-v" [class]="getScoreColor(selectedRecord.healthScore)">{{selectedRecord.healthScore}}<span style="font-size:0.75rem; color:#94a3b8">/100</span> ({{getScoreLabel(selectedRecord.healthScore)}})</div></div>
         </div>
 
-        <div class="section-divider"><div class="sd-label">Historique Médical</div></div>
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; font-size:.875rem; color:#334155; white-space:pre-wrap;">{{selectedRecord.medical_historuy || 'Aucun historique renseigné.'}}</div>
+        <div class="section-divider"><div class="sd-label">Medical History</div></div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; font-size:.875rem; color:#334155; white-space:pre-wrap;">{{selectedRecord.medical_historuy || 'No history provided.'}}</div>
 
         <div *ngIf="selectedRecord.imageUrl">
-          <div class="section-divider"><div class="sd-label">Image Médicale IA</div></div>
-          <img [src]="selectedRecord.imageUrl" alt="IA result" style="width:100%; max-height:200px; object-fit:contain; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; padding:0.5rem;"/>
+          <div class="section-divider"><div class="sd-label">AI Medical Image</div></div>
+          <img [src]="selectedRecord.imageUrl" alt="AI result" style="width:100%; max-height:200px; object-fit:contain; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; padding:0.5rem;"/>
         </div>
 
         <div class="section-divider">
-          <div class="sd-label">Documents Patient (Analyses, Scanners)</div>
+          <div class="sd-label">Patient Documents (Tests, Scans)</div>
         </div>
         
         <!-- File input button instead of dropzone -->
         <input #patientImageInput type="file" accept="image/*,.pdf" multiple class="hidden" style="display:none" (change)="onPatientImageSelected($event)" />
         <button class="btn-upload" (click)="patientImageInput.click()" [disabled]="isUploadingPatientImage">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-          <span *ngIf="!isUploadingPatientImage">Depuis l'Explorateur</span>
-          <span *ngIf="isUploadingPatientImage">Envoi en cours...</span>
+          <span *ngIf="!isUploadingPatientImage">From Explorer</span>
+          <span *ngIf="isUploadingPatientImage">Uploading...</span>
         </button>
 
         <!-- Gallery -->
@@ -134,20 +134,20 @@
                <img [src]="getImageUrl(img)" [alt]="getFileName(img)" class="gallery-img"/>
              </a>
 
-             <button class="btn-del-img" (click)="deletePatientImage(img, $event)" title="Supprimer">✕</button>
+             <button class="btn-del-img" (click)="deletePatientImage(img, $event)" title="Delete">✕</button>
           </div>
         </div>
         <div *ngIf="!selectedRecord.patientImages || selectedRecord.patientImages.length === 0" class="empty-state">
-           Aucun document additionnel patient n'a été ajouté.
+           No additional patient documents added.
         </div>
 
         <div *ngIf="selectedRecord.rep_doc">
-          <div class="section-divider"><div class="sd-label">Rapport du Médecin</div></div>
+          <div class="section-divider"><div class="sd-label">Doctor's Report</div></div>
           <div style="padding:1rem; background:#fffbdd; border-left:4px solid #fde047; font-size:.875rem;">{{selectedRecord.rep_doc}}</div>
         </div>
       </div>
       <div class="mf">
-        <button class="btn-cancel" (click)="selectedRecord = null">Fermer</button>
+        <button class="btn-cancel" (click)="selectedRecord = null">Close</button>
       </div>
     </div>
   </div>
@@ -161,8 +161,8 @@
              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
           </div>
           <div>
-            <h2>{{ isEditing ? 'Éditer le dossier' : 'Nouveau dossier' }}</h2>
-            <p>Saisissez les informations du dossier</p>
+            <h2>{{ isEditing ? 'Edit record' : 'New record' }}</h2>
+            <p>Enter the record information</p>
           </div>
         </div>
         <button class="mc-btn" (click)="cancelForm()">✕</button>
@@ -171,33 +171,33 @@
       <div class="mb">
         <form [formGroup]="formMedicalRecord">
           <div class="fg">
-            <label class="fl">Historique médical *</label>
-            <textarea formControlName="medical_historuy" class="form-ta" rows="3" placeholder="Décrivez l'historique..."></textarea>
+            <label class="fl">Medical history *</label>
+            <textarea formControlName="medical_historuy" class="form-ta" rows="3" placeholder="Describe the history..."></textarea>
             <p *ngIf="formMedicalRecord.controls['medical_historuy'].invalid && formMedicalRecord.controls['medical_historuy'].touched"
-                style="color:#ef4444; font-size:0.75rem; margin-top:0.25rem;">Minimum 4 caractères</p>
+                style="color:#ef4444; font-size:0.75rem; margin-top:0.25rem;">Minimum 4 characters</p>
           </div>
           <div class="fg">
-             <label class="fl">Maladies chroniques</label>
-             <input formControlName="chronic_diseas" class="form-inp" placeholder="Ex: Diabète..."/>
+             <label class="fl">Chronic diseases</label>
+             <input formControlName="chronic_diseas" class="form-inp" placeholder="Ex: Diabetes..."/>
           </div>
 
-          <div class="section-divider"><div class="sd-label">Image Principale Médicale (Aperçu)</div></div>
+          <div class="section-divider"><div class="sd-label">Main Medical Image (Preview)</div></div>
           
           <input #imageFileInput type="file" accept="image/*" class="hidden" style="display:none" (change)="onImageChange($event)" />
           
           <div class="fg" style="display:flex; flex-direction:column; align-items:center; gap:1rem; border:1px solid #e2e8f0; padding:1.5rem; border-radius:12px; background:#f8fafc">
             <div *ngIf="imagePreviewUrl">
-               <img [src]="imagePreviewUrl" alt="Aperçu" style="max-height:180px; object-fit:contain; border-radius:8px; border:1px solid #e2e8f0;"/>
+               <img [src]="imagePreviewUrl" alt="Preview" style="max-height:180px; object-fit:contain; border-radius:8px; border:1px solid #e2e8f0;"/>
                <div style="display:flex; gap:1rem; justify-content:center; margin-top:1rem;">
-                 <button class="btn-cancel" style="padding:0.4rem 1rem" type="button" (click)="removeImage($event)">Retirer</button>
-                 <button class="btn-valid" style="min-width:0; padding:0.4rem 1rem" type="button" (click)="triggerImageInput()">Parcourir</button>
+                 <button class="btn-cancel" style="padding:0.4rem 1rem" type="button" (click)="removeImage($event)">Remove</button>
+                 <button class="btn-valid" style="min-width:0; padding:0.4rem 1rem" type="button" (click)="triggerImageInput()">Browse</button>
                </div>
             </div>
             <div *ngIf="!imagePreviewUrl" style="text-align:center">
                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:48px;height:48px;color:#94a3b8;margin:0 auto"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-               <p style="font-size:0.875rem; color:#64748b; margin:0.5rem 0">Aucune image sélectionnée</p>
+               <p style="font-size:0.875rem; color:#64748b; margin:0.5rem 0">No image selected</p>
                <button class="btn-upload" style="margin-top:0.75rem; display:inline-flex; width:auto" type="button" (click)="triggerImageInput()">
-                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg> Explorer
+                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg> Browse
                </button>
             </div>
           </div>
@@ -205,9 +205,9 @@
       </div>
 
       <div class="mf">
-        <button type="button" class="btn-cancel" (click)="cancelForm()">Annuler</button>
+        <button type="button" class="btn-cancel" (click)="cancelForm()">Cancel</button>
         <button type="button" class="btn-valid" [disabled]="formMedicalRecord.invalid" (click)="saveForm()">
-           {{ isEditing ? 'Mettre à jour' : 'Ajouter' }}
+           {{ isEditing ? 'Update' : 'Add' }}
         </button>
       </div>
     </div>
@@ -222,8 +222,8 @@
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
           </div>
           <div>
-            <h2>Ajouter un Acte</h2>
-            <p>Ajouter une consultation ou chirurgie</p>
+            <h2>Add Procedure</h2>
+            <p>Add a consultation or surgery</p>
           </div>
         </div>
         <button class="mc-btn" (click)="cancelActeForm()">✕</button>
@@ -232,10 +232,10 @@
       <div class="mb">
         <div class="fg">
           <label class="fl">Description</label>
-          <input [(ngModel)]="acteForm.description" class="form-inp" placeholder="Description de l'acte..."/>
+          <input [(ngModel)]="acteForm.description" class="form-inp" placeholder="Procedure description..."/>
         </div>
         <div class="fg">
-          <label class="fl">Type d'acte</label>
+          <label class="fl">Procedure type</label>
           <input [(ngModel)]="acteForm.typeOfActe" class="form-inp" placeholder="Ex: CONSULTATION..."/>
         </div>
         <div class="fg">
@@ -244,8 +244,8 @@
         </div>
       </div>
       <div class="mf">
-        <button class="btn-cancel" (click)="cancelActeForm()">Annuler</button>
-        <button class="btn-valid" style="background:linear-gradient(135deg,#10b981,#059669);" (click)="saveActe()">Ajouter</button>
+        <button class="btn-cancel" (click)="cancelActeForm()">Cancel</button>
+        <button class="btn-valid" style="background:linear-gradient(135deg,#10b981,#059669);" (click)="saveActe()">Add</button>
       </div>
     </div>
   </div>
