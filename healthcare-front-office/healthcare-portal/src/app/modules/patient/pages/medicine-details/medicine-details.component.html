@@ -1,0 +1,153 @@
+<div class="min-h-screen bg-gray-50 font-sans pb-20 pt-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        
+        <!-- Top Navigation -->
+        <div class="flex items-center justify-between mb-8">
+            <button (click)="goBack()"
+                    class="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 group transition-all">
+                <lucide-icon name="arrow-left" [size]="18" class="group-hover:-translate-x-1 transition-transform"></lucide-icon>
+                <span>Back to Shop</span>
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="flex flex-col items-center justify-center py-24">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-gray-500 font-medium">Fetching details for your medication...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error" class="bg-red-50 border border-red-100 p-12 rounded-3xl text-center shadow-sm max-w-2xl mx-auto">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <lucide-icon name="alert-circle" class="w-8 h-8 text-red-600"></lucide-icon>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+            <p class="text-red-700 font-medium mb-6">{{error}}</p>
+            <button (click)="goBack()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all">
+                Return to Shop
+            </button>
+        </div>
+
+        <!-- Medicine Detail View -->
+        <div *ngIf="!loading && !error && medicine" class="bg-white rounded-[32px] shadow-xl shadow-blue-900/5 border border-gray-100 overflow-hidden min-h-[600px] flex flex-col md:flex-row animate-scale-up">
+            
+            <!-- Product Gallery (Left) -->
+            <div class="md:w-1/2 bg-gray-50/50 p-8 sm:p-12 flex flex-col border-r border-gray-50">
+                <div class="flex-1 bg-white rounded-[2.5rem] p-12 shadow-sm border border-gray-100 flex items-center justify-center relative min-h-[400px]">
+                    <!-- Badges Overlay -->
+                    <div class="absolute top-8 left-8 flex flex-col gap-3 z-10">
+                        <span *ngIf="medicine.stock > 10"
+                              class="bg-emerald-100 text-emerald-700 font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-emerald-200">
+                            In Stock
+                        </span>
+                        <span *ngIf="medicine.stock > 0 && medicine.stock <= 10"
+                              class="bg-orange-100 text-orange-700 font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-orange-200">
+                            Low Stock
+                        </span>
+                        <span *ngIf="medicine.stock === 0"
+                              class="bg-red-100 text-red-700 font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-red-200">
+                            Out of Stock
+                        </span>
+                    </div>
+                    
+                    <img [src]="getFirstImage()" class="max-w-full max-h-[450px] object-contain drop-shadow-2xl mix-blend-multiply" [alt]="medicine.medicineName">
+                </div>
+
+                <!-- Thumbnail strip if multiple images -->
+                <div *ngIf="medicine.imageUrls && medicine.imageUrls.length > 1" class="flex gap-4 mt-8 px-2 overflow-x-auto pb-4 custom-scrollbar">
+                    <div *ngFor="let img of medicine.imageUrls" class="w-24 h-24 rounded-2xl bg-white border-2 border-transparent hover:border-blue-500 shadow-sm p-3 cursor-pointer shrink-0 transition-all">
+                        <img [src]="img" class="w-full h-full object-contain">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Info (Right) -->
+            <div class="md:w-1/2 p-10 sm:p-14 lg:p-20 flex flex-col bg-white">
+                <div class="flex flex-col gap-6 mb-10">
+                    <div class="flex flex-wrap gap-2.5">
+                        <span class="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border border-blue-100">
+                            {{ medicine.dosage || '—' }}
+                        </span>
+                        <span *ngIf="medicine.form" class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border border-gray-100">
+                            {{ formatForm(medicine.form) }}
+                        </span>
+                    </div>
+
+                    <h1 class="text-4xl sm:text-5xl font-extrabold text-[#0F172A] leading-[1.1] tracking-tight">
+                        {{ medicine.medicineName }}
+                    </h1>
+
+                    <div class="flex items-center gap-6 mt-2 text-sm font-medium text-gray-400">
+                      <div class="flex items-center gap-2">
+                        <lucide-icon name="info" [size]="16" class="text-gray-300"></lucide-icon>
+                        <span>ID: #{{ medicine.medicineId }}</span>
+                      </div>
+                      <div *ngIf="medicine.expirationDate || medicine.dateOfExpiration" class="flex items-center gap-2">
+                        <lucide-icon name="calendar" [size]="16" class="text-gray-300"></lucide-icon>
+                        <span>Expires: {{ (medicine.expirationDate || medicine.dateOfExpiration) | date:'MMM yyyy' }}</span>
+                      </div>
+                    </div>
+
+                    <div class="w-20 h-1.5 bg-blue-600 rounded-full my-2"></div>
+                </div>
+
+                <div class="flex-1">
+                    <p class="text-gray-600 text-lg leading-relaxed max-w-xl font-medium">
+                        {{ medicine.description || 'Comprehensive clinical data for this medication is currently being updated. Please refer to packaging for full usage guidelines.' }}
+                    </p>
+                </div>
+
+                <!-- Action Panel -->
+                <div class="mt-16 bg-gray-50/80 rounded-[2.5rem] p-8 sm:p-10 border border-gray-100 backdrop-blur-sm">
+                    <div class="flex items-end justify-between mb-8">
+                        <div>
+                            <p class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Unit Price</p>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-5xl font-black text-[#0F172A] tracking-tighter">{{ medicine.price | number:'1.2-2' }}</span>
+                                <span class="text-xl text-gray-400 font-bold uppercase">DT</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-5">
+                        <!-- Qty Selector -->
+                        <div class="flex items-center bg-white rounded-2xl p-2 border border-blue-100 shadow-sm w-full sm:w-auto h-[72px]">
+                            <button (click)="decreaseQuantity()"
+                                    [disabled]="quantity <= 1"
+                                    class="w-14 h-14 flex items-center justify-center bg-gray-50 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-2xl disabled:opacity-30">−</button>
+                            <span class="flex-1 min-w-[3.5rem] text-center font-black text-[#0F172A] text-xl select-none px-2">{{quantity}}</span>
+                            <button (click)="increaseQuantity()"
+                                    [disabled]="quantity >= medicine.stock"
+                                    class="w-14 h-14 flex items-center justify-center bg-gray-50 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-2xl disabled:opacity-30">+</button>
+                        </div>
+
+                        <!-- Main Button -->
+                        <button (click)="addToCart()"
+                                [disabled]="medicine.stock === 0"
+                                class="flex-1 w-full h-[72px] bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 text-white font-black text-lg rounded-2xl shadow-2xl shadow-blue-500/30 transition-all active:scale-[0.98] transform hover:-translate-y-1 flex items-center justify-center gap-4">
+                            <lucide-icon name="shopping-cart" [size]="24" *ngIf="medicine.stock > 0"></lucide-icon>
+                            {{ medicine.stock === 0 ? 'NOT AVAILABLE' : 'ADD TO CART' }}
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .animate-scale-up {
+        animation: scaleUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes scaleUp {
+        0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .custom-scrollbar::-webkit-scrollbar { height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+</style>

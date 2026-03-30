@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -9,14 +10,14 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = { "medicalFiles", "orders", "appointements" })
+@ToString(exclude = {"medicalFiles", "orders", "appointements"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int  userId;
+    private Integer userId;
 
     private String name;
     private String email;
@@ -46,6 +47,7 @@ public class User {
     private Role role;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
+    @JsonIgnore
     private List<Order> orders;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
@@ -54,4 +56,16 @@ public class User {
     @OneToMany
     @JoinColumn(name = "user_id")
     private List<Teleconsultation> consultationRooms;
+
+    @OneToOne
+    @JoinColumn(name = "pharmacy_id")
+    private Pharmacy pharmacy;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
+    @JsonIgnore
+    private List<Post> posts;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
+    @JsonIgnore
+    private List<Comment> comments;
 }

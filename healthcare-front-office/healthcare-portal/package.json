@@ -21,6 +21,9 @@
     "@stomp/stompjs": "^7.3.0",
     "jspdf": "^4.2.1",
     "lucide-angular": "^0.564.0",
+
+    "marked": "^17.0.5",
+    "ngx-webcam": "^0.4.1",
     "rxjs": "~7.8.0",
     "sockjs-client": "^1.6.1",
     "tslib": "^2.3.0",

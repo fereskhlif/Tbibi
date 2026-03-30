@@ -28,7 +28,7 @@ public class HealthGoalServiceImpl implements IHealthGoalService {
     @Override
     public HealthGoal createHealthGoal(HealthGoal goal) {
         if (goal.getUser() != null && goal.getUser().getUserId() > 0) {
-            User user = userRepo.findById((long) goal.getUser().getUserId())
+            User user = userRepo.findById(goal.getUser().getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             goal.setUser(user);
         }

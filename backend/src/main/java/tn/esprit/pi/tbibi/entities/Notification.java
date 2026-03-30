@@ -31,4 +31,13 @@ public class Notification {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id")
     private User doctor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recipient_id")
+    private User recipient;
+
+    @Enumerated(EnumType.STRING)
+    private NotificationType type;
+
+    private String redirectUrl;
 }

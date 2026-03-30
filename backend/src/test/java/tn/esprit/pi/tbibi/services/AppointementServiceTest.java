@@ -92,7 +92,7 @@ public class AppointementServiceTest {
     void testCreate_Success() {
         when(scheduleRepository.findById(10L)).thenReturn(Optional.of(schedule));
         when(mapper.toEntity(request)).thenReturn(appointment);
-        when(userRepo.findById(1L)).thenReturn(Optional.of(patient));
+        when(userRepo.findById(1)).thenReturn(Optional.of(patient));
         when(appointmentRepository.save(any(Appointment.class))).thenReturn(appointment);
         
         AppointmentResponse responseDto = new AppointmentResponse();
@@ -128,7 +128,7 @@ public class AppointementServiceTest {
         
         when(scheduleRepository.findById(10L)).thenReturn(Optional.of(schedule));
         when(mapper.toEntity(any(AppointmentRequest.class))).thenReturn(appointment);
-        when(userRepo.findById(1L)).thenReturn(Optional.of(patient));
+        when(userRepo.findById(1)).thenReturn(Optional.of(patient));
         when(appointmentRepository.save(any(Appointment.class))).thenReturn(appointment);
         when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
         

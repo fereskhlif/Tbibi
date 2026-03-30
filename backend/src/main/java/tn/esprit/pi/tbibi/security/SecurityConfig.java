@@ -8,12 +8,13 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -22,13 +23,14 @@ import tn.esprit.pi.tbibi.security.jwt.JwtAuthFilter;
 import java.util.List;
 
 @Configuration
+@EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
     private final JwtAuthFilter jwtAuthFilter;
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     public DaoAuthenticationProvider authProvider() {
@@ -45,24 +47,24 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authProvider())
                 .authorizeHttpRequests(auth -> auth
-                        // Permettre le forward vers /error par Spring MVC
                         .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.FORWARD, jakarta.servlet.DispatcherType.ERROR).permitAll()
 
-                        // Public routes - no authentication needed
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Auth routes
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
 
-                        // Serve uploaded images publicly
+                        // Uploads
                         .requestMatchers("/uploads/**").permitAll()
 
                         // Appointment routes
@@ -83,38 +85,27 @@ public class SecurityConfig {
 
                         // Notification routes
                         .requestMatchers("/notifications/**").permitAll()
+                        .requestMatchers("/api/notifications/**").permitAll()
 
-                        // Allow doctor to append history and search patients without blocking on JwtAuthFilter missing auth
+                        // Medical records
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/medical-records/*/history").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/medical-records/patients/search").permitAll()
-
-                        // Patient self-service: view, upload, update, delete image
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/medical-records/my").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/medical-records/my/upload-image").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/medical-records/my").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/medical-records/my/image").authenticated()
-
                         .requestMatchers("/medical-records/**").permitAll()
                         .requestMatchers("/prescriptions/**").permitAll()
                         .requestMatchers("/actes/**").permitAll()
 
-                        // Patient routes
+                        // Role-based routes
                         .requestMatchers("/patient/**").hasRole("PATIENT")
-
-                        // Kine routes
                         .requestMatchers("/kine/**").hasRole("KINE")
-
-                        // Doctor routes
                         .requestMatchers("/doctor/**").hasAnyRole("DOCTOR", "DOCTEUR")
                         .requestMatchers("/docteur/**").hasRole("DOCTEUR")
-
-                        // Pharmacist routes
                         .requestMatchers("/pharmasis/**").hasRole("PHARMASIS")
-
-                        // Laboratory routes
                         .requestMatchers("/laboratory/**").hasRole("LABORATORY")
 
-                        // Any other request must be authenticated
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -132,7 +123,6 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-
         return source;
     }
 }
