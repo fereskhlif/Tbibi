@@ -143,8 +143,12 @@ export class AdminApprovalsComponent implements OnInit {
     if (!profilePicture) return '';
     // Already a full URL
     if (profilePicture.startsWith('http')) return profilePicture;
-    // If it's just a UUID or filename, construct the file download URL
-    return `${environment.baseUrl}/uploads/profiles/${profilePicture}`;
+    
+    // Extract just the filename in case the DB stored it with path like "uploads/..."
+    const filename = profilePicture.replace(/^.*[\\/]/, '');
+
+    // Return the URL mapping to the proxy endpoint exposing the uploads folder
+    return `${environment.baseUrl}/uploads/documents/${filename}`;
   }
 
   openDiploma(user: AdminUser, event: Event): void {
