@@ -1,11 +1,20 @@
 package tn.esprit.pi.tbibi.services;
 
 import lombok.RequiredArgsConstructor;
+<<<<<<< HEAD
 import lombok.extern.slf4j.Slf4j;  // ← AJOUTER CET IMPORT
+=======
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.DTO.PrescriptionRequest;
 import tn.esprit.pi.tbibi.DTO.PrescriptionResponse;
 import tn.esprit.pi.tbibi.entities.Acte;
+<<<<<<< HEAD
+=======
+import tn.esprit.pi.tbibi.entities.MedicalReccords;
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 import tn.esprit.pi.tbibi.entities.Prescription;
 import tn.esprit.pi.tbibi.entities.PrescriptionStatus;
 import tn.esprit.pi.tbibi.entities.User;
@@ -13,6 +22,10 @@ import tn.esprit.pi.tbibi.repositories.ActeRepo;
 import tn.esprit.pi.tbibi.repositories.PrescriptionRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
 
+<<<<<<< HEAD
+=======
+import java.util.ArrayList;
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -117,7 +130,11 @@ public class PrescriptionService implements IPrescriptionService {
         log.info("Nombre de prescriptions trouvées: {}", prescriptions.size());
 
         return prescriptions.stream()
+<<<<<<< HEAD
                 .map(mapper::toDto)
+=======
+                .map(p -> enrichWithDoctor(enrichWithPatient(mapper.toDto(p), p), p))
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
                 .collect(Collectors.toList());
     }
 
@@ -126,7 +143,11 @@ public class PrescriptionService implements IPrescriptionService {
     private User findPatientByActe(Acte acte) {
         if (acte == null || acte.getMedicalFile() == null) return null;
         int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
+<<<<<<< HEAD
         return userRepository.findUserByMedicalFileId(medicalFileId).orElse(null);
+=======
+        return userRepository.findPatientByMedicalFileId(medicalFileId).orElse(null);
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
     }
 
     // AJOUTER cette méthode privée pour enrichir le DTO avec les infos patient
@@ -163,4 +184,90 @@ public class PrescriptionService implements IPrescriptionService {
                 .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
         return enrichWithPatient(mapper.toDto(prescr), prescr);
     }
+<<<<<<< HEAD
+=======
+
+    // ── Enrichissement médecin ─────────────────────────────────────────────────
+
+    /** Récupère le nom du médecin à partir de l'ID stocké dans l'acte. */
+    private PrescriptionResponse enrichWithDoctor(PrescriptionResponse dto, Prescription prescription) {
+        if (prescription.getActe() == null) return dto;
+        Integer doctorId = prescription.getActe().getDoctorId();
+        if (doctorId == null) return dto;
+        userRepository.findById(doctorId).ifPresent(doctor -> {
+            dto.setDoctorId(doctor.getUserId());
+            dto.setDoctorName(doctor.getName());
+        });
+        return dto;
+    }
+
+    // ── Prescriptions du patient connecté ─────────────────────────────────────
+
+    /**
+     * Retourne uniquement les prescriptions du patient actuellement connecté,
+     * enrichies avec les infos patient ET médecin.
+     */
+    @Override
+    @jakarta.transaction.Transactional
+    public List<PrescriptionResponse> getMyPrescriptions() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.debug("=== GET MY PRESCRIPTIONS — patient: {} ===", email);
+
+        User patient = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Patient not found: " + email));
+
+        // 2. Collecter toutes les prescriptions via MedicalReccords → Actes → Prescriptions
+        List<PrescriptionResponse> result = new ArrayList<>();
+
+        if (patient.getMedicalFiles() == null) return result;
+
+        for (MedicalReccords medFile : patient.getMedicalFiles()) {
+            if (medFile.getActes() == null) continue;
+            for (Acte acte : medFile.getActes()) {
+                if (acte.getPrescriptions() == null) continue;
+                for (Prescription prescr : acte.getPrescriptions()) {
+                    PrescriptionResponse dto = mapper.toDto(prescr);
+                    dto.setPatientId(patient.getUserId());
+                    dto.setPatientName(patient.getName());
+                    dto.setPatientEmail(patient.getEmail());
+                    enrichWithDoctor(dto, prescr);
+                    result.add(dto);
+                }
+            }
+        }
+
+        log.info("Prescriptions trouvées pour le patient {}: {}", email, result.size());
+        return result;
+    }
+
+    // ── Prescriptions d'analyse (pour le laboratoire) ─────────────────────────
+
+    /**
+     * Returns prescriptions whose linked Acte has typeOfActe containing "analyse".
+     * Used by the laboratory portal.
+     */
+    @Override
+    @jakarta.transaction.Transactional
+    public List<PrescriptionResponse> getAnalysisPrescriptions() {
+        log.info("=== GET ANALYSIS PRESCRIPTIONS ===");
+
+        // Match all analysis subtypes: ANALYSE_DIAGNOSTIQUE, ANALYSE_MICROBIOLOGIQUE,
+        // EXAMEN_ANATOMOPATHOLOGIQUE, TEST_GENETIQUE, or any value containing "ANALYSE" or "EXAMEN" or "TEST"
+        java.util.Set<String> ANALYSIS_TYPES = new java.util.HashSet<>(java.util.Arrays.asList(
+                "ANALYSE_DIAGNOSTIQUE", "ANALYSE_MICROBIOLOGIQUE",
+                "EXAMEN_ANATOMOPATHOLOGIQUE", "TEST_GENETIQUE", "ANALYSE"
+        ));
+
+        List<Prescription> allPrescriptions = repository.findAll();
+        List<PrescriptionResponse> result = allPrescriptions.stream()
+                .filter(p -> p.getActe() != null
+                        && p.getActe().getTypeOfActe() != null
+                        && ANALYSIS_TYPES.contains(p.getActe().getTypeOfActe().toUpperCase()))
+                .map(p -> enrichWithDoctor(enrichWithPatient(mapper.toDto(p), p), p))
+                .collect(Collectors.toList());
+
+        log.info("Prescriptions d'analyse trouvées: {}", result.size());
+        return result;
+    }
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 }

@@ -1,0 +1,22 @@
+/* Table */
+.tbl-card { background:#fff;border-radius:18px;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,.06);overflow:hidden; }
+.ptbl { width:100%;border-collapse:collapse; }
+.ptbl thead tr { background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%); }
+.ptbl th { padding:1rem 1.25rem;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.9);white-space:nowrap; }
+.ptbl td { padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9; vertical-align: middle; }
+.prow { cursor:pointer;transition:background .15s; }
+.prow:hover { background:#f5f3ff; }
+.dos-badge { display:inline-flex;align-items:center;background:#ede9fe;color:#7c3aed;font-size:.8rem;font-weight:700;padding:.25rem .75rem;border-radius:8px; }
+
+/* Status tag */
+.ch-tag { display:inline-flex;align-items:center;padding:.3rem .65rem;border-radius:8px;font-size:.75rem;font-weight:700; }
+
+/* Sub-text / muted */
+.em { color:#64748b;font-size:.8rem; }
+.med-count { font-size:.8rem;font-weight:500;color:#374151; }
+
+/* Progress tracker */
+.progress-track { position:relative; display:flex; align-items:center; justify-content:space-between; height:32px; }
+.progress-track::before { content:''; position:absolute; top:50%; left:0; right:0; height:3px; background:#e5e7eb; transform:translateY(-50%); z-index:0; }
+.progress-fill { position:absolute; top:50%; left:0; height:3px; background:linear-gradient(90deg,#6366f1,#8b5cf6); transform:translateY(-50%); transition:width 0.6s ease; z-index:1; }
+.step-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; position:relative; z-index:2; transition:all 0.3s; flex-shrink:0; }

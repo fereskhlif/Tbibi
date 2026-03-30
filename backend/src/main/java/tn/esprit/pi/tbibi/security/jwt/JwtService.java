@@ -1,8 +1,15 @@
 package tn.esprit.pi.tbibi.security.jwt;
 
+<<<<<<< HEAD
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+=======
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +20,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+<<<<<<< HEAD
+=======
+import lombok.extern.slf4j.Slf4j;
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 
 @Slf4j
 @Service
@@ -23,8 +34,12 @@ public class JwtService {
 
     public JwtService(
             @Value("${app.jwt.secret}") String secret,
+<<<<<<< HEAD
             @Value("${app.jwt.expiration-ms}") long expirationMs
     ) {
+=======
+            @Value("${app.jwt.expiration-ms}") long expirationMs) {
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }
@@ -38,6 +53,7 @@ public class JwtService {
         Date now = new Date();
         Date exp = new Date(now.getTime() + expirationMs);
 
+<<<<<<< HEAD
         // ✅ Créer les claims correctement
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", userDetails.getUsername());  // L'email
@@ -86,11 +102,25 @@ public class JwtService {
             log.error("Erreur extraction email: {}", e.getMessage());
             return null;
         }
+=======
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .claims(Map.of("role", role))
+                .issuedAt(now)
+                .expiration(exp)
+                .signWith(key, Jwts.SIG.HS256)
+                .compact();
+    }
+
+    public String extractEmail(String token) {
+        return parseClaims(token).getSubject();
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             String email = extractEmail(token);
+<<<<<<< HEAD
             boolean isValid = email != null &&
                     email.equals(userDetails.getUsername()) &&
                     !isTokenExpired(token);
@@ -99,11 +129,16 @@ public class JwtService {
             return isValid;
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Token validation error: {}", e.getMessage());
+=======
+            return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException e) {
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
             return false;
         }
     }
 
     private boolean isTokenExpired(String token) {
+<<<<<<< HEAD
         try {
             Date exp = parseClaims(token).getExpiration();
             boolean expired = exp.before(new Date());
@@ -123,5 +158,17 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+=======
+        Date exp = parseClaims(token).getExpiration();
+        return exp.before(new Date());
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
     }
 }

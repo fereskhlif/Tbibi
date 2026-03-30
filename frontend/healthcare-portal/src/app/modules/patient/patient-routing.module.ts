@@ -12,6 +12,10 @@ import { RemindersComponent } from './pages/reminders/reminders.component';
 import { PaymentComponent } from './pages/payment/payment.component';
 import { DoctorSchedulesComponent } from './pages/doctor-schedules/doctor-schedules.component';
 import { InteractionHistoryComponent } from './pages/interaction-history/interaction-history.component';
+<<<<<<< HEAD
+=======
+import { HealthGoalsComponent } from './pages/health-goals/health-goals.component';
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 
 const routes: Routes = [
   {
@@ -65,6 +69,13 @@ const routes: Routes = [
   {
     path: 'interaction-history',
     component: InteractionHistoryComponent,
+<<<<<<< HEAD
+=======
+  },
+  {
+    path: 'health-goals',
+    component: HealthGoalsComponent,
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
   }
 ];
 

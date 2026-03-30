@@ -30,13 +30,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
             "/auth/register",
             "/auth/login",
+<<<<<<< HEAD
             "/auth/test"
     );
+=======
+            "/auth/test");
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
+<<<<<<< HEAD
             FilterChain filterChain
     ) throws ServletException, IOException {
 
@@ -146,4 +151,34 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private boolean isPublicPath(String path) {
         return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
     }
+=======
+            FilterChain filterChain) throws ServletException, IOException {
+
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = authHeader.substring(7);
+                String email = jwtService.extractEmail(token);
+
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+                    if (jwtService.isTokenValid(token, userDetails)) {
+                        var authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
+                }
+            } catch (Exception e) {
+                // Ignore auth failures for public paths; Spring Security will handle restricted
+                // ones later
+                System.out.println("DEBUG: JWT processing failed: " + e.getMessage());
+            }
+        }
+
+        filterChain.doFilter(request, response);
+    }
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 }

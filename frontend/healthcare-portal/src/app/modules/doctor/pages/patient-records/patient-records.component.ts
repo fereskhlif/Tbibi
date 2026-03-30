@@ -746,9 +746,15 @@ export class PatientRecordsComponent implements OnInit {
   }
 
   formIsValid(): boolean {
+<<<<<<< HEAD
     return !!(this.form.visitNote.trim() || this.form.analyseSanguine.trim() || 
              this.form.vaccines.length > 0 || this.form.prescriptions.length > 0 || this.form.autre.trim() ||
              this.form.appareilUrinaire.trim() || this.form.urinaryExams.length > 0);
+=======
+    return !!((this.form.visitNote || '').trim() || (this.form.analyseSanguine || '').trim() || 
+             this.form.vaccines?.length > 0 || this.form.prescriptions?.length > 0 || (this.form.autre || '').trim() ||
+             (this.form.appareilUrinaire || '').trim() || this.form.urinaryExams?.length > 0);
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
   }
 
   validate() {
@@ -802,12 +808,21 @@ export class PatientRecordsComponent implements OnInit {
   }
 
   stripDate(entry: string): string {
+<<<<<<< HEAD
     return entry.replace(/─{3} Visite du .+? ─{3}\\n?/, '').trim();
+=======
+    return entry.replace(/─{3} Visite du .+? ─{3}\n?/, '').trim();
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
   }
 
   initials(name: string): string {
     if (!name) return '?';
+<<<<<<< HEAD
     const p = name.trim().split(' ');
     return p.length >= 2 ? (p[0][0]+p[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+=======
+    const p = name.trim().split(/\s+/);
+    return p.length >= 2 ? (p[0][0]+p[1][0]).toUpperCase() : name.trim().slice(0,2).toUpperCase();
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
   }
 }

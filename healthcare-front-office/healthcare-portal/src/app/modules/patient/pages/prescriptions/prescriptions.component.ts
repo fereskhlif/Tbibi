@@ -1,100 +1,320 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActeDTO, PrescriptionRequest, PrescriptionResponse, PrescriptionService, PrescriptionStatus, STATUS_META } from '../../../../services/prescription-service.service';
+import { interval, Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import jsPDF from 'jspdf';
 
 @Component({
   selector: 'app-prescriptions',
-  template: `
-    <div class="p-8">
-      <div class="flex items-center justify-between mb-6">
-        <div><h1 class="text-2xl font-bold text-gray-900">Prescriptions</h1><p class="text-gray-600">Manage your medications and refills</p></div>
-        <button (click)="newRequest()" class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">+ New Request</button>
-      </div>
-
-      <!-- Tabs -->
-      <div class="flex gap-6 border-b border-gray-200 mb-6">
-        <button *ngFor="let tab of tabs" 
-          (click)="activeTab = tab"
-          [class]="'pb-3 text-sm font-medium transition-colors relative ' + (activeTab === tab ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700')"
-        >
-          {{tab}}
-          <span *ngIf="activeTab === tab" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></span>
-        </button>
-      </div>
-
-      <div class="space-y-4">
-        <div *ngFor="let rx of filteredPrescriptions" class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
-            <div class="p-6 flex items-start gap-4 cursor-pointer" (click)="rx.expanded = !rx.expanded">
-                <div [class]="'w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ' + rx.iconBg">
-                     <lucide-icon [name]="rx.icon" class="w-6 h-6 text-gray-700"></lucide-icon>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between mb-1">
-                        <h3 class="font-bold text-gray-900 text-lg">{{rx.name}}</h3>
-                        <span [class]="'px-2.5 py-0.5 text-xs rounded-full font-medium ' + rx.statusClass">{{rx.status}}</span>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-2">{{rx.dosage}} • {{rx.frequency}}</p>
-                    <div class="flex items-center gap-4 text-xs text-gray-500">
-                        <span class="flex items-center gap-1"><lucide-icon name="user" class="w-3 h-3"></lucide-icon> {{rx.doctor}}</span>
-                        <span class="flex items-center gap-1" *ngIf="rx.refills > 0"><lucide-icon name="refresh-cw" class="w-3 h-3"></lucide-icon> {{rx.refills}} Refills left</span>
-                    </div>
-                </div>
-                <div class="text-gray-400 group-hover:text-blue-600 transition-colors">
-                     <lucide-icon name="chevron-down" [class]="'w-5 h-5 transform transition-transform ' + (rx.expanded ? 'rotate-180' : '')"></lucide-icon>
-                </div>
-            </div>
-
-            <!-- Expanded Actions -->
-            <div *ngIf="rx.expanded" class="border-t border-gray-100 bg-gray-50 p-4 flex flex-wrap gap-3 animate-slide-down">
-                <button *ngIf="rx.status === 'Active'" (click)="refill(rx)" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Refill Now</button>
-                <button (click)="contactDoctor(rx)" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">Contact Doctor</button>
-                <button (click)="viewDetails(rx)" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">View Details</button>
-            </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .rotate-180 { transform: rotate(180deg); }
-    @keyframes slide-down { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-slide-down { animation: slide-down 0.2s ease-out; }
-  `]
+  templateUrl: './prescriptions.component.html',
+  styleUrls: ['./prescriptions.component.css']
 })
-export class PrescriptionsComponent {
-  activeTab = 'Active';
-  tabs = ['Active', 'Completed', 'All'];
+export class PrescriptionsComponent implements OnInit, OnDestroy {
 
-  prescriptions = [
-    {
-      name: 'Amoxicillin', dosage: '500mg', frequency: '3x Daily', doctor: 'Dr. Sarah Johnson', refills: 1,
-      status: 'Active', statusClass: 'bg-green-100 text-green-700', icon: 'pill', iconBg: 'bg-blue-50', expanded: false
-    },
-    {
-      name: 'Lisinopril', dosage: '10mg', frequency: '1x Daily', doctor: 'Dr. Michael Chen', refills: 3,
-      status: 'Active', statusClass: 'bg-green-100 text-green-700', icon: 'stethoscope', iconBg: 'bg-purple-50', expanded: false
-    },
-    {
-      name: 'Azithromycin', dosage: '250mg', frequency: 'Completed', doctor: 'Dr. Sarah Johnson', refills: 0,
-      status: 'Completed', statusClass: 'bg-gray-100 text-gray-600', icon: 'pill', iconBg: 'bg-gray-50', expanded: false
+  prescriptions: PrescriptionResponse[] = [];
+  actes: ActeDTO[] = [];
+  loading = false;
+  loadingActes = false;
+  error = '';
+
+  // ── Detail modal ──────────────────────────────────────────────────────────
+  showDetail = false;
+  detailRx: PrescriptionResponse | null = null;
+
+  showActeModal = false;
+  acteForRx: ActeDTO | null = null;
+
+
+  // ── Filter / sort ─────────────────────────────────────────────────────────
+  activeFilter: PrescriptionStatus | 'ALL' = 'ALL';
+  sortDesc = true;
+  selectedDoctorId: number | null = null;
+
+  // ── Status polling (every 30 s for "real-time" feel) ─────────────────────
+  private pollSub?: Subscription;
+
+  // Expose to template
+  STATUS_META = STATUS_META;
+  statusKeys: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED', 'CANCELLED'];
+  readonly STEPS: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED'];
+
+  constructor(private prescriptionService: PrescriptionService) {}
+
+  ngOnInit(): void {
+    this.loadAll();
+    // Poll every 30 seconds to refresh statuses
+    this.pollSub = interval(30_000)
+      .pipe(switchMap(() => this.prescriptionService.getMyPrescriptions()))
+      .subscribe({
+        next: (data) => {
+          this.prescriptions = data.map(rx => ({
+            ...rx,
+            expanded: this.prescriptions.find(p => p.prescriptionID === rx.prescriptionID)?.expanded ?? false
+          }));
+          if (this.detailRx) {
+            const updated = this.prescriptions.find(p => p.prescriptionID === this.detailRx!.prescriptionID);
+            if (updated) this.detailRx = updated;
+          }
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
+  }
+
+  // ── Data ──────────────────────────────────────────────────────────────────
+
+  loadAll(): void {
+    this.loading = true;
+    this.loadingActes = true;
+    this.error = '';
+
+    // Load prescriptions
+    this.prescriptionService.getMyPrescriptions().subscribe({
+      next: (data) => {
+        this.prescriptions = data.map(rx => ({ ...rx, expanded: false }));
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Erreur lors du chargement des données.';
+        this.loading = false;
+      }
+    });
+
+    // Load actes
+    this.prescriptionService.getMyActes().subscribe({
+      next: (data) => {
+        this.actes = data;
+        this.loadingActes = false;
+      },
+      error: () => {
+        this.loadingActes = false;
+      }
+    });
+  }
+
+  // ── Computed ──────────────────────────────────────────────────────────────
+
+  /** Unique list of doctors sorted by name, extracted from loaded prescriptions and actes. */
+  get doctors(): { doctorId: number; doctorName: string }[] {
+    const map = new Map<number, string>();
+    this.prescriptions.forEach(rx => {
+      if (rx.doctorId != null && rx.doctorName) {
+        map.set(rx.doctorId, rx.doctorName);
+      }
+    });
+    this.actes.forEach(a => {
+      if (a.doctorId != null && a.doctorName) {
+        map.set(a.doctorId, a.doctorName);
+      }
+    });
+    return Array.from(map.entries())
+      .map(([doctorId, doctorName]) => ({ doctorId, doctorName }))
+      .sort((a, b) => a.doctorName.localeCompare(b.doctorName));
+  }
+
+  get filtered(): PrescriptionResponse[] {
+    let list = this.activeFilter === 'ALL'
+      ? [...this.prescriptions]
+      : this.prescriptions.filter(rx => rx.status === this.activeFilter);
+
+    // Doctor filter
+    if (this.selectedDoctorId !== null) {
+      list = list.filter(rx => rx.doctorId === this.selectedDoctorId);
     }
-  ];
 
-  get filteredPrescriptions() {
-    if (this.activeTab === 'All') return this.prescriptions;
-    return this.prescriptions.filter(rx => rx.status === this.activeTab);
+    list.sort((a, b) => {
+      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      return this.sortDesc ? -diff : diff;
+    });
+    return list;
   }
 
-  refill(rx: any) {
-    alert(`Refill request sent for ${rx.name}. You will be notified when it's ready.`);
+  get filteredActes(): ActeDTO[] {
+    let list = [...this.actes];
+
+    if (this.selectedDoctorId !== null) {
+      list = list.filter(a => a.doctorId === this.selectedDoctorId);
+    }
+
+    list.sort((a, b) => {
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      return this.sortDesc ? timeB - timeA : timeA - timeB;
+    });
+    return list;
   }
 
-  contactDoctor(rx: any) {
-    alert(`Message sent to ${rx.doctor} regarding ${rx.name}.`);
+  countByStatus(s: PrescriptionStatus): number {
+    return this.prescriptions.filter(rx => rx.status === s).length;
   }
 
-  viewDetails(rx: any) {
-    alert(`Opening details for ${rx.name}...\nDosage: ${rx.dosage}\nFrequency: ${rx.frequency}\nPharmacy: CVS Pharmacy`);
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  statusMeta(status: PrescriptionStatus) {
+    return STATUS_META[status] ?? STATUS_META['PENDING'];
   }
 
-  newRequest() {
-    alert('New prescription request form would open here.');
+  stepOf(status: PrescriptionStatus): number {
+    return this.STEPS.indexOf(status);
+  }
+
+  // ── Detail modal ──────────────────────────────────────────────────────────
+
+  openEditModal(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    alert("Veuillez contacter votre médecin pour modifier cette prescription.");
+  }
+
+  deletePrescription(id: number, event?: Event): void {
+    event?.stopPropagation();
+    if(confirm('Êtes-vous sûr de vouloir supprimer cette prescription ?')) {
+      this.prescriptionService.delete(id).subscribe({
+        next: () => this.loadAll(),
+        error: () => alert('Erreur lors de la suppression')
+      });
+    }
+  }
+
+  exportToPDF(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Header background
+    doc.setFillColor(14, 165, 233); // Cyan-500
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Header Text
+    doc.setFontSize(24);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text("Medical Prescription", pageWidth / 2, 22, { align: "center" });
+
+    // Prescription Meta
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont("helvetica", "normal");
+    const dateStr = rx.date ? new Date(rx.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown Date';
+    doc.text(`Date: ${dateStr}`, 14, 50);
+    doc.text(`Prescription ID: #${rx.prescriptionID}`, pageWidth - 14, 50, { align: "right" });
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, 55, pageWidth - 14, 55);
+
+    // Doctor & Patient Info Block
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.text("Prescribing Doctor", 14, 68);
+    doc.text("Patient Information", pageWidth / 2, 68);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Dr. ${rx.doctorName || 'Not Assigned'}`, 14, 76);
+    doc.text(`Patient: ${rx.patientName || 'Tbibi Patient'}`, pageWidth / 2, 76);
+
+    doc.line(14, 85, pageWidth - 14, 85);
+
+    // Note Section
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.text("Medical Notes & Instructions", 14, 98);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    const splitNote = doc.splitTextToSize(rx.note || 'No additional notes provided.', pageWidth - 28);
+    doc.text(splitNote, 14, 106);
+
+    // Calculate new Y after notes
+    let currentY = 106 + (splitNote.length * 5) + 8;
+    doc.line(14, currentY, pageWidth - 14, currentY);
+
+    // Medicines List
+    currentY += 12;
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.text("Prescribed Medicines", 14, currentY);
+
+    currentY += 10;
+    if (rx.medicines && rx.medicines.length > 0) {
+      // Table Header
+      doc.setFillColor(241, 245, 249); // slate-100
+      doc.rect(14, currentY, pageWidth - 28, 10, 'F');
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "bold");
+      doc.text("Medicine Name", 20, currentY + 7);
+      doc.text("Quantity", pageWidth - 20, currentY + 7, { align: "right" });
+
+      currentY += 16;
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold"); // slight bold for meds
+
+      rx.medicines.forEach((m) => {
+        // Add page if near bottom
+        if (currentY > 270) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        doc.setTextColor(14, 165, 233); // cyan-500
+        doc.text(`• ${m.medicineName}`, 16, currentY);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`x${m.quantity}`, pageWidth - 20, currentY, { align: "right" });
+        currentY += 10;
+      });
+    } else {
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(100, 116, 139);
+      doc.text("No medicines prescribed.", 14, currentY);
+      currentY += 10;
+    }
+
+    // Footer
+    const totalPages = (<any>doc.internal).getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setTextColor(148, 163, 184);
+        doc.text('Document digitally generated securely via Tbibi Healthcare Portal.', pageWidth / 2, 285, { align: 'center' });
+    }
+
+    doc.save(`Medical_Prescription_${rx.prescriptionID}.pdf`);
+  }
+
+  showActesForRx(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    const relatedActes = this.actes.filter(a => a.acteId === rx.acteId);
+    if (relatedActes.length > 0) {
+      this.acteForRx = relatedActes[0];
+      this.showActeModal = true;
+    } else {
+      alert("Aucun acte médical relié à cette prescription.");
+    }
+  }
+
+  openDetail(rx: PrescriptionResponse, event?: Event): void {
+    event?.stopPropagation();
+    this.detailRx = { ...rx };
+    this.showDetail = true;
+  }
+
+  closeDetail(): void {
+    this.showDetail = false;
+    this.detailRx = null;
+  }
+
+
+
+  trackById(_: number, rx: PrescriptionResponse): number {
+    return rx.prescriptionID;
   }
 }

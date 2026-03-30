@@ -26,11 +26,27 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + u.getRole().getRoleName()));
 
+<<<<<<< HEAD
+=======
+        // Determine if user should be enabled
+        boolean isEnabled = u.getEnabled() != null ? u.getEnabled() : true;
+        tn.esprit.pi.tbibi.entities.UserStatus status = u.getAccountStatus();
+
+        // Block login if status is not ACTIVE (for old rows, assume ACTIVE if null)
+        if (status != null && status != tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE) {
+            isEnabled = false;
+        }
+
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
         return org.springframework.security.core.userdetails.User
                 .withUsername(u.getEmail())
                 .password(u.getPassword())
                 .authorities(authorities)
+<<<<<<< HEAD
                 .disabled(false)
+=======
+                .disabled(!isEnabled)
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
                 .build();
     }
 }

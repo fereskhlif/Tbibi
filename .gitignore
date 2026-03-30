@@ -1,0 +1,48 @@
+git # ==========================================
+# Global Project GitIgnore
+# ==========================================
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs (VS Code, IntelliJ, Eclipse)
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+.apt_generated/
+.factorypath/
+
+# Custom execution logs, test outputs and debug traces
+*.log
+build_error.txt
+build_log.txt
+build_output.log
+dev_build_error.log
+final_build_error.log
+karma_output.txt
+test-out.txt
+test-output.txt
+test_out.txt
+test_out_doctor.txt
+test_out_patient.txt
+test_output_doc.txt
+tsc_output.txt
+tsc_output_patient.txt
+
+# Broad fallbacks for log/txt outputs generated manually
+*_output.txt
+*_out*.txt
+*-out.txt
+test-*.txt
+build*.txt

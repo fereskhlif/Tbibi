@@ -24,7 +24,11 @@ import { AdminService, AdminUser } from '../../../services/admin.service';
       <div *ngFor="let user of pendingUsers" class="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
         <div class="absolute top-0 right-0 p-4">
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-50 text-orange-600 border border-orange-200">
+<<<<<<< HEAD
             {{user.role?.roleName}}
+=======
+            {{user.role.roleName}}
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
           </span>
         </div>
         
@@ -94,12 +98,20 @@ export class AdminApprovalsComponent implements OnInit {
   loadPending(): void {
     this.loading = true;
     this.adminService.getPendingApprovals().subscribe({
+<<<<<<< HEAD
       next: (data: AdminUser[]) => {
+=======
+      next: (data) => {
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
         this.pendingUsers = data;
         this.loading = false;
         this.error = '';
       },
+<<<<<<< HEAD
       error: (err: any) => {
+=======
+      error: (err) => {
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
         console.error(err);
         this.error = "Erreur de connexion (Mock data injectée).";
         this.loading = false;

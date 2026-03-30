@@ -27,6 +27,7 @@ public class PrescriptionController {
 //        return ResponseEntity.ok(service.getAll());
 //    }
 
+<<<<<<< HEAD
 //    @GetMapping("/get/{id}")
 //    public ResponseEntity<PrescriptionResponse> getById(@PathVariable int id) {
 //        try {
@@ -35,6 +36,16 @@ public class PrescriptionController {
 //            return ResponseEntity.notFound().build();
 //        }
 //    }
+=======
+    @GetMapping("/get/{id}")
+    public ResponseEntity<PrescriptionResponse> getById(@PathVariable int id) {
+        try {
+            return ResponseEntity.ok(service.getById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 
     @PostMapping("/add")
     public ResponseEntity<PrescriptionResponse> add(@RequestBody PrescriptionRequest request) {
@@ -110,4 +121,25 @@ public class PrescriptionController {
             return ResponseEntity.notFound().build();
         }
     }
+<<<<<<< HEAD
+=======
+
+    /**
+     * Returns only the prescriptions of the currently authenticated patient,
+     * enriched with doctor information. Used by the patient portal.
+     */
+    @GetMapping("/my")
+    public ResponseEntity<List<PrescriptionResponse>> getMyPrescriptions() {
+        return ResponseEntity.ok(service.getMyPrescriptions());
+    }
+
+    /**
+     * Returns prescriptions whose linked Acte has a typeOfActe related to analysis.
+     * Used by the laboratory portal.
+     */
+    @GetMapping("/analysis")
+    public ResponseEntity<List<PrescriptionResponse>> getAnalysisPrescriptions() {
+        return ResponseEntity.ok(service.getAnalysisPrescriptions());
+    }
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 }

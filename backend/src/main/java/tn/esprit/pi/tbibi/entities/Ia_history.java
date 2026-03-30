@@ -7,7 +7,7 @@ import lombok.experimental.FieldDefaults;
 import java.util.Set;
 
 @Entity
-@Table(name = "Appointement")
+@Table(name = "Ia_history")
 @Getter
 @Setter
 @ToString
@@ -28,6 +28,7 @@ public class Ia_history {
     private String textChatbot;
     private String imageChatbot;
     @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "ia_history_id")
     private Set<Laboratory_Result> Laboratory_Results;
 
 }

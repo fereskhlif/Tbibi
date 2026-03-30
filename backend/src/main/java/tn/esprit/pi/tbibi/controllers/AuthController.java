@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.controllers;
 
+<<<<<<< HEAD
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +21,26 @@ import java.util.Map;
 @Slf4j
 @RestController
 @CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
+=======
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import tn.esprit.pi.tbibi.DTO.LoginRequest;
+import tn.esprit.pi.tbibi.DTO.RegisterRequest;
+import tn.esprit.pi.tbibi.services.IAuthService;
+
+@Slf4j
+@RestController
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final IAuthService authService;
+<<<<<<< HEAD
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final JwtService jwtService;
@@ -51,10 +67,28 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Registration failed with exception:", e);
             return ResponseEntity.status(500).body("Registration failed: " + e.getMessage());
+=======
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(
+            @RequestBody @Valid RegisterRequest request
+    ) {
+        try {
+            authService.register(request);
+            return ResponseEntity.accepted().build();
+        } catch (IllegalArgumentException e) {
+            if ("Email already used".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            }
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed.");
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
         }
     }
 
     @PostMapping("/login")
+<<<<<<< HEAD
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
         log.info("=== LOGIN ATTEMPT ===");
         log.info("Email: {}", req.email());
@@ -137,4 +171,33 @@ public class AuthController {
             ));
         }
     }
+=======
+    public ResponseEntity<?> login(
+            @RequestBody @Valid LoginRequest req) {
+        try {
+            return ResponseEntity.ok(authService.login(req));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+        }
+    }
+
+    @GetMapping("/activate-account")
+    public ResponseEntity<String> confirm(
+            @RequestParam String token
+    ) {
+        try {
+            authService.activateAccount(token);
+            return ResponseEntity.ok("Account activated successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.GONE).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during activation.");
+        }
+    }
+
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 }

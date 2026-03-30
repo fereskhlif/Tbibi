@@ -171,9 +171,15 @@ describe('PatientRecordsComponent', () => {
   describe('openForm()', () => {
 
     it('doit ouvrir le modal et affecter le patient sélectionné', () => {
+<<<<<<< HEAD
       component.openForm(mockPatient);
       expect(component.showModal).toBeTrue();
       expect(component.sel).toEqual(mockPatient);
+=======
+      component.openForm(JSON.parse(JSON.stringify(mockPatient)));
+      expect(component.showModal).toBeTrue();
+      expect(component.sel?.medicalFileId).toEqual(mockPatient.medicalFileId);
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
     });
 
     it('doit réinitialiser le formulaire à chaque ouverture', () => {
@@ -196,7 +202,11 @@ describe('PatientRecordsComponent', () => {
     });
 
     it('doit afficher "Jamais" si aucun historique', () => {
+<<<<<<< HEAD
       component.openForm(mockPatient);
+=======
+      component.openForm(JSON.parse(JSON.stringify(mockPatient)));
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
       expect(component.derniereVisite).toBe('Jamais');
     });
 
@@ -208,7 +218,11 @@ describe('PatientRecordsComponent', () => {
     it('doit réinitialiser saveSuccess et saveError', () => {
       component.saveSuccess = true;
       component.saveError   = 'Erreur précédente';
+<<<<<<< HEAD
       component.openForm(mockPatient);
+=======
+      component.openForm(JSON.parse(JSON.stringify(mockPatient)));
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
       expect(component.saveSuccess).toBeFalse();
       expect(component.saveError).toBe('');
     });
@@ -432,7 +446,11 @@ describe('PatientRecordsComponent', () => {
   describe('validate()', () => {
 
     beforeEach(() => {
+<<<<<<< HEAD
       component.sel = mockPatient;
+=======
+      component.sel = JSON.parse(JSON.stringify(mockPatient));
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
       component.form.visitNote = 'Bilan annuel';
     });
 

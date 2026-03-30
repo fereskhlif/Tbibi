@@ -61,8 +61,13 @@
           <td>
             <div style="display:flex; align-items:center; gap:.75rem;">
               <div class="avatar"
+<<<<<<< HEAD
                 [style.background]="getRoleBadgeColor(user.role?.roleName)"
                 [style.color]="getRoleBadgeText(user.role?.roleName)">
+=======
+                [style.background]="getRoleBadgeColor(user.role.roleName)"
+                [style.color]="getRoleBadgeText(user.role.roleName)">
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
                 {{getInitial(user.name)}}
               </div>
               <div style="display:flex;flex-direction:column;">
@@ -73,9 +78,15 @@
           </td>
           <td>
             <span class="ch-tag"
+<<<<<<< HEAD
               [style.background]="getRoleBadgeColor(user.role?.roleName)"
               [style.color]="getRoleBadgeText(user.role?.roleName)">
               {{user.role?.roleName || 'INCONNU'}}
+=======
+              [style.background]="getRoleBadgeColor(user.role.roleName)"
+              [style.color]="getRoleBadgeText(user.role.roleName)">
+              {{user.role.roleName || 'INCONNU'}}
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
             </span>
           </td>
           <td>

@@ -18,4 +18,8 @@ public class MdicalReccordsResponse {
     private String rep_doc;
     private String imageUrl;
     private List<ActeResponse> actes;
+<<<<<<< HEAD
+=======
+    private List<String> patientImages;
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 }

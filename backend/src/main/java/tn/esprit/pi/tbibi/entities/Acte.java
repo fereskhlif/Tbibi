@@ -26,8 +26,15 @@ public class Acte {
     private List<Prescription> prescriptions;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "medical_file_id")
+<<<<<<< HEAD
     @JsonIgnore
     private MedicalReccords medicalFile;  // ← must be exactly this name
 
+=======
+    private MedicalReccords medicalFile;  // ← must be exactly this name
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 
+    /** ID du médecin qui a créé cet acte (null pour les anciens actes) */
+    @Column(name = "doctor_id")
+    private Integer doctorId;
 }

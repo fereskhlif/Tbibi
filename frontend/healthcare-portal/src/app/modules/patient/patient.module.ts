@@ -17,6 +17,10 @@ import { RemindersComponent } from './pages/reminders/reminders.component';
 import { PaymentComponent } from './pages/payment/payment.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { InteractionHistoryComponent } from './pages/interaction-history/interaction-history.component';
+<<<<<<< HEAD
+=======
+import { HealthGoalsComponent } from './pages/health-goals/health-goals.component';
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
 
 @NgModule({
   declarations: [
@@ -31,7 +35,12 @@ import { InteractionHistoryComponent } from './pages/interaction-history/interac
     RemindersComponent,
     PaymentComponent,
     ProfileComponent,
+<<<<<<< HEAD
     InteractionHistoryComponent
+=======
+    InteractionHistoryComponent,
+    HealthGoalsComponent
+>>>>>>> a5a41a6973410d3da56e12cfe21532fcd06ee3b6
   ],
   imports: [
     CommonModule,
