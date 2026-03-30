@@ -29,4 +29,45 @@ public interface UserRepo extends JpaRepository<User, Long> {
             "AND LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%'))",
             nativeQuery = true)
     List<User> searchPatientsByName(@Param("name") String name);
+
+    // Corrected JPQL queries
+    @Query("SELECT u FROM User u WHERE u.role.roleName = :roleName")
+    List<User> findAllUsersByRoleName(@Param("roleName") String roleName);
+
+    @Query("SELECT u FROM User u JOIN u.medicalFiles m WHERE m.medicalfile_id = :id")
+    Optional<User> findPatientByMedicalFileId(@Param("id") int medicalFileId);
+
+    @Query("SELECT u FROM User u WHERE u.role.roleName = 'PATIENT' AND LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<User> searchAllPatientsByName(@Param("name") String name);
+
+    // Returns all users whose role name contains "DOCTOR" (case-insensitive)
+    @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE 'doct%'")
+    List<User> findAllDoctors();
+
+    // Returns doctors filtered by specialty (case-insensitive)
+    @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE 'doct%' AND LOWER(u.specialty) = LOWER(:specialty)")
+    List<User> findDoctorsBySpecialty(@Param("specialty") String specialty);
+
+    // Returns distinct non-null specialties for all doctors
+    @Query("SELECT DISTINCT u.specialty FROM User u WHERE LOWER(u.role.roleName) LIKE 'doct%' AND u.specialty IS NOT NULL AND u.specialty <> ''")
+    List<String> findDistinctSpecialties();
+
+    @Query("SELECT concat('ID:', u.userId, ' | Name:', u.name, ' | Specialty:', u.specialty, ' | Role:', u.role.roleName) FROM User u")
+    List<String> findDebugInfo();
+
+    /**
+     * Returns doctors whose name contains the given string (case-insensitive).
+     * Pattern should be %name%
+     */
+    @Query("SELECT u FROM User u JOIN u.role r WHERE LOWER(r.roleName) LIKE 'doct%' AND LOWER(u.name) LIKE LOWER(:pattern)")
+    List<User> findDoctorsByNameContaining(@Param("pattern") String pattern);
+
+    // Laboratory methods from UserRepository
+    @Query("SELECT u FROM User u WHERE u.role IS NOT NULL")
+    List<User> findAllLaboratoryUsers(@Param("labGroup") String labGroup);
+
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END " +
+           "FROM User u WHERE u.userId = :userId " +
+           "AND u.role IS NOT NULL")
+    boolean isLaboratoryUser(@Param("userId") Integer userId);
 }

@@ -12,7 +12,7 @@ import tn.esprit.pi.tbibi.entities.TreatmentPlan;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.mappers.TreatmentPlanMapper;
 import tn.esprit.pi.tbibi.repositories.TreatmentPlanRepository;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 import tn.esprit.pi.tbibi.services.TreatmentPlanService.TreatmentPlanService;
 
 import java.time.LocalDate;
@@ -31,7 +31,7 @@ class TreatmentPlanServiceTest {
     private TreatmentPlanRepository planRepo;
 
     @Mock
-    private UserRepository userRepo;
+    private UserRepo userRepo;
 
     @Mock
     private TreatmentPlanMapper mapper;

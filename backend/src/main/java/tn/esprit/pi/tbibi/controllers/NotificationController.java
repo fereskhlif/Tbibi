@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.entities.Notification;
-import tn.esprit.pi.tbibi.repositories.NotificationRepository;
+import tn.esprit.pi.tbibi.repositories.NotificationRepo;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
 @CrossOrigin(originPatterns = "*")
 public class NotificationController {
 
-    private final NotificationRepository notificationRepo;
+    private final NotificationRepo notificationRepo;
 
     // Récupérer toutes les notifications d'un utilisateur
     @GetMapping("/user/{userId}")

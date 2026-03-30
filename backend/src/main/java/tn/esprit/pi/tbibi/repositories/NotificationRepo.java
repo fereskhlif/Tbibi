@@ -5,7 +5,7 @@ import tn.esprit.pi.tbibi.entities.Notification;
 
 import java.util.List;
 
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
+public interface NotificationRepo extends JpaRepository<Notification, Long> {
     
     // Récupérer toutes les notifications d'un utilisateur
     List<Notification> findByRecipient_UserIdOrderByCreatedDateDesc(Integer userId);

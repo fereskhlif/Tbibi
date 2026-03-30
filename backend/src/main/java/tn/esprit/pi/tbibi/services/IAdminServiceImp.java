@@ -1,7 +1,7 @@
 package tn.esprit.pi.tbibi.services;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.Slf4j;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.pi.tbibi.DTO.AdminDashboardStats;
@@ -94,7 +94,7 @@ public class IAdminServiceImp implements IAdminService {
                 .dateOfBirth(user.getDateOfBirth())
                 .gender(user.getGender())
                 .accountStatus(user.getAccountStatus() != null ? user.getAccountStatus() : UserStatus.ACTIVE)
-                .enabled(user.getEnabled() != null ? user.getEnabled() : true)
+                .enabled(user.isEnabled())
                 .profilePicture(user.getProfilePicture())
                 .build();
     }

@@ -11,7 +11,7 @@ import tn.esprit.pi.tbibi.entities.Laboratory_Result;
 import tn.esprit.pi.tbibi.entities.Notification;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.repositories.Laboratory_ResultRepository;
-import tn.esprit.pi.tbibi.repositories.NotificationRepository;
+import tn.esprit.pi.tbibi.repositories.NotificationRepo;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,7 +23,7 @@ import java.util.List;
 public class ScheduledNotificationService {
 
     private final Laboratory_ResultRepository labRepo;
-    private final NotificationRepository notificationRepo;
+    private final NotificationRepo notificationRepo;
     private final SimpMessagingTemplate messagingTemplate;
 
     // ✅ Configurable dans application.properties

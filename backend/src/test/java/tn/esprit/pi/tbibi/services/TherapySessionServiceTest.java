@@ -13,7 +13,7 @@ import tn.esprit.pi.tbibi.entities.TherapySession;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.mappers.TherapySessionMapper;
 import tn.esprit.pi.tbibi.repositories.TherapySessionRepository;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 import tn.esprit.pi.tbibi.services.TherapySessionService.TherapySessionService;
 
 import java.time.LocalDate;
@@ -33,7 +33,7 @@ class TherapySessionServiceTest {
     private TherapySessionRepository sessionRepo;
 
     @Mock
-    private UserRepository userRepo;
+    private UserRepo userRepo;
 
     @Mock
     private TherapySessionMapper mapper;

@@ -16,7 +16,7 @@ import tn.esprit.pi.tbibi.entities.Role;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.entities.UserStatus;
 import tn.esprit.pi.tbibi.repositories.RoleRepo;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 import tn.esprit.pi.tbibi.security.jwt.JwtService;
 
 import java.util.Collections;
@@ -28,7 +28,7 @@ import java.util.UUID;
 @Slf4j
 public class GoogleAuthService {
 
-    private final UserRepository userRepository;
+    private final UserRepo userRepository;
     private final RoleRepo roleRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;

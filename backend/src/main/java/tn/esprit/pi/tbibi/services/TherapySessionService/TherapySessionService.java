@@ -10,7 +10,7 @@ import tn.esprit.pi.tbibi.entities.TherapySession;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.mappers.TherapySessionMapper;
 import tn.esprit.pi.tbibi.repositories.TherapySessionRepository;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 public class TherapySessionService implements ITherapySessionService {
 
     private final TherapySessionRepository sessionRepo;
-    private final UserRepository userRepo;
+    private final UserRepo userRepo;
     private final TherapySessionMapper mapper;
 
     @Override
     public TherapySessionResponse create(TherapySessionRequest request) {
-        User patient = userRepo.findById(request.getPatientId())
+        User patient = userRepo.findById((long) request.getPatientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found with id: " + request.getPatientId()));
-        User physio = userRepo.findById(request.getPhysiotherapistId())
+        User physio = userRepo.findById((long) request.getPhysiotherapistId())
                 .orElseThrow(() -> new RuntimeException("Physiotherapist not found with id: " + request.getPhysiotherapistId()));
         TherapySession session = mapper.toEntity(request);
         session.setPatient(patient);
@@ -210,7 +210,7 @@ public class TherapySessionService implements ITherapySessionService {
     }
 
     private PatientProgressDTO buildPatientProgressDTO(Integer patientId, List<TherapySession> sessions) {
-        User patient = userRepo.findById(patientId)
+        User patient = userRepo.findById((long) patientId)
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
         
         // Calculer les statistiques

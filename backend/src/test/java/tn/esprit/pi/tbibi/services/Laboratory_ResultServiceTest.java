@@ -12,7 +12,7 @@ import tn.esprit.pi.tbibi.entities.Laboratory_Result;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.mappers.Laboratory_ResultMapper;
 import tn.esprit.pi.tbibi.repositories.Laboratory_ResultRepository;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 import tn.esprit.pi.tbibi.services.Laboratory_ResultService.Laboratory_ResultService;
 
 import java.time.LocalDate;
@@ -32,7 +32,7 @@ class Laboratory_ResultServiceTest {
     private Laboratory_ResultRepository labRepo;
 
     @Mock
-    private UserRepository userRepo;
+    private UserRepo userRepo;
 
     @Mock
     private Laboratory_ResultMapper mapper;

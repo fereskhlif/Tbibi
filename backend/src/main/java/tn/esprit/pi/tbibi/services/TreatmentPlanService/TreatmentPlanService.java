@@ -9,7 +9,7 @@ import tn.esprit.pi.tbibi.entities.TreatmentPlan;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.mappers.TreatmentPlanMapper;
 import tn.esprit.pi.tbibi.repositories.TreatmentPlanRepository;
-import tn.esprit.pi.tbibi.repositories.UserRepository;
+import tn.esprit.pi.tbibi.repositories.UserRepo;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,14 +21,14 @@ import java.util.stream.Collectors;
 public class TreatmentPlanService implements ITreatmentPlanService {
 
     private final TreatmentPlanRepository planRepo;
-    private final UserRepository userRepo;
+    private final UserRepo userRepo;
     private final TreatmentPlanMapper mapper;
 
     @Override
     public TreatmentPlanResponse create(TreatmentPlanRequest request) {
-        User patient = userRepo.findById(request.getPatientId())
+        User patient = userRepo.findById((long) request.getPatientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found with id: " + request.getPatientId()));
-        User physio = userRepo.findById(request.getPhysiotherapistId())
+        User physio = userRepo.findById((long) request.getPhysiotherapistId())
                 .orElseThrow(() -> new RuntimeException("Physiotherapist not found with id: " + request.getPhysiotherapistId()));
         
         TreatmentPlan plan = mapper.toEntity(request);
