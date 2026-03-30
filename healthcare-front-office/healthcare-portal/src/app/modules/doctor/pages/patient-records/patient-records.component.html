@@ -1,0 +1,463 @@
+<div class="pw">
+
+  <!-- Header -->
+  <div class="ph">
+    <div class="ph-left">
+      <div class="ph-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Patient Records</h1>
+        <p>Search for a patient to record a medical visit</p>
+      </div>
+    </div>
+    <div class="stat-badge">
+      <span class="sn">{{ patients.length }}</span>
+      <span class="sl">patient(s)</span>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="s-wrap">
+    <div class="s-box">
+      <svg class="s-ico" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0015.803 15.803z"/>
+      </svg>
+      <input id="patient-search" type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearch($event)"
+        placeholder="Search by name..." class="s-inp" autocomplete="off"/>
+      <span *ngIf="loading" class="spinner-sm"></span>
+    </div>
+    <div *ngIf="error" class="err-bar">⚠ {{ error }}</div>
+  </div>
+
+  <!-- Table -->
+  <div class="tbl-card">
+    <table class="ptbl">
+      <thead>
+        <tr>
+          <th>File No.</th>
+          <th>Patient</th>
+          <th>Email</th>
+          <th>Chronic Disease</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="patients.length === 0 && !loading">
+          <td colspan="5" class="empty">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+            </svg>
+            No patients found
+          </td>
+        </tr>
+        <tr *ngFor="let p of patients" class="prow" (click)="openForm(p)">
+          <td><span class="dos-badge">#{{ p.medicalFileId }}</span></td>
+          <td>
+            <div class="p-cell">
+              <div class="av">{{ initials(p.patientName) }}</div>
+              <span class="pname">{{ p.patientName }}</span>
+            </div>
+          </td>
+          <td class="em">{{ p.patientEmail }}</td>
+          <td>
+            <span *ngIf="p.chronicDisease" class="ch-tag">{{ p.chronicDisease }}</span>
+            <span *ngIf="!p.chronicDisease" class="nd">—</span>
+          </td>
+          <td>
+            <button class="btn-visite" (click)="openForm(p); $event.stopPropagation()">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+              </svg>
+              New Visit
+            </button>
+          </td>
+        </tr>
+        <!-- skeleton -->
+        <tr *ngFor="let s of sk" [style.display]="loading && patients.length===0 ? '' : 'none'" class="skrow">
+          <td><div class="skel sw60"></div></td>
+          <td><div class="skel sw130"></div></td>
+          <td><div class="skel sw200"></div></td>
+          <td><div class="skel sw80"></div></td>
+          <td><div class="skel sw100 sh28"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ─── MAIN MODAL ────────────────────────────────────────────────────────── -->
+  <div class="overlay" *ngIf="showModal" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <!-- Modal header -->
+      <div class="mh">
+        <div class="mh-left">
+          <div class="mh-ico">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+            </svg>
+          </div>
+          <div>
+            <h2>Medical Visit</h2>
+            <p *ngIf="sel">{{ sel.patientName }} &mdash; File #{{ sel.medicalFileId }}</p>
+          </div>
+        </div>
+        <button class="mc-btn" (click)="close()">✕</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button [class.active]="tab==='form'" (click)="tab='form'">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+          </svg>
+          New Visit
+        </button>
+        <button [class.active]="tab==='history'" (click)="tab='history'">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          History
+          <span class="hist-count" *ngIf="histEntries.length > 0">{{ histEntries.length }}</span>
+        </button>
+        <button [class.active]="tab==='full'" (click)="openFullRecordTab()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3 12.75h6m-6-3h6M5.25 18.75h-.75A2.25 2.25 0 012.25 16.5V7.5A2.25 2.25 0 014.5 5.25h9a2.25 2.25 0 012.25 2.25v1.5"/>
+          </svg>
+          Record
+        </button>
+      </div>
+
+      <!-- ── FORM TAB ── -->
+      <div class="mb" *ngIf="tab==='form'">
+
+        <!-- Patient info grid -->
+        <div class="info-grid">
+          <div class="ii"><label>Name</label><div class="iv">{{ sel?.patientName || '—' }}</div></div>
+          <div class="ii"><label>Email</label><div class="iv">{{ sel?.patientEmail || '—' }}</div></div>
+          <div class="ii"><label>Last Visit</label><div class="iv last-v">{{ derniereVisite || 'Never' }}</div></div>
+          <div class="ii"><label>Chronic Disease</label><div class="iv">{{ sel?.chronicDisease || '—' }}</div></div>
+        </div>
+
+        <!-- Category dropdown -->
+        <div class="fg">
+          <label class="fl">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+            </svg>
+            Category *
+          </label>
+          <div class="sel-wrap">
+            <select id="filiere-select" [(ngModel)]="form.filiere" class="form-sel">
+              <option value="">-- Select a category --</option>
+              <option value="Récupération des dépenses">Expense Recovery</option>
+              <option value="Filière public">Public Sector</option>
+              <option value="Médecin de famille">Family Doctor</option>
+            </select>
+            <svg class="sel-arr" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Assign Prescriptions -->
+        <div class="fg" *ngIf="sel?.existingPrescriptions?.length">
+          <label class="fl">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3 12.75h6m-6-3h6M5.25 18.75h-.75A2.25 2.25 0 012.25 16.5V7.5A2.25 2.25 0 014.5 5.25h9a2.25 2.25 0 012.25 2.25v1.5"/>
+            </svg>
+            Assign existing prescriptions
+          </label>
+          <div class="pr-list">
+            <label *ngFor="let pr of sel!.existingPrescriptions" class="pr-item">
+              <input type="checkbox" [checked]="isPrescriptionSelected(pr)" (change)="togglePrescription(pr)" />
+              <div class="pr-info">
+                <strong>Prescription #{{pr.prescriptionId}}</strong>
+                <span class="pr-date">{{ pr.date | date:'dd/MM/yyyy' }}</span>
+                <p class="pr-note" *ngIf="pr.note">{{pr.note}}</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Visit notes -->
+        <div class="fg">
+          <label class="fl">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+            </svg>
+            Visit notes *
+          </label>
+          <textarea id="visit-note" [(ngModel)]="form.visitNote" rows="3" placeholder="Observations, diagnosis, recommendations..." class="form-ta"></textarea>
+        </div>
+
+        <!-- Blood analysis -->
+        <div class="section-divider">
+          <div class="sd-label">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+            </svg>
+            Blood Analysis
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Results / Observations</label>
+          <textarea id="blood-analysis" [(ngModel)]="form.analyseSanguine" rows="2" placeholder="Blood sugar, blood count, blood type, other tests..." class="form-ta form-ta-red"></textarea>
+        </div>
+
+        <!-- Vaccination -->
+        <div class="section-divider">
+          <div class="sd-label">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+            </svg>
+            Vaccination
+          </div>
+        </div>
+        <div class="fg">
+          <div class="vaccin-list" *ngIf="form.vaccines.length > 0">
+            <div *ngFor="let v of form.vaccines; let i = index" class="vaccin-item">
+              <div class="vi-info">
+                <strong>{{ v.nom }}</strong> <span class="vi-type">{{ v.type }}</span>
+                <p>{{ v.observation }}</p>
+              </div>
+              <button class="vi-btn-del" (click)="removeVaccine(i)">✕</button>
+            </div>
+          </div>
+          <button class="btn-vaccin" (click)="openVaccineModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Add a vaccine
+          </button>
+        </div>
+
+        <!-- Urinary System -->
+        <div class="section-divider">
+          <div class="sd-label">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3 12.75h6m-6-3h6M5.25 18.75h-.75A2.25 2.25 0 012.25 16.5V7.5A2.25 2.25 0 014.5 5.25h9a2.25 2.25 0 012.25 2.25v1.5"/>
+            </svg>
+            Urinary System
+          </div>
+        </div>
+        <div class="fg">
+          <div class="vaccin-list" *ngIf="form.appareilUrinaire">
+            <div class="vaccin-item" style="border-left-color: #0ea5e9;">
+              <div class="vi-info">
+                <strong>Urinary Details Recorded</strong>
+                <p>Observations saved.</p>
+              </div>
+            </div>
+          </div>
+          <button class="btn-vaccin" style="border-color: #0ea5e9; color: #0284c7; background: #f0f9ff;" (click)="openUrinaryModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Urinary System Details
+          </button>
+        </div>
+
+        <!-- To Report -->
+        <div class="section-divider">
+          <div class="sd-label">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            To Report
+          </div>
+        </div>
+        <div class="fg">
+          <textarea id="autre-signaler" [(ngModel)]="form.autre" rows="2" placeholder="Other observations or notable incidents..." class="form-ta form-ta-warn"></textarea>
+        </div>
+
+        <!-- Feedback banners -->
+        <div class="succ-bar" *ngIf="saveSuccess">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+            </svg>
+            <strong>Visit recorded successfully!</strong>
+          </div>
+          <div style="font-size:.8rem;opacity:.9;margin-left:1.75rem;" *ngIf="lastSavedPrescriptions.length > 0">
+            Prescriptions added/linked: {{ lastSavedPrescriptions.join(', ') }}
+          </div>
+        </div>
+        <div class="err-bar" *ngIf="saveError">⚠ {{ saveError }}</div>
+      </div>
+
+      <!-- ── HISTORY TAB ── -->
+      <div class="mb" *ngIf="tab==='history'">
+        <div *ngIf="histEntries.length === 0" class="no-hist">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>No history for this patient</span>
+        </div>
+        <div *ngFor="let entry of histEntries; let i = index" class="hist-card">
+          <div class="hc-header">
+            <span class="hc-num">Visit #{{ histEntries.length - i }}</span>
+            <span class="hc-date">{{ extractDate(entry) }}</span>
+          </div>
+          <pre class="hc-body">{{ stripDate(entry) }}</pre>
+        </div>
+      </div>
+
+      <!-- ── FULL RECORD TAB ── -->
+      <div class="mb" *ngIf="tab==='full'">
+
+        <!-- Collapsible Medical Record Section (Moved from New Visit tab) -->
+        <div class="expandable-panel" [class.open]="showMedicalRecordSum">
+          <button class="ep-hdr" (click)="showMedicalRecordSum = !showMedicalRecordSum">
+            <div class="ep-hdr-left">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3 12.75h6m-6-3h6M5.25 18.75h-.75A2.25 2.25 0 012.25 16.5V7.5A2.25 2.25 0 014.5 5.25h9a2.25 2.25 0 012.25 2.25v1.5"/>
+              </svg>
+              <span>View medical record</span>
+            </div>
+            <svg class="ep-arr" [class.rotate-180]="showMedicalRecordSum" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </button>
+          <div class="ep-body" *ngIf="showMedicalRecordSum">
+            <h4 class="ep-title">Existing Prescriptions</h4>
+            <div *ngIf="!sel?.existingPrescriptions?.length" class="text-xs text-gray-500 mb-4">No active prescriptions.</div>
+            <div *ngIf="sel?.existingPrescriptions?.length" class="pr-list-sm mb-4">
+              <div *ngFor="let pr of sel!.existingPrescriptions" class="pr-item-sm !border-blue-200 !bg-blue-50">
+                <strong>Prescription #{{pr.prescriptionId}}</strong> - {{ pr.date | date:'dd/MM/yyyy' }}
+                <span *ngIf="pr.note">({{pr.note}})</span>
+              </div>
+            </div>
+            <h4 class="ep-title">Visit History</h4>
+            <div *ngIf="histEntries.length === 0" class="text-xs text-gray-500">No past visits.</div>
+            <div *ngIf="histEntries.length > 0" class="mini-hist">
+              <div *ngFor="let entry of histEntries; let i = index" class="hist-card-sm">
+                <div class="hc-header-sm">
+                  <span class="hc-num">Visit #{{ histEntries.length - i }}</span>
+                  <span class="hc-date">{{ extractDate(entry) }}</span>
+                </div>
+                <pre class="hc-body-sm">{{ stripDate(entry) }}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="loadingFullRecord" class="no-hist">
+          <div class="spinner-sm sp-white" style="position:relative; right:auto; border-top-color:#6366f1; border-width:3px; width:24px; height:24px; margin-bottom:1rem;"></div>
+          <span>Loading...</span>
+        </div>
+        <div *ngIf="!loadingFullRecord && !fullRecord" class="no-hist">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>No medical record found for this patient</span>
+        </div>
+        <div *ngIf="!loadingFullRecord && fullRecord">
+          <div class="info-grid">
+            <div class="ii"><label>Image / Lab</label><div class="iv">{{fullRecord.imageLabo || '—'}}</div></div>
+            <div class="ii"><label>AI Result</label><div class="iv">{{fullRecord.result_ia || '—'}}</div></div>
+            <div class="ii"><label>Type / Category</label><div class="iv">{{fullRecord.type || fullRecord.category || '—'}}</div></div>
+            <div class="ii">
+              <label>Overall Health Score</label>
+              <div class="iv last-v"
+                [class.text-green-600]="fullRecord.healthScore >= 75"
+                [class.text-red-600]="fullRecord.healthScore < 50">
+                {{fullRecord.healthScore}}<span style="font-size:0.75rem; color:#94a3b8">/100</span>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="fullRecord.imageUrl">
+            <div class="section-divider"><div class="sd-label">AI Medical Image</div></div>
+            <img [src]="fullRecord.imageUrl" alt="AI result" style="width:100%; max-height:200px; object-fit:contain; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; padding:0.5rem;"/>
+          </div>
+
+          <div class="section-divider">
+            <div class="sd-label">Patient Documents (Tests, Scans)</div>
+          </div>
+          <div *ngIf="fullRecord.patientImages && fullRecord.patientImages.length > 0" style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div *ngFor="let img of fullRecord.patientImages" style="border:1px solid #e2e8f0; padding:4px; border-radius:8px; background:#fff;">
+              <a [href]="getImageUrl(img)" target="_blank" style="text-decoration:none; color:#6366f1; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.25rem;">
+                <span *ngIf="img.toLowerCase().endsWith('.pdf')" style="padding:0.5rem;">📄 View PDF</span>
+                <img *ngIf="!img.toLowerCase().endsWith('.pdf')" [src]="getImageUrl(img)" style="max-width:100px; max-height:100px; display:block; border-radius:4px;" />
+              </a>
+            </div>
+          </div>
+          <div *ngIf="!fullRecord.patientImages || fullRecord.patientImages.length === 0" style="color:#94a3b8; font-size:0.875rem; text-align:center; padding:1rem 0;">
+            No additional documents have been added by the patient.
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mf">
+        <button class="btn-cancel" (click)="close()">Close</button>
+        <button *ngIf="tab==='form'" class="btn-valid" (click)="validate()" [disabled]="saving || !formIsValid()">
+          <span *ngIf="!saving">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+            </svg>
+            Confirm Visit
+          </span>
+          <span *ngIf="saving" class="spinner-sm sp-white"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── VACCINE SUB-MODAL ─────────────────────────────────────────────────── -->
+  <div class="overlay ov-high" *ngIf="showVaccineModal" (click)="closeVaccineModal()">
+    <div class="modal vac-modal" (click)="$event.stopPropagation()">
+      <div class="vm-hdr">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+        </svg>
+        New Vaccine
+      </div>
+      <div class="vm-body">
+        <div class="fg">
+          <label class="fl">Vaccine</label>
+          <div style="display:flex;gap:.5rem;">
+            <input type="text" [(ngModel)]="vacForm.nom" class="form-inp" style="flex:1" placeholder="Vaccine name...">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Type</label>
+          <input type="text" [(ngModel)]="vacForm.type" class="form-inp" placeholder="Type / batch...">
+        </div>
+        <div class="fg">
+          <label class="fl">Observation</label>
+          <input type="text" [(ngModel)]="vacForm.observation" class="form-inp" placeholder="Reactions, next booster...">
+        </div>
+      </div>
+      <div class="vm-foot">
+        <button class="btn-valid vm-btn-ok" (click)="saveVaccine()" [disabled]="!vacForm.nom">OK ✓</button>
+        <button class="btn-cancel vm-btn-no" (click)="closeVaccineModal()">Cancel ✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── URINARY SUB-MODAL ───────────────────────────────────────────────── -->
+  <div class="overlay ov-high" *ngIf="showUrinaryModal" (click)="closeUrinaryModal()">
+    <div class="modal vac-modal" style="max-width: 800px;" (click)="$event.stopPropagation()">
+      <div class="vm-hdr" style="background: linear-gradient(180deg,#f0f9ff 0%,#e0f2fe 100%); color: #0369a1; border-bottom: 1px solid #bae6fd;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3 12.75h6m-6-3h6M5.25 18.75h-.75A2.25 2.25 0 012.25 16.5V7.5A2.25 2.25 0 014.5 5.25h9a2.25 2.25 0 012.25 2.25v1.5"/>
+        </svg>
+        Urinary System
+      </div>
+      <div class="vm-body">
+        <div class="fg">
+          <label class="fl">Urinary System</label>
+          <textarea [(ngModel)]="form.appareilUrinaire" rows="2" class="form-ta" style="border-color: #bae6fd;" placeholder="Observations..."></textarea>
+        </div>
+      </div>
+      <div class="vm-foot">
+        <button class="btn-valid" style="background:linear-gradient(to bottom, #7dd3fc, #0ea5e9); color:#fff; min-width:100px; border:none;" (click)="closeUrinaryModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+</div>

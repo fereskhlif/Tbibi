@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de rendez-vous</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 24px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2563eb;
+            font-size: 24px;
+        }
+
+        .info-block {
+            background: #f0f9ff;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .info-row {
+            margin: 8px 0;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #374151;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Rendez-vous confirmé</h1>
+        <p class="greeting" th:text="'Bonjour ' + ${patientName} + ','"></p>
+        <p>Votre rendez-vous a bien été confirmé. Voici les détails :</p>
+        <div class="info-block">
+            <div class="info-row"><span class="label">Médecin :</span> <span th:text="${doctorName}"></span></div>
+            <div class="info-row"><span class="label">Spécialité :</span> <span th:text="${specialty}"></span></div>
+            <div class="info-row"><span class="label">Date :</span> <span th:text="${date}"></span></div>
+            <div class="info-row"><span class="label">Heure :</span> <span th:text="${time}"></span></div>
+            <div class="info-row"><span class="label">Lien de la consultation :</span>
+                <a th:href="${meetingLink}" style="color:#2563eb;text-decoration:none">Rejoindre la réunion</a>
+            </div>
+        </div>
+        <p>Merci de votre confiance. À bientôt !</p>
+    </div>
+</body>
+
+</html>

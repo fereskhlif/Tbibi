@@ -1,0 +1,151 @@
+<div class="lab-container">
+  <!-- Header -->
+  <div class="lab-header">
+    <div class="lab-title">
+      <h1>Lab Results</h1>
+      <p>View and track your test results</p>
+    </div>
+    <button (click)="downloadAll()" class="btn-download">
+      Download All
+    </button>
+  </div>
+
+  <!-- Notifications Section -->
+  <div class="notifications-section" *ngIf="notifications.length > 0">
+    <div class="notifications-header">
+      <h2>
+        🔔 Recent Notifications
+        <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </h2>
+      <button (click)="markAllAsRead()" class="btn-mark-read" *ngIf="unreadCount > 0">
+        Mark all as read
+      </button>
+    </div>
+    
+    <div class="notifications-list">
+      <div
+        *ngFor="let notification of notifications"
+        class="notification-card"
+        [class.unread]="!notification.read"
+        (click)="markNotificationAsRead(notification)">
+        <div class="notification-icon-wrapper">
+          🧪
+        </div>
+        <div class="notification-content">
+          <p class="notification-message">{{ notification.message }}</p>
+          <small class="notification-date">{{ notification.createdDate | date: 'MMM dd, yyyy HH:mm' }}</small>
+        </div>
+        <div class="notification-status">
+          <span class="unread-dot" *ngIf="!notification.read"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results List -->
+  <div class="results-list">
+    <div
+      *ngFor="let result of results"
+      class="result-card"
+      [class.expanded]="result.expanded">
+
+      <!-- Card Header -->
+      <div class="card-header" (click)="toggleResult(result)">
+        <div class="card-left">
+          <div class="icon-wrapper">
+            <lucide-icon name="microscope" class="icon"></lucide-icon>
+          </div>
+          <div class="card-info">
+            <h3>{{ result.testName }}</h3>
+            <p>{{ result.nameLabo }} • {{ result.testDate | date: 'MMM dd, yyyy' }}</p>
+          </div>
+        </div>
+        <div class="card-right">
+          <span class="status-badge" [ngClass]="getStatusClass(result.status)">
+            {{ result.status }}
+          </span>
+          <lucide-icon
+            name="chevron-down"
+            class="chevron"
+            [class.rotated]="result.expanded">
+          </lucide-icon>
+        </div>
+      </div>
+
+      <!-- Expanded Details -->
+      <div *ngIf="result.expanded" class="card-body">
+        <div class="result-details">
+          <div class="detail-row">
+            <span class="detail-label">Test Name</span>
+            <span class="detail-value">{{ result.testName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Laboratory</span>
+            <span class="detail-value">{{ result.nameLabo }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Location</span>
+            <span class="detail-value">{{ result.location }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Result Value</span>
+            <span class="detail-value highlight">{{ result.resultValue }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Test Date</span>
+            <span class="detail-value">{{ result.testDate | date: 'MMMM dd, yyyy' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Status</span>
+            <span class="status-badge" [ngClass]="getStatusClass(result.status)">{{ result.status }}</span>
+          </div>
+          <div class="detail-row" *ngIf="result.priority">
+            <span class="detail-label">Priority</span>
+            <span class="priority-badge" [class.priority-critical]="result.priority === 'Critical'" 
+                  [class.priority-urgent]="result.priority === 'Urgent'">
+              {{ result.priority }}
+            </span>
+          </div>
+          <div class="detail-row" *ngIf="result.notificationMessage">
+            <span class="detail-label">Notification</span>
+            <span class="detail-value notif-msg">{{ result.notificationMessage }}</span>
+          </div>
+          
+          <!-- ✅ Simple Explanation Section -->
+          <div class="explanation-section" *ngIf="result.expanded">
+            <button (click)="toggleExplanation(result); $event.stopPropagation()" class="btn-explain">
+              {{ result.showExplanation ? '📖 Hide Explanation' : '💡 What does this mean?' }}
+            </button>
+            <div class="explanation-box" *ngIf="result.showExplanation">
+              <h4>📚 Understanding Your Results</h4>
+              <p>{{ getSimpleExplanation(result) }}</p>
+              <div class="alert-box" *ngIf="hasAbnormalValues(result.resultValue)">
+                ⚠️ <strong>Note:</strong> Some values are outside the normal range. 
+                Please discuss these results with your doctor.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button (click)="shareWithDoctor(result); $event.stopPropagation()" 
+                  class="btn-action btn-share"
+                  *ngIf="result.prescribedByDoctorName">
+            👨‍⚕️ Share with Doctor
+          </button>
+          <button (click)="downloadResult(result); $event.stopPropagation()" class="btn-action">
+            <lucide-icon name="download" class="btn-icon"></lucide-icon>
+            Download PDF
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="results.length === 0" class="empty-state">
+      <span style="font-size: 4rem;">🧪</span>
+      <p>No lab results found</p>
+    </div>
+
+  </div>
+</div>

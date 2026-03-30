@@ -1,0 +1,112 @@
+<div class="p-8">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">Lab Results</h1>
+      <p class="text-gray-600">Review and manage patient laboratory results</p>
+    </div>
+    <button (click)="openRequestForm()" class="btn-request-test">
+      🧪 Request Lab Test
+    </button>
+  </div>
+
+  <!-- Request Test Form Modal -->
+  <div class="modal-overlay" *ngIf="showRequestForm" (click)="closeRequestForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h2 class="modal-title">Request Laboratory Test</h2>
+      
+      <div class="form-group">
+        <label>Patient ID *</label>
+        <input type="number" [(ngModel)]="requestForm.patientId" placeholder="Enter patient ID" />
+      </div>
+
+      <div class="form-group">
+        <label>Test Name *</label>
+        <input type="text" [(ngModel)]="requestForm.testName" placeholder="e.g., Complete Blood Count" />
+      </div>
+
+      <div class="form-group">
+        <label>Priority *</label>
+        <select [(ngModel)]="requestForm.priority">
+          <option value="Normal">Normal</option>
+          <option value="Urgent">Urgent</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Request Notes</label>
+        <textarea [(ngModel)]="requestForm.requestNotes" 
+                  placeholder="Additional instructions or clinical information..." 
+                  rows="3"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeRequestForm()" class="btn-cancel">Cancel</button>
+        <button (click)="submitTestRequest()" class="btn-submit">Send Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Section -->
+  <div class="notifications-section" *ngIf="notifications.length > 0">
+    <div class="notifications-header">
+      <h2>
+        🔔 Recent Notifications
+        <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </h2>
+      <button (click)="markAllAsRead()" class="btn-mark-read" *ngIf="unreadCount > 0">
+        Mark all as read
+      </button>
+    </div>
+    
+    <div class="notifications-list">
+      <div
+        *ngFor="let notification of notifications"
+        class="notification-card"
+        [class.unread]="!notification.read"
+        (click)="markNotificationAsRead(notification)">
+        <div class="notification-icon-wrapper">
+          🧪
+        </div>
+        <div class="notification-content">
+          <p class="notification-message">{{ notification.message }}</p>
+          <small class="notification-date">{{ notification.createdDate | date: 'MMM dd, yyyy HH:mm' }}</small>
+        </div>
+        <div class="notification-status">
+          <span class="unread-dot" *ngIf="!notification.read"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results List -->
+  <div class="space-y-4">
+    <div *ngFor="let result of results" class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🔬</span>
+          <div>
+            <h3 class="font-semibold text-gray-900">{{result.testName}}</h3>
+            <p class="text-sm text-gray-500">Patient: {{result.patient?.name || 'N/A'}} • {{result.testDate | date: 'MMM dd, yyyy'}}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span [class]="'px-3 py-1 text-xs rounded-full ' + getStatusClass(result.status)">{{result.status}}</span>
+          <button class="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg" (click)="reviewResult(result)">Review</button>
+        </div>
+      </div>
+      <div *ngIf="result.resultValue" class="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 mt-2">
+        <strong>Result:</strong> {{result.resultValue}}
+      </div>
+      <div *ngIf="result.notificationMessage" class="text-sm text-blue-600 bg-blue-50 rounded-lg p-3 mt-2">
+        <strong>📬 Notification:</strong> {{result.notificationMessage}}
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="results.length === 0" class="text-center py-12">
+      <span class="text-6xl">🧪</span>
+      <p class="text-gray-500 mt-4">No lab results found</p>
+    </div>
+  </div>
+</div>
