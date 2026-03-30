@@ -11,11 +11,11 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
 
         // ─── Docker ──────────────────────────────────────────────────────
-        DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/tbibi-backend"
+        DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/tbibi-backend_test"
         DOCKER_TAG   = "${BUILD_NUMBER}"
 
         // ─── GitHub ──────────────────────────────────────────────────────
-        GIT_REPO   = 'https://github.com/fereskhlif/Tbibi.git'
+        GIT_REPO   = 'https://github.com/fereskhlif/Esprit-PIDEV_SE-4SE2-2526-Tbibi.git'
         GIT_BRANCH = 'yassine_pipeline_test'
 
         // ─── Kubernetes ──────────────────────────────────────────────────
