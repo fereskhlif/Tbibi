@@ -1,37 +1,182 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { PatientEvaluationService } from '../../services/patient-evaluation.service';
+import { PatientEvaluation, PatientEvaluationRequest } from '../../models/patient-evaluation.model';
+import { HttpClient } from '@angular/common/http';
+
+interface Patient {
+  userId: number;
+  name: string;
+  email: string;
+}
+
 @Component({
-    selector: 'app-patient-evaluation', template: `
-  <div class="p-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">Patient Evaluation</h1><p class="text-gray-600 mb-6">Conduct and review patient assessments</p>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 class="font-semibold text-gray-900 mb-4">New Evaluation</h3>
-        <div class="space-y-4">
-          <div><label class="block text-sm text-gray-700 mb-1">Patient</label><select class="w-full px-4 py-2.5 border border-gray-300 rounded-lg"><option>Select Patient</option><option>John Doe</option><option>Jane Smith</option><option>Sarah Wilson</option></select></div>
-          <div><label class="block text-sm text-gray-700 mb-1">Evaluation Type</label><select class="w-full px-4 py-2.5 border border-gray-300 rounded-lg"><option>Initial Assessment</option><option>Follow-up</option><option>Discharge</option></select></div>
-          <div><label class="block text-sm text-gray-700 mb-1">Pain Assessment (0-10)</label><input type="range" min="0" max="10" [(ngModel)]="painLevel" class="w-full" /><div class="flex justify-between text-xs text-gray-500"><span>No Pain</span><span class="font-bold text-purple-600">{{painLevel}}</span><span>Severe</span></div></div>
-          <div><label class="block text-sm text-gray-700 mb-1">Clinical Notes</label><textarea class="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg resize-none" placeholder="Enter clinical observations..."></textarea></div>
-          <button class="w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Submit Evaluation</button>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 class="font-semibold text-gray-900 mb-4">Recent Evaluations</h3>
-        <div class="space-y-3">
-          <div *ngFor="let eval of evaluations" class="p-4 bg-gray-50 rounded-lg">
-            <div class="flex items-center justify-between mb-2"><p class="font-medium text-gray-900">{{eval.patient}}</p><span class="text-xs text-gray-500">{{eval.date}}</span></div>
-            <p class="text-sm text-gray-600">{{eval.type}} • Pain: {{eval.pain}}/10</p><p class="text-xs text-gray-500 mt-1">{{eval.notes}}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-` })
-export class PatientEvaluationComponent {
-    painLevel = 5;
-    evaluations = [
-        { patient: 'John Doe', date: 'Jan 15, 2024', type: 'Follow-up', pain: 3, notes: 'Good progress. ROM improving. Continue current protocol.' },
-        { patient: 'Jane Smith', date: 'Jan 14, 2024', type: 'Follow-up', pain: 5, notes: 'Moderate pain during overhead movements. Adjust exercises.' },
-        { patient: 'Sarah Wilson', date: 'Jan 12, 2024', type: 'Initial Assessment', pain: 6, notes: 'Chronic lower back pain. Limited flexion. MRI reviewed.' },
-        { patient: 'Mike Brown', date: 'Jan 10, 2024', type: 'Initial Assessment', pain: 7, notes: 'Post total knee replacement. Day 5. Starting gentle ROM.' }
-    ];
+  selector: 'app-patient-evaluation',
+  templateUrl: './patient-evaluation.component.html',
+  styleUrls: ['./patient-evaluation.component.css']
+})
+export class PatientEvaluationComponent implements OnInit {
+  evaluations: PatientEvaluation[] = [];
+  filteredEvaluations: PatientEvaluation[] = [];
+  patients: Patient[] = [];
+  currentPhysioId: number = 9;
+  
+  searchTerm: string = '';
+  
+  showCreateModal: boolean = false;
+  showDetailModal: boolean = false;
+  selectedEvaluation: PatientEvaluation | null = null;
+  
+  newEvaluation: PatientEvaluationRequest = this.getEmptyEvaluation();
+
+  private apiUrl = 'http://localhost:8088/api';
+
+  constructor(
+    private evaluationService: PatientEvaluationService,
+    private http: HttpClient
+  ) {}
+
+  ngOnInit(): void {
+    this.loadEvaluations();
+    this.loadPatients();
+  }
+
+  loadEvaluations(): void {
+    this.evaluationService.getByPhysiotherapist(this.currentPhysioId)
+      .subscribe({
+        next: (data) => {
+          this.evaluations = data;
+          this.applyFilters();
+        },
+        error: (err) => console.error('Error loading evaluations:', err)
+      });
+  }
+
+  loadPatients(): void {
+    this.http.get<any[]>(`${this.apiUrl}/therapy-session/physiotherapist/${this.currentPhysioId}`)
+      .subscribe({
+        next: (sessions) => {
+          const patientMap = new Map<number, Patient>();
+          sessions.forEach(session => {
+            if (!patientMap.has(session.patientId)) {
+              patientMap.set(session.patientId, {
+                userId: session.patientId,
+                name: session.patientName,
+                email: session.patientEmail || ''
+              });
+            }
+          });
+          this.patients = Array.from(patientMap.values());
+        },
+        error: (err) => console.error('Error loading patients:', err)
+      });
+  }
+
+  applyFilters(): void {
+    this.filteredEvaluations = this.evaluations.filter(evaluation => {
+      const matchesSearch = !this.searchTerm || 
+        evaluation.patientName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        evaluation.jointLocation?.toLowerCase().includes(this.searchTerm.toLowerCase());
+      
+      return matchesSearch;
+    });
+  }
+
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  openCreateModal(): void {
+    this.newEvaluation = this.getEmptyEvaluation();
+    this.showCreateModal = true;
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal = false;
+  }
+
+  openDetailModal(evaluation: PatientEvaluation): void {
+    this.selectedEvaluation = evaluation;
+    this.showDetailModal = true;
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedEvaluation = null;
+  }
+
+  createEvaluation(): void {
+    if (!this.validateEvaluation(this.newEvaluation)) return;
+    
+    this.evaluationService.create(this.newEvaluation).subscribe({
+      next: () => {
+        this.loadEvaluations();
+        this.closeCreateModal();
+        alert('Évaluation créée avec succès!');
+      },
+      error: (err) => {
+        console.error('Error creating evaluation:', err);
+        alert('Erreur lors de la création de l\'évaluation');
+      }
+    });
+  }
+
+  deleteEvaluation(evaluationId: number): void {
+    if (!confirm('Voulez-vous vraiment supprimer cette évaluation?')) return;
+    
+    this.evaluationService.delete(evaluationId).subscribe({
+      next: () => {
+        this.loadEvaluations();
+        alert('Évaluation supprimée avec succès!');
+      },
+      error: (err) => {
+        console.error('Error deleting evaluation:', err);
+        alert('Erreur lors de la suppression de l\'évaluation');
+      }
+    });
+  }
+
+  validateEvaluation(evaluation: PatientEvaluationRequest): boolean {
+    if (!evaluation.patientId || !evaluation.evaluationDate || 
+        evaluation.painScale === null || evaluation.painScale === undefined ||
+        !evaluation.painDescription || !evaluation.jointLocation ||
+        !evaluation.functionalLimitations) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return false;
+    }
+    if (evaluation.painScale < 0 || evaluation.painScale > 10) {
+      alert('L\'échelle de douleur doit être entre 0 et 10');
+      return false;
+    }
+    return true;
+  }
+
+  getEmptyEvaluation(): PatientEvaluationRequest {
+    return {
+      patientId: 0,
+      physiotherapistId: this.currentPhysioId,
+      evaluationDate: new Date().toISOString().split('T')[0],
+      painScale: 0,
+      painDescription: '',
+      flexionDegrees: 0,
+      extensionDegrees: 0,
+      jointLocation: '',
+      functionalLimitations: '',
+      generalObservations: '',
+      treatmentGoals: ''
+    };
+  }
+
+  getPainLevelClass(painScale: number): string {
+    if (painScale <= 3) return 'pain-low';
+    if (painScale <= 6) return 'pain-medium';
+    return 'pain-high';
+  }
+
+  getPainLevelText(painScale: number): string {
+    if (painScale === 0) return 'Aucune douleur';
+    if (painScale <= 3) return 'Douleur légère';
+    if (painScale <= 6) return 'Douleur modérée';
+    if (painScale <= 8) return 'Douleur sévère';
+    return 'Douleur extrême';
+  }
 }
