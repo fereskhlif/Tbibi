@@ -56,7 +56,6 @@ public class IAuthServiceImp implements IAuthService {
             role = roleRepository.save(role);
         }
 
-        // PATIENT → ACTIVE directement, autres rôles → PENDING (validation admin)
         UserStatus initialStatus = roleNameUpper.equals("PATIENT")
                 ? UserStatus.ACTIVE
                 : UserStatus.PENDING;
@@ -82,9 +81,17 @@ public class IAuthServiceImp implements IAuthService {
 
     @Override
     public AuthResponse login(LoginRequest req) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.email(), req.password())
-        );
+        log.info("Login attempt for email: {}", req.email());
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(req.email(), req.password())
+            );
+            log.info("Authentication successful for: {}", req.email());
+        } catch (Exception e) {
+            log.error("Authentication failed for {}: {}", req.email(), e.getMessage());
+            throw e;
+        }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(req.email());
         String token = jwtService.generateToken(userDetails);
@@ -94,14 +101,13 @@ public class IAuthServiceImp implements IAuthService {
                 .orElseThrow(() -> new IllegalStateException("No roles found"))
                 .getAuthority();
 
-        // ✅ Get userId from database
         User user = userRepository.findByEmail(req.email())
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
         return new AuthResponse(
-            token, 
-            userDetails.getUsername(), 
-            role, 
+            token,
+            userDetails.getUsername(),
+            role,
             user.getUserId(),
             user.getName(),
             user.getProfilePicture(),

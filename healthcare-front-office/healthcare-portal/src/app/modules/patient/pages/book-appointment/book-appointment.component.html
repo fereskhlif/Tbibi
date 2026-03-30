@@ -1,0 +1,193 @@
+<div class="book-appointment-page">
+  <!-- Doctor selection (before stepper) -->
+  <ng-container *ngIf="!selectedDoctor">
+    <div class="search-section p-6 bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">Prendre un rendez-vous</h1>
+      <p class="text-gray-600 mb-6">Recherchez un médecin par spécialité ou par nom</p>
+
+      <div class="flex flex-wrap gap-4 mb-6">
+        <div class="flex gap-2">
+          <button (click)="searchMode = 'specialty'" [class.bg-blue-600]="searchMode === 'specialty'" [class.text-white]="searchMode === 'specialty'" [class.bg-gray-100]="searchMode !== 'specialty'" class="px-4 py-2 rounded-lg font-medium transition-colors">Par spécialité</button>
+          <button (click)="searchMode = 'name'" [class.bg-blue-600]="searchMode === 'name'" [class.text-white]="searchMode === 'name'" [class.bg-gray-100]="searchMode !== 'name'" class="px-4 py-2 rounded-lg font-medium transition-colors">Par nom</button>
+        </div>
+        <div class="flex-1 flex gap-2 min-w-[200px]">
+          <select *ngIf="searchMode === 'specialty'" [(ngModel)]="selectedSpecialty" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+            <option value="">-- Choisir une spécialité --</option>
+            <option *ngFor="let s of specialties" [value]="s">{{ s }}</option>
+          </select>
+          <input *ngIf="searchMode === 'name'" type="text" [(ngModel)]="searchName" placeholder="Nom du médecin..." class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" />
+          <button (click)="searchDoctors()" [disabled]="loadingDoctors || (searchMode === 'specialty' ? !selectedSpecialty : !searchName.trim())" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">Rechercher</button>
+        </div>
+      </div>
+
+      <div *ngIf="loadingDoctors" class="text-center py-8 text-gray-500">Chargement...</div>
+      <div *ngIf="!loadingDoctors && doctors.length === 0" class="text-center py-8 text-gray-500">Aucun médecin trouvé.</div>
+      <div *ngIf="!loadingDoctors && doctors.length > 0" class="space-y-4">
+        <div *ngFor="let doc of doctors" class="doctor-card flex flex-wrap items-start gap-4 p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
+          <img *ngIf="doc.profilPicture" [src]="doc.profilPicture" alt="" class="w-16 h-16 rounded-lg object-cover" />
+          <div *ngIf="!doc.profilPicture" class="w-16 h-16 rounded-lg bg-blue-100 flex items-center justify-center text-2xl">👨‍⚕️</div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-lg font-bold text-blue-600">{{ doc.name }}</h3>
+            <p class="text-gray-700">{{ doc.specialty }}</p>
+            <p *ngIf="doc.adresse" class="text-sm text-gray-500 flex items-center gap-1 mt-1">
+              <span>📍</span> {{ doc.adresse }}
+            </p>
+          </div>
+          <button (click)="selectDoctor(doc)" class="px-6 py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-colors">
+            <span>📅</span> Prendre Rendez-vous
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Stepper + booking flow (when doctor selected) -->
+  <ng-container *ngIf="selectedDoctor as doctor">
+    <div class="booking-card bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden max-w-2xl mx-auto">
+      <!-- Doctor header -->
+      <div class="bg-blue-600 text-white p-6 flex items-center gap-4">
+        <img *ngIf="doctor.profilPicture" [src]="doctor.profilPicture" alt="" class="w-14 h-14 rounded-lg object-cover" />
+        <div *ngIf="!doctor.profilPicture" class="w-14 h-14 rounded-lg bg-white/20 flex items-center justify-center text-2xl">👨‍⚕️</div>
+        <div>
+          <h2 class="font-bold text-xl">Dr {{ doctor.name }}</h2>
+          <p class="text-blue-100">{{ doctor.specialty }}</p>
+          <p *ngIf="doctor.adresse" class="text-sm flex items-center gap-1 mt-1">
+            <span>📍</span> {{ doctor.adresse }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Stepper -->
+      <div class="stepper flex items-center px-6 py-4 border-b border-gray-100">
+        <ng-container *ngFor="let s of steps; let i = index">
+          <div class="flex items-center">
+            <div [class]="'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ' + (i < currentStep ? 'bg-blue-600 text-white' : i === currentStep ? 'bg-amber-400 text-gray-900' : 'bg-gray-200 text-gray-500')">
+              <span *ngIf="i < currentStep">✓</span>
+              <span *ngIf="i >= currentStep">{{ i + 1 }}</span>
+            </div>
+            <span class="ml-2 text-sm font-medium" [class.text-gray-400]="i > currentStep" [class.text-amber-600]="i === currentStep">{{ s }}</span>
+            <div *ngIf="i < steps.length - 1" class="w-8 h-0.5 mx-2" [class.bg-blue-600]="i < currentStep" [class.bg-gray-200]="i >= currentStep"></div>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="p-6">
+        <!-- Step 0: Date/Heure -->
+        <div *ngIf="currentStep === 0">
+          <h3 class="font-bold text-gray-800 mb-4">Veuillez choisir la date du rendez-vous</h3>
+          <div class="flex items-center justify-between mb-4">
+            <span class="font-semibold text-gray-700">{{ getCurrentMonthYear() }}</span>
+          </div>
+          <div class="flex gap-2 overflow-x-auto pb-4 mb-6">
+            <button *ngFor="let g of groupedSlots" (click)="selectedDate = g.date" [class.bg-blue-600]="selectedDate === g.date" [class.text-white]="selectedDate === g.date" [class.bg-gray-100]="selectedDate !== g.date" [class.text-gray-700]="selectedDate !== g.date" class="flex-shrink-0 py-3 px-4 rounded-xl border-2 border-transparent hover:border-blue-300 transition-all text-center">
+              <span class="block text-xs opacity-80">{{ getDayName(g.date) }}</span>
+              <span class="block text-lg font-bold">{{ getDayNum(g.date) }}</span>
+              <span class="block text-xs opacity-80">{{ getMonthShort(g.date) }}</span>
+            </button>
+          </div>
+          <h3 class="font-bold text-gray-800 mb-4">Veuillez choisir l'heure du rendez-vous</h3>
+          <div *ngIf="loadingSchedules" class="text-center py-8 text-gray-500">Chargement des créneaux...</div>
+          <div *ngIf="scheduleError" class="text-red-500 py-4">{{ scheduleError }}</div>
+          <div *ngIf="!loadingSchedules && !scheduleError && groupedSlots.length === 0" class="text-red-500 py-4">Aucun créneau disponible.</div>
+          <div *ngIf="!loadingSchedules && groupedSlots.length > 0" class="grid grid-cols-4 gap-2 mb-4">
+            <ng-container *ngFor="let g of groupedSlots">
+              <ng-container *ngIf="selectedDate === g.date">
+                <button *ngFor="let slot of g.slots" (click)="selectedSlot = slot" [class.bg-blue-600]="selectedSlot?.scheduleId === slot.scheduleId" [class.text-white]="selectedSlot?.scheduleId === slot.scheduleId" [class.border-blue-600]="selectedSlot?.scheduleId === slot.scheduleId" [class.bg-gray-50]="selectedSlot?.scheduleId !== slot.scheduleId" [class.text-gray-900]="selectedSlot?.scheduleId !== slot.scheduleId" class="py-3 rounded-lg border-2 border-gray-200 font-semibold text-sm transition-all hover:bg-gray-100">
+                  {{ slotTime(slot) }}
+                </button>
+              </ng-container>
+            </ng-container>
+          </div>
+          <p class="text-blue-600 text-sm font-medium mb-4 cursor-pointer hover:underline text-center">Voir plus d'horaires</p>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Motif de la visite</label>
+            <textarea [(ngModel)]="reasonForVisit" rows="3" placeholder="Décrivez brièvement le motif de votre consultation..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button (click)="cancelBooking()" class="px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg flex items-center gap-2">
+              <span>✕</span> Annuler
+            </button>
+            <button (click)="goToVerification()" [disabled]="!canProceedDateHeure()" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+              <span>✓</span> Confirmer
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 1: Vérification (patient info) -->
+        <div *ngIf="currentStep === 1">
+          <div class="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <p class="text-sm text-gray-700">Votre rendez-vous le :</p>
+            <p class="font-bold text-gray-900 flex items-center gap-2 mt-1">
+              <span>📅</span> {{ selectedSlot ? formatDateDisplay(selectedDate) : '' }}
+              <span class="ml-2">🕐</span> {{ selectedSlot ? formatTimeDisplay(selectedSlot) : '' }}
+            </p>
+            <div class="flex gap-4 mt-2 text-sm">
+              <a class="text-blue-600 hover:underline flex items-center gap-1 cursor-pointer">🔄 Déplacer RDV</a>
+              <a (click)="cancelBooking()" class="text-red-600 hover:underline flex items-center gap-1 cursor-pointer">✕ Annuler RDV</a>
+            </div>
+          </div>
+          <h3 class="font-bold text-gray-800 mb-4">Vos informations</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nom / Prénom</label>
+              <input type="text" [(ngModel)]="patientName" placeholder="Votre nom complet"
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Adresse e-mail</label>
+              <input type="email" [(ngModel)]="patientEmail" placeholder="exemple@email.com"
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" />
+              <p class="text-sm text-gray-500 mt-1">Un code à 4 chiffres vous sera envoyé à cette adresse e-mail.</p>
+            </div>
+            <p class="text-xs text-gray-500">En cliquant sur Suivant, vous acceptez les CGU et la politique de confidentialité.</p>
+            <p *ngIf="verificationError" class="text-red-600 text-sm">{{ verificationError }}</p>
+            <button (click)="sendVerificationCode()" [disabled]="!canProceedVerification() || sendingCode" class="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ sendingCode ? 'Envoi...' : 'Suivant >' }}
+            </button>
+            <p class="text-xs text-gray-400 flex items-center gap-1">
+              <span>🔒</span> Votre connexion est sécurisée
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 2: Confirmation (4-digit code) -->
+        <div *ngIf="currentStep === 2">
+          <p class="text-gray-700 mb-4">Veuillez saisir le code à 4 chiffres que nous venons de vous envoyer par e-mail à <b>{{ getDisplayEmail() }}</b></p>
+          <div class="flex gap-2 mb-4">
+            <input type="text" [(ngModel)]="verificationCode" maxlength="4" placeholder="####" class="flex-1 px-4 py-3 border-2 border-blue-200 rounded-lg text-center text-xl font-mono tracking-widest focus:ring-2 focus:ring-blue-400 outline-none" />
+            <button (click)="validateCode()" [disabled]="verificationCode.length !== 4 || confirming" class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ confirming ? '...' : 'Valider' }}
+            </button>
+          </div>
+          <p class="text-sm text-gray-500 mb-4">Si vous ne recevez pas l'email sous 2 minutes, vérifiez vos spams ou vérifiez l'adresse saisie et demandez un nouveau code.</p>
+          <p *ngIf="confirmError" class="text-red-600 text-sm mb-4">{{ confirmError }}</p>
+          <p class="text-xs text-gray-400 flex items-center gap-1">
+            <span>🔒</span> Votre connexion est sécurisée
+          </p>
+        </div>
+
+        <!-- Step 3: Succès -->
+        <div *ngIf="currentStep === 3 && confirmedAppointment as appointment" class="text-center py-8">
+          <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">🕐</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Demande envoyée !</h3>
+          <p class="text-gray-600 mb-2">Votre demande de rendez-vous a bien été reçue.</p>
+          <p class="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-6">
+            ⏳ En attente de confirmation du médecin. Vous serez notifié(e) une fois que <strong>Dr {{ appointment.doctor }}</strong> aura confirmé votre rendez-vous.
+          </p>
+          <div class="bg-blue-50 rounded-xl p-4 mb-6 text-left">
+            <p><strong>Dr {{ appointment.doctor }}</strong> - {{ appointment.specialty }}</p>
+            <p class="text-sm text-gray-600 mt-1">{{ appointment.scheduleDate }} à {{ (appointment.scheduleTime || '').toString().substring(0, 5) }}</p>
+            <span class="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">EN ATTENTE</span>
+          </div>
+          <div class="flex justify-center gap-2">
+            <button (click)="reschedule()" class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg">Modifier</button>
+            <a [routerLink]="['/patient', 'appointments']" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Mes rendez-vous</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center mt-4">
+      <button (click)="backToDoctors()" class="text-blue-600 hover:underline text-sm">← Changer de médecin</button>
+    </div>
+  </ng-container>
+</div>
