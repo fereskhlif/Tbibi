@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tn.esprit.pi.tbibi.entities.Role;
 import tn.esprit.pi.tbibi.entities.UserStatus;
 
 import java.time.LocalDate;
@@ -16,7 +17,7 @@ public class UserAdminResponse {
     private int userId;
     private String name;
     private String email;
-    private String roleName;
+    private Role role;
     private LocalDate dateOfBirth;
     private String gender;
     private UserStatus accountStatus;
