@@ -74,7 +74,8 @@ public class MedicalPictureAnalysisService implements IMedicalPictureAnalysisSer
                 + " | history=" + request.getHistory());
 
 
-        Laboratory_Result lab = labRepo.findById(request.getLaboratoryResultId()).get();
+        Laboratory_Result lab = labRepo.findById(request.getLaboratoryResultId())
+                .orElseThrow(() -> new RuntimeException("Laboratory result not found with id: " + request.getLaboratoryResultId()));
 
         // ✅ Sauvegarder l'image sur le serveur
         String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();

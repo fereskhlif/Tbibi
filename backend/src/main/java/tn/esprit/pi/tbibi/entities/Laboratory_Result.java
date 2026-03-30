@@ -43,7 +43,7 @@ public class Laboratory_Result {
 
     // ✅ Patient qui reçoit le résultat
     @ManyToOne
-    @JoinColumn(name = "patient_id", nullable = true)
+    @JoinColumn(name = "patient_user_id", nullable = true)
     @ToString.Exclude
     private User patient;
 
