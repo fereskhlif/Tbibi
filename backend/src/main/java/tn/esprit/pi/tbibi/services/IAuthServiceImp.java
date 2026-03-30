@@ -85,13 +85,21 @@ public class IAuthServiceImp implements IAuthService {
             log.info("Role found with ID: {}", role.getRole_id());
         }
 
-        // Déterminer le statut selon le rôle
+        // Déterminer le statut selon le rôle et valider le document
         tn.esprit.pi.tbibi.entities.UserStatus status = tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE;
-        if (roleNameUpper.equals("MEDECIN") || roleNameUpper.equals("DOCTEUR") || roleNameUpper.equals("DOCTOR") ||
+        boolean isProfessional = roleNameUpper.equals("MEDECIN") || roleNameUpper.equals("DOCTEUR") || roleNameUpper.equals("DOCTOR") ||
             roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS") || roleNameUpper.equals("PHARMACIST") ||
             roleNameUpper.equals("LABORATOIRE") || roleNameUpper.equals("LABORATORY") || 
-            roleNameUpper.equals("KINE") || roleNameUpper.equals("PHYSIOTHERAPIST")) {
+            roleNameUpper.equals("KINE") || roleNameUpper.equals("PHYSIOTHERAPIST");
+
+        if (isProfessional) {
             status = tn.esprit.pi.tbibi.entities.UserStatus.PENDING;
+            
+            // Validation stricte du document pour les professionnels
+            if (req.documentBase64() == null || req.documentBase64().isBlank() || 
+                req.documentName() == null || req.documentName().isBlank()) {
+                throw new IllegalArgumentException("Un diplôme ou certificat est obligatoire pour les professionnels de santé.");
+            }
         }
 
         // Sauvegarder le document s'il existe

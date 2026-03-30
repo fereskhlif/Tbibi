@@ -145,6 +145,11 @@ export class LoginComponent {
         }
       }
 
+      if (this.isProfessionalRole() && !this.uploadedDocumentBase64) {
+        this.errorMessage = 'Vous devez obligatoirement télécharger votre diplôme ou certificat.';
+        return;
+      }
+
       this.isLoading = true;
 
       const registerData: any = {

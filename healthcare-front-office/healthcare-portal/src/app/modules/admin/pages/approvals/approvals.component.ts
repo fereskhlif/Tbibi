@@ -141,22 +141,19 @@ export class AdminApprovalsComponent implements OnInit {
 
   getDiplomaUrl(profilePicture: string): string {
     if (!profilePicture) return '';
-    // Already a full URL
     if (profilePicture.startsWith('http')) return profilePicture;
     
-    // Extract just the filename in case the DB stored it with path like "uploads/..."
     const filename = profilePicture.replace(/^.*[\\/]/, '');
-
-    // Return the URL mapping to the proxy endpoint exposing the uploads folder
-    return `${environment.baseUrl}/uploads/documents/${filename}`;
+    // Construction de l'URL vers le backend de l'API (généralement sur le port 8088)
+    return `http://localhost:8088/uploads/documents/${filename}`;
   }
 
   openDiploma(user: AdminUser, event: Event): void {
-    if (user.profilePicture) {
+    if (user.profilePicture && user.profilePicture.trim() !== '') {
       window.open(this.getDiplomaUrl(user.profilePicture), '_blank');
     } else {
-      // Si pas de diplôme, ouvrir un PDF de test
-      window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
+      // Si pas de diplôme, on avertit au lieu d'ouvrir le faux PDF du W3C
+      alert("❌ Aucun diplôme ou document justificatif n'a été fourni par " + user.name + " lors de son inscription.");
     }
   }
 }

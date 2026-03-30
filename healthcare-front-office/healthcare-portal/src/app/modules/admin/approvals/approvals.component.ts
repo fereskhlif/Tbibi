@@ -135,20 +135,17 @@ export class AdminApprovalsComponent implements OnInit {
   }
 
   openDiploma(user: AdminUser, event: Event): void {
-    if (!user.profilePicture) {
-      event.preventDefault();
-      // Si pas de diplôme, ouvrir un PDF de test
-      window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
+    if (user.profilePicture && user.profilePicture.trim() !== '') {
+      window.open(this.getDiplomaUrl(user.profilePicture), '_blank');
+    } else {
+      alert("❌ Aucun diplôme ou document justificatif n'a été fourni par " + user.name + " lors de son inscription.");
     }
-    // Si diplôme existe, laisser le href ouvrir normalement avec target="_blank"
   }
 
   getDiplomaUrl(profilePicture: string): string {
     if (!profilePicture) return '';
-    // Already a full URL
     if (profilePicture.startsWith('http')) return profilePicture;
-    // Path stored as just filename, serve via backend static handler
     const filename = profilePicture.replace(/^.*[\\/]/, '');
-    return `${environment.baseUrl}/uploads/profiles/${filename}`;
+    return `http://localhost:8088/uploads/documents/${filename}`;
   }
 }
