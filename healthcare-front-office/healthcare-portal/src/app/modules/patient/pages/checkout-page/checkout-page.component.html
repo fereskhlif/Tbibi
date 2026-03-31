@@ -1,0 +1,157 @@
+<div class="min-h-screen bg-[#F8FAFC] py-10 px-4 sm:px-6 lg:px-8 font-sans">
+    <div class="max-w-6xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-8">
+            <button (click)="goBack()"
+                class="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-blue-600 bg-white hover:bg-gray-50 rounded-full shadow-sm border border-gray-100 transition-colors mr-2">
+                <lucide-icon name="chevron-left" [size]="20"></lucide-icon>
+            </button>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Complete Your Order</h1>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+
+            <!-- Left Column: Details -->
+            <div class="flex-1 space-y-6">
+
+                <!-- Local Error inside Checkout -->
+                <div *ngIf="checkoutError"
+                    class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl text-sm font-bold flex items-start gap-4 shadow-sm animate-fade-in">
+                    <lucide-icon name="alert-circle" class="w-6 h-6 shrink-0 mt-0.5 text-red-500"></lucide-icon>
+                    <div>
+                        <p class="text-base text-red-800 mb-1">Order Processing Failed</p>
+                        <p class="font-medium opacity-90">{{ checkoutError }}</p>
+                    </div>
+                </div>
+
+                <!-- Order Items Summary (Read Only) -->
+                <div class="bg-white rounded-3xl p-6 lg:p-8 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
+                        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                            <lucide-icon name="package" [size]="20"></lucide-icon>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">Review Items</h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div *ngFor="let item of (cartService.cartItems$ | async)"
+                            class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <div>
+                                <h4 class="font-bold text-gray-900 text-[15px] leading-tight mb-1">
+                                    {{item.medicine.medicineName}}</h4>
+                                <p class="text-xs text-gray-500 font-medium">Qty: <strong
+                                        class="text-gray-900">{{item.quantity}}</strong> &times; {{item.medicine.price |
+                                    number:'1.2-2'}} DT</p>
+                            </div>
+                            <span
+                                class="font-bold text-gray-900 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">{{item.medicine.price
+                                * item.quantity | number:'1.2-2'}} DT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pharmacy Info -->
+                <div class="bg-white rounded-3xl p-6 lg:p-8 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
+                        <div
+                            class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
+                            <lucide-icon name="map-pin" [size]="20"></lucide-icon>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">Dispensing Pharmacy</h2>
+                    </div>
+
+                    <div *ngIf="selectedPharmacy; else missingPharm" class="flex gap-4 items-start">
+                        <div
+                            class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center shrink-0 border border-blue-100">
+                            <lucide-icon name="plus" class="text-blue-500 w-8 h-8"></lucide-icon>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-lg text-gray-900 mb-1">{{selectedPharmacy.pharmacyName}}</h3>
+                            <p class="text-gray-500 text-sm mb-3 flex items-start gap-2">
+                                <lucide-icon name="map-pin" [size]="16"
+                                    class="mt-0.5 text-gray-400 shrink-0"></lucide-icon>
+                                {{selectedPharmacy.address || 'Address not listed'}}
+                            </p>
+                            <span
+                                class="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest inline-flex border border-emerald-200">
+                                Verified Partner
+                            </span>
+                        </div>
+                    </div>
+
+                    <ng-template #missingPharm>
+                        <div class="text-gray-400 italic text-sm">Loading pharmacy details...</div>
+                    </ng-template>
+                </div>
+            </div>
+
+            <!-- Right Column: Order Summary & Checkout -->
+            <div class="w-full lg:w-[400px]">
+                <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 lg:p-8 sticky top-6">
+
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-8">Order Summary</h2>
+
+                    <!-- Readonly Lines -->
+                    <div class="space-y-4 text-sm mb-8">
+                        <div *ngFor="let item of (cartService.cartItems$ | async)"
+                            class="flex justify-between items-start text-gray-600">
+                            <span class="flex-1 pr-4 line-clamp-1 block">{{item.quantity}}x
+                                {{item.medicine.medicineName}}</span>
+                            <span class="font-bold text-gray-900 shrink-0">{{item.medicine.price * item.quantity |
+                                number:'1.2-2'}} DT</span>
+                        </div>
+                    </div>
+
+                    <div class="h-px bg-gray-100 w-full mb-6"></div>
+
+                    <!-- Totals -->
+                    <div class="space-y-4 text-sm mb-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500 font-medium">Subtotal</span>
+                            <span class="font-bold text-gray-700">{{cartService.getTotalAmount() | number:'1.2-2'}}
+                                DT</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500 font-medium">Delivery</span>
+                            <span
+                                class="font-bold text-emerald-600 uppercase tracking-widest text-xs bg-emerald-50 px-2 py-0.5 rounded">Free</span>
+                        </div>
+                    </div>
+
+                    <div class="h-px bg-gray-200 w-full mb-6 relative">
+                        <div class="absolute -left-8 -top-3 w-6 h-6 bg-[#F8FAFC] rounded-full"></div>
+                        <div class="absolute -right-8 -top-3 w-6 h-6 bg-[#F8FAFC] rounded-full"></div>
+                    </div>
+
+                    <div class="flex justify-between items-end mb-8">
+                        <span class="text-gray-900 font-bold text-[15px] uppercase tracking-wider">Total</span>
+                        <span class="text-4xl font-extrabold text-[#0F172A]">{{cartService.getTotalAmount() |
+                            number:'1.2-2'}} <span class="text-lg">DT</span></span>
+                    </div>
+
+                    <button (click)="placeOrder()" [disabled]="isOrdering"
+                        class="relative w-full h-[60px] bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-xl rounded-2xl shadow-xl shadow-blue-500/30 transition-all active:scale-[0.98] overflow-hidden group">
+
+                        <div *ngIf="isOrdering"
+                            class="absolute inset-0 bg-blue-800 flex items-center justify-center gap-3">
+                            <div class="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin">
+                            </div>
+                            <span class="text-lg tracking-wide">Processing...</span>
+                        </div>
+
+                        <div *ngIf="!isOrdering" class="flex items-center justify-center gap-3 h-full w-full">
+                            <lucide-icon name="shield-check" [size]="22"></lucide-icon>
+                            Place Order
+                        </div>
+                    </button>
+
+                    <p class="text-[11px] text-center text-gray-400 mt-4 leading-relaxed font-medium">By placing your
+                        order, you agree to our Terms of Sale and Privacy Policy.</p>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -60,7 +60,7 @@ public class ChronicConditionServiceTest {
     void testCreate_DoctorNotFound() {
         ChronicConditionRequest req = new ChronicConditionRequest();
         req.setDoctorId(999);
-        when(userRepo.findById(999L)).thenReturn(Optional.empty());
+        when(userRepo.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> service.create(req));
     }
@@ -73,8 +73,8 @@ public class ChronicConditionServiceTest {
         req.setConditionType("HEART_RATE");
         req.setValue(110.0);
 
-        when(userRepo.findById(2L)).thenReturn(Optional.of(doctor));
-        when(userRepo.findById(1L)).thenReturn(Optional.of(patient));
+        when(userRepo.findById(2)).thenReturn(Optional.of(doctor));
+        when(userRepo.findById(1)).thenReturn(Optional.of(patient));
 
         ChronicCondition mockSaved = new ChronicCondition();
         mockSaved.setId(10L);

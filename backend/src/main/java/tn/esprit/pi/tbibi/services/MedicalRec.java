@@ -237,7 +237,7 @@ public class MedicalRec implements IMedicalReccordsService {
                     if (acte.getPrescriptions() != null) {
                         String docName = "Inconnu";
                         if (acte.getDoctorId() != null) {
-                            User doc = userRepo.findById(acte.getDoctorId().longValue()).orElse(null);
+                            User doc = userRepo.findById(acte.getDoctorId()).orElse(null);
                             if (doc != null) docName = doc.getName();
                         }
                         final String finalDocName = docName;

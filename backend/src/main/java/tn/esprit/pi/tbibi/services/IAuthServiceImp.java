@@ -58,8 +58,20 @@ public class IAuthServiceImp implements IAuthService {
         }
 
         // Validation du mot de passe
-        if (req.password() == null || req.password().length() < 6) {
-            throw new IllegalArgumentException("Password must contain at least 6 characters");
+        if (req.password() == null || req.password().length() < 8) {
+            throw new IllegalArgumentException("Password must contain at least 8 characters");
+        }
+        if (!req.password().matches(".*[A-Z].*")) {
+            throw new IllegalArgumentException("Password must contain at least one uppercase letter");
+        }
+        if (!req.password().matches(".*[a-z].*")) {
+            throw new IllegalArgumentException("Password must contain at least one lowercase letter");
+        }
+        if (!req.password().matches(".*\\d.*")) {
+            throw new IllegalArgumentException("Password must contain at least one number");
+        }
+        if (!req.password().matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
+            throw new IllegalArgumentException("Password must contain at least one special character");
         }
 
         // Validation du rôle

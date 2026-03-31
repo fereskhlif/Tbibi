@@ -83,7 +83,7 @@ public class ScheduleService implements IScheduleService {
     }
 
     private User findDoctorById(Integer doctorId) {
-        return userRepo.findById(doctorId.longValue())
+        return userRepo.findById(doctorId)
                 .orElseThrow(() -> new EntityNotFoundException("Doctor not found with id: " + doctorId));
     }
 }

@@ -7,13 +7,16 @@ import { ActivateAccountComponent } from './pages/activate-account/activate-acco
 import { MainLayoutComponent } from './shared/layouts/main-layout/main-layout.component';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
-
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 const routes: Routes = [
   { path: '', component: HomepageComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: LoginComponent, data: { signupMode: true } },
-  { path: 'activate-account', component: ActivateAccountComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'graphic-charter', component: GraphicCharterComponent },
+  { path: 'activate-account', component: ActivateAccountComponent },
   {
     path: 'patient',
     component: MainLayoutComponent,
@@ -45,8 +48,8 @@ const routes: Routes = [
   {
     path: 'laboratory',
     component: MainLayoutComponent,
-    canActivate: [AuthGuard, RoleGuard],
-    data: { role: 'LABORATORY' },  // ⚠️ 'LABORATORY' (correspond)
+canActivate: [AuthGuard, RoleGuard],
+    data: { role: 'LABORATORY' },
     loadChildren: () => import('./modules/laboratory/laboratory.module').then(m => m.LaboratoryModule)
   },
   {
@@ -55,7 +58,20 @@ const routes: Routes = [
     canActivate: [AuthGuard, RoleGuard],
     data: { role: 'ADMIN' },
     loadChildren: () => import('./modules/admin/admin.module').then(m => m.AdminModule)
-  }
+  },
+  {
+    path: 'forum',
+    component: MainLayoutComponent,
+    data: { role: 'patient' },
+    loadChildren: () => import('./modules/forum/forum.module').then(m => m.ForumModule)
+  },
+  {
+    path: 'notifications',
+    component: MainLayoutComponent,
+    data: { role: 'patient' },
+    loadChildren: () => import('./modules/notifications/notifications.module').then(m => m.NotificationsModule)
+  },
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({

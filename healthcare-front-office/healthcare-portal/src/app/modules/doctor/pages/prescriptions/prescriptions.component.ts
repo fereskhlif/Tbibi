@@ -111,7 +111,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     let list = this.activeFilter === 'ALL'
       ? [...this.prescriptions]
       : this.prescriptions.filter(rx => rx.status === this.activeFilter);
-      
+
     if (this.patientSearch.trim()) {
       const q = this.patientSearch.toLowerCase();
       list = list.filter(rx => rx.patientName?.toLowerCase().includes(q));

@@ -20,7 +20,7 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
   // ── Detail modal ──────────────────────────────────────────────────────────
   showDetail = false;
   detailRx: PrescriptionResponse | null = null;
-  
+
   showActeModal = false;
   acteForRx: ActeDTO | null = null;
 
@@ -181,11 +181,11 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
     event?.stopPropagation();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    
+
     // Header background
     doc.setFillColor(14, 165, 233); // Cyan-500
     doc.rect(0, 0, pageWidth, 35, 'F');
-    
+
     // Header Text
     doc.setFontSize(24);
     doc.setTextColor(255, 255, 255);
@@ -229,7 +229,7 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
     doc.setTextColor(71, 85, 105);
     const splitNote = doc.splitTextToSize(rx.note || 'No additional notes provided.', pageWidth - 28);
     doc.text(splitNote, 14, 106);
-    
+
     // Calculate new Y after notes
     let currentY = 106 + (splitNote.length * 5) + 8;
     doc.line(14, currentY, pageWidth - 14, currentY);
@@ -246,24 +246,24 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
       // Table Header
       doc.setFillColor(241, 245, 249); // slate-100
       doc.rect(14, currentY, pageWidth - 28, 10, 'F');
-      
+
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139);
       doc.setFont("helvetica", "bold");
       doc.text("Medicine Name", 20, currentY + 7);
       doc.text("Quantity", pageWidth - 20, currentY + 7, { align: "right" });
-      
+
       currentY += 16;
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold"); // slight bold for meds
-      
+
       rx.medicines.forEach((m) => {
         // Add page if near bottom
         if (currentY > 270) {
           doc.addPage();
           currentY = 20;
         }
-        
+
         doc.setTextColor(14, 165, 233); // cyan-500
         doc.text(`• ${m.medicineName}`, 16, currentY);
         doc.setTextColor(71, 85, 105);
@@ -286,7 +286,7 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
         doc.setTextColor(148, 163, 184);
         doc.text('Document digitally generated securely via Tbibi Healthcare Portal.', pageWidth / 2, 285, { align: 'center' });
     }
-    
+
     doc.save(`Medical_Prescription_${rx.prescriptionID}.pdf`);
   }
 

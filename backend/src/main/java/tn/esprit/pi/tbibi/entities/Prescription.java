@@ -15,7 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Prescription {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int prescriptionID;

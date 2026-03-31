@@ -24,9 +24,15 @@ const routes: Routes = [
   { path: 'results',    component: TestResultsComponent },
   { path: 'equipment',  component: EquipmentManagementComponent },
   { path: 'quality',    component: QualityControlComponent },
-  // ✅ Nouvelles routes CRUD
+  // ✅ Nouvelles routes CRUD (Lemin-pi)
   { path: 'lab-results',      component: LaboratoryResultListComponent },
   { path: 'medical-pictures', component: MedicalPictureListComponent },
+  // ✅ Forum route (main)
+  {
+    path: 'forum',
+    loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
+    data: { role: 'LAB', userId: 4, userName: 'Lab Staff', expertCategory: 'Ask a Lab', title: 'Lab Results Forum' }
+  }
 ];
 
 @NgModule({

@@ -75,7 +75,7 @@ public class ChronicConditionController {
     @PostMapping("/warn-email")
     public ResponseEntity<String> sendWarningEmail(@RequestBody Map<String, String> body) {
         try {
-            Long patientId = body.containsKey("patientId") ? Long.parseLong(body.get("patientId")) : null;
+            Integer patientId = body.containsKey("patientId") ? Integer.parseInt(body.get("patientId")) : null;
             String to = body.get("to"); // Fallback if provided
 
             // Use patient ID to get real email if available

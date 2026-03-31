@@ -12,7 +12,6 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"orders", "medicine"})  // Exclude relationships
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderLine {
     @Id
@@ -21,10 +20,12 @@ public class OrderLine {
     int quantity;
     float unitPrice;
 
-    @ManyToMany(mappedBy = "orderLines")
-    List<Order> orders;
 
     @ManyToOne
+    @JoinColumn(name = "order_order_id")
+    Order order;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medicine_id")
     Medicine medicine;
 }

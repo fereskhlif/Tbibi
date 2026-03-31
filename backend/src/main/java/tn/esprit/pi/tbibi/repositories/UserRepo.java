@@ -7,7 +7,7 @@ import tn.esprit.pi.tbibi.entities.User;
 import java.util.List;
 import java.util.Optional;
 
-public interface UserRepo extends JpaRepository<User, Long> {
+public interface UserRepo extends JpaRepository<User, Integer> {
 
         Optional<User> findByEmail(String email);
 
@@ -58,4 +58,6 @@ public interface UserRepo extends JpaRepository<User, Long> {
          */
         @Query("SELECT u FROM User u JOIN u.role r WHERE LOWER(r.roleName) LIKE 'doct%' AND LOWER(u.name) LIKE LOWER(:pattern)")
         List<User> findDoctorsByNameContaining(@Param("pattern") String pattern);
+
+        Optional<User> findByPharmacy_PharmacyId(Long pharmacyId);
 }
