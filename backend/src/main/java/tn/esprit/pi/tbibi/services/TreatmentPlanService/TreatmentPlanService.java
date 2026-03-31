@@ -26,9 +26,9 @@ public class TreatmentPlanService implements ITreatmentPlanService {
 
     @Override
     public TreatmentPlanResponse create(TreatmentPlanRequest request) {
-        User patient = userRepo.findById((long) request.getPatientId())
+        User patient = userRepo.findById(request.getPatientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found with id: " + request.getPatientId()));
-        User physio = userRepo.findById((long) request.getPhysiotherapistId())
+        User physio = userRepo.findById(request.getPhysiotherapistId())
                 .orElseThrow(() -> new RuntimeException("Physiotherapist not found with id: " + request.getPhysiotherapistId()));
         
         TreatmentPlan plan = mapper.toEntity(request);

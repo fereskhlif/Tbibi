@@ -28,9 +28,9 @@ public class TherapySessionService implements ITherapySessionService {
 
     @Override
     public TherapySessionResponse create(TherapySessionRequest request) {
-        User patient = userRepo.findById((long) request.getPatientId())
+        User patient = userRepo.findById(request.getPatientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found with id: " + request.getPatientId()));
-        User physio = userRepo.findById((long) request.getPhysiotherapistId())
+        User physio = userRepo.findById(request.getPhysiotherapistId())
                 .orElseThrow(() -> new RuntimeException("Physiotherapist not found with id: " + request.getPhysiotherapistId()));
         TherapySession session = mapper.toEntity(request);
         session.setPatient(patient);
@@ -210,7 +210,7 @@ public class TherapySessionService implements ITherapySessionService {
     }
 
     private PatientProgressDTO buildPatientProgressDTO(Integer patientId, List<TherapySession> sessions) {
-        User patient = userRepo.findById((long) patientId)
+        User patient = userRepo.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
         
         // Calculer les statistiques

@@ -26,9 +26,9 @@ public class PatientEvaluationService implements IPatientEvaluationService {
 
     @Override
     public PatientEvaluationResponse create(PatientEvaluationRequest request) {
-        User patient = userRepo.findById((long) request.getPatientId())
+        User patient = userRepo.findById(request.getPatientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found with id: " + request.getPatientId()));
-        User physio = userRepo.findById((long) request.getPhysiotherapistId())
+        User physio = userRepo.findById(request.getPhysiotherapistId())
                 .orElseThrow(() -> new RuntimeException("Physiotherapist not found with id: " + request.getPhysiotherapistId()));
         
         PatientEvaluation evaluation = mapper.toEntity(request);
