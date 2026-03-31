@@ -201,8 +201,13 @@
         </div>
 
         <div class="form-group">
-          <label>Patient ID</label>
-          <input type="number" [(ngModel)]="formData.patientId" placeholder="Patient ID (optional)" />
+          <label>Patient</label>
+          <select [(ngModel)]="formData.patientId">
+            <option [value]="null">No patient (optional)</option>
+            <option *ngFor="let patient of patients" [value]="patient.userId">
+              {{ patient.name }} ({{ patient.email }})
+            </option>
+          </select>
         </div>
 
         <div class="form-group">

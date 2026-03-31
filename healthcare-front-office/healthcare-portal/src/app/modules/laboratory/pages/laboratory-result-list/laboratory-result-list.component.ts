@@ -1,7 +1,14 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { LaboratoryResultResponse, LaboratoryResultRequest } from '../../models/laboratory-result.model';
 import { LaboratoryResultService } from '../../services/laboratory-result.service';
 import { AuthService } from '../../../patient/services/auth.service';
+
+interface Patient {
+  userId: number;
+  name: string;
+  email: string;
+}
 
 @Component({
   selector: 'app-laboratory-result-list',
@@ -10,6 +17,7 @@ import { AuthService } from '../../../patient/services/auth.service';
 })
 export class LaboratoryResultListComponent implements OnInit {
   results: LaboratoryResultResponse[] = [];
+  patients: Patient[] = [];
   isLoading = false;
   errorMessage = '';
   successMessage = '';
@@ -44,12 +52,28 @@ export class LaboratoryResultListComponent implements OnInit {
     requestNotes: '' as string // ✅ NOUVEAU
   };
 
+  private apiUrl = 'http://localhost:8088/api';
+
   constructor(
     private service: LaboratoryResultService,
-    private authService: AuthService
+    private authService: AuthService,
+    private http: HttpClient
   ) {}
 
-  ngOnInit(): void { this.loadAll(); }
+  ngOnInit(): void {
+    this.loadAll();
+    this.loadPatients();
+  }
+
+  loadPatients(): void {
+    this.http.get<Patient[]>(`${this.apiUrl}/users/patients`)
+      .subscribe({
+        next: (data) => {
+          this.patients = data;
+        },
+        error: (err) => console.error('Error loading patients:', err)
+      });
+  }
 
   loadAll(): void {
     this.isLoading = true;

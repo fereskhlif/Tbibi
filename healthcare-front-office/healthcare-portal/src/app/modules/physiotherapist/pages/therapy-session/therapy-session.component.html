@@ -103,12 +103,13 @@
           <input type="time" [(ngModel)]="formData.endTime" />
         </div>
         <div class="form-group">
-          <label>ID Patient *</label>
-          <input type="number" [(ngModel)]="formData.patientId" placeholder="ID du patient" />
-        </div>
-        <div class="form-group">
-          <label>ID Kinésithérapeute *</label>
-          <input type="number" [(ngModel)]="formData.physiotherapistId" placeholder="ID du kiné" />
+          <label>Patient *</label>
+          <select [(ngModel)]="formData.patientId" required>
+            <option [value]="null" disabled>Sélectionner un patient</option>
+            <option *ngFor="let patient of patients" [value]="patient.userId">
+              {{ patient.name }} ({{ patient.email }})
+            </option>
+          </select>
         </div>
       </div>
 
