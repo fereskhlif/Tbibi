@@ -33,7 +33,7 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
         }
         
         System.out.println("🔍 Looking for laboratory user with ID: " + request.getLaboratoryUserId());
-        User labUser = userRepo.findById((long) request.getLaboratoryUserId())
+        User labUser = userRepo.findById(request.getLaboratoryUserId())
                 .orElseThrow(() -> new RuntimeException("Laboratory user not found with id: " + request.getLaboratoryUserId()));
         
         System.out.println("✅ Found laboratory user: " + labUser.getName());
@@ -42,7 +42,7 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
 
         // Lier le patient si fourni
         if (request.getPatientId() != null && request.getPatientId() > 0) {
-            User patient = userRepo.findById((long) request.getPatientId())
+            User patient = userRepo.findById(request.getPatientId())
                     .orElse(null);  // ✅ Don't throw error, just set to null if not found
             if (patient != null) {
                 lab.setPatient(patient);
@@ -53,7 +53,7 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
 
         // ✅ Lier le médecin prescripteur si fourni
         if (request.getPrescribedByDoctorId() != null && request.getPrescribedByDoctorId() > 0) {
-            User doctor = userRepo.findById((long) request.getPrescribedByDoctorId())
+            User doctor = userRepo.findById(request.getPrescribedByDoctorId())
                     .orElse(null);  // ✅ Don't throw error, just set to null if not found
             if (doctor != null) {
                 lab.setPrescribedByDoctor(doctor);
@@ -170,7 +170,7 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
         lab.setTestDate(request.getTestDate());
 
         if (request.getPatientId() != null && request.getPatientId() > 0) {
-            User patient = userRepo.findById((long) request.getPatientId())
+            User patient = userRepo.findById(request.getPatientId())
                     .orElse(null);
             if (patient != null) {
                 lab.setPatient(patient);
@@ -181,7 +181,7 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
 
         // ✅ Mettre à jour le médecin prescripteur si fourni
         if (request.getPrescribedByDoctorId() != null && request.getPrescribedByDoctorId() > 0) {
-            User doctor = userRepo.findById((long) request.getPrescribedByDoctorId())
+            User doctor = userRepo.findById(request.getPrescribedByDoctorId())
                     .orElse(null);
             if (doctor != null) {
                 lab.setPrescribedByDoctor(doctor);
