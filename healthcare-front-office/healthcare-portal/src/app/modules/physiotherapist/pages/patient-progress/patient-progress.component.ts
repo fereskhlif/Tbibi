@@ -28,7 +28,7 @@ interface PatientProgress {
 export class PatientProgressComponent implements OnInit {
   patients: PatientProgress[] = [];
   filteredPatients: PatientProgress[] = [];
-  currentPhysioId: number = 9; // ID du kinésithérapeute connecté
+  currentPhysioId: number = 0; // Will be set from localStorage
   
   filterStatus: string = 'all';
   searchTerm: string = '';
@@ -42,6 +42,12 @@ export class PatientProgressComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
+    // Get the logged-in physiotherapist's ID from localStorage
+    this.currentPhysioId = Number(localStorage.getItem('userId') || '0');
+    if (this.currentPhysioId === 0) {
+      console.error('No user ID found in localStorage');
+      return;
+    }
     this.loadPatientProgress();
   }
 
