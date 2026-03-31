@@ -119,4 +119,27 @@ public class EmailService {
         mailSender.send(mimeMessage);
     }
 
+    /** Sends a password reset link to the user's email */
+    @Async
+    public void sendPasswordResetEmail(String to, String userName, String resetLink) throws MessagingException {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, MULTIPART_MODE_MIXED, UTF_8.name());
+        helper.setFrom("firasabdeljaouad@gmail.com");
+        helper.setTo(to);
+        helper.setSubject("Réinitialisation de votre mot de passe - Tbibi");
+        String html = "<div style='font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e5e7eb;border-radius:12px'>"
+                + "<h2 style='color:#2563eb;margin-bottom:8px'>Tbibi &mdash; Réinitialisation de mot de passe</h2>"
+                + "<p style='color:#374151'>Bonjour <b>" + userName + "</b>,</p>"
+                + "<p style='color:#374151'>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe :</p>"
+                + "<div style='text-align:center;padding:24px 0'>"
+                + "<a href='" + resetLink + "' style='background-color:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block'>Réinitialiser le mot de passe</a>"
+                + "</div>"
+                + "<p style='color:#6b7280;font-size:13px'>Ce lien est valable 15 minutes. Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :</p>"
+                + "<p style='color:#3b82f6;font-size:12px;word-break:break-all'>" + resetLink + "</p>"
+                + "<hr style='border:none;border-top:1px solid #e5e7eb;margin:24px 0'/>"
+                + "<p style='color:#9ca3af;font-size:12px'>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email. Votre mot de passe actuel ne changera pas.</p>"
+                + "</div>";
+        helper.setText(html, true);
+        mailSender.send(mimeMessage);
+    }
 }

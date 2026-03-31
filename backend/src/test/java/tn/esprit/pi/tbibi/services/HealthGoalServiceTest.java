@@ -7,7 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.test.context.TestPropertySource;
+
 @SpringBootTest
+@TestPropertySource(properties = {"app.jwt.secret=MySuperSecretKeyForJwtAuthSpringSecurity2026!"})
 class HealthGoalServiceTest {
 
     @Autowired

@@ -6,7 +6,7 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "Appointement")
+@Table(name = "Appointement_Legacy")
 @Getter
 @Setter
 @ToString
@@ -18,6 +18,7 @@ import java.time.LocalDate;
 public class Appointement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "appointment_id")
     private long appointementId;
     private String doctor;
     private String availableDoctor;

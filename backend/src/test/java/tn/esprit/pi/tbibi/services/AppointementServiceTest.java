@@ -124,7 +124,7 @@ public class AppointementServiceTest {
                 vReq, "code123", System.currentTimeMillis());
 
         when(verificationService.consume("verify123", "code123")).thenReturn(pv);
-        when(userRepo.findByEmail("jane@example.com")).thenReturn(Optional.of(patient));
+        // when(userRepo.findByEmail("jane@example.com")).thenReturn(Optional.of(patient));
         
         when(scheduleRepository.findById(10L)).thenReturn(Optional.of(schedule));
         when(mapper.toEntity(any(AppointmentRequest.class))).thenReturn(appointment);

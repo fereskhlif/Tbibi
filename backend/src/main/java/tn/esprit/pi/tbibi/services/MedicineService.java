@@ -31,7 +31,19 @@ public class MedicineService implements IMedicineService {
         medicine.setAvailable(true);
 
         // ✅ link medicine to pharmacy
-        Pharmacy pharmacy = pharmacyRepo.findById(request.getPharmacyId()).orElseThrow();
+        Pharmacy pharmacy = null;
+        if (request.getPharmacyId() != null) {
+            pharmacy = pharmacyRepo.findById(request.getPharmacyId()).orElse(null);
+        }
+        if (pharmacy == null) {
+            pharmacy = pharmacyRepo.findById(1L).orElse(null);
+            if (pharmacy == null) {
+                pharmacy = new Pharmacy();
+                pharmacy.setPharmacyName("Default Pharmacy");
+                pharmacy.setPharmacyAddress("123 Main St");
+                pharmacy = pharmacyRepo.save(pharmacy);
+            }
+        }
         medicine.setPharmacy(pharmacy);
 
         if (images != null && !images.isEmpty()) {

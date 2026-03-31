@@ -23,7 +23,11 @@ public interface AppointmentRepo extends JpaRepository<Appointment, Long> {
 
     List<Appointment> findBySpecialtyIgnoreCase(String specialty);
 
-    /** All appointments booked by a specific patient, schedule eagerly loaded */
-    @Query("SELECT a FROM Appointment a JOIN FETCH a.schedule s WHERE a.user.userId = :userId ORDER BY s.date ASC, s.startTime ASC")
+    /** All appointments booked by a specific patient, schedule and user eagerly loaded */
+    @Query("SELECT a FROM Appointment a " +
+           "JOIN FETCH a.user u " +
+           "LEFT JOIN FETCH a.schedule s " +
+           "WHERE u.userId = :userId " +
+           "ORDER BY s.date ASC NULLS LAST, s.startTime ASC NULLS LAST")
     List<Appointment> findByUserUserId(@Param("userId") int userId);
 }

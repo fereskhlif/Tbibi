@@ -12,4 +12,8 @@ public interface IAuthService {
     AuthResponse login(LoginRequest req);
 
     void activateAccount(String token) throws MessagingException;
+    
+    void forgotPassword(String email) throws MessagingException;
+    
+    void resetPassword(String token, String newPassword);
 }

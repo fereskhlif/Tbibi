@@ -1,6 +1,7 @@
 package tn.esprit.pi.tbibi.services;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.pi.tbibi.DTO.AppointmentRequest;
@@ -93,21 +94,28 @@ public class AppointementService implements IAppointementService {
     }
 
     @Override
+    @Transactional
     public List<AppointmentResponse> getAll() {
         return mapper.toResponseList(appointmentRepository.findAll());
     }
 
     @Override
+    @Transactional
     public List<AppointmentResponse> getByScheduleId(Long scheduleId) {
         return mapper.toResponseList(appointmentRepository.findByScheduleScheduleId(scheduleId));
     }
 
     @Override
+    @Transactional
     public List<AppointmentResponse> getByUserId(Integer userId) {
-        return mapper.toResponseList(appointmentRepository.findByUserUserId(userId));
+        System.out.println("DEBUG: getByUserId called with userId=" + userId);
+        List<Appointment> appointments = appointmentRepository.findByUserUserId(userId);
+        System.out.println("DEBUG: found " + appointments.size() + " appointments for userId=" + userId);
+        return mapper.toResponseList(appointments);
     }
 
     @Override
+    @Transactional
     public List<AppointmentResponse> getByDoctorId(Integer doctorId) {
         return mapper.toResponseList(appointmentRepository.findByDoctorUserId(doctorId));
     }
@@ -195,12 +203,11 @@ public class AppointementService implements IAppointementService {
         // Generate a unique meeting room per appointment
         String meetingLink = "https://meet.jit.si/tbibi-" + java.util.UUID.randomUUID();
 
-        // Determine the correct patient userId: use the verified email to look up the user.
-        // This is safe because the email was verified by code, and prevents issues where
-        // localStorage.userId belongs to a doctor testing the booking flow.
+        // Determine the correct patient userId: respect the logged-in user ID passed by the frontend.
+        // Fallback to finding by verified email only if the frontend sent a null or 0 userId.
         Integer patientUserId = req.getUserId();
         String verifiedEmail = req.getPatientEmail();
-        if (verifiedEmail != null && !verifiedEmail.isBlank()) {
+        if ((patientUserId == null || patientUserId == 0) && verifiedEmail != null && !verifiedEmail.isBlank()) {
             patientUserId = userRepo.findByEmail(verifiedEmail)
                     .map(u -> u.getUserId())
                     .orElse(req.getUserId());
