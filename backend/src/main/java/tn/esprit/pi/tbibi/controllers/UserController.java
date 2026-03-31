@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping({"/users", "/user"})
+@RequestMapping({"/api/users", "/api/user"})
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
 public class UserController {
