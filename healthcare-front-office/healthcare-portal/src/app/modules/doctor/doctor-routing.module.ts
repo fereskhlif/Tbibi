@@ -30,7 +30,12 @@ const routes: Routes = [
     { path: 'notifications', component: DoctorNotificationsComponent },
     { path: 'all-appointments', component: DoctorAllAppointmentsComponent },
     { path: 'manage-schedules', component: ManageSchedulesComponent },
-    { path: 'messages', component: DoctorChatComponent }
+    { path: 'messages', component: DoctorChatComponent },
+    {
+        path: 'forum',
+        loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
+        data: { role: 'DOCTEUR' }
+    }
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })

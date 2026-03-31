@@ -30,10 +30,10 @@ public class MedicalChatController {
 
         MedicalChat chat = mapper.toEntity(dto);
 
-        User sender = userRepo.findById(dto.getSenderId())
+        User sender = userRepo.findById(dto.getSenderId().intValue())
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
 
-        User receiver = userRepo.findById(dto.getReceiverId())
+        User receiver = userRepo.findById(dto.getReceiverId().intValue())
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
 
         chat.setSender(sender);

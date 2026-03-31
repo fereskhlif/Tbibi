@@ -7,16 +7,22 @@ import { MedicationManagementComponent } from './pages/medication-management/med
 import { InventoryManagementComponent } from './pages/inventory-management/inventory-management.component';
 import { PrescriptionReceivingComponent } from './pages/prescription-receiving/prescription-receiving.component';
 import { DrugAvailabilityComponent } from './pages/drug-availability/drug-availability.component';
+import { OrderManagementComponent } from './pages/order-management/order-management.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     { path: 'dashboard', component: PharmacistDashboardComponent },
     { path: 'profile', component: PharmacistProfileComponent },
-    { path: 'orders', component: OrderValidationComponent },
+    { path: 'orders', component: OrderManagementComponent },
     { path: 'medications', component: MedicationManagementComponent },
-    { path: 'inventory', component: InventoryManagementComponent },
     { path: 'prescriptions', component: PrescriptionReceivingComponent },
-    { path: 'availability', component: DrugAvailabilityComponent }
+    { path: 'availability', component: DrugAvailabilityComponent },
+    { path: 'inventory', component: InventoryManagementComponent },
+    {
+        path: 'forum',
+        loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
+        data: { role: 'PHARMASIS' }
+    }
 ];
 
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })

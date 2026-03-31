@@ -1,0 +1,445 @@
+<div class="min-h-screen bg-[#F8FAFC] font-sans">
+  <div class="max-w-[760px] mx-auto px-4 py-8 lg:py-10">
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex flex-col items-center justify-center py-32">
+      <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-sm text-gray-400 font-medium mt-4">Loading discussion...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !loading" class="bg-white rounded-2xl border border-red-100 shadow-sm p-12 text-center mt-8">
+      <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+        <lucide-icon name="alert-circle" [size]="28" class="text-red-400"></lucide-icon>
+      </div>
+      <p class="text-red-700 font-bold text-base mb-1">Something went wrong</p>
+      <p class="text-gray-400 text-sm mb-5">{{ error }}</p>
+      <button (click)="loadPost()"
+        class="bg-blue-600 px-6 py-2.5 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-colors active:scale-95">
+        Try Again
+      </button>
+    </div>
+
+    <ng-container *ngIf="!loading && !error && post">
+
+      <!-- Breadcrumb -->
+      <div class="flex items-center gap-2 text-sm mb-6">
+        <button (click)="goBack()"
+          class="text-gray-400 hover:text-blue-600 transition-colors font-medium flex items-center gap-1.5 group">
+          <lucide-icon name="arrow-left" [size]="15"
+            class="group-hover:-translate-x-0.5 transition-transform"></lucide-icon>
+          Back to Forum
+        </button>
+        <span class="text-gray-300">›</span>
+        <span class="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-full">
+          {{ post.categoryName }}
+        </span>
+      </div>
+
+      <!-- Status Banner RESOLVED -->
+      <div *ngIf="post.postStatus === 'RESOLVED'"
+        class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-4">
+        <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+          <lucide-icon name="check-circle" [size]="15" class="text-emerald-600"></lucide-icon>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-emerald-800">This question has been resolved</p>
+          <p class="text-xs text-emerald-600">The author marked a solution as accepted.</p>
+        </div>
+      </div>
+
+      <!-- Status Banner CLOSED -->
+      <div *ngIf="post.postStatus === 'CLOSED'"
+        class="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4">
+        <div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+          <lucide-icon name="lock" [size]="15" class="text-gray-500"></lucide-icon>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-gray-700">This post is closed</p>
+          <p class="text-xs text-gray-500">No new responses can be added.</p>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════ -->
+      <!-- MAIN POST CARD                  -->
+      <!-- ═══════════════════════════════ -->
+      <article class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-8 animate-fade-in-up hover-lift">
+
+        <!-- TOP ACCENT BAR — use [style] NOT [ngClass] for gradients -->
+        <div [class.post-accent-open]="post.postStatus === 'OPEN'"
+          [class.post-accent-resolved]="post.postStatus === 'RESOLVED'"
+          [class.post-accent-closed]="post.postStatus === 'CLOSED'">
+        </div>
+
+        <div class="px-6 lg:px-8 pb-7">
+          <!-- Badges Row -->
+          <div class="flex items-center gap-2" style="margin-top: 32px !important; margin-bottom: 24px !important;">
+            <!-- Status Pill -->
+            <span [class.bg-green-50]="post.postStatus === 'OPEN'"
+                  [class.text-green-700]="post.postStatus === 'OPEN'"
+                  [class.border-green-200]="post.postStatus === 'OPEN'"
+                  [class.bg-blue-50]="post.postStatus === 'RESOLVED'"
+                  [class.text-blue-700]="post.postStatus === 'RESOLVED'"
+                  [class.border-blue-200]="post.postStatus === 'RESOLVED'"
+                  [class.bg-gray-50]="post.postStatus === 'CLOSED'"
+                  [class.text-gray-700]="post.postStatus === 'CLOSED'"
+                  [class.border-gray-200]="post.postStatus === 'CLOSED'"
+                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border">
+              <span class="w-1.5 h-1.5 rounded-full"
+                    [class.bg-green-500]="post.postStatus === 'OPEN'"
+                    [class.bg-blue-500]="post.postStatus === 'RESOLVED'"
+                    [class.bg-gray-400]="post.postStatus === 'CLOSED'"></span>
+              {{ post.postStatus | titlecase }}
+            </span>
+            <!-- Category Pill -->
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
+              {{ post.categoryName }}
+            </span>
+          </div>
+
+          <!-- Title -->
+          <h1 class="text-2xl lg:text-3xl font-black text-gray-900 leading-tight mb-8 tracking-tight">
+            {{ post.title }}
+          </h1>
+
+          <!-- Author Info Row -->
+          <div class="flex items-center gap-4" style="margin-bottom: 32px !important;">
+            <div class="shrink-0 flex items-center justify-center" 
+                 style="width: 42px !important; height: 42px !important; min-width: 42px !important; min-height: 42px !important; background-color: #2563eb !important; color: white !important; border-radius: 9999px !important; font-size: 16px !important; font-weight: bold !important; line-height: 1 !important; box-shadow: 0 0 0 4px #eff6ff !important;">
+              {{ post.authorName.charAt(0).toUpperCase() }}
+            </div>
+            <div class="flex items-center gap-3 text-[15.5px]">
+                <span class="font-bold text-gray-900 text-[16px]">{{ post.authorName }}</span>
+                <span class="text-gray-300">·</span>
+                <span class="text-gray-500 flex items-center gap-1.5">
+                  <lucide-icon name="clock" [size]="16"></lucide-icon>
+                  {{ timeAgo(post.createdDate) }}
+                </span>
+                <span class="text-gray-300">·</span>
+                <span class="text-gray-500 flex items-center gap-1.5">
+                  <lucide-icon name="eye" [size]="16"></lucide-icon>
+                  {{ post.views }} views
+                </span>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="text-[15px] text-gray-700 leading-[1.8] prose prose-sm max-w-none
+                      prose-headings:text-gray-900 prose-headings:font-bold prose-p:my-2
+                      prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg
+                      prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-1.5
+                      prose-code:py-0.5 prose-code:rounded-md prose-code:text-[13px]
+                      prose-blockquote:border-l-4 prose-blockquote:border-blue-300
+                      prose-blockquote:text-gray-500 prose-blockquote:bg-blue-50/50
+                      prose-blockquote:py-0.5 prose-blockquote:rounded-r-lg
+                      prose-a:text-blue-600 prose-a:underline-offset-2
+                      prose-strong:text-gray-900 prose-li:my-0.5 mb-10" [innerHTML]="post.content | markdown">
+          </div>
+
+          <!-- Media -->
+          <div *ngIf="post.mediaUrls && post.mediaUrls.length > 0" class="mt-6 flex flex-wrap gap-3">
+            <ng-container *ngFor="let url of post.mediaUrls">
+              <img *ngIf="!url.includes('.mp4') && !url.includes('.mov') && !url.includes('video')" [src]="url"
+                class="max-w-full rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:opacity-90 hover:shadow-md transition-all duration-200"
+                style="max-height:360px;object-fit:contain;" />
+              <video *ngIf="url.includes('.mp4') || url.includes('.mov') || url.includes('video')" [src]="url" controls
+                class="max-w-full rounded-xl border border-gray-200 shadow-sm" style="max-height:360px;"></video>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Action bar - Boxed style -->
+        <div class="px-6 lg:px-8 mb-10" style="margin-top: 64px !important;">
+          <div class="flex items-center justify-between p-3.5 bg-white border border-gray-100 rounded-xl shadow-sm">
+            <div class="flex items-center gap-6">
+              <!-- Vote -->
+              <button (click)="toggleVote()" 
+                      [class.text-blue-600]="hasVoted" 
+                      [class.text-gray-400]="!hasVoted"
+                      class="flex items-center gap-2 text-sm font-bold transition-all hover:scale-105">
+                <lucide-icon name="thumbs-up" [size]="16" [strokeWidth]="hasVoted ? 3 : 2"></lucide-icon>
+                <span>{{ voteCount }}</span>
+              </button>
+
+              <div class="flex items-center gap-2 text-sm font-bold text-gray-400">
+                <lucide-icon name="message-circle" [size]="16"></lucide-icon>
+                <span>{{ comments.length }}</span>
+              </div>
+
+              <div class="flex items-center gap-2 text-sm font-bold text-gray-400">
+                <lucide-icon name="eye" [size]="16"></lucide-icon>
+                <span>{{ post.views }}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button (click)="toggleBookmark()" 
+                      [class.text-blue-600]="isBookmarked"
+                      [class.text-gray-400]="!isBookmarked"
+                      class="p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                <lucide-icon name="bookmark" [size]="18" [strokeWidth]="isBookmarked ? 3 : 2"></lucide-icon>
+              </button>
+              <button (click)="copyPostLink()" 
+                      class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors relative">
+                <lucide-icon name="share-2" [size]="18"></lucide-icon>
+                <span *ngIf="showCopied"
+                  class="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] font-semibold px-2 py-1 rounded-md shadow-lg">
+                  Link copied!
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manage bar (author + PATIENT only) -->
+        <div class="manage-bar">
+          <span
+            style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-right:4px">Manage:</span>
+          <ng-container *ngIf="post.postStatus === 'OPEN'">
+            <button (click)="changeStatus('RESOLVED')" [disabled]="changingStatus"
+              class="forum-btn-resolve inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-colors active:scale-95 disabled:opacity-50">
+              <lucide-icon name="check-circle" [size]="13"></lucide-icon>
+              Mark Resolved
+            </button>
+            <button (click)="changeStatus('CLOSED')" [disabled]="changingStatus"
+              class="forum-btn-close inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-colors active:scale-95 disabled:opacity-50">
+              <lucide-icon name="lock" [size]="13"></lucide-icon>
+              Close Post
+            </button>
+          </ng-container>
+          <ng-container *ngIf="post.postStatus !== 'OPEN'">
+            <button (click)="changeStatus('OPEN')" [disabled]="changingStatus"
+              class="forum-btn-reopen inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-colors active:scale-95 disabled:opacity-50">
+              <lucide-icon name="rotate-ccw" [size]="13"></lucide-icon>
+              Reopen Post
+            </button>
+          </ng-container>
+          <div *ngIf="changingStatus"
+            class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
+      </article>
+
+      <!-- ═══════════════════════════════ -->
+      <!-- COMMENTS SECTION                -->
+      <!-- ═══════════════════════════════ -->
+      <div>
+
+        <!-- Header (Reddit Style) -->
+        <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+          <!-- Sort -->
+          <div class="flex items-center group cursor-pointer px-2 py-1 hover:bg-gray-50 rounded-lg transition-colors">
+            <span class="text-[13px] font-medium text-gray-500 mr-2">Sort by:</span>
+            <div class="relative flex items-center">
+              <select [(ngModel)]="commentSortOrder" (change)="sortComments()"
+                class="appearance-none text-[13px] font-bold text-gray-900 border-none bg-transparent p-0 pr-5 cursor-pointer focus:ring-0">
+                <option value="oldest">Oldest</option>
+                <option value="newest">Newest</option>
+              </select>
+              <lucide-icon name="chevron-down" [size]="12" 
+                class="absolute right-0 text-gray-900 pointer-events-none stroke-[3]">
+              </lucide-icon>
+            </div>
+          </div>
+
+          <!-- Search Placeholder -->
+          <div class="relative flex-1 max-w-[200px] hidden sm:block search-focus-glow rounded-full">
+            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <lucide-icon name="search" [size]="14" class="text-gray-400"></lucide-icon>
+            </div>
+            <input type="text" placeholder="Search Comments" 
+                   class="w-full bg-gray-50 border border-transparent rounded-full py-1.5 pl-9 pr-4 text-[13px] outline-none hover:bg-gray-100 transition-all">
+          </div>
+
+          <div class="flex-1"></div>
+
+          <!-- Comment Count -->
+          <div class="text-[12px] font-bold text-gray-400 uppercase tracking-tight flex items-center gap-1.5">
+            <lucide-icon name="message-square" [size]="14"></lucide-icon>
+            {{ comments.length }} {{ comments.length !== 1 ? 'Comments' : 'Comment' }}
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="comments.length === 0"
+          class="py-16 text-center bg-white rounded-2xl border-2 border-dashed border-gray-200 mb-6">
+          <div class="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <lucide-icon name="message-circle" [size]="24" class="text-blue-400"></lucide-icon>
+          </div>
+          <p class="text-gray-700 font-bold text-sm mb-1">No comments yet</p>
+          <p class="text-gray-400 text-xs">Be the first to share your thoughts!</p>
+        </div>
+
+        <!-- Comments list — ONE white card -->
+        <div *ngIf="comments.length > 0" class="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-1 mb-8">
+          <app-comment-item *ngFor="let comment of comments; let last = last; let i = index" 
+            [comment]="comment" [depth]="0"
+            class="animate-fade-in-up stagger-item block" [style.--index]="i"
+            [currentUserName]="currentUserName" [replyingTo]="replyingTo" [replyText]="replyText"
+            [submittingReply]="submittingReply" [isLast]="last" [isPostAuthor]="isPostAuthor"
+            (startReplyEvent)="startReply($event)"
+            (submitReplyEvent)="onSubmitReplyFromComponent($event)" (replyTextChange)="replyText = $event"
+            (toggleVoteEvent)="toggleCommentVote($event)" (togglePinEvent)="onTogglePin($event)">
+          </app-comment-item>
+        </div>
+
+        <!-- ═══════════════════════════════ -->
+        <!-- COMMENT EDITOR CARD             -->
+        <!-- ═══════════════════════════════ -->
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 lg:p-6 mt-2">
+
+          <h4 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+              <lucide-icon name="alert-circle" [size]="13" class="text-gray-400"></lucide-icon>
+            </span>
+            Leave a Comment
+          </h4>
+
+          <div class="flex items-center gap-2.5 mb-4">
+            <div
+              class="w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 ring-2 ring-blue-100">
+              {{ currentUserName.charAt(0).toUpperCase() }}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-gray-900">{{ currentUserName }}</span>
+              <span *ngIf="roleBadge"
+                class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                {{ roleBadge }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Editor box -->
+          <div
+            class="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 focus-within:border-blue-400 focus-within:shadow-[0_0_0_3px_rgba(59,130,246,0.1)]">
+
+            <!-- Write/Preview tabs -->
+            <div class="flex items-center gap-1 border-b border-gray-100 px-2 pt-1 bg-gray-50/60">
+              <button (click)="isPreview = false"
+                class="px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors"
+                [class.text-blue-600]="!isPreview" [class.border-blue-600]="!isPreview"
+                [class.text-gray-400]="isPreview" [class.border-transparent]="isPreview">
+                Write
+              </button>
+              <button (click)="isPreview = true"
+                class="px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors"
+                [class.text-blue-600]="isPreview" [class.border-blue-600]="isPreview" [class.text-gray-400]="!isPreview"
+                [class.border-transparent]="!isPreview">
+                Preview
+              </button>
+            </div>
+
+            <!-- Write mode -->
+            <div *ngIf="!isPreview">
+              <!-- Toolbar -->
+              <div class="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-gray-50/40 flex-wrap">
+                <button type="button" (click)="insertMarkdown('**','**',commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Bold"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="bold" [size]="18"></lucide-icon>
+                </button>
+                <button type="button" (click)="insertMarkdown('*','*',commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Italic"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="italic" [size]="18"></lucide-icon>
+                </button>
+                <button type="button" (click)="insertMarkdown('~~','~~',commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Strikethrough"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="strikethrough" [size]="18"></lucide-icon>
+                </button>
+                <div class="w-px h-5 bg-gray-200 mx-1.5"></div>
+                <button type="button" (click)="insertMarkdown('### ','',commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Heading"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="type" [size]="18"></lucide-icon>
+                </button>
+                <button type="button" (click)="insertMarkdown('> ','',commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Blockquote"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="quote" [size]="18"></lucide-icon>
+                </button>
+                <button type="button" (click)="insertMarkdown(codeBlockPrefix, codeBlockSuffix, commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Code block"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="code" [size]="18"></lucide-icon>
+                </button>
+                <div class="w-px h-5 bg-gray-200 mx-1.5"></div>
+                <button type="button" (click)="insertMarkdown('- ','',commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Bullet list"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="list" [size]="18"></lucide-icon>
+                </button>
+                <button type="button" (click)="insertMarkdown('1. ','',commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Numbered list"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="list-ordered" [size]="18"></lucide-icon>
+                </button>
+                <div class="w-px h-5 bg-gray-200 mx-1.5"></div>
+                <button type="button" (click)="insertMarkdown('[','](url)',commentInput)"
+                  (mousedown)="$event.preventDefault()" title="Link"
+                  class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                  <lucide-icon name="link" [size]="18"></lucide-icon>
+                </button>
+              </div>
+              <!-- Textarea -->
+              <textarea #commentInput [(ngModel)]="newComment" rows="5" placeholder="Write a comment..."
+                class="w-full px-4 py-3 text-sm text-gray-800 outline-none resize-y min-h-[130px] bg-white leading-relaxed placeholder:text-gray-300 block">
+              </textarea>
+            </div>
+
+            <!-- Preview mode -->
+            <div *ngIf="isPreview" class="px-4 py-3 min-h-[130px]">
+              <div *ngIf="newComment.trim()"
+                class="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none prose-pre:bg-gray-100 prose-pre:rounded-lg prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-1 prose-code:rounded prose-blockquote:border-l-blue-300 prose-blockquote:text-gray-500 prose-a:text-blue-600 prose-strong:text-gray-900"
+                [innerHTML]="newComment | markdown">
+              </div>
+              <p *ngIf="!newComment.trim()" class="text-sm text-gray-300 italic">Nothing to preview</p>
+            </div>
+
+            <!-- File previews -->
+            <div *ngIf="filePreviews.length > 0" class="flex flex-wrap gap-2 px-4 pb-3">
+              <div *ngFor="let preview of filePreviews; let i = index" class="relative group">
+                <img [src]="preview" class="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm" />
+                <button (click)="removeFile(i)"
+                  class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">✕</button>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-between px-3 py-2.5 bg-gray-50/60 border-t border-gray-100">
+              <div class="flex items-center gap-2">
+                <div appFilePicker #mediaPicker="appFilePicker" [multiple]="true"
+                  (filesChanged)="onFilesChanged($event)"
+                  class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
+                  title="Attach image">
+                  <lucide-icon name="image" [size]="16"></lucide-icon>
+                </div>
+                <span class="text-[10px] text-gray-300 hidden sm:inline">Markdown supported</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button (click)="clearContent()" *ngIf="newComment.trim().length > 0 || selectedFiles.length > 0"
+                  class="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                  Clear
+                </button>
+                <button (click)="submitComment()"
+                  [disabled]="submittingComment || (!newComment.trim() && selectedFiles.length === 0)"
+                  class="shimmer-btn inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                  <div *ngIf="submittingComment"
+                    class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Comment
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <p class="text-[10px] text-gray-300 mt-3 text-center">
+            Be respectful and constructive in your responses.
+          </p>
+        </div>
+
+      </div>
+    </ng-container>
+  </div>
+</div>

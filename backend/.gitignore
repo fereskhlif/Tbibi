@@ -63,3 +63,6 @@ Thumbs.db
 # ========================
 *.txt
 !README.txt
+
+node_modules/
+

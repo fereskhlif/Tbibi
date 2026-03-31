@@ -119,7 +119,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
       this.fetch(t);
     });
     this.fetch('');
-    
+
     // Polling pour actualiser la liste automatiquement
     this.pollSub = interval(30_000).subscribe(() => {
       if (!this.showModal && !this.loading) {
@@ -147,7 +147,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
       error: e => { this.error = 'Error loading patients.'; this.loading = false; console.error(e); }
     });
   }
-  
+
   fetchQuietly(name: string): void {
     this.http.get<PatientRecordDTO[]>(`${this.api}/patients/search?name=${encodeURIComponent(name)}`).subscribe({
       next: d => { this.patients = d; },

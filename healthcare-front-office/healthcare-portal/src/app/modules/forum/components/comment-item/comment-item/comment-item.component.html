@@ -1,0 +1,251 @@
+<div class="flex gap-3" [style.paddingTop]="depth === 0 ? '16px' : '8px'"
+    [style.paddingBottom]="depth === 0 ? '16px' : '8px'"
+    [style.borderBottom]="depth === 0 && !isLast ? '1px solid #f3f4f6' : 'none'"
+    [class.pinned-border]="comment.isPinned && depth === 0">
+
+    <!-- Avatar column + thread line -->
+    <div class="flex flex-col items-center shrink-0" 
+         [style.width]="depth === 0 ? '36px' : '28px'"
+         style="display: flex !important; flex-direction: column !important; align-items: center !important; align-self: stretch !important; height: auto !important; min-height: 100% !important;">
+        
+        <div class="rounded-full text-white font-bold flex items-center justify-center shrink-0 z-10"
+            [style.width]="depth === 0 ? '36px' : '28px'" [style.height]="depth === 0 ? '36px' : '28px'"
+            [style.fontSize]="depth === 0 ? '14px' : '11px'" [style.background]="getAvatarColor(comment.authorName)">
+            {{ comment.authorName ? comment.authorName.charAt(0).toUpperCase() : '?' }}
+        </div>
+
+        <!-- Thread line: Combined Vertical + L-Connector for Hierarchy -->
+        <div class="flex flex-col items-center" style="flex: 1 1 auto !important; width: 100% !important; position: relative !important; overflow: visible !important;">
+            
+            <!-- Vertical line (Visible when expanded) -->
+            <div *ngIf="!isCollapsed && (comment.replies && comment.replies.length > 0 || replyingTo === comment.commentId)"
+                 (click)="toggleCollapse()"
+                 (mouseenter)="isHoveringLine = true"
+                 (mouseleave)="isHoveringLine = false"
+                 style="width: 2px !important; flex: 1 1 auto !important; height: 100% !important; border-radius: 9999px !important; cursor: pointer !important; transition: all 0.2s ease !important;"
+                 [style.background-color]="isHoveringLine ? '#2563eb' : '#94a3b8'"
+                 [style.width]="isHoveringLine ? '4px' : '2px'">
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Content column -->
+    <div class="flex-1 min-w-0">
+
+        <!-- Comment bubble -->
+        <div class="comment-bubble relative" [class.pinned-bubble]="comment.isPinned">
+            
+            <!-- Pinned Badge (Top Right) -->
+            <div *ngIf="comment.isPinned" class="absolute top-3 right-4 flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-bold border border-red-100 shadow-sm z-10">
+                <lucide-icon name="pin" [size]="10" class="fill-red-600"></lucide-icon>
+                Pinned
+            </div>
+
+            <!-- Author + time -->
+            <div class="flex items-center gap-2 mb-2.5 flex-wrap">
+                <span class="font-bold text-sm text-gray-900">{{ comment.authorName }}</span>
+                <span *ngIf="isPostAuthor" 
+                      class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wider border border-blue-100">
+                    Author
+                </span>
+                <span class="text-gray-300 text-xs">·</span>
+                <span class="text-xs text-gray-400 flex items-center gap-1">
+                    <lucide-icon name="clock" [size]="11"></lucide-icon>
+                    {{ timeAgo(comment.commentDate) }}
+                </span>
+                
+              </div>
+
+
+            <div *ngIf="!isCollapsed">
+                <!-- Body -->
+            <div class="text-sm text-gray-700 leading-relaxed mb-3
+                  prose prose-sm max-w-none
+                  prose-pre:bg-gray-100 prose-pre:rounded-lg
+                  prose-code:text-pink-600 prose-code:bg-pink-50
+                  prose-code:px-1 prose-code:rounded
+                  prose-blockquote:border-l-blue-300 prose-blockquote:text-gray-500
+                  prose-a:text-blue-600 prose-strong:text-gray-900" [innerHTML]="comment.comment | markdown">
+            </div>
+
+            <!-- Actions bar -->
+            <div class="flex items-center gap-3">
+              <!-- Vote button -->
+              <button (click)="onToggleVote(comment)" 
+                      [class.text-blue-600]="comment.userHasVoted" 
+                      [class.bg-blue-50]="comment.userHasVoted"
+                      [class.text-gray-400]="!comment.userHasVoted"
+                      class="inline-flex items-center gap-1.5 text-xs font-bold hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+                  <lucide-icon name="thumbs-up" [size]="12" [strokeWidth]="comment.userHasVoted ? 3 : 2"></lucide-icon>
+                  {{ comment.voteCount || 0 }}
+              </button>
+
+              <!-- Reply button -->
+              <button (click)="onStartReply(comment.commentId)" class="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+                  <lucide-icon name="corner-down-right" [size]="12"></lucide-icon>
+                  Reply
+              </button>
+
+              <!-- Pin button (Only for Post Author, Only for Parent Comments) -->
+              <button *ngIf="isPostAuthor && depth === 0" (click)="onTogglePin()" 
+                      [class.text-red-600]="comment.isPinned"
+                      [class.bg-red-50]="comment.isPinned"
+                      [class.text-gray-400]="!comment.isPinned"
+                      class="inline-flex items-center gap-1.5 text-xs font-bold hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors">
+                  <lucide-icon name="pin" [size]="12" [strokeWidth]="comment.isPinned ? 3 : 2"></lucide-icon>
+                  {{ comment.isPinned ? 'Unpin' : 'Pin' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Show more answers (YouTube Style) - SYNCED & CLICKABLE CONNECTOR -->
+        <div *ngIf="isCollapsed" 
+             (mouseenter)="isHoveringShowMore = true"
+             (mouseleave)="isHoveringShowMore = false"
+             style="display: flex !important; align-items: center !important; margin-top: -6px !important; margin-bottom: 12px !important; height: 32px !important; flex-direction: row !important; flex-wrap: nowrap !important; position: relative !important; overflow: visible !important;">
+            
+            <!-- The L-Connector (Now CLICKABLE and BLUE on hover) -->
+            <div (click)="toggleCollapse()" 
+                 style="width: 24px !important; height: 20px !important; border-bottom-left-radius: 12px !important; position: absolute !important; right: 100% !important; top: -8px !important; margin-right: 14px !important; transition: all 0.2s ease !important; cursor: pointer !important;"
+                 [style.border-left]="isHoveringShowMore ? '3px solid #2563eb' : '2px solid #94a3b8'"
+                 [style.border-bottom]="isHoveringShowMore ? '3px solid #2563eb' : '2px solid #94a3b8'">
+            </div>
+
+            <button (click)="toggleCollapse()" 
+                    style="display: flex !important; flex-direction: row !important; align-items: center !important; flex-wrap: nowrap !important; gap: 8px !important; padding: 6px 16px !important; border-radius: 9999px !important; transition: all 0.2s ease !important; cursor: pointer !important; font-size: 13.5px !important; font-weight: 800 !important; background: transparent !important; border: none !important; white-space: nowrap !important; outline: none !important;"
+                    [style.background-color]="isHoveringShowMore ? '#eff6ff' : 'transparent'"
+                    [style.color]="isHoveringShowMore ? '#2563eb' : '#2563eb'">
+                <span style="display: inline-block !important; white-space: nowrap !important; line-height: 1 !important;">{{ (comment.replies?.length ?? 0) > 0 ? 'Show more answers' : 'Show comment' }}</span>
+                <span style="display: flex !important; align-items: center !important; justify-content: center !important;">
+                    <lucide-icon name="chevron-down" [size]="14" [style.strokeWidth]="isHoveringShowMore ? 4.5 : 3.5"></lucide-icon>
+                </span>
+            </button>
+        </div>
+
+        <!-- Inline reply editor -->
+        <div *ngIf="replyingTo === comment.commentId" class="mb-3 ml-1">
+            <div
+                class="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 focus-within:border-blue-400 focus-within:shadow-[0_0_0_3px_rgba(59,130,246,0.1)]">
+
+                <!-- Tabs -->
+                <div class="flex items-center gap-1 border-b border-gray-100 px-2 pt-1 bg-gray-50/60">
+                    <button (click)="replyPreview = false"
+                        class="px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors"
+                        [class.text-blue-600]="!replyPreview" [class.border-blue-600]="!replyPreview"
+                        [class.text-gray-400]="replyPreview" [class.border-transparent]="replyPreview">
+                        Write
+                    </button>
+                    <button (click)="replyPreview = true"
+                        class="px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors"
+                        [class.text-blue-600]="replyPreview" [class.border-blue-600]="replyPreview"
+                        [class.text-gray-400]="!replyPreview" [class.border-transparent]="!replyPreview">
+                        Preview
+                    </button>
+                </div>
+
+                <!-- Write mode -->
+                <div *ngIf="!replyPreview">
+                    <!-- Toolbar -->
+                    <div class="flex items-center gap-1.5 px-3 py-2 border-b border-gray-100 bg-gray-50/40 flex-wrap">
+                        <button type="button" (click)="insertReplyMarkdown('**','**',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Bold"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="bold" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="insertReplyMarkdown('*','*',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Italic"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="italic" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="insertReplyMarkdown('~~','~~',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Strikethrough"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="strikethrough" [size]="17"></lucide-icon>
+                        </button>
+                        <div class="w-px h-5 bg-gray-200 mx-1"></div>
+                        <button type="button" (click)="insertReplyMarkdown('### ','',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Heading"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="type" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="insertReplyMarkdown('> ','',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Quote"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="quote" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button"
+                            (click)="insertReplyMarkdown(codeBlockPrefix, codeBlockSuffix, replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Code"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="code" [size]="17"></lucide-icon>
+                        </button>
+                        <div class="w-px h-5 bg-gray-200 mx-1"></div>
+                        <button type="button" (click)="insertReplyMarkdown('- ','',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="List"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="list" [size]="17"></lucide-icon>
+                        </button>
+                        <button type="button" (click)="insertReplyMarkdown('1. ','',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Numbered"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="list-ordered" [size]="17"></lucide-icon>
+                        </button>
+                        <div class="w-px h-5 bg-gray-200 mx-1"></div>
+                        <button type="button" (click)="insertReplyMarkdown('[','](url)',replyInput)"
+                            (mousedown)="$event.preventDefault()" title="Link"
+                            class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-200 rounded-md transition-colors">
+                            <lucide-icon name="link" [size]="17"></lucide-icon>
+                        </button>
+                    </div>
+                    <!-- Textarea -->
+                    <textarea #replyInput [value]="replyText" (input)="onReplyTextChange($any($event.target).value)"
+                        rows="3" [placeholder]="'Reply to ' + comment.authorName + '...'"
+                        class="w-full px-4 py-3 text-sm text-gray-800 outline-none resize-y min-h-[90px] bg-white leading-relaxed placeholder:text-gray-300 block">
+          </textarea>
+                </div>
+
+                <!-- Preview -->
+                <div *ngIf="replyPreview" class="px-4 py-3 min-h-[90px]">
+                    <div *ngIf="replyText.trim()"
+                        class="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                        [innerHTML]="replyText | markdown">
+                    </div>
+                    <p *ngIf="!replyText.trim()" class="text-sm text-gray-300 italic">Nothing to preview</p>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex items-center justify-between px-3 py-2.5 bg-gray-50/60 border-t border-gray-100">
+                    <div></div>
+                    <div class="flex items-center gap-2">
+                        <button (click)="onStartReply(comment.commentId)"
+                            class="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                        <button (click)="onSubmitReply(comment.commentId)"
+                            [disabled]="submittingReply || !replyText.trim()"
+                            class="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                            <div *ngIf="submittingReply"
+                                class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin">
+                            </div>
+                            Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nested replies -->
+        <div *ngIf="!isCollapsed && comment.replies && comment.replies.length > 0" class="flex flex-col pl-1">
+            <app-comment-item *ngFor="let reply of comment.replies" [comment]="reply" [depth]="depth + 1"
+                [currentUserName]="currentUserName" [replyingTo]="replyingTo" [replyText]="replyText"
+                [submittingReply]="submittingReply" [isPostAuthor]="isPostAuthor"
+                (startReplyEvent)="onStartReply($event)"
+                (submitReplyEvent)="submitReplyEvent.emit($event)" (replyTextChange)="onReplyTextChange($event)"
+                (toggleVoteEvent)="toggleVoteEvent.emit($event)" (togglePinEvent)="togglePinEvent.emit($event)">
+            </app-comment-item>
+        </div>
+
+    </div>
+</div>

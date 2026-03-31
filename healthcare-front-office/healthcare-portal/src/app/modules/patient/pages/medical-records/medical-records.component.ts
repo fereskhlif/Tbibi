@@ -232,7 +232,7 @@ saveActe(): void {
       }
     });
   }
-  
+
 @ViewChild('imageFileInput') imageFileInput!: ElementRef<HTMLInputElement>;
 @ViewChild('pdfFileInput') pdfFileInput!: ElementRef<HTMLInputElement>;
 

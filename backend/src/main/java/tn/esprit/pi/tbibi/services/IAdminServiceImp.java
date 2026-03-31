@@ -39,7 +39,7 @@ public class IAdminServiceImp implements IAdminService {
     @Override
     public void updateUserStatus(int userId, UserStatus status) {
         log.info("Admin is updating status for user {} to {}", userId, status);
-        User user = userRepository.findById((long) userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
         user.setAccountStatus(status);
         userRepository.save(user);
@@ -48,10 +48,10 @@ public class IAdminServiceImp implements IAdminService {
     @Override
     public void deleteUser(int userId) {
         log.info("Admin is deleting user {}", userId);
-        if (!userRepository.existsById((long) userId)) {
+        if (!userRepository.existsById(userId)) {
             throw new IllegalArgumentException("User not found with id: " + userId);
         }
-        userRepository.deleteById((long) userId);
+        userRepository.deleteById(userId);
     }
 
     @Override

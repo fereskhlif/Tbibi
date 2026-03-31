@@ -74,7 +74,7 @@ public class PrescriptionServiceTest {
         mockPatient.setMedicalFiles(List.of(medicalFile));
 
         when(userRepository.findByEmail("patient@test.com")).thenReturn(Optional.of(mockPatient));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(mockDoctor));
+        when(userRepository.findById(2)).thenReturn(Optional.of(mockDoctor));
 
         PrescriptionResponse mappedDto = new PrescriptionResponse();
         mappedDto.setPrescriptionID(1000);  // int
@@ -95,7 +95,7 @@ public class PrescriptionServiceTest {
         assertEquals("Test Doctor", dto.getDoctorName());
 
         verify(userRepository, times(1)).findByEmail("patient@test.com");
-        verify(userRepository, times(1)).findById(2L);
+        verify(userRepository, times(1)).findById(2);
         verify(mapper, times(1)).toDto(prescription);
     }
 
@@ -111,7 +111,7 @@ public class PrescriptionServiceTest {
         // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(userRepository, never()).findById(anyLong());
+        verify(userRepository, never()).findById(any(Integer.class));
         verify(mapper, never()).toDto(any());
     }
 
