@@ -55,20 +55,10 @@ export class TreatmentPlanComponent implements OnInit {
   }
 
   loadPatients(): void {
-    this.http.get<any[]>(`${this.apiUrl}/therapy-session/physiotherapist/${this.currentPhysioId}`)
+    this.http.get<Patient[]>(`${this.apiUrl}/users/patients`)
       .subscribe({
-        next: (sessions) => {
-          const patientMap = new Map<number, Patient>();
-          sessions.forEach(session => {
-            if (!patientMap.has(session.patientId)) {
-              patientMap.set(session.patientId, {
-                userId: session.patientId,
-                name: session.patientName,
-                email: session.patientEmail || ''
-              });
-            }
-          });
-          this.patients = Array.from(patientMap.values());
+        next: (data) => {
+          this.patients = data;
         },
         error: (err) => console.error('Error loading patients:', err)
       });
