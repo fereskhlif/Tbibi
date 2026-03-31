@@ -37,8 +37,8 @@ export class BookAppointmentComponent implements OnInit {
   currentMonthOffset = 0;
 
   // Verification — pre-filled from logged-in account
-  patientName = localStorage.getItem('name') ?? '';
-  patientEmail = localStorage.getItem('email') ?? '';
+  patientName = '';
+  patientEmail = '';
   verificationId = '';
   sendingCode = false;
   verificationError = '';
@@ -53,11 +53,16 @@ export class BookAppointmentComponent implements OnInit {
 
   currentStep = 0;
   readonly steps = STEPS;
-  readonly patientId = Number(localStorage.getItem('userId') ?? 1);
+  patientId = 0;  // set in ngOnInit from localStorage
 
   constructor(private svc: AppointmentService) { }
 
   ngOnInit() {
+    // Read from localStorage in ngOnInit — never as class field initializers.
+    // Login stores keys: 'userId', 'UserName', 'EmailUserConnect'
+    this.patientId = Number(localStorage.getItem('userId') || 0);
+    this.patientName = localStorage.getItem('UserName') || '';
+    this.patientEmail = localStorage.getItem('EmailUserConnect') || '';
     this.loadSpecialties();
   }
 
@@ -162,8 +167,8 @@ export class BookAppointmentComponent implements OnInit {
     this.currentStep = 1;
     this.verificationError = '';
     // Always refresh from localStorage to ensure correct patient identity
-    this.patientName = localStorage.getItem('name') ?? '';
-    this.patientEmail = localStorage.getItem('email') ?? '';
+    this.patientName = localStorage.getItem('UserName') || this.patientName;
+    this.patientEmail = localStorage.getItem('EmailUserConnect') || this.patientEmail;
   }
 
   canProceedVerification(): boolean {

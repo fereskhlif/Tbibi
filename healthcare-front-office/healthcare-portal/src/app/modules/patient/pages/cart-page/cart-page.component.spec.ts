@@ -70,15 +70,9 @@ describe('CartPageComponent', () => {
 
     describe('Navigation', () => {
 
-        it('should navigate to pharmacy medicines when continuing shopping', () => {
+        it('should navigate to medicine catalog when continuing shopping', () => {
             component.continueShopping();
-            expect(routerSpy.navigate).toHaveBeenCalledWith(['/patient/pharmacy', 1, 'medicines']);
-        });
-
-        it('should navigate to pharmacy list when no pharmacy ID', () => {
-            cartServiceSpy.getPharmacyId.and.returnValue(0);
-            component.continueShopping();
-            expect(routerSpy.navigate).toHaveBeenCalledWith(['/patient/pharmacy-list']);
+            expect(routerSpy.navigate).toHaveBeenCalledWith(['/patient/medicine-catalog']);
         });
 
         it('should navigate to checkout', () => {

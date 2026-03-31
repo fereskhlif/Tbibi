@@ -5,6 +5,8 @@ import { CartService } from '../../../modules/patient/services/cart.service';
 import { WebSocketService } from '../../../services/websocket.service';
 import { NotificationService } from '../../../services/notification.service';
 import { NotificationResponse } from '../../../models/notification.model';
+import { AuthService } from '../../../services/auth.service';
+import { UserService } from '../../../services/user.service';
 
 interface NavItem {
   path: string;
@@ -21,7 +23,8 @@ interface NavItem {
   `]
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
-  currentUserId = 1; // Hardcoded for testing
+  currentUserId: number = 0;
+  currentUserName: string = 'User';
   role: string = '';
   roleUrlPrefix: string = '';
   currentPage: string = 'dashboard';
@@ -118,7 +121,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     public cartService: CartService,
     private wsService: WebSocketService,
-    public notificationService: NotificationService
+    public notificationService: NotificationService,
+    private authService: AuthService,
+    private userService: UserService
   ) { }
 
   ngOnInit() {
@@ -146,6 +151,24 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }
 
     if (rawRole) localStorage.setItem('userRole', this.role);
+
+    // Load current user info from localStorage as initial value
+    this.currentUserName = localStorage.getItem('UserName') || '';
+    this.currentUserId = parseInt(localStorage.getItem('userId') || '0', 10);
+
+    // Always fetch the real full name from the API to ensure it's up-to-date
+    this.userService.getProfile().subscribe({
+      next: (profile) => {
+        this.currentUserName = profile.name;
+        localStorage.setItem('UserName', profile.name);
+      },
+      error: () => {
+        // Fallback: use whatever is in localStorage or a generic placeholder
+        if (!this.currentUserName) {
+          this.currentUserName = localStorage.getItem('EmailUserConnect') || 'User';
+        }
+      }
+    });
 
     this.setupNavigation();
     this.router.events.pipe(
@@ -263,6 +286,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   logout() {
     this.wsService.disconnect();
+    this.authService.logout(); // clears all localStorage (token, role, name, userId, etc.)
     this.router.navigate(['/']);
   }
 

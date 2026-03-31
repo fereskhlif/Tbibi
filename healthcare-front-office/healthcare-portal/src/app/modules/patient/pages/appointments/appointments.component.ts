@@ -40,6 +40,11 @@ import {
         </div>
       </div>
 
+      <!-- Load error -->
+      <div *ngIf="loadError && !loadingList" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        ⚠️ {{loadError}}
+      </div>
+
       <!-- Loading state -->
       <div *ngIf="loadingList" class="text-center py-12 text-gray-400">
         <p>Loading appointments…</p>
@@ -420,8 +425,9 @@ import {
 })
 export class AppointmentsComponent implements OnInit {
 
-  // ─── Patient ID (reads from localStorage after login) ───────────────────────
-  private patientId: number = Number(localStorage.getItem('userId') ?? 1);
+  // ─── Patient ID (read dynamically to avoid stale class-init values) ─────────
+  private patientId: number = 0;
+  loadError: string = '';
 
   // ─── Page state ──────────────────────────────────────────────────────────────
   myAppointments: AppointmentResponse[] = [];
@@ -469,15 +475,35 @@ export class AppointmentsComponent implements OnInit {
   constructor(private svc: AppointmentService) { }
 
   ngOnInit() {
-    this.loadMyAppointments();
+    // Always read userId fresh from localStorage here, never at field-init time.
+    // Number('0') is falsy, so || 0 handles the '0'-string edge case correctly.
+    const storedId = localStorage.getItem('userId');
+    this.patientId = storedId ? Number(storedId) : 0;
+    if (this.patientId > 0) {
+      this.loadMyAppointments();
+    } else {
+      this.loadError = 'Unable to identify your account. Please log out and log in again.';
+      this.loadingList = false;
+    }
   }
 
   // ─── Load patient appointments ───────────────────────────────────────────────
   loadMyAppointments() {
     this.loadingList = true;
+    this.loadError = '';
+    console.log('[Appointments] Loading for patientId:', this.patientId);
     this.svc.getPatientAppointments(this.patientId).subscribe({
-      next: (data: AppointmentResponse[]) => { this.myAppointments = data; this.loadingList = false; },
-      error: () => { this.myAppointments = []; this.loadingList = false; }
+      next: (data: AppointmentResponse[]) => {
+        console.log('[Appointments] Received:', data);
+        this.myAppointments = data;
+        this.loadingList = false;
+      },
+      error: (err: any) => {
+        console.error('[Appointments] Failed to load:', err);
+        this.myAppointments = [];
+        this.loadingList = false;
+        this.loadError = `Failed to load appointments (${err?.status ?? 'network error'}). Please try refreshing the page.`;
+      }
     });
   }
 
@@ -610,8 +636,16 @@ export class AppointmentsComponent implements OnInit {
     this.booking = true;
     this.bookingError = '';
 
+    // Re-read userId at booking time to guarantee freshness
+    const currentUserId = Number(localStorage.getItem('userId') || 0);
+    if (!currentUserId) {
+      this.bookingError = 'Your session has expired. Please log in again.';
+      this.booking = false;
+      return;
+    }
+
     const req = {
-      userId: this.patientId,
+      userId: currentUserId,
       doctor: this.selectedDoctorName,
       service: this.selectedSpecialty,
       specialty: this.selectedSpecialty,

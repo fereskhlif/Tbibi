@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 @Component({
     selector: 'app-pharmacist-dashboard', template: `
   <div class="p-8">
-    <div class="mb-8"><h1 class="text-2xl font-bold text-gray-900 mb-2">Pharmacist Dashboard</h1><p class="text-gray-600">Welcome back, Dr. Karim Benali</p></div>
+    <div class="mb-8"><h1 class="text-2xl font-bold text-gray-900 mb-2">Pharmacist Dashboard</h1><p class="text-gray-600">Welcome back, {{ currentUserName }}</p></div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div *ngFor="let stat of stats" class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
         <div class="flex items-center gap-3 mb-3"><span class="text-2xl">{{stat.icon}}</span><span class="text-sm text-gray-500">{{stat.title}}</span></div>
@@ -31,7 +31,8 @@ import { Component } from '@angular/core';
     </div>
   </div>
 ` })
-export class PharmacistDashboardComponent {
+export class PharmacistDashboardComponent implements OnInit {
+    currentUserName: string = 'User';
     stats = [
         { icon: '📦', title: 'Pending Orders', value: '15', subtitle: '3 urgent' },
         { icon: '💊', title: 'Prescriptions Today', value: '28', subtitle: '12 processed' },
@@ -48,4 +49,9 @@ export class PharmacistDashboardComponent {
         { name: 'Paracetamol 1000mg', category: 'Pain Relief', stock: 15, min: 50, critical: true },
         { name: 'Vitamin D3 1000IU', category: 'Vitamins', stock: 30, min: 40, critical: false }
     ];
+
+    ngOnInit(): void {
+        const storedUserName = localStorage.getItem('UserName');
+        this.currentUserName = storedUserName || 'User';
+    }
 }

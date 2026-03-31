@@ -125,7 +125,7 @@ describe('MedicalRecordsComponent', () => {
     it('doit afficher un message d\'erreur en cas d\'échec', () => {
       mockService.getMyRecord.and.returnValue(throwError(() => ({ status: 500 })));
       component.loadRecords();
-      expect(component.errorMessage).toBe('Impossible de charger vos dossiers médicaux.');
+      expect(component.errorMessage).toBe('Unable to load your medical records.');
       expect(component.records).toEqual([]);
     });
 
@@ -574,14 +574,14 @@ describe('MedicalRecordsComponent', () => {
     it('doit rejeter un format non supporté', () => {
       const file = new File([''], 'doc.txt', { type: 'text/plain' });
       component.uploadPatientImage(file);
-      expect(window.alert).toHaveBeenCalledWith(jasmine.stringContaining('Format non supporté'));
+      expect(window.alert).toHaveBeenCalledWith(jasmine.stringContaining('Unsupported format'));
       expect(mockService.uploadPatientImage).not.toHaveBeenCalled();
     });
 
     it('doit rejeter un fichier > 10 Mo', () => {
       const file = new File([new ArrayBuffer(11 * 1024 * 1024)], 'big.jpg', { type: 'image/jpeg' });
       component.uploadPatientImage(file);
-      expect(window.alert).toHaveBeenCalledWith(jasmine.stringContaining('trop grand'));
+      expect(window.alert).toHaveBeenCalledWith(jasmine.stringContaining('File too large'));
       expect(mockService.uploadPatientImage).not.toHaveBeenCalled();
     });
 

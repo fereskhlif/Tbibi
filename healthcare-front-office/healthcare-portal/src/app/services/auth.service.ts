@@ -26,9 +26,8 @@ export interface AuthResponse {
   token: string;
   email: string;
   role: string;
-  firstName?: string;
-  lastName?: string;
   userId?: number;
+  name?: string;
 }
 
 @Injectable({
@@ -74,13 +73,11 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    const token = localStorage.getItem('TokenUserConnect');
-    return token ? JSON.parse(token) : null;
+    return localStorage.getItem('TokenUserConnect');
   }
 
   getRole(): string | null {
-    const role = localStorage.getItem('RoleUserConnect');
-    return role ? JSON.parse(role) : null;
+    return localStorage.getItem('RoleUserConnect');
   }
 
   isLoggedIn(): boolean {
