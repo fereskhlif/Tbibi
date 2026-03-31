@@ -18,7 +18,7 @@ export class TreatmentPlanComponent implements OnInit {
   plans: TreatmentPlan[] = [];
   filteredPlans: TreatmentPlan[] = [];
   patients: Patient[] = [];
-  currentPhysioId: number = 9;
+  currentPhysioId: number = 0; // Will be set from localStorage
   
   filterStatus: string = 'all';
   searchTerm: string = '';
@@ -39,6 +39,12 @@ export class TreatmentPlanComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Get the logged-in physiotherapist's ID from localStorage
+    this.currentPhysioId = Number(localStorage.getItem('userId') || '0');
+    if (this.currentPhysioId === 0) {
+      console.error('No user ID found in localStorage');
+      return;
+    }
     this.loadPlans();
     this.loadPatients();
   }

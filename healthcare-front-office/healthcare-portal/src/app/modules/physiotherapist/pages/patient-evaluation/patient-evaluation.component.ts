@@ -18,7 +18,7 @@ export class PatientEvaluationComponent implements OnInit {
   evaluations: PatientEvaluation[] = [];
   filteredEvaluations: PatientEvaluation[] = [];
   patients: Patient[] = [];
-  currentPhysioId: number = 9;
+  currentPhysioId: number = 0; // Will be set from localStorage
   
   searchTerm: string = '';
   
@@ -36,6 +36,12 @@ export class PatientEvaluationComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Get the logged-in physiotherapist's ID from localStorage
+    this.currentPhysioId = Number(localStorage.getItem('userId') || '0');
+    if (this.currentPhysioId === 0) {
+      console.error('No user ID found in localStorage');
+      return;
+    }
     this.loadEvaluations();
     this.loadPatients();
   }
