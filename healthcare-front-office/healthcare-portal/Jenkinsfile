@@ -1,0 +1,125 @@
+pipeline {
+    agent any
+
+
+
+    environment {
+        PATH = "/usr/bin:${env.PATH}"
+        CHROME_BIN = '/usr/bin/google-chrome-stable'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+
+        DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/tbibi-frontend"
+        DOCKER_TAG   = "${BUILD_NUMBER}"
+
+        GIT_REPO   = 'https://github.com/fereskhlif/Esprit-PIDEV_SE-4SE2-2526-Tbibi.git'
+        GIT_BRANCH = 'backup_1'
+
+        KUBE_NAMESPACE       = 'tbibi'
+        MONITORING_NAMESPACE = 'monitoring'
+    }
+
+    stages {
+
+        stage('Git Checkout') {
+            steps {
+                echo '📥 Récupération du code source depuis GitHub...'
+                git branch: "${GIT_BRANCH}",
+                    url:    "${GIT_REPO}"
+            }
+        }
+
+        stage('Installation des dépendances') {
+            steps {
+                echo '📦 Installation des dépendances npm...'
+                dir('healthcare-front-office/healthcare-portal') {
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        stage('Tests Unitaires') {
+            steps {
+                echo '🧪 Exécution des tests unitaires Angular...'
+                dir('healthcare-front-office/healthcare-portal') {
+                    sh 'npm test -- --watch=false --browsers=ChromeHeadless'
+                }
+            }
+        }
+
+        stage('Build Production') {
+            steps {
+                echo '🔨 Build de l\'application Angular en mode production...'
+                dir('healthcare-front-office/healthcare-portal') {
+                    sh 'npm run build -- --configuration=production'
+                }
+            }
+            post {
+                success {
+                    dir('healthcare-front-office/healthcare-portal') {
+                        archiveArtifacts artifacts: 'dist/**',
+                                         fingerprint: true
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo '🐳 Construction de l\'image Docker...'
+                dir('healthcare-front-office/healthcare-portal') {
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
+                }
+            }
+        }
+
+        stage('Push Docker Hub') {
+            steps {
+                echo '🚀 Publication de l\'image sur Docker Hub...'
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                sh "docker push ${DOCKER_IMAGE}:latest"
+            }
+        }
+
+        /*
+        stage('Déploiement Kubernetes') {
+            steps {
+                echo '☸️ Déploiement sur le cluster Kubernetes...'
+                sh "kubectl create namespace ${KUBE_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
+                sh "sed -i 's|FRONTEND_IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${DOCKER_TAG}|g' k8s/frontend-deployment.yaml"
+                sh "kubectl apply -f k8s/frontend-deployment.yaml -n ${KUBE_NAMESPACE}"
+                sh "kubectl rollout status deployment/tbibi-frontend -n ${KUBE_NAMESPACE} --timeout=180s"
+            }
+        }
+
+        stage('Déploiement Monitoring') {
+            steps {
+                echo '📊 Déploiement de Prometheus & Grafana...'
+                sh "kubectl create namespace ${MONITORING_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
+                sh 'kubectl apply -f k8s/monitoring/prometheus.yaml'
+                sh 'kubectl apply -f k8s/monitoring/grafana.yaml'
+                sh "kubectl rollout status deployment/prometheus -n ${MONITORING_NAMESPACE} --timeout=120s"
+                sh "kubectl rollout status deployment/grafana -n ${MONITORING_NAMESPACE} --timeout=120s"
+                echo '📊 Prometheus → NodePort 30090'
+                echo '📊 Grafana   → NodePort 30030 (admin/admin)'
+            }
+        }
+        */
+
+    }
+
+    post {
+        always {
+            sh 'docker logout || true'
+            cleanWs()
+        }
+        success {
+            echo '✅ Pipeline CI/CD Frontend exécuté avec succès !'
+        }
+        failure {
+            echo '❌ Le pipeline CI/CD Frontend a échoué !'
+        }
+    }
+
+}
