@@ -1,0 +1,73 @@
+# ============================================================
+# Angular 18 Frontend — Service + Deployment
+# Served by http-server on port 80
+# Exposed via NodePort 30200 (access: http://<node-ip>:30200)
+# Namespace: tbibi
+# ============================================================
+
+# ----- Service (NodePort — accessible from outside the cluster) -----
+apiVersion: v1
+kind: Service
+metadata:
+  name: tbibi-frontend
+  namespace: tbibi
+  labels:
+    app: tbibi-frontend
+spec:
+  selector:
+    app: tbibi-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30200   # Access via http://<node-ip>:30200
+  type: NodePort
+
+---
+# ----- Deployment -----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tbibi-frontend
+  namespace: tbibi
+  labels:
+    app: tbibi-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tbibi-frontend
+  template:
+    metadata:
+      labels:
+        app: tbibi-frontend
+    spec:
+      containers:
+        - name: tbibi-frontend
+          # Replace with your actual Docker image pushed to a registry
+          # e.g.: docker.io/<your-dockerhub>/tbibi-frontend:latest
+          image: tbibi-frontend:latest
+          imagePullPolicy: IfNotPresent   # Use Always when pulling from a registry
+          ports:
+            - containerPort: 80
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
