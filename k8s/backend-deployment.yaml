@@ -1,0 +1,178 @@
+# ============================================================
+# Spring Boot 3 / Java 17 Backend — Service + Deployment
+# Port: 8088
+# Namespace: tbibi
+# ============================================================
+
+# ----- Service (ClusterIP — frontend reaches backend internally) -----
+apiVersion: v1
+kind: Service
+metadata:
+  name: tbibi-backend
+  namespace: tbibi
+  labels:
+    app: tbibi-backend
+spec:
+  selector:
+    app: tbibi-backend
+  ports:
+    - protocol: TCP
+      port: 8088
+      targetPort: 8088
+  type: ClusterIP
+
+---
+# ----- Deployment -----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tbibi-backend
+  namespace: tbibi
+  labels:
+    app: tbibi-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tbibi-backend
+  template:
+    metadata:
+      labels:
+        app: tbibi-backend
+    spec:
+      # Wait for MySQL to be resolvable before starting
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z mysql 3306; do
+                echo "Waiting for MySQL...";
+                sleep 3;
+              done
+      containers:
+        - name: tbibi-backend
+          # Replace with your actual Docker image pushed to a registry
+          # e.g.: docker.io/<your-dockerhub>/tbibi-backend:latest
+          image: tbibi-backend:latest
+          imagePullPolicy: IfNotPresent   # Use Always when pulling from a registry
+          ports:
+            - containerPort: 8088
+          env:
+            # Server
+            - name: SPRING_PROFILE
+              value: "prod"
+            - name: SERVER_PORT
+              value: "8088"
+
+            # Database — "mysql" resolves via the headless Service
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: MYSQL_DATABASE
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/$(MYSQL_DATABASE)?createDatabaseIfNotExist=true&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: DB_PASSWORD
+
+            # JPA
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: SPRING_JPA_SHOW_SQL
+              value: "false"
+
+            # JWT
+            - name: APP_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: JWT_SECRET
+            - name: APP_JWT_EXPIRATION_MS
+              value: "3600000"
+
+            # Tesseract OCR (Linux path inside the container)
+            - name: TESSERACT_DATAPATH
+              value: "/usr/share/tesseract-ocr/5/tessdata"
+
+            # Cloudinary
+            - name: CLOUDINARY_CLOUD_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: CLOUDINARY_CLOUD_NAME
+            - name: CLOUDINARY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: CLOUDINARY_API_KEY
+            - name: CLOUDINARY_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: CLOUDINARY_API_SECRET
+
+            # Groq AI
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: GROQ_API_KEY
+
+            # Mail
+            - name: SPRING_MAIL_HOST
+              value: "smtp.gmail.com"
+            - name: SPRING_MAIL_PORT
+              value: "587"
+            - name: SPRING_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: MAIL_USERNAME
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tbibi-secrets
+                  key: MAIL_PASSWORD
+            - name: SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH
+              value: "true"
+            - name: SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE
+              value: "true"
+
+            # Activation URL — update with your real domain or NodePort IP
+            - name: APPLICATION_MAILING_FRONTEND_ACTIVATION_URL
+              value: "http://localhost:4200/activate-account"
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8088
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8088
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
