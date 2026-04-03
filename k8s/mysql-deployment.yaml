@@ -52,7 +52,7 @@ spec:
     - protocol: TCP
       port: 3306
       targetPort: 3306
-  clusterIP: None   # headless — backend connects by name "mysql"
+      # headless — backend connects by name "mysql"
 
 ---
 # ----- Deployment -----
