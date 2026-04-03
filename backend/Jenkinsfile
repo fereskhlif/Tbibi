@@ -9,7 +9,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
 
-        DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/tbibi-backend_test"
+        DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/tbibi-backend-test"
         DOCKER_TAG   = "${BUILD_NUMBER}"
 
         GIT_REPO   = 'https://github.com/fereskhlif/Esprit-PIDEV_SE-4SE2-2526-Tbibi.git'
