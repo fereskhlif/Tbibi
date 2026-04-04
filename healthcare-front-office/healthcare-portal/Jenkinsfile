@@ -82,7 +82,6 @@ pipeline {
             }
         }
 
-        /*
         stage('Déploiement Kubernetes') {
             steps {
                 echo '☸️ Déploiement sur le cluster Kubernetes...'
@@ -93,6 +92,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Déploiement Monitoring') {
             steps {
                 echo '📊 Déploiement de Prometheus & Grafana...'
