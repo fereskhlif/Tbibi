@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks, flush } from '@angular/core/testing';
 import { ChronicDiseaseComponent } from './chronic-disease.component';
 import { ChronicConditionService, ChronicConditionResponse } from '../../services/chronic-condition.service';
 import { HttpClient } from '@angular/common/http';
@@ -105,5 +105,8 @@ describe('ChronicDiseaseComponent', () => {
     const calls = mockHttp.post.calls.allArgs();
     const hasEmailCall = calls.some(args => String(args[0]).includes('warn-email'));
     expect(hasEmailCall).toBeTrue();
+
+    discardPeriodicTasks();
+    flush();
   }));
 });

@@ -1,0 +1,138 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'M2_HOME'
+        jdk   'JAVA_HOME'
+    }
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+
+        DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/tbibi-backend-test"
+        DOCKER_TAG   = "${BUILD_NUMBER}"
+
+        GIT_REPO   = 'https://github.com/fereskhlif/Esprit-PIDEV_SE-4SE2-2526-Tbibi.git'
+        GIT_BRANCH = 'backup_1'
+
+        KUBE_NAMESPACE       = 'tbibi'
+        MONITORING_NAMESPACE = 'monitoring'
+    }
+
+    stages {
+
+        stage('Git Checkout') {
+            steps {
+                echo '📥 Récupération du code source depuis GitHub...'
+                git branch: "${GIT_BRANCH}",
+                    url:    "${GIT_REPO}"
+            }
+        }
+
+        stage('Compilation Maven') {
+            steps {
+                echo '🔨 Compilation du backend Spring Boot...'
+                dir('backend') {
+                    sh 'mvn clean compile -DskipTests'
+                }
+            }
+        }
+
+        stage('Tests Unitaires') {
+            steps {
+                echo '🧪 Exécution des tests unitaires...'
+                dir('backend') {
+                    sh 'mvn test'
+                }
+            }
+            post {
+                always {
+                    dir('backend') {
+                        junit allowEmptyResults: true,
+                             testResults: '**/target/surefire-reports/*.xml'
+                    }
+                }
+            }
+        }
+
+        stage('Package JAR') {
+            steps {
+                echo '📦 Création du fichier JAR...'
+                dir('backend') {
+                    sh 'mvn package -DskipTests'
+                }
+            }
+            post {
+                success {
+                    dir('backend') {
+                        archiveArtifacts artifacts: 'target/*.jar',
+                                         fingerprint: true
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo '🐳 Construction de l\'image Docker...'
+                dir('backend') {
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
+                }
+            }
+        }
+
+        stage('Push Docker Hub') {
+            steps {
+                echo '🚀 Publication de l\'image sur Docker Hub...'
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                sh "docker push ${DOCKER_IMAGE}:latest"
+            }
+        }
+
+
+        stage('Déploiement Kubernetes') {
+            steps {
+                echo '☸️ Déploiement sur le cluster Kubernetes...'
+                sh "kubectl create namespace ${KUBE_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
+                sh "sed -i 's|BACKEND_IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${DOCKER_TAG}|g' k8s/backend-deployment.yaml"
+                sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}"
+                sh "kubectl rollout status deployment/tbibi-mysql -n ${KUBE_NAMESPACE} --timeout=120s"
+                sh "kubectl apply -f k8s/backend-deployment.yaml -n ${KUBE_NAMESPACE}"
+                sh "kubectl rollout status deployment/tbibi-backend -n ${KUBE_NAMESPACE} --timeout=180s"
+            }
+        }
+
+
+        /*
+        stage('Déploiement Monitoring') {
+            steps {
+                echo '📊 Déploiement de Prometheus & Grafana...'
+                sh "kubectl create namespace ${MONITORING_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
+                sh 'kubectl apply -f k8s/monitoring/prometheus.yaml'
+                sh 'kubectl apply -f k8s/monitoring/grafana.yaml'
+                sh "kubectl rollout status deployment/prometheus -n ${MONITORING_NAMESPACE} --timeout=120s"
+                sh "kubectl rollout status deployment/grafana -n ${MONITORING_NAMESPACE} --timeout=120s"
+                echo '📊 Prometheus → NodePort 30090'
+                echo '📊 Grafana   → NodePort 30030 (admin/admin)'
+            }
+        }
+        */
+
+    }
+
+    post {
+        always {
+            sh 'docker logout || true'
+            cleanWs()
+        }
+        success {
+            echo '✅ Pipeline CI/CD Backend exécuté avec succès !'
+        }
+        failure {
+            echo '❌ Le pipeline CI/CD Backend a échoué !'
+        }
+    }
+
+}

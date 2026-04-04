@@ -20,6 +20,8 @@ import tn.esprit.pi.tbibi.DTO.post.PostResponse;
 import tn.esprit.pi.tbibi.DTO.vote.VoteRequest;
 import tn.esprit.pi.tbibi.DTO.vote.VoteResponse;
 import tn.esprit.pi.tbibi.services.IForumService;
+import tn.esprit.pi.tbibi.security.jwt.JwtService;
+import tn.esprit.pi.tbibi.security.CustomUserDetailsService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -39,6 +41,12 @@ class ForumControllerTest {
 
     @MockBean
     private IForumService forumService;
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Autowired
     private ObjectMapper objectMapper;

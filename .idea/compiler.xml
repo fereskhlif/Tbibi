@@ -28,4 +28,5 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="tbibi" options="-parameters" />
     </option>
+  </component>
 </project>
