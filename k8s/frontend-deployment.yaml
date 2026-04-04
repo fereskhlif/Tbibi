@@ -46,7 +46,7 @@ spec:
         - name: tbibi-frontend
           # Replace with your actual Docker image pushed to a registry
           # e.g.: docker.io/<your-dockerhub>/tbibi-frontend:latest
-          image: tbibi-frontend:latest
+          image: FRONTEND_IMAGE_PLACEHOLDER
           imagePullPolicy: IfNotPresent   # Use Always when pulling from a registry
           ports:
             - containerPort: 80
