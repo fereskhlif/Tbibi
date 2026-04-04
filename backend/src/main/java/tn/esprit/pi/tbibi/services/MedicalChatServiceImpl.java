@@ -20,23 +20,23 @@ public class MedicalChatServiceImpl implements IMedicalChatService {
 
     // all messages of user
     @Override
-    public List<MedicalChat> getMessages(Long userId) {
+    public List<MedicalChat> getMessages(Integer userId) {
         return repo.findBySenderUserIdOrReceiverUserId(userId, userId);
     }
 
     // conversation between 2 users
     @Override
-    public List<MedicalChat> getConversation(Long senderId, Long receiverId) {
-        // Automatically mark messages received by the current user (senderId parameter is often the active user requesting)
-        // Wait, to be safe, we will just provide the method and let the controller call it with explicit current user.
-        return repo.findBySenderUserIdAndReceiverUserIdOrReceiverUserIdAndSenderUserId(
+    public List<MedicalChat> getConversation(Integer senderId, Integer receiverId) {
+        // Find messages where (Sender=senderId AND Receiver=receiverId) 
+        // OR (Receiver=senderId AND Sender=receiverId)
+        return repo.findBySenderUserIdAndReceiverUserIdOrReceiverUserIdAndSenderUserIdOrderByCreatedAtAsc(
                 senderId, receiverId,
                 senderId, receiverId
         );
     }
 
     @Override
-    public void markConversationAsRead(Long senderId, Long receiverId) {
+    public void markConversationAsRead(Integer senderId, Integer receiverId) {
         repo.markMessagesAsRead(senderId, receiverId);
     }
 }

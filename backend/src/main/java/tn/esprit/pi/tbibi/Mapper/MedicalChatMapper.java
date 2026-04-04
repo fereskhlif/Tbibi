@@ -15,8 +15,8 @@ public class MedicalChatMapper {
         dto.setMessage(entity.getMessage());
         dto.setFileUrl(entity.getFileUrl());
         dto.setIsRead(entity.getIsRead());
-        dto.setReadAt(entity.getReadAt());
-        dto.setCreatedAt(entity.getCreatedAt());
+        dto.setReadAt(entity.getReadAt() != null ? entity.getReadAt().toString() : null);
+        dto.setCreatedAt(entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null);
 
         if (entity.getSender() != null) {
             dto.setSenderId((long) entity.getSender().getUserId());
@@ -37,8 +37,8 @@ public class MedicalChatMapper {
         entity.setMessage(dto.getMessage());
         entity.setFileUrl(dto.getFileUrl());
         entity.setIsRead(dto.getIsRead());
-        entity.setReadAt(dto.getReadAt());
-        entity.setCreatedAt(dto.getCreatedAt());
+        entity.setReadAt(dto.getReadAt() != null ? java.time.LocalDateTime.parse(dto.getReadAt()) : null);
+        entity.setCreatedAt(dto.getCreatedAt() != null ? java.time.LocalDateTime.parse(dto.getCreatedAt()) : null);
 
         return entity;
     }

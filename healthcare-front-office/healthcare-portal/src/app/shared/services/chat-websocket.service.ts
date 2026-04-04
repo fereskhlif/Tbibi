@@ -39,8 +39,8 @@ export class ChatWebSocketService {
     
     // Build WebSocket URL with token as query parameter (fallback for SockJS)
     const wsUrl = token 
-      ? `http://localhost:8088/ws-chat?Authorization=Bearer%20${encodeURIComponent(token)}` 
-      : 'http://localhost:8088/ws-chat';
+      ? `http://localhost:8088/ws?Authorization=Bearer%20${encodeURIComponent(token)}` 
+      : 'http://localhost:8088/ws';
 
     this.stompClient = new Client({
       debug: (msg: string) => console.log('STOMP: ' + msg),

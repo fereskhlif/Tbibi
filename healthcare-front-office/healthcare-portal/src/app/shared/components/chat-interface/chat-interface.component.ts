@@ -234,31 +234,33 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   loadContacts() {
-    const role = localStorage.getItem('RoleUserConnect');
+    const role = (localStorage.getItem('RoleUserConnect') || '').toUpperCase().trim();
     
-    // If patient, fetch doctors. If doctor, fetch patients.
-    const contactsObservable = role === 'PATIENT' 
+    console.log('📋 Loading contacts for role:', role);
+
+    // Patients see doctors; doctors/DOCTEUR see patients
+    const isPatient = role.includes('PATIENT');
+    const contactsObservable = isPatient
       ? this.chatHttp.getAllDoctors()
       : this.chatHttp.getAllPatients();
     
     this.subscriptions.add(contactsObservable.subscribe({
       next: (users) => {
+        console.log('✅ Contacts loaded:', users.length, 'users');
         if (users && users.length > 0) {
           this.contacts = users.map(u => ({
             userId: u.userId,
             name: u.name || 'Unknown User',
-            role: u.role || 'User',
+            role: (u as any).roleName || u.role || 'User',
             unreadCount: 0
           }));
         } else {
-          console.warn('No users found for role:', role);
-          // Fallback: show empty state
+          console.warn('⚠️ No contacts found for role:', role);
           this.contacts = [];
         }
       },
       error: (err) => {
-        console.error('Error loading contacts:', err);
-        // Fallback dummy contacts for testing
+        console.error('❌ Error loading contacts:', err);
         this.contacts = [];
       }
     }));

@@ -45,7 +45,7 @@ public class MedicalChatController {
 
     // ALL messages of user
     @GetMapping("/user/{id}")
-    public List<MedicalChatDto> getUserMessages(@PathVariable Long id) {
+    public List<MedicalChatDto> getUserMessages(@PathVariable Integer id) {
         return service.getMessages(id)
                 .stream()
                 .map(mapper::toDto)
@@ -55,11 +55,16 @@ public class MedicalChatController {
     // conversation between 2 users
     @GetMapping("/conversation")
     public List<MedicalChatDto> getConversation(
-            @RequestParam Long senderId,
-            @RequestParam Long receiverId) {
+            @RequestParam Integer senderId,
+            @RequestParam Integer receiverId) {
 
-        // also mark them as read when fetching conversation
-        service.markConversationAsRead(receiverId, senderId);
+        // Mark received messages as read (best-effort – don't crash if this fails)
+        try {
+            service.markConversationAsRead(receiverId, senderId);
+        } catch (Exception e) {
+            // log but don't fail the request
+            System.err.println("[Chat] markConversationAsRead failed: " + e.getMessage());
+        }
 
         return service.getConversation(senderId, receiverId)
                 .stream()

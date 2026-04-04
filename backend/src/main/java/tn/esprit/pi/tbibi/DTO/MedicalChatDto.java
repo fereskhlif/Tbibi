@@ -16,6 +16,6 @@ public class MedicalChatDto {
 
     private String fileUrl;
     private Boolean isRead;
-    private java.time.LocalDateTime readAt;
-    private java.time.LocalDateTime createdAt;
+    private String readAt;
+    private String createdAt;
 }

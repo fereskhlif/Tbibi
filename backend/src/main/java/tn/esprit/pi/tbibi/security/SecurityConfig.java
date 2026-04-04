@@ -78,6 +78,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/chronic/**").permitAll()
 
                         // Websocket chat
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/ws-chat/**").permitAll()
 
                         // Health goals routes

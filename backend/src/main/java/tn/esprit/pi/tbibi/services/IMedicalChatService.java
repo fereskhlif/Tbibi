@@ -9,9 +9,9 @@ public interface IMedicalChatService {
 
     MedicalChat create(MedicalChat chat);
 
-    List<MedicalChat> getMessages(Long userId);
+    List<MedicalChat> getMessages(Integer userId);
 
-    List<MedicalChat> getConversation(Long senderId, Long receiverId);
+    List<MedicalChat> getConversation(Integer senderId, Integer receiverId);
 
-    void markConversationAsRead(Long senderId, Long receiverId);
+    void markConversationAsRead(Integer senderId, Integer receiverId);
 }
