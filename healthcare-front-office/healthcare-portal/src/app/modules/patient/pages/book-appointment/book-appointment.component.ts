@@ -36,6 +36,10 @@ export class BookAppointmentComponent implements OnInit {
   reasonForVisit = '';
   currentMonthOffset = 0;
 
+  // Pagination & Display limits
+  currentDateStart: Date | null = null;
+  showAllSlotsForDate = false;
+
   // Verification — pre-filled from logged-in account
   patientName = '';
   patientEmail = '';
@@ -77,6 +81,58 @@ export class BookAppointmentComponent implements OnInit {
     return Array.from(map.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, slots]) => ({ date, slots: slots.sort((x, y) => this.slotTime(x).localeCompare(this.slotTime(y))) }));
+  }
+
+  // ─── Pagination & Limits ───────────────────────────────────────────────────
+  get currentWeekDays() {
+    if (!this.currentDateStart) return [];
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(this.currentDateStart.getFullYear(), this.currentDateStart.getMonth(), this.currentDateStart.getDate() + i);
+      const dateStr = [
+        d.getFullYear(),
+        (d.getMonth() + 1).toString().padStart(2, '0'),
+        d.getDate().toString().padStart(2, '0')
+      ].join('-');
+      const group = this.groupedSlots.find(g => g.date === dateStr);
+      days.push({
+        date: dateStr,
+        hasSlots: !!group,
+        slots: group ? group.slots : []
+      });
+    }
+    return days;
+  }
+
+  nextDatePage() {
+    if (this.currentDateStart) {
+      const d = new Date(this.currentDateStart);
+      d.setDate(d.getDate() + 7);
+      this.currentDateStart = d;
+    }
+  }
+
+  prevDatePage() {
+    if (this.currentDateStart) {
+      const d = new Date(this.currentDateStart);
+      d.setDate(d.getDate() - 7);
+      
+      // Optional: limit moving to past before today? 
+      // For now we allow it, but mostly doctors have future availability.
+      this.currentDateStart = d;
+    }
+  }
+
+  getVisibleSlots(slots: ScheduleSlot[]): ScheduleSlot[] {
+    if (this.showAllSlotsForDate) {
+      return slots;
+    }
+    return slots.slice(0, 4);
+  }
+
+  selectDate(date: string) {
+    this.selectedDate = date;
+    this.showAllSlotsForDate = false;
   }
 
   slotDate(slot: ScheduleSlot): string {
@@ -135,6 +191,8 @@ export class BookAppointmentComponent implements OnInit {
     this.scheduleSlots = [];
     this.selectedSlot = null;
     this.selectedDate = '';
+    this.currentDateStart = null;
+    this.showAllSlotsForDate = false;
   }
 
   loadSchedules() {
@@ -147,7 +205,16 @@ export class BookAppointmentComponent implements OnInit {
         this.loadingSchedules = false;
         if (this.scheduleSlots.length > 0) {
           const g = this.groupedSlots;
-          if (g.length > 0) this.selectedDate = g[0].date;
+          if (g.length > 0) {
+             this.selectedDate = g[0].date;
+             // Calculate the Monday (or start of week) of the first available date
+             const firstDate = new Date(g[0].date + 'T00:00:00');
+             const day = firstDate.getDay(); 
+             // Adjust to make Monday the start of the week (0 = Mon, 6 = Sun)
+             const diff = firstDate.getDate() - day + (day === 0 ? -6 : 1);
+             this.currentDateStart = new Date(firstDate.getFullYear(), firstDate.getMonth(), diff);
+             this.showAllSlotsForDate = false;
+          }
         }
       },
       error: () => {
@@ -254,8 +321,9 @@ export class BookAppointmentComponent implements OnInit {
   }
 
   getCurrentMonthYear(): string {
-    if (this.selectedDate) {
-      const d = new Date(this.selectedDate + 'T00:00:00');
+    const targetDate = this.selectedDate || (this.currentDateStart ? this.currentDateStart.toISOString().split('T')[0] : null);
+    if (targetDate) {
+      const d = new Date(targetDate + 'T00:00:00');
       const m = d.toLocaleDateString('fr-FR', { month: 'long' });
       return m.charAt(0).toUpperCase() + m.slice(1) + ' ' + d.getFullYear();
     }

@@ -75,6 +75,9 @@ public class SecurityConfig {
                         // Schedule routes
                         .requestMatchers("/api/doctor/schedules/**").permitAll()
 
+                        // Doctor exceptions routes
+                        .requestMatchers("/api/doctor/exceptions/**").permitAll()
+
                         // Chronic disease routes
                         .requestMatchers("/api/chronic/**").permitAll()
 

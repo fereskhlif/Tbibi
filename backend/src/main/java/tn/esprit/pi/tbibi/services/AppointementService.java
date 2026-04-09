@@ -9,6 +9,7 @@ import tn.esprit.pi.tbibi.DTO.AppointmentResponse;
 import tn.esprit.pi.tbibi.Mapper.IAppointementMapper;
 import tn.esprit.pi.tbibi.entities.Appointment;
 import tn.esprit.pi.tbibi.entities.Notification;
+import tn.esprit.pi.tbibi.entities.NotificationType;
 import tn.esprit.pi.tbibi.entities.Schedule;
 import tn.esprit.pi.tbibi.entities.StatusAppointement;
 import tn.esprit.pi.tbibi.entities.User;
@@ -17,9 +18,7 @@ import tn.esprit.pi.tbibi.repositories.NotificationRepo;
 import tn.esprit.pi.tbibi.repositories.ScheduleRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
 
-import jakarta.mail.MessagingException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -33,6 +32,7 @@ public class AppointementService implements IAppointementService {
     private final NotificationRepo notificationRepo;
     private final VerificationService verificationService;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Override
     public AppointmentResponse create(AppointmentRequest request) {
@@ -72,9 +72,10 @@ public class AppointementService implements IAppointementService {
         // ── Notify the doctor ────────────────────────────────────────────────
         if (schedule.getDoctor() != null) {
             String patientName = saved.getUser() != null ? saved.getUser().getName() : "A patient";
-            String msg = "New appointment request from " + patientName
-                    + " for " + (saved.getSpecialty() != null ? saved.getSpecialty() : "a consultation")
-                    + ". Please accept or refuse.";
+            String specialty = saved.getSpecialty() != null ? saved.getSpecialty() : "a consultation";
+            String msg = "New appointment request from " + patientName + " for " + specialty + ". Please accept or refuse.";
+
+            // 1️⃣ Save to appointment notification table (for Doctor Notifications page accept/refuse)
             Notification notif = Notification.builder()
                     .message(msg)
                     .read(false)
@@ -83,6 +84,15 @@ public class AppointementService implements IAppointementService {
                     .doctor(schedule.getDoctor())
                     .build();
             notificationRepo.save(notif);
+
+            // 2️⃣ Also send via e-pharmacy notification system so it appears in the bell icon
+            //    This saves to NotificationRepository and pushes proper JSON via WebSocket
+            notificationService.createAndSend(
+                    schedule.getDoctor(),
+                    msg,
+                    NotificationType.APPOINTMENT,
+                    "/doctor/notifications"
+            );
         }
 
         return mapper.toResponse(saved);
@@ -138,7 +148,16 @@ public class AppointementService implements IAppointementService {
 
         appointment.setSchedule(newSchedule);
         appointment.setStatusAppointement(StatusAppointement.PENDING); // reset to pending
-        return mapper.toResponse(appointmentRepository.save(appointment));
+        Appointment saved = appointmentRepository.save(appointment);
+
+        // Notify patient that appointment is rescheduled
+        if (saved.getUser() != null) {
+            String doctorName = (newSchedule.getDoctor() != null) ? newSchedule.getDoctor().getName() : "your doctor";
+            String msg = "Your appointment for " + saved.getSpecialty() + " has been rescheduled by Dr. " + doctorName + ". Please review the new time.";
+            notificationService.createAndSend(saved.getUser(), msg, tn.esprit.pi.tbibi.entities.NotificationType.APPOINTMENT, "/patient/appointments");
+        }
+
+        return mapper.toResponse(saved);
     }
 
     @Override
@@ -195,7 +214,7 @@ public class AppointementService implements IAppointementService {
         return verificationService.createVerification(request);
     }
 
-    /** Verify code and create appointment, then send confirmation email */
+    /** Verify code and create appointment — email is sent later when doctor accepts */
     public AppointmentResponse verifyAndConfirm(String verificationId, String code) {
         var pv = verificationService.consume(verificationId, code);
         var req = pv.request();
@@ -203,8 +222,7 @@ public class AppointementService implements IAppointementService {
         // Generate a unique meeting room per appointment
         String meetingLink = "https://meet.jit.si/tbibi-" + java.util.UUID.randomUUID();
 
-        // Determine the correct patient userId: respect the logged-in user ID passed by the frontend.
-        // Fallback to finding by verified email only if the frontend sent a null or 0 userId.
+        // Determine the correct patient userId
         Integer patientUserId = req.getUserId();
         String verifiedEmail = req.getPatientEmail();
         if ((patientUserId == null || patientUserId == 0) && verifiedEmail != null && !verifiedEmail.isBlank()) {
@@ -224,9 +242,7 @@ public class AppointementService implements IAppointementService {
                 .build();
         AppointmentResponse response = create(apptReq);
 
-        // Persist the meeting link AND the patient name (from the form) on the saved appointment.
-        // Storing patientName directly ensures the doctor always sees the right name even if
-        // the userId was incorrectly linked.
+        // Persist the meeting link AND the patient name on the saved appointment.
         final String patientNameFromForm = req.getPatientName() != null ? req.getPatientName() : "";
         appointmentRepository.findById(response.getAppointmentId()).ifPresent(a -> {
             a.setMeetingLink(meetingLink);
@@ -234,34 +250,12 @@ public class AppointementService implements IAppointementService {
                 a.setPatientName(patientNameFromForm);
             }
             appointmentRepository.save(a);
-            // Update the response to reflect the correct patientName
             response.setPatientName(a.getPatientName());
         });
 
-        Schedule schedule = findScheduleById(req.getScheduleId());
-        String patientEmail = req.getPatientEmail();
-        if ((patientEmail == null || patientEmail.isBlank()) && req.getUserId() != null) {
-            patientEmail = userRepo.findById(req.getUserId()).map(User::getEmail).orElse(null);
-        }
-        if (patientEmail != null && !patientEmail.isBlank()) {
-            try {
-                String dateStr = schedule.getDate() != null ? schedule.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
-                String timeStr = schedule.getStartTime() != null ? schedule.getStartTime().toString().substring(0, 5) : "";
-                String location = schedule.getDoctor() != null && schedule.getDoctor().getAdresse() != null ? schedule.getDoctor().getAdresse() : "";
-                emailService.sendAppointmentConfirmation(
-                        patientEmail,
-                        req.getPatientName() != null ? req.getPatientName() : "Patient",
-                        req.getDoctor(),
-                        req.getSpecialty(),
-                        dateStr,
-                        timeStr,
-                        location,
-                        meetingLink);
-            } catch (MessagingException e) {
-                // Log but don't fail - appointment is already created
-                System.err.println("Failed to send confirmation email: " + e.getMessage());
-            }
-        }
+        // ✅ Email is intentionally NOT sent here.
+        // The confirmation email with the meeting link will be sent when the doctor ACCEPTS the appointment.
+
         return response;
     }
 }

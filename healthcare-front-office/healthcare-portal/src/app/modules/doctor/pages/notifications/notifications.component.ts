@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DoctorNotificationService, NotificationDTO } from '../../services/doctor-notification.service';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-doctor-notifications',
@@ -106,7 +108,7 @@ import { DoctorNotificationService, NotificationDTO } from '../../services/docto
     </div>
   `
 })
-export class DoctorNotificationsComponent implements OnInit {
+export class DoctorNotificationsComponent implements OnInit, OnDestroy {
 
     notifications: NotificationDTO[] = [];
     loading = true;
@@ -115,6 +117,7 @@ export class DoctorNotificationsComponent implements OnInit {
     successMsg = '';
 
     private doctorId: number = Number(localStorage.getItem('userId') ?? 0);
+    private wsSub?: Subscription;
 
     get unreadCount(): number {
         return this.notifications.filter(n => !n.read && n.statusAppointement === 'PENDING').length;
@@ -124,6 +127,24 @@ export class DoctorNotificationsComponent implements OnInit {
 
     ngOnInit() {
         this.load();
+
+        // Subscribe to real-time WebSocket and reload when a new notification arrives
+        this.svc.subscribeToRealTime(this.doctorId);
+        this.wsSub = this.svc.newNotification$
+            .pipe(filter(n => n !== null))
+            .subscribe(newNotif => {
+                // Re-fetch the full list so we get all details (schedule, patient, etc.)
+                this.svc.getNotifications(this.doctorId).subscribe({
+                    next: data => {
+                        this.notifications = data;
+                        this.showSuccess(`🔔 New appointment request from ${(newNotif as NotificationDTO).patientName || 'a patient'}!`);
+                    }
+                });
+            });
+    }
+
+    ngOnDestroy() {
+        this.wsSub?.unsubscribe();
     }
 
     load() {
