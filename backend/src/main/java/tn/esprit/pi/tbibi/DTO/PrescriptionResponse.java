@@ -21,6 +21,7 @@ public class PrescriptionResponse {
     private String  doctorName;
     private String note;
     private String date;           // String ISO → Angular le parse sans problème
+    private String expirationDate;
     private String statusUpdatedAt;
     private PrescriptionStatus status;
 

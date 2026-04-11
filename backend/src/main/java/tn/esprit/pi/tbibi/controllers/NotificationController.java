@@ -70,6 +70,24 @@ public class NotificationController {
         return ResponseEntity.ok(notificationRepo.countByDoctorUserIdAndRead(doctorId, false));
     }
 
+    /** DEBUG: returns ALL notifications in DB that have doctor_id = doctorId */
+    @GetMapping("/doctor/{doctorId}/debug")
+    @Transactional
+    public ResponseEntity<List<java.util.Map<String, Object>>> debugDoctor(@PathVariable int doctorId) {
+        List<Notification> all = notificationRepo.findByDoctorUserIdOrderByCreatedDateDesc(doctorId);
+        List<java.util.Map<String, Object>> result = all.stream().map(n -> {
+            java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", n.getNotificationId());
+            m.put("message", n.getMessage());
+            m.put("type", n.getType());
+            m.put("read", n.isRead());
+            m.put("createdDate", n.getCreatedDate());
+            m.put("doctorId", n.getDoctor() != null ? n.getDoctor().getUserId() : null);
+            return m;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
     @PatchMapping("/{id}/accept")
     @Transactional
     public ResponseEntity<NotificationDTO> accept(@PathVariable Long id) {
@@ -174,12 +192,32 @@ public class NotificationController {
     // ── Mapper ────────────────────────────────────────────────────────────────
 
     private NotificationDTO toDTO(Notification n) {
+        String msg = n.getMessage();
+        String title = null;
+        if (msg != null && msg.contains("||")) {
+            String[] parts = msg.split("\\|\\|");
+            title = parts[0];
+            msg = parts[1];
+        } else if (n.getType() == NotificationType.PRESCRIPTION_RENEWAL) {
+            title = "Prescription Renewal Request";
+        }
+
+        Integer prescriptionId = null;
+        if (n.getRedirectUrl() != null && n.getRedirectUrl().contains("prescriptions/")) {
+            try {
+                prescriptionId = Integer.parseInt(n.getRedirectUrl().substring(n.getRedirectUrl().lastIndexOf('/') + 1));
+            } catch (Exception e) {}
+        }
+
         NotificationDTO dto = NotificationDTO.builder()
                 .notificationId(n.getNotificationId())
-                .message(n.getMessage())
+                .message(msg) // without title if parsed
                 .read(n.isRead())
                 .createdDate(n.getCreatedDate())
                 .doctorId(n.getDoctor() != null ? n.getDoctor().getUserId() : 0)
+                .type(n.getType() != null ? n.getType().name() : null)
+                .title(title)
+                .prescriptionId(prescriptionId)
                 .build();
 
         Appointment apt = n.getAppointments();

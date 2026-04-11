@@ -96,6 +96,10 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
   saveError = '';
   lastSavedPrescriptions: string[] = [];
 
+  // ── Constantes Vitales ─────────────────────────────────────────────────────
+  vitals = { tensionSys: null as number | null, tensionDia: null as number | null, poids: null as number | null, glycemie: null as number | null, temperature: null as number | null };
+
+
   // ── Sub-modal Vaccin ───────────────────────────────────────────────────────
   showVaccineModal = false;
   vacForm: VaccineRequest = { nom: '', type: '', observation: '' };
@@ -166,6 +170,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
     };
     this.saveSuccess = false;
     this.saveError = '';
+    this.vitals = { tensionSys: null, tensionDia: null, poids: null, glycemie: null, temperature: null };
     this.histEntries = this.parseHistory(p.medicalHistory);
     this.derniereVisite = this.histEntries.length > 0 ? this.extractDate(this.histEntries[0]) : 'Never';
     this.showModal = true;
@@ -270,7 +275,10 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
 
   // ── Validation formulaire ──────────────────────────────────────────────────
   formIsValid(): boolean {
+    const hasVitals = this.vitals.tensionSys !== null || this.vitals.poids !== null ||
+                      this.vitals.glycemie !== null || this.vitals.temperature !== null;
     return !!(
+      hasVitals ||
       (this.form.visitNote      || '').trim() ||
       (this.form.analyseSanguine || '').trim() ||
       this.form.vaccines?.length > 0           ||
@@ -279,6 +287,31 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
       (this.form.appareilUrinaire || '').trim() ||
       this.form.urinaryExams?.length > 0
     );
+  }
+
+  // ── Vital Signs helpers ────────────────────────────────────────────────────
+  tensionState(): 'normal' | 'warn' | 'danger' {
+    const s = this.vitals.tensionSys, d = this.vitals.tensionDia;
+    if (s !== null && s >= 14) return 'danger';
+    if (d !== null && d >= 9)  return 'danger';
+    if (s !== null && s >= 13) return 'warn';
+    return 'normal';
+  }
+
+  temperatureState(): 'normal' | 'warn' | 'danger' {
+    const t = this.vitals.temperature;
+    if (t === null) return 'normal';
+    if (t >= 39.5) return 'danger';
+    if (t >= 38)   return 'warn';
+    return 'normal';
+  }
+
+  glycemieState(): 'normal' | 'warn' | 'danger' {
+    const g = this.vitals.glycemie;
+    if (g === null) return 'normal';
+    if (g > 2.0) return 'danger';
+    if (g > 1.6) return 'warn';
+    return 'normal';
   }
 
   // ── Enregistrement visite ──────────────────────────────────────────────────
@@ -305,6 +338,14 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
           });
           let built = `─── Visit on ${ts} ───`;
           if (this.form.filiere)         built += `\nCategory      : ${this.form.filiere}`;
+          // Include vitals summary
+          const v = this.vitals;
+          const vParts: string[] = [];
+          if (v.tensionSys !== null || v.tensionDia !== null) vParts.push(`BP: ${v.tensionSys ?? '?'}/${v.tensionDia ?? '?'} mmHg`);
+          if (v.poids       !== null) vParts.push(`Weight: ${v.poids} kg`);
+          if (v.glycemie    !== null) vParts.push(`Glucose: ${v.glycemie} g/L`);
+          if (v.temperature !== null) vParts.push(`Temp: ${v.temperature} °C`);
+          if (vParts.length > 0) built += `\nVitals        : ${vParts.join(' | ')}`;
           if (this.form.visitNote)       built += `\nNotes         : ${this.form.visitNote}`;
           if (this.form.analyseSanguine) built += `\nBlood Test    : ${this.form.analyseSanguine}`;
           if (this.form.prescriptions?.length) built += `\nPrescriptions : ${this.form.prescriptions.join(' | ')}`;
@@ -319,6 +360,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
         this.lastSavedPrescriptions = [...this.form.prescriptions];
 
         // Réinitialisation du formulaire
+        this.vitals = { tensionSys: null, tensionDia: null, poids: null, glycemie: null, temperature: null };
         this.form = {
           filiere: '', visitNote: '', analyseSanguine: '', vaccination: '',
           prescriptions: [], autre: '', vaccines: [], appareilUrinaire: '', urinaryExams: []

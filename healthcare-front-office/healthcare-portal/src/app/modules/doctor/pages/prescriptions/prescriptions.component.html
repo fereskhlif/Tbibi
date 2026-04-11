@@ -99,7 +99,7 @@
   <div class="tbl-card" *ngIf="!loading && filtered.length > 0">
     <table class="ptbl">
       <thead><tr>
-        <th>Document</th><th>Patient / Date</th><th>Medicines</th><th>Status</th><th>Last Update</th><th>Actions</th>
+        <th>Document</th><th>Patient / Date</th><th>Medicines & Tracking</th><th>Status</th><th>Last Update</th><th>Actions</th>
       </tr></thead>
       <tbody>
         <tr *ngFor="let rx of filtered; trackBy: trackById" class="prow" (click)="openDetail(rx, $event)">
@@ -117,8 +117,27 @@
             </div>
           </td>
           <td>
-            <span *ngIf="rx.medicines?.length" class="med-count">💊 {{rx.medicines.length}} medicine(s)</span>
-            <span *ngIf="!rx.medicines?.length" class="em">No medicines</span>
+            <div class="flex flex-col gap-2">
+              <div>
+                <span *ngIf="rx.medicines?.length" class="med-count">💊 {{rx.medicines.length}} medicine(s)</span>
+                <span *ngIf="!rx.medicines?.length" class="em">No medicines</span>
+              </div>
+              <div *ngIf="getTrackingCards(rx).length > 0" class="flex flex-col gap-1.5 mt-1" (click)="$event.stopPropagation()">
+                <div *ngFor="let card of getTrackingCards(rx)" 
+                     class="flex flex-col gap-1 p-2 rounded-lg border text-xs"
+                     [ngClass]="card.color" style="max-width: 280px;">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="font-bold truncate" [title]="card.medicineName">{{card.medicineName}}</span>
+                    <span class="px-1.5 py-0.5 rounded-full uppercase font-bold" style="font-size: 0.65rem" [ngClass]="card.bgLabel">
+                      <span *ngIf="card.type === 'GREEN'">🟢</span>
+                      <span *ngIf="card.type === 'ORANGE'">🟠</span>
+                      <span *ngIf="card.type === 'RED'">🔴</span>
+                    </span>
+                  </div>
+                  <span class="font-semibold">{{card.message}}</span>
+                </div>
+              </div>
+            </div>
           </td>
           <td>
             <span class="ch-tag"
@@ -131,6 +150,7 @@
             {{rx.statusUpdatedAt ? (rx.statusUpdatedAt | date: 'dd MMM, HH:mm') : '—'}}
           </td>
           <td style="display:flex; gap:0.5rem; align-items:center;">
+            <button *ngIf="rx.status === 'PENDING'" style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;" (click)="validateRenewal(rx.prescriptionID, $event); $event.stopPropagation()">✅ Validate</button>
             <button style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;" (click)="openEditModal(rx, $event); $event.stopPropagation()">✏️ Edit</button>
             <button style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;" (click)="openAssignModal(rx, $event); $event.stopPropagation()">👤 Assign</button>
             <button style="display:inline-flex;align-items:center;padding:.35rem .65rem;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;" (click)="deletePrescription(rx.prescriptionID, $event); $event.stopPropagation()">🗑️</button>
@@ -231,6 +251,13 @@
           <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
           <p class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Doctor's Note</p>
           <p class="text-gray-800 text-sm leading-relaxed">{{detailRx.note || 'No notes provided.'}}</p>
+        </div>
+
+        <!-- Expiration Date -->
+        <div class="bg-white rounded-xl p-5 border border-red-100 shadow-sm relative overflow-hidden" *ngIf="detailRx.expirationDate">
+          <div class="absolute top-0 left-0 w-1 h-full bg-red-400"></div>
+          <p class="text-xs font-bold text-red-400 uppercase tracking-wider mb-2">Expiration Date</p>
+          <p class="text-gray-800 text-sm font-semibold">{{detailRx.expirationDate | date: 'dd MMMM yyyy'}}</p>
         </div>
 
         <!-- Medicines List -->
@@ -471,8 +498,22 @@
         <!-- Date -->
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">Date (Act &amp; Prescription)</label>
-          <input type="datetime-local" [(ngModel)]="form.date" [min]="editMode ? minDate : null"
+          <input type="datetime-local" [(ngModel)]="form.date" [min]="editMode ? minDate : null" (ngModelChange)="onDurationChange()"
             class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
+        </div>
+
+        <!-- Duration -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Durée :exemple [ 7 ] jours</label>
+          <input type="number" [(ngModel)]="form.duration" min="1" (ngModelChange)="onDurationChange()" placeholder="Entrez la durée en jours..."
+            class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
+        </div>
+
+        <div *ngIf="form.expirationDate">
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Date d'expiration :</label>
+          <div class="px-4 py-2.5 bg-gray-50 border-2 border-green-200 rounded-xl text-sm text-green-700 font-semibold" style="background:#f0fdf4;">
+            {{form.expirationDate | date: 'dd MMMM yyyy'}}
+          </div>
         </div>
 
         <!-- Note -->

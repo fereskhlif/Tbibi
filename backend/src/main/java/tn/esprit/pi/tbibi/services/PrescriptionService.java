@@ -29,6 +29,9 @@ public class PrescriptionService implements IPrescriptionService {
     private final Prescription_Mapper mapper;
     private final ActeRepo acteRepository;
     private final UserRepo userRepository;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
+
     @Override
     public PrescriptionResponse add(PrescriptionRequest request) {
         log.info("=== ADD PRESCRIPTION ===");
@@ -61,6 +64,11 @@ public class PrescriptionService implements IPrescriptionService {
         Prescription updated = mapper.toEntity(prescription);
         updated.setPrescriptionID(existing.getPrescriptionID());
 
+        // Preserve relationships
+        updated.setActe(existing.getActe());
+        updated.setMedicines(existing.getMedicines());
+        updated.setTreatments(existing.getTreatments());
+
         // Preserve status unless explicitly provided
         updated.setStatus(
                 prescription.getStatus() != null ? prescription.getStatus() : existing.getStatus()
@@ -69,6 +77,8 @@ public class PrescriptionService implements IPrescriptionService {
 
         Prescription saved = repository.save(updated);
         log.info("Prescription mise à jour avec ID: {}", saved.getPrescriptionID());
+
+        checkAndSendImmediateAlert(saved);
 
         return mapper.toDto(saved);
     }
@@ -144,6 +154,7 @@ public class PrescriptionService implements IPrescriptionService {
     }
 
     @Override
+    @jakarta.transaction.Transactional
     public PrescriptionResponse assignActe(int prescriptionId, int acteId) {
         log.info("=== ASSIGN ACTE {} TO PRESCRIPTION {} ===", acteId, prescriptionId);
 
@@ -157,6 +168,8 @@ public class PrescriptionService implements IPrescriptionService {
         Prescription saved = repository.save(existing);
         log.info("Acte {} assigné à la prescription {}", acteId, prescriptionId);
 
+        checkAndSendImmediateAlert(saved);
+
         return enrichWithPatient(mapper.toDto(saved), saved);
     }
     @Override
@@ -165,6 +178,34 @@ public class PrescriptionService implements IPrescriptionService {
         Prescription prescr = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
         return enrichWithPatient(mapper.toDto(prescr), prescr);
+    }
+
+    private void checkAndSendImmediateAlert(Prescription prescription) {
+        if (prescription.getExpirationDate() == null) return;
+
+        java.time.LocalDate expDate = prescription.getExpirationDate().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        long daysRemaining = java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), expDate);
+
+        if (daysRemaining == 7 || daysRemaining == 3) {
+            User patient = findPatientByActe(prescription.getActe());
+            if (patient != null && patient.getEmail() != null) {
+                String email = patient.getEmail();
+                String name = patient.getName();
+                try {
+                    if (daysRemaining == 7) {
+                        String msg = "Votre prescription expire dans une semaine (J-7). Pensez à renouveler votre ordonnance auprès du Dr. Tbibi.";
+                        emailService.sendPrescriptionAlertMessage(email, name, msg);
+                        log.info("Sent immediate J-7 alert to {}", email);
+                    } else if (daysRemaining == 3) {
+                        String msg = "⚠️ Alerte : Votre prescription expire bientôt (il vous reste 3 jours). Cliquez ici pour demander un renouvellement au Dr. Tbibi.";
+                        emailService.sendPrescriptionAlertMessage(email, name, msg);
+                        log.info("Sent immediate J-3 alert to {}", email);
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to send immediate prescription alert email to {}: {}", email, e.getMessage(), e);
+                }
+            }
+        }
     }
 
     // ── Enrichissement médecin ─────────────────────────────────────────────────
@@ -248,5 +289,79 @@ public class PrescriptionService implements IPrescriptionService {
 
         log.info("Prescriptions d'analyse trouvées: {}", result.size());
         return result;
+    }
+
+    @Override
+    @jakarta.transaction.Transactional
+    public PrescriptionResponse renewPrescription(int id) {
+        log.info("=== RENEW PRESCRIPTION ID: {} ===", id);
+
+        Prescription existing = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
+
+        Prescription renewal = new Prescription();
+        renewal.setActe(existing.getActe());
+        
+        // Copy medicines
+        if (existing.getMedicines() != null) {
+            renewal.setMedicines(new ArrayList<>(existing.getMedicines()));
+        }
+
+        renewal.setDate(new Date());
+        renewal.setStatus(PrescriptionStatus.PENDING);
+        renewal.setStatusUpdatedAt(new Date());
+        
+        // Let Doctor define new duration
+        renewal.setExpirationDate(null);
+        
+        String oldNote = existing.getNote() != null ? existing.getNote() : "";
+        renewal.setNote("🔄 RENEWAL REQUEST - " + oldNote);
+
+        Prescription saved = repository.save(renewal);
+        log.info("Renewal request created as Prescription ID: {}", saved.getPrescriptionID());
+
+        // EMIT NOTIFICATION TO THE DOCTOR
+        User patient = findPatientByActe(existing.getActe());
+        String patientName = patient != null ? patient.getName() : "Unknown Patient";
+        Integer doctorId = existing.getActe() != null ? existing.getActe().getDoctorId() : null;
+
+        log.info("[RENEWAL NOTIF] prescriptionId={}, acte={}, doctorId={}, patientName={}",
+                existing.getPrescriptionID(),
+                existing.getActe() != null ? existing.getActe().getActeId() : "NULL",
+                doctorId, patientName);
+
+        String medNames = existing.getMedicines() != null && !existing.getMedicines().isEmpty()
+                ? existing.getMedicines().stream().map(m -> m.getMedicineName()).collect(Collectors.joining(", "))
+                : "the prescription";
+        String title = patientName + "'s Renewal Request";
+        String content = "The patient wishes to renew: " + medNames + " (Prescription #" + existing.getPrescriptionID() + ")";
+
+        java.util.List<User> doctorsToNotify = new java.util.ArrayList<>();
+        if (doctorId != null) {
+            userRepository.findById(doctorId).ifPresent(doctorsToNotify::add);
+        }
+
+        // Fallback: if no doctorId on acte, notify ALL doctors in the system
+        if (doctorsToNotify.isEmpty()) {
+            log.warn("[RENEWAL NOTIF] No doctorId on acte — falling back to notifying all doctors");
+            doctorsToNotify.addAll(userRepository.findAllDoctors());
+        }
+
+        log.info("[RENEWAL NOTIF] Will notify {} doctor(s)", doctorsToNotify.size());
+
+        for (User doctor : doctorsToNotify) {
+            tn.esprit.pi.tbibi.entities.Notification notif = new tn.esprit.pi.tbibi.entities.Notification();
+            notif.setRecipient(doctor);
+            notif.setDoctor(doctor);
+            notif.setMessage(title + "||" + content);
+            notif.setType(tn.esprit.pi.tbibi.entities.NotificationType.PRESCRIPTION_RENEWAL);
+            notif.setRedirectUrl("/doctor/prescriptions/" + saved.getPrescriptionID());
+            notif.setRead(false);
+            notif.setCreatedDate(java.time.LocalDateTime.now());
+            notificationService.saveAndBroadcast(notif);
+            log.info("[RENEWAL NOTIF] Notification saved and broadcast to doctorId={} ({})", doctor.getUserId(), doctor.getName());
+        }
+
+        return enrichWithPatient(mapper.toDto(saved), saved);
     }
 }

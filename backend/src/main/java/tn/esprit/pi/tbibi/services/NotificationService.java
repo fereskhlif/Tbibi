@@ -37,6 +37,24 @@ public class NotificationService {
         );
     }
 
+    /**
+     * Saves a fully-built Notification (with both recipient AND doctor set) and
+     * broadcasts it via WebSocket so it shows up in the global bell AND the
+     * doctor's Notifications page.
+     */
+    public NotificationResponse saveAndBroadcast(Notification notification) {
+        Notification saved = notificationRepo.save(notification);
+        NotificationResponse dto = toDto(saved);
+
+        // Broadcast to the recipient (global bell)
+        if (saved.getRecipient() != null) {
+            messagingTemplate.convertAndSend(
+                    "/topic/notifications/" + saved.getRecipient().getUserId(), dto
+            );
+        }
+        return dto;
+    }
+
     public void notifyAllByRole(String roleName, String message, NotificationType type, String redirectUrl) {
         List<User> users = userRepo.findAllUsersByRoleName(roleName);
         for (User user : users) {

@@ -38,7 +38,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   selectedId: number | null = null;
   saving = false;
 
-  form: any = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: '' };
+  form: any = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: '', duration: null, expirationDate: null };
 
   activeFilter: PrescriptionStatus | 'ALL' = 'ALL';
   sortDesc = true;
@@ -118,10 +118,58 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     }
 
     list.sort((a, b) => {
-      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
-      return this.sortDesc ? -diff : diff;
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      return this.sortDesc ? timeB - timeA : timeA - timeB;
     });
     return list;
+  }
+
+  getTrackingCards(rx: PrescriptionResponse): any[] {
+    const cards: any[] = [];
+    if (!rx.expirationDate || rx.status === 'CANCELLED') return cards;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const expDate = new Date(rx.expirationDate);
+    expDate.setHours(0, 0, 0, 0);
+
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    let type = '';
+    let msg = '';
+    let color = '';
+    let bgLabel = '';
+
+    if (diffDays > 3) {
+      type = 'GREEN';
+      msg = `You have ${diffDays} days of treatment remaining.`;
+      color = 'border-green-200 bg-green-50 text-green-800';
+      bgLabel = 'bg-green-100 text-green-700';
+    } else if (diffDays <= 3 && diffDays > 0) {
+      type = 'ORANGE';
+      msg = `You have ${diffDays} days left. Remember to see the doctor.`;
+      color = 'border-orange-200 bg-orange-50 text-orange-800';
+      bgLabel = 'bg-orange-100 text-orange-700';
+    } else {
+      type = 'RED';
+      msg = 'Expired! Do not take this medication without consulting a doctor.';
+      color = 'border-red-200 bg-red-50 text-red-800';
+      bgLabel = 'bg-red-100 text-red-700';
+    }
+
+    cards.push({
+      medicineName: 'Prescription Tracking',
+      daysLeft: diffDays,
+      type: type,
+      message: msg,
+      color: color,
+      bgLabel: bgLabel
+    });
+    
+    return cards;
   }
 
   get minDate(): string {
@@ -155,7 +203,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.editMode = false;
     this.selectedId = null;
     const isoString = new Date().toISOString();
-    this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: isoString };
+    this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: isoString, duration: null, expirationDate: null };
     console.log('📅 Date envoyée:', isoString);
     this.showModal = true;
   }
@@ -175,6 +223,16 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.form.typeOfActe = value;
   }
 
+  onDurationChange(): void {
+    if (this.form.duration && this.form.duration > 0) {
+      const currentDate = new Date();
+      currentDate.setDate(currentDate.getDate() + this.form.duration);
+      this.form.expirationDate = currentDate.toISOString();
+    } else {
+      this.form.expirationDate = null;
+    }
+  }
+
   openEditModal(rx: PrescriptionResponse, event?: Event): void {
     event?.stopPropagation();
     this.editMode = true;
@@ -182,7 +240,9 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.form = {
       patientId: null, acteDescription: '', typeOfActe: '',
       note: rx.note,
-      date: new Date(rx.date).toISOString()
+      date: new Date(rx.date).toISOString(),
+      duration: null,
+      expirationDate: rx.expirationDate || null
     };
     this.showModal = true;
   }
@@ -192,6 +252,18 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.assigningRx = rx;
     this.selectedActeId = rx.acteId ?? null;
     this.showAssignModal = true;
+  }
+
+  validateRenewal(id: number, event: Event): void {
+    event.stopPropagation();
+    this.prescriptionService.updateStatus(id, 'VALIDATED').subscribe({
+      next: () => {
+        this.loadAll();
+      },
+      error: () => {
+        this.error = 'Erreur lors de la validation.';
+      }
+    });
   }
 
   save(): void {
@@ -210,7 +282,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     if (dateToSend && dateToSend.length === 16) {
       dateToSend = dateToSend + ':00.000Z';
     }
-    const rxDataToSend = { note: this.form.note, date: dateToSend };
+    const rxDataToSend = { note: this.form.note, date: dateToSend, expirationDate: this.form.expirationDate };
 
     this.saving = true;
 
