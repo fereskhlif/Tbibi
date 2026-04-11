@@ -47,6 +47,9 @@ public class PrescriptionService implements IPrescriptionService {
             Prescription saved = repository.save(prescr);
             log.info("Prescription sauvegardée avec ID: {}", saved.getPrescriptionID());
 
+            // Send immediate email if expiration is within 7 days
+            checkAndSendImmediateAlert(saved);
+
             return mapper.toDto(saved);
         } catch (Exception e) {
             log.error("Erreur lors de l'ajout: {}", e.getMessage(), e);
@@ -135,11 +138,33 @@ public class PrescriptionService implements IPrescriptionService {
     }
 
 
-    // AJOUTER cette méthode privée pour retrouver le patient via MedicalReccords
+    // ── Trouver le patient via l'acte ──────────────────────────────────────────
     private User findPatientByActe(Acte acte) {
-        if (acte == null || acte.getMedicalFile() == null) return null;
-        int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
-        return userRepository.findPatientByMedicalFileId(medicalFileId).orElse(null);
+        if (acte == null) {
+            log.warn("[findPatientByActe] acte is null");
+            return null;
+        }
+
+        // PRIMARY: direct SQL join (bypasses lazy loading — works for ALL patients)
+        User patient = userRepository.findPatientByActeId(acte.getActeId()).orElse(null);
+        if (patient != null) {
+            log.info("[findPatientByActe] Found patient '{}' ({}) via direct acte join",
+                    patient.getName(), patient.getEmail());
+            return patient;
+        }
+
+        // FALLBACK: via MedicalFile (may fail if lazy-loaded relationship is null)
+        if (acte.getMedicalFile() != null) {
+            int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
+            patient = userRepository.findPatientByMedicalFileId(medicalFileId).orElse(null);
+            if (patient != null) {
+                log.info("[findPatientByActe] Found patient '{}' via medicalFile fallback", patient.getEmail());
+                return patient;
+            }
+        }
+
+        log.warn("[findPatientByActe] No patient found for acteId={}", acte.getActeId());
+        return null;
     }
 
     // AJOUTER cette méthode privée pour enrichir le DTO avec les infos patient
@@ -183,27 +208,39 @@ public class PrescriptionService implements IPrescriptionService {
     private void checkAndSendImmediateAlert(Prescription prescription) {
         if (prescription.getExpirationDate() == null) return;
 
-        java.time.LocalDate expDate = prescription.getExpirationDate().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        java.time.LocalDate expDate = prescription.getExpirationDate().toInstant()
+                .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
         long daysRemaining = java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), expDate);
 
-        if (daysRemaining == 7 || daysRemaining == 3) {
+        // Send immediately for any expiration within 7 days
+        if (daysRemaining >= 0 && daysRemaining <= 7) {
             User patient = findPatientByActe(prescription.getActe());
             if (patient != null && patient.getEmail() != null) {
                 String email = patient.getEmail();
                 String name = patient.getName();
+                String medNames = prescription.getMedicines() != null && !prescription.getMedicines().isEmpty()
+                        ? prescription.getMedicines().stream().map(m -> m.getMedicineName()).collect(Collectors.joining(", "))
+                        : "votre traitement";
                 try {
-                    if (daysRemaining == 7) {
-                        String msg = "Votre prescription expire dans une semaine (J-7). Pensez à renouveler votre ordonnance auprès du Dr. Tbibi.";
-                        emailService.sendPrescriptionAlertMessage(email, name, msg);
-                        log.info("Sent immediate J-7 alert to {}", email);
-                    } else if (daysRemaining == 3) {
-                        String msg = "⚠️ Alerte : Votre prescription expire bientôt (il vous reste 3 jours). Cliquez ici pour demander un renouvellement au Dr. Tbibi.";
-                        emailService.sendPrescriptionAlertMessage(email, name, msg);
-                        log.info("Sent immediate J-3 alert to {}", email);
+                    String msg;
+                    if (daysRemaining == 0) {
+                        msg = "🛑 Votre prescription (" + medNames + ") expire aujourd'hui. Contactez votre médecin pour la suite.";
+                    } else if (daysRemaining <= 3) {
+                        msg = "⚠️ Alerte J-" + daysRemaining + " : Votre prescription (" + medNames
+                                + ") expire dans " + daysRemaining + " jour(s). Vous pouvez demander un renouvellement directement sur l'application Tbibi.";
+                    } else {
+                        // 4–7 days
+                        msg = "📋 Votre nouvelle prescription (" + medNames
+                                + ") expire dans " + daysRemaining + " jour(s). Pensez à renouveler votre ordonnance à temps.";
                     }
+                    emailService.sendPrescriptionAlertMessage(email, name, msg);
+                    log.info("[IMMEDIATE ALERT] J-{} email sent to {} for prescription #{}",
+                            daysRemaining, email, prescription.getPrescriptionID());
                 } catch (Exception e) {
-                    log.error("Failed to send immediate prescription alert email to {}: {}", email, e.getMessage(), e);
+                    log.error("[IMMEDIATE ALERT] Failed to send email to {}: {}", email, e.getMessage(), e);
                 }
+            } else {
+                log.warn("[IMMEDIATE ALERT] No patient/email found for prescription #{}", prescription.getPrescriptionID());
             }
         }
     }

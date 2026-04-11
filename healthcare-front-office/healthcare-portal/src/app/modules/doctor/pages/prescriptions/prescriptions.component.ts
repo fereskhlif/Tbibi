@@ -224,10 +224,16 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   }
 
   onDurationChange(): void {
-    if (this.form.duration && this.form.duration > 0) {
-      const currentDate = new Date();
-      currentDate.setDate(currentDate.getDate() + this.form.duration);
-      this.form.expirationDate = currentDate.toISOString();
+    const days = parseInt(this.form.duration, 10);
+    if (!isNaN(days) && days > 0) {
+      // Calculate from the prescription date (form.date), not from today
+      const baseDate = this.form.date ? new Date(this.form.date) : new Date();
+      const expDate = new Date(baseDate);
+      expDate.setDate(expDate.getDate() + days);
+      // Use noon (12:00) to avoid UTC offset flipping the date ±1 day
+      expDate.setHours(12, 0, 0, 0);
+      this.form.expirationDate = expDate.toISOString();
+      this.form.duration = days; // normalize back to number
     } else {
       this.form.expirationDate = null;
     }
