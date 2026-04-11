@@ -504,15 +504,21 @@
 
         <!-- Duration -->
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Durée :exemple [ 7 ] jours</label>
-          <input type="number" [(ngModel)]="form.duration" min="1" (ngModelChange)="onDurationChange()" placeholder="Entrez la durée en jours..."
-            class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            Duration (days) — e.g. <strong>7</strong> = expires in 7 days
+          </label>
+          <input type="number" [(ngModel)]="form.duration" min="1" max="365"
+                 (ngModelChange)="onDurationChange()" placeholder="Enter number of days..."
+                 class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
         </div>
 
         <div *ngIf="form.expirationDate">
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Date d'expiration :</label>
-          <div class="px-4 py-2.5 bg-gray-50 border-2 border-green-200 rounded-xl text-sm text-green-700 font-semibold" style="background:#f0fdf4;">
-            {{form.expirationDate | date: 'dd MMMM yyyy'}}
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Expiration Date:</label>
+          <div class="px-4 py-2.5 border-2 border-green-200 rounded-xl text-sm font-semibold flex items-center gap-2" style="background:#f0fdf4;color:#15803d;">
+            📅 {{form.expirationDate | date: 'dd MMMM yyyy'}}
+            <span class="text-xs font-normal ml-auto" style="color:#4ade80;">
+              in {{ form.duration }} day(s)
+            </span>
           </div>
         </div>
 

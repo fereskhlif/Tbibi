@@ -36,13 +36,12 @@ public class PrescriptionAlertScheduler {
             LocalDate expDate = p.getExpirationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), expDate);
 
-            // Fetch the patient directly like in PrescriptionService
-            if (p.getActe() == null || p.getActe().getMedicalFile() == null) {
+            // Fetch the patient directly using the reliable direct SQL join
+            if (p.getActe() == null) {
                 continue;
             }
 
-            int medicalFileId = p.getActe().getMedicalFile().getMedicalfile_id();
-            User patient = userRepository.findPatientByMedicalFileId(medicalFileId).orElse(null);
+            User patient = userRepository.findPatientByActeId(p.getActe().getActeId()).orElse(null);
 
             if (patient != null && patient.getEmail() != null) {
                 String email = patient.getEmail();
