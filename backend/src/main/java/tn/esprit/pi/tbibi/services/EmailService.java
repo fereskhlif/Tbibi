@@ -142,4 +142,23 @@ public class EmailService {
         helper.setText(html, true);
         mailSender.send(mimeMessage);
     }
+
+    /** Sends a prescription alert email to the patient */
+    @Async
+    public void sendPrescriptionAlertMessage(String to, String patientName, String alertMessage) throws MessagingException {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, MULTIPART_MODE_MIXED, UTF_8.name());
+        helper.setFrom("firasabdeljaouad@gmail.com");
+        helper.setTo(to);
+        helper.setSubject("Alerte de Prescription - Tbibi");
+        String html = "<div style='font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e5e7eb;border-radius:12px'>"
+                + "<h2 style='color:#e11d48;margin-bottom:8px'>Tbibi &mdash; Suivi de traitement</h2>"
+                + "<p style='color:#374151'>Bonjour <b>" + patientName + "</b>,</p>"
+                + "<p style='color:#374151;font-size:16px;font-weight:bold;'>" + alertMessage + "</p>"
+                + "<hr style='border:none;border-top:1px solid #e5e7eb;margin:24px 0'/>"
+                + "<p style='color:#9ca3af;font-size:12px'>Si vous avez des questions, n'hésitez pas à contacter votre médecin sur la plateforme.</p>"
+                + "</div>";
+        helper.setText(html, true);
+        mailSender.send(mimeMessage);
+    }
 }

@@ -34,6 +34,13 @@ public interface UserRepo extends JpaRepository<User, Integer> {
         @Query("SELECT u FROM User u JOIN u.medicalFiles m WHERE m.medicalfile_id = :id")
         Optional<User> findPatientByMedicalFileId(@Param("id") int medicalFileId);
 
+        /** Direct join: acte → medical_reccords → users. Bypasses lazy loading. */
+        @Query(value = "SELECT u.* FROM users u " +
+                "INNER JOIN medical_reccords mr ON mr.patient_id = u.user_id " +
+                "INNER JOIN acte a ON a.medical_file_id = mr.medicalfile_id " +
+                "WHERE a.acte_id = :acteId", nativeQuery = true)
+        Optional<User> findPatientByActeId(@Param("acteId") int acteId);
+
         @Query("SELECT u FROM User u WHERE u.role.roleName = 'PATIENT' AND LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%'))")
         List<User> searchAllPatientsByName(@Param("name") String name);
 
