@@ -88,6 +88,9 @@ public class SecurityConfig {
                         // Health goals routes
                         .requestMatchers("/api/health-goals", "/api/health-goals/**").permitAll()
 
+                        // AI Chat (Gemma/Groq)
+                        .requestMatchers("/api/ai-chat/**").permitAll()
+
                         // Notification routes
                         .requestMatchers("/notifications/**").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
