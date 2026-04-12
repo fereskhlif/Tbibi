@@ -19,4 +19,7 @@ public interface IPrescriptionService {
 
     /** Returns prescriptions linked to an acte of type "analyse" (for the laboratory). */
     List<PrescriptionResponse> getAnalysisPrescriptions();
+
+    /** Patient requests a renewal of an existing prescription */
+    PrescriptionResponse renewPrescription(int id);
 }

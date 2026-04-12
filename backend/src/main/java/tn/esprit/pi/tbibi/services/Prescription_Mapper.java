@@ -25,6 +25,7 @@ public interface Prescription_Mapper {
     Prescription toEntity(PrescriptionRequest request);
 
     @Mapping(target = "date",            source = "date",            qualifiedByName = "dateToIso")
+    @Mapping(target = "expirationDate",  source = "expirationDate",  qualifiedByName = "dateToIso")
     @Mapping(target = "statusUpdatedAt", source = "statusUpdatedAt", qualifiedByName = "dateToIso")
     @Mapping(target = "status",          source = "status",          qualifiedByName = "safeStatus")
     @Mapping(target = "acteId",          source = "acte.acteId")

@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 import tn.esprit.pi.tbibi.entities.Prescription;
 @Repository
 public interface PrescriptionRepo extends JpaRepository<Prescription,Integer> {
-
+    java.util.List<Prescription> findByExpirationDateIsNotNull();
 }

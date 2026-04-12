@@ -5,5 +5,6 @@ public enum NotificationType {
     ORDER,
     PAYMENT,
     APPOINTMENT,
-    TELECONSULTATION
+    TELECONSULTATION,
+    PRESCRIPTION_RENEWAL
 }

@@ -184,3 +184,85 @@
 @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
 @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
 @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Vital Signs ─────────────────────────────────────────────────────────────*/
+.vitals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+
+.vital-card {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: .85rem 1rem;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+
+.vital-card.vital-warn {
+  background: #fffbeb;
+  border-color: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251,191,36,.15);
+}
+
+.vital-card.vital-danger {
+  background: #fff1f2;
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(248,113,113,.15);
+  animation: pulse-red 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+  0%,100% { box-shadow: 0 0 0 3px rgba(248,113,113,.15); }
+  50%      { box-shadow: 0 0 0 6px rgba(248,113,113,.25); }
+}
+
+.vital-header {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin-bottom: .6rem;
+  flex-wrap: wrap;
+}
+
+.vital-icon  { font-size: 1.1rem; }
+.vital-label { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; flex: 1; }
+
+.vital-alert { font-size: .72rem; font-weight: 700; padding: .15rem .5rem; border-radius: 20px; }
+.danger-badge { background: #fee2e2; color: #b91c1c; }
+.warn-badge   { background: #fef3c7; color: #92400e; }
+
+.vital-inputs-row {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.vital-inp {
+  flex: 1;
+  min-width: 0;
+  padding: .55rem .7rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: .95rem;
+  font-weight: 700;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  text-align: center;
+  transition: border-color .2s, background .2s;
+  font-family: 'Inter', sans-serif;
+  -moz-appearance: textfield;
+}
+.vital-inp::-webkit-outer-spin-button,
+.vital-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.vital-inp:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+.vital-inp::placeholder { color: #cbd5e1; font-weight: 400; }
+
+.vital-inp.inp-warn   { border-color: #fbbf24; background: #fefce8; color: #92400e; }
+.vital-inp.inp-danger { border-color: #f87171; background: #fff1f2; color: #b91c1c; }
+
+.vs-sep   { font-size: 1.1rem; font-weight: 700; color: #94a3b8; }
+.vital-unit { font-size: .75rem; font-weight: 600; color: #94a3b8; white-space: nowrap; }

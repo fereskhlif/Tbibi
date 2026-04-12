@@ -42,6 +42,7 @@ patientEmail?: string;
   prescriptionID: number;
   medicines: MedicineDTO[];
   date: string;
+  expirationDate?: string;
   note: string;
   status: PrescriptionStatus;
   statusUpdatedAt: string;
@@ -52,6 +53,7 @@ patientEmail?: string;
 export interface PrescriptionRequest {
   note: string;
   date: string;
+  expirationDate?: string;
   status?: PrescriptionStatus;
 }
 
@@ -100,6 +102,10 @@ export class PrescriptionService {
 
   updateStatus(id: number, status: PrescriptionStatus): Observable<PrescriptionResponse> {
     return this.http.patch<PrescriptionResponse>(`${this.apiUrl}/${id}/status`, { status });
+  }
+
+  renewPrescription(id: number): Observable<PrescriptionResponse> {
+    return this.http.post<PrescriptionResponse>(`${this.apiUrl}/${id}/renew`, {});
   }
 
   delete(id: number): Observable<void> {

@@ -98,43 +98,73 @@
   <div class="tbl-card" *ngIf="!loading && filtered.length > 0">
     <table class="ptbl">
       <thead><tr>
-        <th>Document</th><th>Doctor / Date</th><th>Medicines</th><th>Status</th><th>Last Update</th><th>Actions</th>
+        <th>Document</th><th>Doctor / Date</th><th>Medicines & Tracking</th><th>Status</th><th>Last Update</th><th>Actions</th>
       </tr></thead>
       <tbody>
-        <tr *ngFor="let rx of filtered; trackBy: trackById" class="prow" (click)="openDetail(rx, $event)">
-          <td><span class="dos-badge">Medical Prescription</span></td>
-          <td>
-            <div style="display:flex; align-items:center; gap:.75rem;">
-              <div style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"
-                   [style.background]="STATUS_META[rx.status].bg ?? '#f3f4f6'">
-                {{STATUS_META[rx.status].icon ?? '💊'}}
+        <ng-container *ngFor="let rx of filtered; trackBy: trackById">
+          <tr class="prow" (click)="openDetail(rx, $event)">
+            <td><span class="dos-badge">Medical Prescription</span></td>
+            <td>
+              <div style="display:flex; align-items:center; gap:.75rem;">
+                <div style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"
+                     [style.background]="STATUS_META[rx.status].bg ?? '#f3f4f6'">
+                  {{STATUS_META[rx.status].icon ?? '💊'}}
+                </div>
+                <div style="display:flex; flex-direction:column">
+                  <span style="font-weight:600; color:#1e293b">{{rx.doctorName ? 'Dr. ' + rx.doctorName : 'Unassigned'}}</span>
+                  <span class="em" style="font-size:0.75rem">{{rx.date | date: 'dd MMM yyyy'}}</span>
+                </div>
               </div>
-              <div style="display:flex; flex-direction:column">
-                <span style="font-weight:600; color:#1e293b">{{rx.doctorName ? 'Dr. ' + rx.doctorName : 'Unassigned'}}</span>
-                <span class="em" style="font-size:0.75rem">{{rx.date | date: 'dd MMM yyyy'}}</span>
+            </td>
+            <td>
+              <div class="flex flex-col gap-2">
+                <div>
+                  <span *ngIf="rx.medicines?.length" class="med-count">💊 {{rx.medicines.length}} medicine(s)</span>
+                  <span *ngIf="!rx.medicines?.length" class="em">No medicines</span>
+                </div>
+                <div *ngIf="getTrackingCards(rx).length > 0" class="flex flex-col gap-1.5 mt-1" (click)="$event.stopPropagation()">
+                  <div *ngFor="let card of getTrackingCards(rx)" 
+                       class="flex flex-col gap-1 p-2 rounded-lg border text-xs"
+                       [ngClass]="card.color" style="max-width: 280px;">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="font-bold truncate" [title]="card.medicineName">{{card.medicineName}}</span>
+                      <span class="px-1.5 py-0.5 rounded-full uppercase font-bold" style="font-size: 0.65rem" [ngClass]="card.bgLabel">
+                        <span *ngIf="card.type === 'GREEN'">🟢</span>
+                        <span *ngIf="card.type === 'ORANGE'">🟠</span>
+                        <span *ngIf="card.type === 'RED'">🔴</span>
+                      </span>
+                    </div>
+                    <span class="font-semibold">{{card.message}}</span>
+                    <!-- Renewal Button for ORANGE/RED statuses -->
+                    <button *ngIf="(card.type === 'ORANGE' || card.type === 'RED')"
+                            (click)="requestRenewal(card.rxId, $event)"
+                            [disabled]="renewalsRequested.has(card.rxId)"
+                            [class]="renewalsRequested.has(card.rxId) ? 'bg-gray-200 text-gray-500 cursor-not-allowed opacity-80' : 'bg-white text-gray-800 shadow-sm hover:shadow-md border border-gray-300'"
+                            class="mt-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 w-full">
+                      <span *ngIf="!renewalsRequested.has(card.rxId)">📩 Request a renewal</span>
+                      <span *ngIf="renewalsRequested.has(card.rxId)" class="text-green-600">Request sent ✅</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </td>
-          <td>
-            <span *ngIf="rx.medicines?.length" class="med-count">💊 {{rx.medicines.length}} medicine(s)</span>
-            <span *ngIf="!rx.medicines?.length" class="em">No medicines</span>
-          </td>
-          <td>
-            <span class="ch-tag"
-              [style.background]="STATUS_META[rx.status].bg"
-              [style.color]="STATUS_META[rx.status].color">
-              {{STATUS_META[rx.status].label}}
-            </span>
-          </td>
-          <td class="em">
-            {{rx.statusUpdatedAt ? (rx.statusUpdatedAt | date: 'dd MMM, HH:mm') : '—'}}
-          </td>
-          <td style="display:flex; gap:0.5rem; align-items:center;">
-            <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:linear-gradient(135deg,#0ea5e9,#3b82f6); color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="openDetail(rx, $event); $event.stopPropagation()">🔍 View</button>
-            <button class="btn-cancel" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:#4f46e5; color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="showActesForRx(rx, $event); $event.stopPropagation()">🩺 Medical Record</button>
-            <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:linear-gradient(135deg,#ec4899,#e11d48); color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="exportToPDF(rx, $event); $event.stopPropagation()">📄 PDF</button>
-          </td>
-        </tr>
+            </td>
+            <td>
+              <span class="ch-tag"
+                [style.background]="STATUS_META[rx.status].bg"
+                [style.color]="STATUS_META[rx.status].color">
+                {{STATUS_META[rx.status].label}}
+              </span>
+            </td>
+            <td class="em">
+              {{rx.statusUpdatedAt ? (rx.statusUpdatedAt | date: 'dd MMM, HH:mm') : '—'}}
+            </td>
+            <td style="display:flex; gap:0.5rem; align-items:center;">
+              <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:linear-gradient(135deg,#0ea5e9,#3b82f6); color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="openDetail(rx, $event); $event.stopPropagation()">🔍 View</button>
+              <button class="btn-cancel" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:#4f46e5; color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="showActesForRx(rx, $event); $event.stopPropagation()">🩺 Record</button>
+              <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem; background:linear-gradient(135deg,#ec4899,#e11d48); color:#fff; border:none; border-radius:8px; cursor:pointer;" (click)="exportToPDF(rx, $event); $event.stopPropagation()">📄 PDF</button>
+            </td>
+          </tr>
+        </ng-container>
       </tbody>
     </table>
   </div>

@@ -128,4 +128,13 @@ public class PrescriptionController {
     public ResponseEntity<List<PrescriptionResponse>> getAnalysisPrescriptions() {
         return ResponseEntity.ok(service.getAnalysisPrescriptions());
     }
+
+    @PostMapping("/{id}/renew")
+    public ResponseEntity<PrescriptionResponse> renewPrescription(@PathVariable int id) {
+        try {
+            return ResponseEntity.ok(service.renewPrescription(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

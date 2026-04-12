@@ -37,6 +37,7 @@ public class Notification {
     private User recipient;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "type", columnDefinition = "VARCHAR(50)")
     private NotificationType type;
 
     private String redirectUrl;

@@ -16,6 +16,9 @@ export interface NotificationDTO {
     scheduleDate: string;
     scheduleTime: string;
     doctorId: number;
+    type?: string;
+    title?: string;
+    prescriptionId?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -49,7 +52,10 @@ export class DoctorNotificationService {
                     statusAppointement: 'PENDING',
                     scheduleDate: payload.scheduleDate || '',
                     scheduleTime: payload.scheduleTime || '',
-                    doctorId: doctorId
+                    doctorId: doctorId,
+                    type: payload.type,
+                    title: payload.title,
+                    prescriptionId: payload.prescriptionId
                 };
                 this.newNotification$.next(notif);
             } catch (e) {
@@ -75,6 +81,6 @@ export class DoctorNotificationService {
     }
 
     markRead(notifId: number): Observable<void> {
-        return this.http.patch<void>(`${this.base}/${notifId}/read`, {});
+        return this.http.put<void>(`${this.base}/${notifId}/read`, {});
     }
 }
