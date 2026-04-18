@@ -20,6 +20,14 @@
       <input type="text" [(ngModel)]="patientSearch" placeholder="🔍 Search patient..."
         class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
         style="min-width:200px;" />
+      <button *ngIf="selectedIds.size > 0" (click)="deleteSelected()"
+        style="display:flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:.6rem 1.2rem;border-radius:12px;font-size:.875rem;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(239,68,68,.35);">
+        🗑️ Delete ({{selectedIds.size}})
+      </button>
+      <button (click)="openRecentModal()"
+        style="display:flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;padding:.6rem 1.2rem;border-radius:12px;font-size:.875rem;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(14,165,233,.35);">
+        ⏱️ Recent Actives
+      </button>
       <button (click)="sortDesc = !sortDesc"
         class="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-1.5">
         <span>{{ sortDesc ? '↓' : '↑' }}</span> Date
@@ -99,10 +107,16 @@
   <div class="tbl-card" *ngIf="!loading && filtered.length > 0">
     <table class="ptbl">
       <thead><tr>
+        <th style="width: 40px; text-align: center;">
+          <input type="checkbox" (click)="toggleAll($event)" [checked]="selectedIds.size === filtered.length && filtered.length > 0">
+        </th>
         <th>Document</th><th>Patient / Date</th><th>Medicines & Tracking</th><th>Status</th><th>Last Update</th><th>Actions</th>
       </tr></thead>
       <tbody>
         <tr *ngFor="let rx of filtered; trackBy: trackById" class="prow" (click)="openDetail(rx, $event)">
+          <td style="text-align: center;">
+            <input type="checkbox" [checked]="selectedIds.has(rx.prescriptionID)" (click)="toggleSelection(rx.prescriptionID, $event); $event.stopPropagation()">
+          </td>
           <td><span class="dos-badge">Medical Prescription</span></td>
           <td>
             <div style="display:flex; align-items:center; gap:.75rem;">
@@ -455,11 +469,22 @@
             <!-- Patient -->
             <div class="mb-4">
               <label class="block text-sm font-semibold text-gray-700 mb-1.5">Patient *</label>
-              <select [(ngModel)]="form.patientId"
+              <select [(ngModel)]="form.patientId" (ngModelChange)="onPatientChange($event)"
                 class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 bg-white">
                 <option [ngValue]="null" disabled>Select a patient...</option>
                 <option *ngFor="let p of patients" [ngValue]="p.patientId">{{p.patientName}}</option>
               </select>
+            </div>
+
+            <!-- Warning for active prescriptions -->
+            <div *ngIf="checkingActivePrescriptions" class="mb-4 text-xs text-blue-500 font-semibold">
+              Checking for active prescriptions...
+            </div>
+            <div *ngIf="activePrescriptionsWarning.length > 0" class="mb-4 bg-orange-50 border border-orange-200 p-3 rounded-lg">
+              <p class="text-sm font-bold text-orange-800 mb-1">
+                ⚠️ Attention! This patient has {{activePrescriptionsWarning.length}} active prescription(s).
+              </p>
+              <p class="text-xs text-orange-700">Please review to avoid medication conflicts or duplicates.</p>
             </div>
 
             <!-- Act Type -->
@@ -495,10 +520,10 @@
           </div>
         </ng-container>
 
-        <!-- Date -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Date (Act &amp; Prescription)</label>
-          <input type="datetime-local" [(ngModel)]="form.date" [min]="editMode ? minDate : null" (ngModelChange)="onDurationChange()"
+        <!-- Act Date: only when creating a new act -->
+        <div *ngIf="!editMode">
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Date (Act)</label>
+          <input type="datetime-local" [(ngModel)]="form.date" (ngModelChange)="onDurationChange()"
             class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
         </div>
 
@@ -539,6 +564,64 @@
           class="px-6 py-2.5 text-sm font-bold text-white rounded-xl transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
           {{saving ? 'Saving...' : (editMode ? 'Save Changes' : 'Create Act & Prescription')}}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       RECENT ACTIVES MODAL
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="showRecentModal"
+    class="fixed inset-0 flex items-center justify-center z-50 p-4"
+    style="background:rgba(15,23,42,.55);backdrop-filter:blur(4px);"
+    (click)="closeRecentModal()">
+
+    <div class="bg-white rounded-2xl w-full shadow-2xl overflow-hidden flex flex-col"
+      style="max-width:680px;max-height:90vh;"
+      (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between"
+        style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">⏱️ Recent Active Prescriptions</h2>
+          <p class="text-sm mt-0.5" style="color:rgba(255,255,255,.75);">Acts from the last 30 days with validated prescriptions</p>
+        </div>
+        <button (click)="closeRecentModal()"
+          style="background:rgba(255,255,255,.2);border:none;cursor:pointer;padding:.4rem .55rem;border-radius:8px;color:white;font-size:1.1rem;">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4 overflow-y-auto flex-1" style="background:#f8fafc;">
+        <div *ngIf="loadingRecent" class="text-center py-10">
+          <p class="text-gray-500 font-medium">Loading recent acts...</p>
+        </div>
+
+        <div *ngIf="!loadingRecent && recentActes.length === 0" class="text-center py-10 border border-dashed border-gray-300 rounded-xl bg-white">
+          <p class="text-3xl mb-2">✅</p>
+          <p class="text-gray-500 font-medium">No recent acts with active prescriptions found.</p>
+        </div>
+
+        <div *ngIf="!loadingRecent && recentActes.length > 0" class="grid gap-3">
+          <div *ngFor="let acte of recentActes" class="bg-white border-2 border-sky-100 rounded-xl p-4 shadow-sm hover:border-sky-300 transition-colors">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-1 bg-sky-100 text-sky-800 text-xs font-bold rounded">🩺 {{acte.typeOfActe || 'Acte Medical'}}</span>
+                  <span class="text-xs text-gray-500">{{acte.date | date:'dd/MM/yyyy'}}</span>
+                </div>
+                <p class="font-bold text-gray-900 text-sm mt-2">👤 Patient: <span class="text-indigo-600">{{acte.patientName}}</span></p>
+                <p *ngIf="acte.description" class="text-sm text-gray-600 mt-1 italic">"{{acte.description}}"</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 bg-gray-50 border-t border-gray-200 flex justify-end">
+        <button (click)="closeRecentModal()"
+          class="px-6 py-2.5 text-sm font-bold bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors shadow-sm">
+          Close
         </button>
       </div>
     </div>

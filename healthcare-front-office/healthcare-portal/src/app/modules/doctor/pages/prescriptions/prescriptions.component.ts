@@ -8,9 +8,11 @@ import {
   PrescriptionStatus,
   STATUS_META,
 } from '../../../../services/prescription-service.service';
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, forkJoin } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-doctor-prescriptions',
@@ -25,6 +27,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   showAssignModal = false;
   assigningRx: PrescriptionResponse | null = null;
   selectedActeId: number | null = null;
+  selectedIds: Set<number> = new Set<number>();
 
   prescriptions: PrescriptionResponse[] = [];
   loading = false;
@@ -49,7 +52,14 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   statusKeys: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED', 'CANCELLED'];
   readonly STEPS: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED'];
 
-  constructor(private prescriptionService: PrescriptionService) {}
+  activePrescriptionsWarning: any[] = [];
+  checkingActivePrescriptions = false;
+
+  showRecentModal = false;
+  recentActes: any[] = [];
+  loadingRecent = false;
+
+  constructor(private prescriptionService: PrescriptionService, private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadAll();
@@ -118,8 +128,8 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     }
 
     list.sort((a, b) => {
-      const timeA = a.date ? new Date(a.date).getTime() : 0;
-      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      const timeA = a.statusUpdatedAt ? new Date(a.statusUpdatedAt).getTime() : (a.date ? new Date(a.date).getTime() : 0);
+      const timeB = b.statusUpdatedAt ? new Date(b.statusUpdatedAt).getTime() : (b.date ? new Date(b.date).getTime() : 0);
       return this.sortDesc ? timeB - timeA : timeA - timeB;
     });
     return list;
@@ -202,10 +212,51 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   openAddModal(): void {
     this.editMode = false;
     this.selectedId = null;
+    this.activePrescriptionsWarning = [];
     const isoString = new Date().toISOString();
-    this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: isoString, duration: null, expirationDate: null };
+    // Use local formatted date for the HTML datetime-local input
+    const localDateTime = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: localDateTime, duration: null, expirationDate: null, rxOriginalDate: null };
     console.log('📅 Date envoyée:', isoString);
     this.showModal = true;
+  }
+
+  onPatientChange(patientId: number): void {
+    if (!patientId) {
+      this.activePrescriptionsWarning = [];
+      return;
+    }
+    this.checkingActivePrescriptions = true;
+    this.http.get<any[]>(`${environment.baseUrl}/actes/active-prescriptions-for-patient/${patientId}`).subscribe({
+      next: (res) => {
+        this.activePrescriptionsWarning = res;
+        this.checkingActivePrescriptions = false;
+      },
+      error: (err) => {
+        console.error('Error checking active prescriptions', err);
+        this.checkingActivePrescriptions = false;
+      }
+    });
+  }
+
+  openRecentModal(): void {
+    this.showRecentModal = true;
+    this.loadingRecent = true;
+    this.recentActes = [];
+    this.http.get<any[]>(`${environment.baseUrl}/actes/recent-active-prescriptions-for-doctor`).subscribe({
+      next: (res) => {
+        this.recentActes = res;
+        this.loadingRecent = false;
+      },
+      error: (err) => {
+        console.error('Error loading recent actes', err);
+        this.loadingRecent = false;
+      }
+    });
+  }
+
+  closeRecentModal(): void {
+    this.showRecentModal = false;
   }
 
   onTypeChange(value: string): void {
@@ -226,8 +277,8 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   onDurationChange(): void {
     const days = parseInt(this.form.duration, 10);
     if (!isNaN(days) && days > 0) {
-      // Calculate from the prescription date (form.date), not from today
-      const baseDate = this.form.date ? new Date(this.form.date) : new Date();
+      // Calculate from today for new prescriptions, or original date if editing
+      const baseDate = this.editMode && this.form.rxOriginalDate ? new Date(this.form.rxOriginalDate) : new Date();
       const expDate = new Date(baseDate);
       expDate.setDate(expDate.getDate() + days);
       // Use noon (12:00) to avoid UTC offset flipping the date ±1 day
@@ -246,9 +297,10 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.form = {
       patientId: null, acteDescription: '', typeOfActe: '',
       note: rx.note,
-      date: new Date(rx.date).toISOString(),
+      date: '', // Not shown/used when editing prescription
       duration: null,
-      expirationDate: rx.expirationDate || null
+      expirationDate: rx.expirationDate || null,
+      rxOriginalDate: rx.date
     };
     this.showModal = true;
   }
@@ -284,11 +336,16 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    let dateToSend = this.form.date;
-    if (dateToSend && dateToSend.length === 16) {
-      dateToSend = dateToSend + ':00.000Z';
+    let acteDateToSend = this.form.date;
+    if (acteDateToSend && acteDateToSend.length === 16) {
+      acteDateToSend = acteDateToSend + ':00.000Z';
     }
-    const rxDataToSend = { note: this.form.note, date: dateToSend, expirationDate: this.form.expirationDate };
+    
+    const rxDateToSend = this.editMode && this.form.rxOriginalDate 
+                         ? this.form.rxOriginalDate 
+                         : new Date().toISOString();
+
+    const rxDataToSend = { note: this.form.note, date: rxDateToSend, expirationDate: this.form.expirationDate };
 
     this.saving = true;
 
@@ -306,7 +363,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
       });
     } else {
       const acteReq = {
-        date: dateToSend,
+        date: acteDateToSend,
         description: this.form.acteDescription,
         typeOfActe: this.form.typeOfActe
       };
@@ -362,9 +419,52 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.prescriptionService.delete(id).subscribe({
       next: () => {
         this.prescriptions = this.prescriptions.filter(rx => rx.prescriptionID !== id);
+        this.selectedIds.delete(id);
         if (this.detailRx?.prescriptionID === id) this.closeDetail();
       },
       error: () => { this.error = 'Erreur lors de la suppression.'; }
+    });
+  }
+
+  toggleSelection(id: number, event: Event): void {
+    event.stopPropagation();
+    if (this.selectedIds.has(id)) {
+      this.selectedIds.delete(id);
+    } else {
+      this.selectedIds.add(id);
+    }
+  }
+
+  toggleAll(event: Event): void {
+    event.stopPropagation();
+    const allIds = this.filtered.map(rx => rx.prescriptionID);
+    if (this.selectedIds.size === allIds.length && allIds.length > 0) {
+      this.selectedIds.clear();
+    } else {
+      allIds.forEach(id => this.selectedIds.add(id));
+    }
+  }
+
+  deleteSelected(): void {
+    if (this.selectedIds.size === 0) return;
+    if (!confirm(`Voulez-vous vraiment supprimer les ${this.selectedIds.size} prescriptions sélectionnées ?`)) return;
+
+    this.loading = true;
+    const idsToDelete = Array.from(this.selectedIds);
+    const deleteReqs = idsToDelete.map(id => this.prescriptionService.delete(id).pipe(
+      catchError(err => of(null)) // Ignore errors for individual deletes to ensure forkJoin completes
+    ));
+
+    forkJoin(deleteReqs).subscribe({
+      next: () => {
+        this.loading = false;
+        this.selectedIds.clear();
+        this.loadAll();
+      },
+      error: () => {
+        this.loading = false;
+        this.error = 'Erreur lors de la suppression par lot.';
+      }
     });
   }
 

@@ -431,6 +431,24 @@
                 <pre class="hc-body-sm">{{ stripDate(entry) }}</pre>
               </div>
             </div>
+            <h4 class="ep-title">Actes with Active Prescriptions</h4>
+            <div *ngIf="loadingActes" class="text-xs text-gray-500 mb-4">Loading actes...</div>
+            <div *ngIf="!loadingActes && actesWithActivePrescriptions.length === 0" class="text-xs text-gray-500 mb-4">No actes with active prescriptions found.</div>
+            <div *ngIf="!loadingActes && actesWithActivePrescriptions.length > 0" class="pr-list-sm mb-4">
+              <div *ngFor="let acte of actesWithActivePrescriptions" 
+                   class="pr-item-sm !border-teal-200 !bg-teal-50 hover:!bg-teal-100 transition-colors">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                  <strong class="text-teal-900 group-hover:text-teal-700 flex items-center justify-between">
+                    <span>🩺 {{ acte.typeOfActe || 'Acte Médical' }}</span>
+                  </strong>
+                  <span style="font-size:0.75rem; color:#64748b;">
+                    {{ acte.date | date:'dd/MM/yyyy' }}
+                    <span *ngIf="acte.doctorName"> — Dr. {{acte.doctorName}}</span>
+                  </span>
+                  <span *ngIf="acte.description" style="font-size:0.8rem; color:#475569; font-style:italic;" class="line-clamp-1">({{acte.description}})</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
