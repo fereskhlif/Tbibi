@@ -13,6 +13,7 @@ import { LabPrescriptionsComponent } from './pages/prescriptions/prescriptions.c
 // ✅ Nouveaux composants CRUD
 import { LaboratoryResultListComponent } from './pages/laboratory-result-list/laboratory-result-list.component';
 import { MedicalPictureListComponent } from './pages/medical-picture-list/medical-picture-list.component';
+import { LabStatisticsComponent } from './pages/lab-statistics/lab-statistics.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -27,6 +28,7 @@ const routes: Routes = [
   // ✅ Nouvelles routes CRUD (Lemin-pi)
   { path: 'lab-results',      component: LaboratoryResultListComponent },
   { path: 'medical-pictures', component: MedicalPictureListComponent },
+  { path: 'statistics',       component: LabStatisticsComponent },
   // ✅ Forum route (main)
   {
     path: 'forum',

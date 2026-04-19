@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultRequest;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultResponse;
+import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.PatientLabStatisticsDTO;
 import tn.esprit.pi.tbibi.entities.Laboratory_Result;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.mappers.Laboratory_ResultMapper;
@@ -336,5 +337,57 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
     @Override
     public byte[] generateReport(Integer id) {
         throw new UnsupportedOperationException("PDF report generation will be implemented in next sprint");
+    }
+
+    // ✅ JPQL COMPLEXE - Statistiques par patient pour un laboratoire
+    @Override
+    public List<PatientLabStatisticsDTO> getPatientStatistics(Integer labUserId) {
+        List<Object[]> results = labRepo.getPatientStatisticsByLaboratory(labUserId);
+        
+        return results.stream()
+                .map(row -> {
+                    Integer patientId = (Integer) row[0];
+                    String patientName = (String) row[1];
+                    String patientEmail = (String) row[2];
+                    Long totalTests = (Long) row[3];
+                    Long completedTests = (Long) row[4];
+                    Long pendingTests = (Long) row[5];
+                    Long urgentTests = (Long) row[6];
+                    
+                    // Calculer le taux de complétion
+                    Double completionRate = totalTests > 0 
+                        ? (completedTests * 100.0) / totalTests 
+                        : 0.0;
+                    
+                    return PatientLabStatisticsDTO.builder()
+                            .patientId(patientId)
+                            .patientName(patientName)
+                            .patientEmail(patientEmail)
+                            .totalTests(totalTests)
+                            .completedTests(completedTests)
+                            .pendingTests(pendingTests)
+                            .urgentTests(urgentTests)
+                            .completionRate(Math.round(completionRate * 10.0) / 10.0)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    // ✅ JPQL COMPLEXE - Résultats détaillés avec JOIN (patient + médecin + labo)
+    @Override
+    public List<Laboratory_ResultResponse> getDetailedResultsByDateRange(String status, String startDate, String endDate) {
+        try {
+            java.time.LocalDate start = java.time.LocalDate.parse(startDate);
+            java.time.LocalDate end = java.time.LocalDate.parse(endDate);
+            
+            List<Laboratory_Result> results = labRepo.findDetailedResultsByStatusAndDateRange(status, start, end);
+            
+            return results.stream()
+                    .map(mapper::toResponse)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error parsing dates: " + e.getMessage());
+            return List.of();
+        }
     }
 }

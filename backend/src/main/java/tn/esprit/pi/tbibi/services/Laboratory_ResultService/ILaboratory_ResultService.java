@@ -2,6 +2,7 @@ package tn.esprit.pi.tbibi.services.Laboratory_ResultService;
 
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultRequest;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultResponse;
+import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.PatientLabStatisticsDTO;
 
 import java.util.List;
 
@@ -17,20 +18,14 @@ public interface ILaboratory_ResultService {
     List<Laboratory_ResultResponse> getByLaboratoryUser(Integer userId);
     Laboratory_ResultResponse updateStatus(Integer id, String newStatus);
 
-    // ✅ NOUVEAU
     List<Laboratory_ResultResponse> getByPatient(Integer patientId);
-
-    // ✅ Résultats prescrits par un médecin
     List<Laboratory_ResultResponse> getByPrescribedByDoctor(Integer doctorId);
-
-    // ✅ Filtrage par priorité
     List<Laboratory_ResultResponse> getByPriority(String priority);
-    
-    // ✅ Demandes en attente
     List<Laboratory_ResultResponse> getPendingRequests();
-    
-    // ✅ Demandes urgentes
     List<Laboratory_ResultResponse> getUrgentRequests();
 
     byte[] generateReport(Integer id);
+    
+    List<PatientLabStatisticsDTO> getPatientStatistics(Integer labUserId);
+    List<Laboratory_ResultResponse> getDetailedResultsByDateRange(String status, String startDate, String endDate);
 }
