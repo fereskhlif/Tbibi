@@ -1,0 +1,215 @@
+<div class="patient-progress-container">
+  <div class="header">
+    <h1>📊 Suivi de la Progression des Patients</h1>
+    <p class="subtitle">Suivez l'évolution de vos patients en temps réel</p>
+  </div>
+
+  <!-- Filtres et tri -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>🔍 Rechercher</label>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (ngModelChange)="onFilterChange()"
+        placeholder="Nom du patient ou type de thérapie..."
+        class="filter-input">
+    </div>
+
+    <div class="filter-group">
+      <label>📊 Statut</label>
+      <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()" class="filter-select">
+        <option value="all">Tous</option>
+        <option value="Active">Actifs</option>
+        <option value="Completed">Terminés</option>
+        <option value="Inactive">Inactifs</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>🔄 Trier par</label>
+      <select [(ngModel)]="sortBy" (ngModelChange)="onFilterChange()" class="filter-select">
+        <option value="progress">Progression</option>
+        <option value="name">Nom</option>
+        <option value="sessions">Nombre de séances</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Statistiques globales -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ patients.length }}</div>
+        <div class="stat-label">Patients Total</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getActivePatientCount() }}</div>
+        <div class="stat-label">Patients Actifs</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-content">
+        <div class="stat-value">
+          {{ getAverageProgress() }}%
+        </div>
+        <div class="stat-label">Progression Moyenne</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des patients -->
+  <div class="patients-grid">
+    <div *ngIf="filteredPatients.length === 0" class="no-patients">
+      <p>Aucun patient trouvé</p>
+    </div>
+
+    <div *ngFor="let patient of filteredPatients" class="patient-card" (click)="openDetailModal(patient)">
+      <div class="patient-header">
+        <div class="patient-info">
+          <h3>{{ patient.patientName }}</h3>
+          <span class="therapy-type">{{ patient.currentTherapyType }}</span>
+        </div>
+        <span [class]="'status-badge ' + getStatusBadgeClass(patient.status)">
+          {{ patient.status }}
+        </span>
+      </div>
+
+      <!-- Barre de progression -->
+      <div class="progress-section">
+        <div class="progress-header">
+          <span class="progress-label">Progression</span>
+          <span class="progress-value">{{ patient.progressPercentage }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div 
+            class="progress-fill" 
+            [style.width.%]="patient.progressPercentage"
+            [style.background-color]="getProgressColor(patient.progressPercentage)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistiques des séances -->
+      <div class="session-stats">
+        <div class="stat-item">
+          <span class="stat-icon">📅</span>
+          <div class="stat-details">
+            <span class="stat-number">{{ patient.totalSessions }}</span>
+            <span class="stat-text">Total</span>
+          </div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">✅</span>
+          <div class="stat-details">
+            <span class="stat-number">{{ patient.completedSessions }}</span>
+            <span class="stat-text">Complétées</span>
+          </div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">📆</span>
+          <div class="stat-details">
+            <span class="stat-number">{{ patient.scheduledSessions }}</span>
+            <span class="stat-text">Planifiées</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prochaine séance -->
+      <div class="next-session" *ngIf="patient.nextSessionDate">
+        <span class="next-session-label">Prochaine séance:</span>
+        <span class="next-session-date">{{ patient.nextSessionDate | date: 'dd/MM/yyyy' }} à {{ patient.nextSessionTime }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de détails -->
+  <div *ngIf="showDetailModal" class="modal-overlay" (click)="closeDetailModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📋 Détails du Patient</h2>
+        <button (click)="closeDetailModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedPatient">
+        <div class="patient-detail-header">
+          <h3>{{ selectedPatient.patientName }}</h3>
+          <span [class]="'status-badge ' + getStatusBadgeClass(selectedPatient.status)">
+            {{ selectedPatient.status }}
+          </span>
+        </div>
+
+        <div class="detail-section">
+          <h4>📧 Contact</h4>
+          <p>{{ selectedPatient.patientEmail }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>💊 Type de Thérapie</h4>
+          <p>{{ selectedPatient.currentTherapyType }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>📊 Progression</h4>
+          <div class="progress-bar large">
+            <div 
+              class="progress-fill" 
+              [style.width.%]="selectedPatient.progressPercentage"
+              [style.background-color]="getProgressColor(selectedPatient.progressPercentage)">
+            </div>
+          </div>
+          <p class="progress-text">{{ selectedPatient.progressPercentage }}% complété</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>📈 Statistiques des Séances</h4>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-label">Total</span>
+              <span class="stat-value">{{ selectedPatient.totalSessions }}</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Complétées</span>
+              <span class="stat-value">{{ selectedPatient.completedSessions }}</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Planifiées</span>
+              <span class="stat-value">{{ selectedPatient.scheduledSessions }}</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Annulées</span>
+              <span class="stat-value">{{ selectedPatient.cancelledSessions }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedPatient.lastSessionDate">
+          <h4>🕐 Dernière Séance</h4>
+          <p><strong>Date:</strong> {{ selectedPatient.lastSessionDate | date: 'dd/MM/yyyy' }}</p>
+          <p><strong>Type:</strong> {{ selectedPatient.lastSessionType }}</p>
+          <p *ngIf="selectedPatient.lastSessionNote"><strong>Notes:</strong> {{ selectedPatient.lastSessionNote }}</p>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedPatient.nextSessionDate">
+          <h4>📅 Prochaine Séance</h4>
+          <p><strong>Date:</strong> {{ selectedPatient.nextSessionDate | date: 'dd/MM/yyyy' }}</p>
+          <p><strong>Heure:</strong> {{ selectedPatient.nextSessionTime }}</p>
+          <p><strong>Type:</strong> {{ selectedPatient.nextSessionType }}</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeDetailModal()" class="btn btn-secondary">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

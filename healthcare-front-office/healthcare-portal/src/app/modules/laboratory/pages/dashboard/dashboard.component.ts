@@ -3,6 +3,21 @@ import { Component } from '@angular/core';
     selector: 'app-lab-dashboard', template: `
   <div class="p-8">
     <div class="mb-8"><h1 class="text-2xl font-bold text-gray-900 mb-2">Laboratory Dashboard</h1><p class="text-gray-600">Welcome back, Laboratory Admin</p></div>
+    
+    <!-- Quick Links Section -->
+    <div class="mb-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Access</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a *ngFor="let link of quickLinks" [routerLink]="link.route" class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="text-3xl">{{link.icon}}</span>
+            <h3 class="font-semibold text-gray-900 group-hover:text-blue-600">{{link.title}}</h3>
+          </div>
+          <p class="text-sm text-gray-500">{{link.description}}</p>
+        </a>
+      </div>
+    </div>
+    
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div *ngFor="let stat of stats" class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
         <div class="flex items-center gap-3 mb-3"><span class="text-2xl">{{stat.icon}}</span><span class="text-sm text-gray-500">{{stat.title}}</span></div>
@@ -38,6 +53,13 @@ export class LabDashboardComponent {
         { icon: '📊', title: 'Avg Turnaround', value: '4.2h', subtitle: 'Target: 6h' },
         { icon: '✅', title: 'Quality Score', value: '98.5%', subtitle: 'Above target' }
     ];
+    
+    quickLinks = [
+        { title: 'Lab Results', route: '/laboratory/lab-results', icon: '🧪', description: 'Manage laboratory test results' },
+        { title: 'Medical Pictures', route: '/laboratory/medical-pictures', icon: '🖼️', description: 'View and analyze medical images' },
+        { title: 'Statistics', route: '/laboratory/statistics', icon: '📊', description: 'View patient test statistics' }
+    ];
+    
     pendingTests = [
         { test: 'Complete Blood Count', patient: 'John Doe', doctor: 'Sarah Johnson', priority: 'Urgent', priorityClass: 'bg-red-100 text-red-700' },
         { test: 'Lipid Panel', patient: 'Jane Smith', doctor: 'Ahmed Hassan', priority: 'Routine', priorityClass: 'bg-blue-100 text-blue-700' },

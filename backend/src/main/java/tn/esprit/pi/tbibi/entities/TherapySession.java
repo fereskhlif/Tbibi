@@ -19,6 +19,8 @@ public class TherapySession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer sessionId;
 
+    private String therapyType; // Type de thérapie (ex: Massage, Rééducation, etc.)
+
     private String progressNote;
 
     private LocalDate scheduledDate;
@@ -29,12 +31,29 @@ public class TherapySession {
 
     private LocalTime endTime;
 
+    private Integer durationMinutes; // Durée prévue en minutes
+
+    @Column(nullable = false)
+    private String status = "Scheduled"; // Scheduled, In Progress, Completed, Cancelled, Rescheduled
+
+    // Nouveaux champs pour la documentation de séance
+    @Column(columnDefinition = "TEXT")
+    private String exercisesPerformed; // Exercices effectués pendant la séance
+
+    @Column(columnDefinition = "TEXT")
+    private String sessionNotes; // Notes de session détaillées
+
+    private LocalTime actualStartTime; // Heure réelle de début
+
+    private LocalTime actualEndTime; // Heure réelle de fin
+
+    private Integer actualDurationMinutes; // Durée réelle en minutes
+
     @ManyToOne
     @JoinColumn(name = "patient_user_id", nullable = false)
-
     private User patient;
+
     @ManyToOne
     @JoinColumn(name = "physiotherapist_user_id", nullable = false)
-
     private User physiotherapist;
 }
