@@ -17,6 +17,7 @@ import { LabPrescriptionsComponent } from './pages/prescriptions/prescriptions.c
 // ✅ Nouveaux composants CRUD
 import { LaboratoryResultListComponent } from './pages/laboratory-result-list/laboratory-result-list.component';
 import { MedicalPictureListComponent } from './pages/medical-picture-list/medical-picture-list.component';
+import { LabStatisticsComponent } from './pages/lab-statistics/lab-statistics.component';
 
 @NgModule({
   declarations: [
@@ -31,6 +32,7 @@ import { MedicalPictureListComponent } from './pages/medical-picture-list/medica
     // ✅ Nouveaux
     LaboratoryResultListComponent,
     MedicalPictureListComponent,
+    LabStatisticsComponent,
   ],
   imports: [
     CommonModule,

@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultRequest;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultResponse;
+import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.PatientLabStatisticsDTO;
 import tn.esprit.pi.tbibi.services.Laboratory_ResultService.ILaboratory_ResultService;
 
 import java.util.List;
@@ -132,5 +133,21 @@ public class Laboratory_ResultController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("❌ Error: " + e.getMessage() + "\n" + e.getClass().getName());
         }
+    }
+
+    // ✅ JPQL COMPLEXE - Statistiques par patient
+    @GetMapping("/statistics/patients/{labUserId}")
+    public ResponseEntity<List<PatientLabStatisticsDTO>> getPatientStatistics(
+            @PathVariable Integer labUserId) {
+        return ResponseEntity.ok(service.getPatientStatistics(labUserId));
+    }
+
+    // ✅ JPQL COMPLEXE - Résultats détaillés par période
+    @GetMapping("/detailed")
+    public ResponseEntity<List<Laboratory_ResultResponse>> getDetailedResults(
+            @RequestParam String status,
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+        return ResponseEntity.ok(service.getDetailedResultsByDateRange(status, startDate, endDate));
     }
 }
