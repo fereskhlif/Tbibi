@@ -36,6 +36,7 @@ public class PrescriptionAiService {
 
     private final UserRepo userRepo;
     private final PrescriptionRepo prescriptionRepo;
+    private final IMedicineService medicineService;
 
     @Value("${ai.prescription.service.url:http://localhost:5001}")
     private String aiServiceUrl;
@@ -63,11 +64,16 @@ public class PrescriptionAiService {
             }
         }
 
+        List<String> availableMeds = medicineService.getAvailableMedicineNames();
+        List<String> availableMoles = medicineService.getAvailableMoleculesInStock();
+
         AiAlternativeRequest requestPayload = AiAlternativeRequest.builder()
                 .medicament(medicament)
                 .indication(indication == null ? "" : indication)
                 .famille(famille == null ? "" : famille)
                 .patient(aiPatient)
+                .availableMedicines(availableMeds)
+                .availableMolecules(availableMoles)
                 .build();
 
         try {

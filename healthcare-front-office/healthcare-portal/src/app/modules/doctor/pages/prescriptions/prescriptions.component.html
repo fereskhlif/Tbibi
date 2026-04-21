@@ -653,12 +653,25 @@
             </div>
           </div>
 
+          <!-- Warn: Indisponible -->
+          <div *ngIf="outOfStockWarning" 
+               class="p-4 mb-4 bg-red-600 text-white rounded-xl shadow-lg flex items-start gap-4">
+            <span class="text-3xl">⚠️</span>
+            <div class="flex-1">
+              <h4 class="font-black uppercase tracking-tighter text-lg leading-tight">MÉDICAMENT HORS-STOCK</h4>
+              <p class="text-sm font-bold opacity-90">Attention Docteur: Ce médicament n'est pas présent à la pharmacie.</p>
+              <p class="text-xs mt-1 bg-red-800/40 p-2 rounded border border-red-500/30">
+                L'IA analyse vos entrées pour suggérer des alternatives cliniquement équivalentes <strong>actuellement en stock</strong>.
+              </p>
+            </div>
+          </div>
+
           <!-- Status / Error Message -->
           <div *ngIf="medicineCheckStatus"
                [ngClass]="{
-                 'bg-red-50 text-red-700 border-red-200':    aiSuggestions.length > 0,
+                 'bg-red-50 text-red-700 border-red-200':    aiSuggestions.length > 0 && !outOfStockWarning,
                  'bg-orange-50 text-orange-700 border-orange-200': aiSuggestions.length === 0 && !checkingSubstitute && medicineCheckStatus.includes('Aucun'),
-                 'bg-green-50 text-green-700 border-green-200':  aiSuggestions.length === 0 && !medicineCheckStatus.includes('Aucun') && !checkingSubstitute
+                 'bg-green-50 text-green-700 border-green-200':  aiSuggestions.length === 0 && !medicineCheckStatus.includes('Aucun') && !checkingSubstitute && !outOfStockWarning
                }"
                class="p-3 mb-3 border rounded-xl text-sm font-medium flex items-center gap-2">
             <span *ngIf="aiSuggestions.length > 0">⚠️</span>
@@ -682,6 +695,9 @@
                          <span class="text-white font-bold">{{ m.nom || '—' }}</span>
                          <span *ngIf="m.type === 'equivalent_exact'" class="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">⭐ Équivalent Exact</span>
                          <span *ngIf="m.type === 'alternative_therapeutique'" class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">💊 Alternative</span>
+                         <span *ngIf="m.in_stock" class="text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                           <span class="animate-pulse">●</span> EN STOCK
+                         </span>
                        </div>
                        <div *ngIf="m.molecule" class="mb-1"><span class="text-gray-400">Molécule:</span> <span class="text-gray-300">{{ m.molecule }}</span></div>
                        <div>

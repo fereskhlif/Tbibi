@@ -37,4 +37,7 @@ public class AiAlternativeItem {
     
     @JsonProperty("indications")
     private String indications;
+
+    @JsonProperty("in_stock")
+    private boolean inStock;
 }

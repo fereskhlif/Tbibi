@@ -15,6 +15,9 @@ import tn.esprit.pi.tbibi.repositories.PharmacyRepository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @AllArgsConstructor
@@ -51,7 +54,22 @@ public class MedicineService implements IMedicineService {
             medicine.setImageUrls(imageUrls);
         }
 
-        return medicineMapper.toDto(medicineRepo.save(medicine));
+        Medicine saved = medicineRepo.save(medicine);
+        triggerAiSync();
+        return medicineMapper.toDto(saved);
+    }
+
+    private void triggerAiSync() {
+        CompletableFuture.runAsync(() -> {
+            try {
+                System.out.println("Triggering AI Sync with MySQL Database...");
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.postForEntity("http://localhost:5001/api/sync-database", null, String.class);
+                System.out.println("AI Sync completed.");
+            } catch (Exception e) {
+                System.err.println("Failed to trigger AI sync: " + e.getMessage());
+            }
+        });
     }
 
     @Override
@@ -125,7 +143,9 @@ public class MedicineService implements IMedicineService {
         medicine.setPrice(request.getPrice());
         medicine.setStock(request.getStock());
         medicine.setMinStockAlert(request.getMinStockAlert());
-        return medicineMapper.toDto(medicineRepo.save(medicine));
+        Medicine saved = medicineRepo.save(medicine);
+        triggerAiSync();
+        return medicineMapper.toDto(saved);
     }
 
     @Override
@@ -158,5 +178,24 @@ public class MedicineService implements IMedicineService {
         Medicine medicine = medicineRepo.findById(id).orElseThrow();
         medicine.setAvailable(false); // ← soft delete
         medicineRepo.save(medicine);
+    }
+
+    @Override
+    public List<String> getAvailableMedicineNames() {
+        return medicineRepo.findByStockGreaterThanAndAvailableTrue(0)
+                .stream()
+                .map(Medicine::getMedicineName)
+                .filter(name -> name != null && !name.trim().isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getAvailableMoleculesInStock() {
+        return medicineRepo.findByStockGreaterThanAndAvailableTrue(0)
+                .stream()
+                .map(Medicine::getActiveIngredient)
+                .filter(mol -> mol != null && !mol.trim().isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

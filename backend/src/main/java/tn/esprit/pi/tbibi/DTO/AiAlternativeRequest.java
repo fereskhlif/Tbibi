@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.DTO;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,10 @@ public class AiAlternativeRequest {
     private String indication;
     private String famille;
     private AiPatient patient;
+    @JsonProperty("available_medicines")
+    private List<String> availableMedicines;
+    @JsonProperty("available_molecules")
+    private List<String> availableMolecules;
 
     @Data
     @Builder
