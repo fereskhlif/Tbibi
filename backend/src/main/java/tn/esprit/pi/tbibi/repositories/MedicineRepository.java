@@ -15,6 +15,7 @@ public interface MedicineRepository extends JpaRepository<Medicine,Long> {
     List<Medicine> findByMedicineNameContaining(String name);
     List<Medicine> findByAvailableTrue();
     List<Medicine> findByPharmacy_PharmacyIdAndAvailableTrue(Long pharmacyId);
+    List<Medicine> findByStockGreaterThanAndAvailableTrue(int stock);
 
     // ─── PAGINATED ───
     Page<Medicine> findByAvailableTrue(Pageable pageable);
