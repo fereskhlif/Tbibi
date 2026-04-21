@@ -5,10 +5,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tn.esprit.pi.tbibi.DTO.PatientReportDTO;
 import tn.esprit.pi.tbibi.DTO.PrescriptionRequest;
 import tn.esprit.pi.tbibi.DTO.PrescriptionResponse;
+import tn.esprit.pi.tbibi.DTO.CheckSubstituteRequest;
+import tn.esprit.pi.tbibi.DTO.CheckSubstituteResponse;
+import tn.esprit.pi.tbibi.DTO.AiPredictRequest;
+import tn.esprit.pi.tbibi.DTO.AiPredictResponse;
+import tn.esprit.pi.tbibi.DTO.medicine.MedicineResponse;
 import tn.esprit.pi.tbibi.entities.PrescriptionStatus;
 import tn.esprit.pi.tbibi.services.PrescriptionService;
+import tn.esprit.pi.tbibi.services.IMedicineService;
+import tn.esprit.pi.tbibi.services.PrescriptionAiService;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +29,8 @@ import java.util.Map;
 public class PrescriptionController {
 
     private final PrescriptionService service;
+    private final IMedicineService medicineService;
+    private final PrescriptionAiService prescriptionAiService;
 
 //    @GetMapping("/all")
 //    public ResponseEntity<List<PrescriptionResponse>> getAll() {
@@ -32,6 +42,17 @@ public class PrescriptionController {
         try {
             return ResponseEntity.ok(service.getById(id));
         } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/patient/{patientId}/report")
+    public ResponseEntity<PatientReportDTO> getPatientReport(@PathVariable Integer patientId) {
+        log.info("=== GET PATIENT REPORT ID: {} ===", patientId);
+        try {
+            return ResponseEntity.ok(service.getPatientReport(patientId));
+        } catch (RuntimeException e) {
+            log.error("Report generation failed for patientId {}: {}", patientId, e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }
@@ -135,6 +156,71 @@ public class PrescriptionController {
             return ResponseEntity.ok(service.renewPrescription(id));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/check-substitutes")
+    public ResponseEntity<CheckSubstituteResponse> checkSubstitutes(@RequestBody CheckSubstituteRequest req) {
+        try {
+            boolean isAvailable = false;
+            
+            boolean hasMedicineName = req.getMedicineName() != null && !req.getMedicineName().trim().isEmpty();
+            
+            if (req.getMedicineId() != null) {
+                try {
+                    MedicineResponse med = medicineService.getMedicineById(req.getMedicineId());
+                    isAvailable = med.isAvailable() && med.getStock() > 0;
+                } catch (Exception e) {
+                    log.warn("Medicine ID {} not found", req.getMedicineId());
+                }
+            } else if (hasMedicineName) {
+                // simple search by name
+                List<MedicineResponse> meds = medicineService.searchByName(req.getMedicineName());
+                if (!meds.isEmpty()) {
+                    isAvailable = meds.get(0).isAvailable() && meds.get(0).getStock() > 0;
+                }
+            }
+            
+            CheckSubstituteResponse response = new CheckSubstituteResponse();
+            response.setAvailable(isAvailable);
+            
+            if (!isAvailable) {
+                if (!hasMedicineName) {
+                    response.setStatusMessage("Recherche basée sur l'indication via l'IA...");
+                } else {
+                    response.setStatusMessage("Médicament indisponible. Recherche d'alternatives via l'IA...");
+                }
+                response.setAiAlternatives(prescriptionAiService.getAlternatives(
+                        req.getMedicineName(),
+                        req.getIndication(),
+                        req.getFamille(),
+                        req.getPatientId()
+                ));
+            } else {
+                response.setStatusMessage("Médicament disponible en stock.");
+            }
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la vérification de disponibilité: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/ai-predict")
+    public ResponseEntity<AiPredictResponse> predictAiRecommandation(@RequestBody AiPredictRequest req) {
+        try {
+            if (req.getPatientId() == null || req.getIndication() == null || req.getIndication().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(AiPredictResponse.builder().error("L'ID patient et le symptôme sont obligatoires.").build());
+            }
+            AiPredictResponse response = prescriptionAiService.predictTherapeuticClass(req);
+            if (response.getError() != null) {
+                return ResponseEntity.internalServerError().body(response);
+            }
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur lors de la prédiction IA: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

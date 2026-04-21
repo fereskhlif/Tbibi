@@ -58,6 +58,9 @@ export class MedicationManagementComponent implements OnInit {
   scannedForm = '';
   scannedActiveIngredient = '';
 
+  // Input mode: 'scan' or 'manual'
+  inputMode: 'scan' | 'manual' = 'scan';
+
   // Duplicate detection
   duplicateData: any = null;
   existingDuplicate: Medicine | null = null;
@@ -96,7 +99,7 @@ export class MedicationManagementComponent implements OnInit {
 
   private buildForms(): void {
     this.medicineForm = this.fb.group({
-      medicineName: ['', [Validators.required, Validators.minLength(2)]],
+      medicineName: [''],
       description: [''],
       dosage: [''],
       price: [null, [Validators.required, Validators.min(0)]],
@@ -221,6 +224,11 @@ export class MedicationManagementComponent implements OnInit {
       next: (result) => {
         this.isScanning = false;
         this.scannedSuccessfully = true;
+        // Enable fields before patching so values are accepted
+        this.medicineForm.get('medicineName')?.enable();
+        this.medicineForm.get('dosage')?.enable();
+        this.medicineForm.get('form')?.enable();
+        this.medicineForm.get('activeIngredient')?.enable();
         this.medicineForm.patchValue({
           medicineName: result.medicineName || '',
           dosage: result.dosage || '',
@@ -228,10 +236,7 @@ export class MedicationManagementComponent implements OnInit {
           form: result.form || '',
           activeIngredient: result.activeIngredient || ''
         });
-        this.medicineForm.get('medicineName')?.disable();
-        this.medicineForm.get('dosage')?.disable();
-        this.medicineForm.get('form')?.disable();
-        this.medicineForm.get('activeIngredient')?.disable();
+        // Keep fields enabled so pharmacist can correct the scan result
         this.scannedForm = result.form || '';
         this.scannedActiveIngredient = result.activeIngredient || '';
       },
@@ -336,6 +341,9 @@ export class MedicationManagementComponent implements OnInit {
     this.scannedSuccessfully = false;
     this.duplicateData = null;
     this.existingDuplicate = null;
+    this.inputMode = 'scan';
+
+    // Always enable all fields
     this.medicineForm.get('medicineName')?.enable();
     this.medicineForm.get('dosage')?.enable();
     this.medicineForm.get('form')?.enable();
@@ -347,15 +355,56 @@ export class MedicationManagementComponent implements OnInit {
     });
     this.medicineForm.markAsUntouched();
     this.medicineForm.markAsPristine();
-    this.medicineForm.get('medicineName')?.disable();
-    this.medicineForm.get('dosage')?.disable();
-    this.medicineForm.get('form')?.disable();
-    this.medicineForm.get('activeIngredient')?.disable();
+
+    // In scan mode, disable name/dosage/form/activeIngredient until scan
+    this.lockScanFields();
 
     setTimeout(() => {
       const modal = document.querySelector('.overflow-y-auto');
       if (modal) modal.scrollTop = 0;
     }, 50);
+  }
+
+  switchInputMode(mode: 'scan' | 'manual'): void {
+    this.inputMode = mode;
+    this.showWebcam = false;
+    this.isScanning = false;
+    this.scanError = '';
+    this.scannedSuccessfully = false;
+
+    if (mode === 'manual') {
+      // Enable all fields for manual entry
+      this.medicineForm.get('medicineName')?.enable();
+      this.medicineForm.get('dosage')?.enable();
+      this.medicineForm.get('form')?.enable();
+      this.medicineForm.get('activeIngredient')?.enable();
+      this.medicineForm.reset({
+        medicineName: '', description: '', dosage: '',
+        price: null, stock: null, minStockAlert: 10, dateOfExpiration: '',
+        form: '', activeIngredient: ''
+      });
+      this.medicineForm.markAsUntouched();
+    } else {
+      // Back to scan mode: lock fields until scan
+      this.medicineForm.get('medicineName')?.enable();
+      this.medicineForm.get('dosage')?.enable();
+      this.medicineForm.get('form')?.enable();
+      this.medicineForm.get('activeIngredient')?.enable();
+      this.medicineForm.reset({
+        medicineName: '', description: '', dosage: '',
+        price: null, stock: null, minStockAlert: 10, dateOfExpiration: '',
+        form: '', activeIngredient: ''
+      });
+      this.medicineForm.markAsUntouched();
+      this.lockScanFields();
+    }
+  }
+
+  private lockScanFields(): void {
+    this.medicineForm.get('medicineName')?.disable();
+    this.medicineForm.get('dosage')?.disable();
+    this.medicineForm.get('form')?.disable();
+    this.medicineForm.get('activeIngredient')?.disable();
   }
 
   openEditModal(med: Medicine): void {

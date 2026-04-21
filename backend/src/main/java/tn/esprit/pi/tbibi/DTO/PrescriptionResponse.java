@@ -24,5 +24,14 @@ public class PrescriptionResponse {
     private String expirationDate;
     private String statusUpdatedAt;
     private PrescriptionStatus status;
+    private List<MedicineInfo> medicines;
 
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class MedicineInfo {
+        private Long medicineId;
+        private String medicineName;
+        private int quantity;
+        private String dosage;
+        private String activeIngredient;
+    }
 }
