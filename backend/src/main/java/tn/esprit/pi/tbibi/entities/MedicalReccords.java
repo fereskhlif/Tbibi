@@ -36,10 +36,15 @@ public class MedicalReccords {
     @JsonIgnore
     private List<Acte> actes;
 
-    /** Images uploaded by the patient (analyses, scanners, old prescriptions) */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "medical_record_patient_images",
             joinColumns = @JoinColumn(name = "medical_record_id"))
     @Column(name = "image_path", columnDefinition = "TEXT")
     private List<String> patientImages = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "medical_record_allergies",
+            joinColumns = @JoinColumn(name = "medical_record_id"))
+    @Column(name = "allergy")
+    private List<String> allergies = new ArrayList<>();
 }

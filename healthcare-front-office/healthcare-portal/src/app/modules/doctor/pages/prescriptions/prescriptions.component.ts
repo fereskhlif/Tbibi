@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
   ActeDTO,
   PatientDTO,
+  PatientReportDTO,
   PrescriptionRequest,
   PrescriptionResponse,
   PrescriptionService,
@@ -41,6 +42,10 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   selectedId: number | null = null;
   saving = false;
 
+  showPatientReportModal = false;
+  patientReport: PatientReportDTO | null = null;
+  loadingReport = false;
+
   form: any = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: '', duration: null, expirationDate: null };
 
   activeFilter: PrescriptionStatus | 'ALL' = 'ALL';
@@ -58,6 +63,20 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   showRecentModal = false;
   recentActes: any[] = [];
   loadingRecent = false;
+
+  // AI substitutes state
+  medicineInput = '';
+  indicationInput = '';
+  familleInput = '';
+  checkingSubstitute = false;
+  aiSuggestions: any[] = [];
+  addedMedicines: any[] = [];
+  medicineCheckStatus = '';
+  currentSearch = '';
+
+  predictingClass = false;
+  predictedClassResponse: any = null;
+  predictedClassError: string = '';
 
   constructor(private prescriptionService: PrescriptionService, private http: HttpClient) {}
 
@@ -204,6 +223,34 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.showDetail = true;
   }
 
+  viewPatientReport(patientId?: number) {
+    if (!patientId) {
+      alert("Ce patient n'a pas d'ID associé.");
+      return;
+    }
+    this.showPatientReportModal = true;
+    this.loadingReport = true;
+    this.patientReport = null;
+
+    this.prescriptionService.getPatientReport(patientId).subscribe({
+      next: (report: PatientReportDTO) => {
+        this.patientReport = report;
+        this.loadingReport = false;
+      },
+      error: (err: any) => {
+        console.error("Erreur chargement rapport", err);
+        this.loadingReport = false;
+        this.showPatientReportModal = false;
+        alert("Impossible de charger le dossier complet pour le moment.");
+      }
+    });
+  }
+
+  closePatientReport() {
+    this.showPatientReportModal = false;
+    this.patientReport = null;
+  }
+
   closeDetail(): void {
     this.showDetail = false;
     this.detailRx = null;
@@ -217,6 +264,17 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     // Use local formatted date for the HTML datetime-local input
     const localDateTime = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: localDateTime, duration: null, expirationDate: null, rxOriginalDate: null };
+    
+    // Reset AI state
+    this.addedMedicines = [];
+    this.medicineInput = '';
+    this.indicationInput = '';
+    this.familleInput = '';
+    this.aiSuggestions = [];
+    this.medicineCheckStatus = '';
+    this.predictedClassResponse = null;
+    this.predictedClassError = '';
+    
     console.log('📅 Date envoyée:', isoString);
     this.showModal = true;
   }
@@ -290,6 +348,108 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     }
   }
 
+  addMedicine(): void {
+    if ((!this.medicineInput.trim() && !this.indicationInput.trim() && !this.familleInput.trim()) || !this.form.patientId) return;
+    this.checkingSubstitute = true;
+    this.medicineCheckStatus = '';
+    this.aiSuggestions = [];
+
+    this.prescriptionService.checkSubstitutes({
+      medicineName: this.medicineInput,
+      patientId: this.form.patientId,
+      indication: this.indicationInput ? this.indicationInput.trim() : '',
+      famille: this.familleInput ? this.familleInput.trim() : ''
+    }).subscribe({
+      next: (res) => {
+        this.checkingSubstitute = false;
+        this.currentSearch = '';
+        if (res.available) {
+          this.addedMedicines.push({ name: this.medicineInput });
+          this.medicineInput = '';
+          this.indicationInput = '';
+          this.familleInput = '';
+          this.medicineCheckStatus = 'Médicament disponible en stock. Ajouté. ' + (res.statusMessage || '');
+        } else {
+          this.medicineCheckStatus = res.statusMessage || 'Médicament indisponible.';
+          const alts = res.aiAlternatives?.alternatives ?? [];
+          if (alts.length === 0) {
+            // AI returned no valid substitute: message is already set above
+            if (!this.medicineCheckStatus.includes('Aucun')) {
+              this.medicineCheckStatus = 'Aucun substitut cliniquement valide trouvé par l\'IA.';
+            }
+          }
+          this.aiSuggestions = alts;
+        }
+      },
+      error: () => {
+        this.checkingSubstitute = false;
+        this.currentSearch = '';
+        this.medicineCheckStatus = 'Erreur lors de la vérification. Veuillez réessayer.';
+      }
+    });
+  }
+
+  predictTherapeuticClass(): void {
+    if (!this.form.patientId || (!this.indicationInput.trim() && !this.form.note.trim())) return;
+    
+    const indicationToUse = this.indicationInput.trim() || this.form.note.trim();
+    
+    this.predictingClass = true;
+    this.predictedClassResponse = null;
+    this.predictedClassError = '';
+
+    this.prescriptionService.predictTherapeuticClass({
+      patientId: this.form.patientId,
+      indication: indicationToUse
+    }).subscribe({
+      next: (res) => {
+        this.predictingClass = false;
+        if (res.error) {
+          this.predictedClassError = res.message || res.error;
+        } else {
+          this.predictedClassResponse = res;
+        }
+      },
+      error: (err) => {
+        this.predictingClass = false;
+        const errBody = err?.error;
+        this.predictedClassError = errBody?.message || errBody?.error || 'Symptôme non reconnu comme une indication médicale.';
+      }
+    });
+  }
+
+  searchSpecific(type: string): void {
+    this.currentSearch = type;
+    if (type === 'medicine') {
+      this.indicationInput = '';
+      this.familleInput = '';
+    } else if (type === 'indication') {
+      this.medicineInput = '';
+      // We keep famille if they want to filter
+    } else if (type === 'famille') {
+      this.medicineInput = '';
+      // We keep indication if they want to filter
+    }
+    this.addMedicine();
+  }
+
+  selectSubstitute(sub: any): void {
+    // Handles both snake_case (sous_classe) from Flask via Jackson and camelCase (sousClasse) from Angular serialization
+    const displayName = sub.nom || sub.name || 'Médicament AI';
+    const subClass = sub.sous_classe || sub.sousClasse || '';
+    this.addedMedicines.push({
+      name: displayName,
+      source: 'AI',
+      sousClasse: subClass,
+      score: sub.score || 0
+    });
+    this.aiSuggestions = [];
+    this.medicineInput = '';
+    this.indicationInput = '';
+    this.familleInput = '';
+    this.medicineCheckStatus = `✅ Substitut IA sélectionné : ${displayName}${subClass ? ' (' + subClass + ')' : ''}`;
+  }
+
   openEditModal(rx: PrescriptionResponse, event?: Event): void {
     event?.stopPropagation();
     this.editMode = true;
@@ -302,6 +462,16 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
       expirationDate: rx.expirationDate || null,
       rxOriginalDate: rx.date
     };
+    
+    // Reset AI state & populate if needed
+    // Assuming UI display only, we map the medicines back if editing
+    this.addedMedicines = rx.medicines ? rx.medicines.map((m: any) => ({ name: m.medicineName })) : [];
+    this.medicineInput = '';
+    this.indicationInput = '';
+    this.familleInput = '';
+    this.aiSuggestions = [];
+    this.medicineCheckStatus = '';
+
     this.showModal = true;
   }
 

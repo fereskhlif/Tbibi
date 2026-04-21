@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import tn.esprit.pi.tbibi.DTO.PatientReportDTO;
 import tn.esprit.pi.tbibi.DTO.PrescriptionRequest;
 import tn.esprit.pi.tbibi.DTO.PrescriptionResponse;
 import tn.esprit.pi.tbibi.entities.Acte;
@@ -17,7 +18,9 @@ import tn.esprit.pi.tbibi.repositories.UserRepo;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j  // ← AJOUTER CETTE ANNOTATION
@@ -398,7 +401,126 @@ public class PrescriptionService implements IPrescriptionService {
             notificationService.saveAndBroadcast(notif);
             log.info("[RENEWAL NOTIF] Notification saved and broadcast to doctorId={} ({})", doctor.getUserId(), doctor.getName());
         }
-
         return enrichWithPatient(mapper.toDto(saved), saved);
+    }
+
+    /**
+     * Generates a complete medical report for a patient:
+     * prescription history enriched with medicines, stats, and monthly breakdown.
+     */
+    @jakarta.transaction.Transactional
+    public PatientReportDTO getPatientReport(Integer patientId) {
+        log.info("=== GENERATE PATIENT REPORT — patientId: {} ===", patientId);
+
+        User patient = userRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found: " + patientId));
+
+        // Collect all prescriptions via MedicalFiles → Actes → Prescriptions
+        List<Prescription> all = new ArrayList<>();
+        if (patient.getMedicalFiles() != null) {
+            for (MedicalReccords mf : patient.getMedicalFiles()) {
+                if (mf.getActes() == null) continue;
+                for (Acte acte : mf.getActes()) {
+                    if (acte.getPrescriptions() == null) continue;
+                    all.addAll(acte.getPrescriptions());
+                }
+            }
+        }
+
+        // Sort by date descending
+        all.sort((a, b) -> {
+            if (a.getDate() == null) return 1;
+            if (b.getDate() == null) return -1;
+            return b.getDate().compareTo(a.getDate());
+        });
+
+        // Build enriched DTO list
+        List<PrescriptionResponse> rxList = all.stream()
+            .map(p -> {
+                PrescriptionResponse dto = mapper.toDto(p);
+                dto.setPatientId(patient.getUserId());
+                dto.setPatientName(patient.getName());
+                dto.setPatientEmail(patient.getEmail());
+                enrichWithDoctor(dto, p);
+
+                // Map medicines manually for the dto
+                if (p.getMedicines() != null) {
+                    List<PrescriptionResponse.MedicineInfo> infos = p.getMedicines().stream()
+                        .map(m -> PrescriptionResponse.MedicineInfo.builder()
+                            .medicineId(m.getMedicineId())
+                            .medicineName(m.getMedicineName())
+                            .quantity(m.getQuantity())
+                            .dosage(m.getDosage())
+                            .activeIngredient(m.getActiveIngredient())
+                            .build())
+                        .collect(Collectors.toList());
+                    dto.setMedicines(infos);
+                } else {
+                    dto.setMedicines(java.util.Collections.emptyList());
+                }
+
+                return dto;
+            })
+            .collect(Collectors.toList());
+
+        // Statistics by status
+        long active     = all.stream().filter(p -> PrescriptionStatus.VALIDATED.equals(p.getStatus())).count();
+        long expired    = all.stream().filter(p -> PrescriptionStatus.COMPLETED.equals(p.getStatus())).count();
+        long cancelled  = all.stream().filter(p -> PrescriptionStatus.CANCELLED.equals(p.getStatus())).count();
+        long pending    = all.stream().filter(p -> PrescriptionStatus.PENDING.equals(p.getStatus())).count();
+        long dispensed  = all.stream().filter(p -> PrescriptionStatus.DISPENSED.equals(p.getStatus())).count();
+
+        // Medicine frequency count
+        Map<String, long[]> medMap = new java.util.HashMap<>();
+        for (Prescription p : all) {
+            if (p.getMedicines() == null) continue;
+            for (tn.esprit.pi.tbibi.entities.Medicine m : p.getMedicines()) {
+                String name = m.getMedicineName() != null ? m.getMedicineName() : "Unknown";
+                medMap.computeIfAbsent(name, k -> new long[]{0})[0]++;
+            }
+        }
+
+        List<PatientReportDTO.MedicineFrequency> topMeds = medMap.entrySet().stream()
+            .map(e -> PatientReportDTO.MedicineFrequency.builder()
+                .medicineName(e.getKey())
+                .count((int) e.getValue()[0])
+                .build())
+            .sorted((a, b) -> Long.compare(b.getCount(), a.getCount()))
+            .limit(10)
+            .collect(Collectors.toList());
+
+        long totalMeds = all.stream()
+            .mapToLong(p -> p.getMedicines() != null ? p.getMedicines().size() : 0L)
+            .sum();
+
+        // Monthly breakdown for timeline chart
+        Map<String, Long> perMonth = all.stream()
+            .filter(p -> p.getDate() != null)
+            .collect(Collectors.groupingBy(
+                p -> {
+                    java.time.LocalDate d = p.getDate().toInstant()
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                    return String.format("%04d-%02d", d.getYear(), d.getMonthValue());
+                },
+                LinkedHashMap::new,
+                Collectors.counting()
+            ));
+
+        return PatientReportDTO.builder()
+            .patientId(patient.getUserId())
+            .patientName(patient.getName())
+            .patientEmail(patient.getEmail())
+            .totalPrescriptions(all.size())
+            .activePrescriptions((int) active)
+            .expiredPrescriptions((int) expired)
+            .cancelledPrescriptions((int) cancelled)
+            .pendingPrescriptions((int) pending)
+            .dispensedPrescriptions((int) dispensed)
+            .totalMedicinesEverPrescribed((int) totalMeds)
+            .uniqueMedicinesCount(medMap.size())
+            .topMedicines(topMeds)
+            .prescriptions(rxList)
+            .prescriptionsPerMonth(perMonth)
+            .build();
     }
 }
