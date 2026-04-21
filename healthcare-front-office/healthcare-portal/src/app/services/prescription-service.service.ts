@@ -57,6 +57,27 @@ export interface PrescriptionRequest {
   status?: PrescriptionStatus;
 }
 
+export interface PatientReportDTO {
+  patientId: number;
+  patientName: string;
+  patientEmail: string;
+  totalPrescriptions: number;
+  activePrescriptions: number;
+  expiredPrescriptions: number;
+  cancelledPrescriptions: number;
+  pendingPrescriptions: number;
+  dispensedPrescriptions: number;
+  totalMedicinesEverPrescribed: number;
+  uniqueMedicinesCount: number;
+  topMedicines: {
+    medicineName: string;
+    activeIngredient?: string;
+    count: number;
+  }[];
+  prescriptions: PrescriptionResponse[];
+  prescriptionsPerMonth: Record<string, number>;
+}
+
 export const STATUS_META: Record<PrescriptionStatus, {
   label: string;
   icon: string;
@@ -144,4 +165,22 @@ getAllActes(): Observable<ActeDTO[]> {
   getAnalysisPrescriptions(): Observable<PrescriptionResponse[]> {
     return this.http.get<PrescriptionResponse[]>(`${this.apiUrl}/analysis`);
   }
-}
+
+  /** Checks for AI substitutes if a medicine is out of stock. */
+  checkSubstitutes(req: { medicineName: string; patientId: number; indication: string; famille?: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/check-substitutes`, req);
+  }
+
+  /** Gets AI suggestion for therapeutic class based on patient record and indication */
+  predictTherapeuticClass(req: { patientId: number; indication: string; weight?: number }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/ai-predict`, req);
+  }
+
+  getPrescription(id: number): Observable<PrescriptionResponse> {
+    return this.http.get<PrescriptionResponse>(`${this.apiUrl}/get/${id}`);
+  }
+
+  getPatientReport(patientId: number): Observable<PatientReportDTO> {
+    return this.http.get<PatientReportDTO>(`${this.apiUrl}/patient/${patientId}/report`);
+  }
+}
