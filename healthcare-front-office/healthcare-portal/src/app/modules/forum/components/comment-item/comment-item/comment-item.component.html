@@ -1,194 +1,201 @@
-<div
-  [class.border-b]="!isLast"
-  [class.border-gray-100]="!isLast"
-  [class.bg-amber-50]="comment.isPinned"
-  class="flex gap-3 px-5 py-4">
+<div [class.border-b]="!isLast" [class.border-gray-100]="!isLast"
+    [style.background-color]="comment.isPinned ? '#fffbeb' : ''"
+    class="flex gap-3 px-5 py-4">
 
-  <!-- ─── LEFT COLUMN: Avatar + Thread line ─────────────────────── -->
-  <div class="flex flex-col items-center" style="width:32px; flex-shrink:0;">
+    <!-- ─── LEFT COLUMN: Avatar + Thread line ─────────────────────── -->
+    <div class="flex flex-col items-center" style="width:32px; flex-shrink:0;">
 
-    <!-- Avatar: always a circle, always coloured by name hash -->
-    <div
-      class="flex items-center justify-center text-white text-xs font-bold select-none"
-      style="width:32px; height:32px; border-radius:50%; flex-shrink:0;"
-      [style.background-color]="getAvatarColor(comment.authorName)"
-      [style.cursor]="hasRepliesOrReplying() ? 'pointer' : 'default'"
-      [attr.title]="hasRepliesOrReplying() ? (isCollapsed ? 'Expand thread' : 'Collapse thread') : null"
-      (click)="hasRepliesOrReplying() && toggleCollapse()">
-      {{ comment.authorName?.charAt(0)?.toUpperCase() }}
-    </div>
-
-    <!-- Thread line: a div (not button!) so flex-1 works reliably -->
-    <div
-      *ngIf="hasRepliesOrReplying() && !isCollapsed"
-      class="flex-1 flex justify-center"
-      style="margin-top:6px; min-height:16px; cursor:pointer;"
-      (click)="toggleCollapse()"
-      (mouseenter)="isHoveringLine = true"
-      (mouseleave)="isHoveringLine = false">
-      <div
-        style="width:2px; height:100%; border-radius:4px; transition:background 0.15s, width 0.15s;"
-        [style.background]="isHoveringLine ? '#3b82f6' : '#e2e8f0'">
-      </div>
-    </div>
-  </div>
-
-  <!-- ─── RIGHT COLUMN: All content ────────────────────────────── -->
-  <div class="flex-1 min-w-0 pb-1">
-
-    <!-- Pinned badge -->
-    <div
-      *ngIf="comment.isPinned"
-      class="inline-flex items-center gap-1 mb-2"
-      style="font-size:10px; font-weight:700; color:#92400e; background:#fef3c7; padding:2px 8px; border-radius:9999px;">
-      📌 Pinned
-    </div>
-
-    <!-- Author row -->
-    <div class="flex flex-wrap items-center gap-2 mb-1.5">
-      <span class="font-semibold text-gray-900" style="font-size:13px;">{{ comment.authorName }}</span>
-      <span
-        *ngIf="comment.roleBadge"
-        class="text-blue-700 bg-blue-50 border border-blue-100"
-        style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px;">
-        {{ comment.roleBadge }}
-      </span>
-      <span class="text-gray-400" style="font-size:11px;">{{ timeAgo(comment.commentDate) }}</span>
-    </div>
-
-    <!-- Collapsed state -->
-    <button
-      *ngIf="isCollapsed"
-      (click)="toggleCollapse()"
-      class="text-blue-600 hover:text-blue-700 font-semibold"
-      style="font-size:12px; background:none; border:none; cursor:pointer; padding:4px 0;">
-      ▶ Show {{ getReplyCount() + 1 }} {{ (getReplyCount() + 1) === 1 ? 'comment' : 'comments' }}
-    </button>
-
-    <!-- Expanded content -->
-    <ng-container *ngIf="!isCollapsed">
-
-      <!-- Comment body -->
-      <div
-        class="text-gray-800 leading-6 mb-2 prose prose-sm max-w-none
-               prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-               prose-strong:text-gray-900 prose-strong:font-semibold
-               prose-code:text-pink-700 prose-code:bg-pink-50 prose-code:px-1 prose-code:rounded
-               prose-blockquote:border-l-2 prose-blockquote:border-blue-200 prose-blockquote:text-gray-500 prose-blockquote:pl-3 prose-blockquote:italic
-               prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:text-xs prose-pre:p-3"
-        style="font-size:14px;"
-        [innerHTML]="comment.content | markdown">
-      </div>
-
-      <!-- Action row -->
-      <div class="flex items-center gap-0.5" style="margin-left:-6px;">
-
-        <!-- Vote -->
-        <button
-          (click)="onToggleVote(comment)"
-          class="inline-flex items-center gap-1.5 rounded-lg transition-colors"
-          style="font-size:12px; font-weight:600; padding:4px 8px; border:none; cursor:pointer; background:transparent;"
-          [style.color]="comment.userHasVoted ? '#2563eb' : '#9ca3af'"
-          [style.background]="comment.userHasVoted ? '#eff6ff' : 'transparent'">
-          <lucide-icon name="thumbs-up" [size]="13" [strokeWidth]="comment.userHasVoted ? 3 : 2"></lucide-icon>
-          {{ comment.voteCount || 0 }}
-        </button>
-
-        <!-- Reply -->
-        <button
-          (click)="onStartReply(comment.commentId)"
-          class="inline-flex items-center gap-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          style="font-size:12px; font-weight:600; padding:4px 8px; border:none; cursor:pointer; background:transparent;">
-          <lucide-icon name="corner-down-right" [size]="13"></lucide-icon>
-          Reply
-        </button>
-
-        <!-- Pin (post author only) -->
-        <button
-          *ngIf="isPostAuthor"
-          (click)="onTogglePin()"
-          class="inline-flex items-center gap-1 rounded-lg transition-colors"
-          style="font-size:12px; font-weight:600; padding:4px 8px; border:none; cursor:pointer; background:transparent;"
-          [style.color]="comment.isPinned ? '#d97706' : '#d1d5db'"
-          [title]="comment.isPinned ? 'Unpin' : 'Pin comment'">
-          📌 {{ comment.isPinned ? 'Pinned' : 'Pin' }}
-        </button>
-
-        <!-- Report -->
-        <button
-          (click)="reportComment()"
-          class="text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-          style="font-size:12px; padding:4px 6px; border:none; cursor:pointer; background:transparent;"
-          title="Report">
-          <lucide-icon name="flag" [size]="12"></lucide-icon>
-        </button>
-      </div>
-
-      <!-- ─── Inline reply composer ──────────────────────────────── -->
-      <div
-        *ngIf="replyingTo === comment.commentId"
-        class="overflow-hidden"
-        style="margin-top:12px; border-radius:12px; border:1px solid #e5e7eb; background:#f9fafb;">
-
-        <div class="flex gap-2.5" style="padding:12px 12px 8px;">
-          <!-- Current user avatar -->
-          <div
-            class="flex items-center justify-center text-white font-bold"
-            style="width:28px; height:28px; border-radius:50%; flex-shrink:0; font-size:11px; margin-top:2px;"
-            [style.background-color]="getAvatarColor(currentUserName)">
-            {{ currentUserName?.charAt(0)?.toUpperCase() }}
-          </div>
-
-          <div class="flex-1 min-w-0">
-            <!-- Write / Preview tabs -->
-            <div class="flex items-center gap-3" style="margin-bottom:8px; border-bottom:1px solid #e5e7eb;">
-              <button
-                (click)="replyPreview = false"
-                style="padding-bottom:6px; font-size:11px; font-weight:700; background:none; border-left:none; border-right:none; border-top:none; cursor:pointer; margin-bottom:-1px; transition:color 0.1s, border-color 0.1s;"
-                [style.color]="!replyPreview ? '#2563eb' : '#9ca3af'"
-                [style.border-bottom]="!replyPreview ? '2px solid #2563eb' : '2px solid transparent'">
-                Write
-              </button>
-              <button
-                (click)="replyPreview = true"
-                style="padding-bottom:6px; font-size:11px; font-weight:700; background:none; border-left:none; border-right:none; border-top:none; cursor:pointer; margin-bottom:-1px; transition:color 0.1s, border-color 0.1s;"
-                [style.color]="replyPreview ? '#2563eb' : '#9ca3af'"
-                [style.border-bottom]="replyPreview ? '2px solid #2563eb' : '2px solid transparent'">
-                Preview
-              </button>
-            </div>
-
-            <!-- Textarea -->
-            <textarea
-              *ngIf="!replyPreview"
-              #replyInput
-              [value]="replyText"
-              (input)="onReplyTextChange($any($event.target).value)"
-              rows="2"
-              placeholder="Write a reply…"
-              class="block w-full bg-transparent outline-none resize-y placeholder-gray-400 border-0 focus:ring-0 text-gray-800"
-              style="font-size:14px; min-height:48px; padding:2px 0;">
-            </textarea>
-
-            <!-- Preview pane -->
-            <div *ngIf="replyPreview" style="min-height:48px; padding:2px 0;">
-              <div
-                *ngIf="replyText.trim()"
-                class="text-gray-700 prose prose-sm max-w-none"
-                style="font-size:14px;"
-                [innerHTML]="replyText | markdown">
-              </div>
-              <p *ngIf="!replyText.trim()" class="italic text-gray-300" style="font-size:13px;">Nothing to preview</p>
-            </div>
-          </div>
+        <!-- Avatar: always a circle, always coloured by name hash -->
+        <div class="flex items-center justify-center text-white text-xs font-bold select-none"
+            style="width:32px; height:32px; border-radius:50%; flex-shrink:0;"
+            [style.background-color]="getAvatarColor(comment.authorName)"
+            [style.cursor]="hasRepliesOrReplying() ? 'pointer' : 'default'"
+            [attr.title]="hasRepliesOrReplying() ? (isCollapsed ? 'Expand thread' : 'Collapse thread') : null"
+            (click)="hasRepliesOrReplying() && toggleCollapse()">
+            {{ comment.authorName?.charAt(0)?.toUpperCase() }}
         </div>
-          (submitReplyEvent)="submitReplyEvent.emit($event)"
-          (replyTextChange)="replyTextChange.emit($event)"
-          (toggleVoteEvent)="toggleVoteEvent.emit($event)"
-          (togglePinEvent)="togglePinEvent.emit($event)">
-        </app-comment-item>
-      </div>
 
-    </ng-container>
-  </div>
+        <!-- Thread line: a div (not button!) so flex-1 works reliably -->
+        <div *ngIf="hasRepliesOrReplying() && !isCollapsed" class="flex-1 flex justify-center"
+            style="margin-top:6px; min-height:16px; cursor:pointer;" (click)="toggleCollapse()"
+            (mouseenter)="isHoveringLine = true" (mouseleave)="isHoveringLine = false">
+            <div style="width:2px; height:100%; border-radius:4px; transition:background 0.15s, width 0.15s;"
+                [style.background]="isHoveringLine ? '#3b82f6' : '#e2e8f0'">
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── RIGHT COLUMN: All content ────────────────────────────── -->
+    <div class="flex-1 min-w-0 pb-1">
+
+        <!-- Pinned badge -->
+        <div *ngIf="comment.isPinned" class="inline-flex items-center gap-1 mb-2"
+            style="font-size:10px; font-weight:700; color:#92400e; background:#fef3c7; padding:2px 8px; border-radius:9999px;">
+            <lucide-icon name="pin" [size]="11" class="text-amber-800 inline-flex fill-amber-500/20 mr-0.5"></lucide-icon> Pinned
+        </div>
+
+        <!-- Author row -->
+        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+            <span class="font-semibold text-gray-900" style="font-size:13px;">{{ comment.authorName }}</span>
+            <span *ngIf="comment.roleBadge" class="text-blue-700 bg-blue-50 border border-blue-100"
+                style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px;">
+                {{ comment.roleBadge }}
+            </span>
+            <span class="text-gray-400" style="font-size:11px;">{{ timeAgo(comment.commentDate) }}</span>
+        </div>
+
+        <!-- Collapsed state -->
+        <button *ngIf="isCollapsed" (click)="toggleCollapse()" class="text-blue-600 hover:text-blue-700 font-semibold"
+            style="font-size:12px; background:none; border:none; cursor:pointer; padding:4px 0;">
+            ▶ Show {{ getReplyCount() + 1 }} {{ (getReplyCount() + 1) === 1 ? 'comment' : 'comments' }}
+        </button>
+
+        <!-- Expanded content -->
+        <ng-container *ngIf="!isCollapsed">
+
+            <!-- Comment body -->
+            <div class="text-gray-800 mb-2 forum-prose"
+                style="font-size:14px; line-height:1.5;" [innerHTML]="comment.comment | markdown">
+            </div>
+
+            <!-- Action row -->
+            <div class="flex items-center gap-1.5" style="margin-top:4px;">
+                <!-- Vote -->
+                <button (click)="onToggleVote(comment)"
+                    class="inline-flex items-center gap-1.5 rounded-lg transition-colors hover:bg-gray-100/80"
+                    style="font-size:12px; font-weight:600; padding:6px 10px; border:none; cursor:pointer;"
+                    [style.color]="comment.userHasVoted ? '#2563eb' : '#9ca3af'"
+                    [style.background]="comment.userHasVoted ? '#eff6ff' : 'transparent'">
+                    <lucide-icon name="thumbs-up" [size]="14"
+                        [strokeWidth]="comment.userHasVoted ? 3 : 2"></lucide-icon>
+                    {{ comment.voteCount || 0 }}
+                </button>
+
+                <!-- Reply -->
+                <button (click)="onStartReply(comment.commentId)"
+                    class="inline-flex items-center gap-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    style="font-size:12px; font-weight:600; padding:6px 10px; border:none; cursor:pointer; background:transparent;">
+                    <lucide-icon name="corner-down-right" [size]="14"></lucide-icon>
+                    Reply
+                </button>
+
+                <!-- Pin (post author only) -->
+                <button *ngIf="isPostAuthor" (click)="onTogglePin()"
+                    class="inline-flex items-center gap-1.5 rounded-lg transition-colors hover:bg-amber-50"
+                    style="font-size:12px; font-weight:600; padding:6px 10px; border:none; cursor:pointer; background:transparent;"
+                    [style.color]="comment.isPinned ? '#d97706' : '#d1d5db'"
+                    [title]="comment.isPinned ? 'Unpin' : 'Pin comment'">
+                    <lucide-icon name="pin" [size]="14" [strokeWidth]="comment.isPinned ? 3 : 2"></lucide-icon>
+                    {{ comment.isPinned ? 'Pinned' : 'Pin' }}
+                </button>
+
+                <!-- Report -->
+                <button (click)="reportComment()"
+                    class="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    style="font-size:12px; padding:6px 10px; border:none; cursor:pointer; background:transparent;"
+                    title="Report">
+                    <lucide-icon name="flag" [size]="14"></lucide-icon>
+                </button>
+            </div>
+
+            <!-- ─── Inline reply composer ──────────────────────────────── -->
+            <div *ngIf="replyingTo === comment.commentId" class="overflow-hidden"
+                style="margin-top:12px; border-radius:12px; border:1px solid #e5e7eb; background:#ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                <div class="flex gap-3" style="padding:16px 16px 8px;">
+                    <!-- Current user avatar -->
+                    <div class="flex items-center justify-center text-white font-bold"
+                        style="width:32px; height:32px; border-radius:50%; flex-shrink:0; font-size:12px; margin-top:2px;"
+                        [style.background-color]="getAvatarColor(currentUserName)">
+                        {{ currentUserName?.charAt(0)?.toUpperCase() }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <!-- Write / Preview tabs -->
+                        <div class="flex items-center gap-1 mb-2">
+                            <button (click)="replyPreview = false"
+                                class="px-3 py-1 text-xs font-bold rounded-md transition-colors"
+                                [class.bg-blue-50]="!replyPreview" [class.text-blue-700]="!replyPreview"
+                                [class.text-gray-500]="replyPreview" [class.hover:bg-gray-100]="replyPreview">
+                                Write
+                            </button>
+                            <button (click)="replyPreview = true"
+                                class="px-3 py-1 text-xs font-bold rounded-md transition-colors"
+                                [class.bg-blue-50]="replyPreview" [class.text-blue-700]="replyPreview"
+                                [class.text-gray-500]="!replyPreview" [class.hover:bg-gray-100]="!replyPreview">
+                                Preview
+                            </button>
+                        </div>
+                        <!-- Textarea -->
+                        <div [hidden]="replyPreview" class="bg-gray-50 rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all p-1">
+                            <textarea #replyInput [value]="replyText"
+                                (input)="onReplyTextChange($any($event.target).value)" rows="3" placeholder="Write a reply…"
+                                class="block w-full bg-transparent outline-none resize-y placeholder-gray-400 border-0 focus:ring-0 text-gray-800"
+                                style="font-size:14px; min-height:60px; padding:8px;">
+                            </textarea>
+                        </div>
+
+                        <!-- Preview pane -->
+                        <div *ngIf="replyPreview" style="min-height:48px; padding:2px 0;">
+                            <div *ngIf="replyText.trim()" class="text-gray-700 prose prose-sm max-w-none"
+                                style="font-size:14px;" [innerHTML]="replyText | markdown">
+                            </div>
+                            <p *ngIf="!replyText.trim()" class="italic text-gray-300" style="font-size:13px;">Nothing to
+                                preview</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reply toolbar -->
+                <div class="flex items-center justify-between"
+                    style="padding:8px 12px; border-top:1px solid #e5e7eb; background:white;">
+                    <div class="flex items-center gap-0.5">
+                        <button type="button" (click)="insertReplyMarkdown('**','**',replyInput)"
+                            (mousedown)="$event.preventDefault()"
+                            class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"><lucide-icon
+                                name="bold" [size]="13"></lucide-icon></button>
+                        <button type="button" (click)="insertReplyMarkdown('*','*',replyInput)"
+                            (mousedown)="$event.preventDefault()"
+                            class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"><lucide-icon
+                                name="italic" [size]="13"></lucide-icon></button>
+                        <button type="button" (click)="insertReplyMarkdown('> ','',replyInput)"
+                            (mousedown)="$event.preventDefault()"
+                            class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"><lucide-icon
+                                name="quote" [size]="13"></lucide-icon></button>
+                        <button type="button" (click)="insertReplyMarkdown(codeBlockPrefix,codeBlockSuffix,replyInput)"
+                            (mousedown)="$event.preventDefault()"
+                            class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"><lucide-icon
+                                name="code" [size]="13"></lucide-icon></button>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button (click)="onStartReply(comment.commentId)"
+                            class="text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            style="font-size:12px; font-weight:500; padding:4px 10px; border:none; cursor:pointer; background:transparent;">
+                            Cancel
+                        </button>
+                        <button (click)="onSubmitReply(comment.commentId)"
+                            [disabled]="submittingReply || !replyText.trim()"
+                            class="inline-flex items-center gap-1.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            style="font-size:12px; font-weight:600; padding:4px 12px; border:none; cursor:pointer;">
+                            <div *ngIf="submittingReply"
+                                style="width:10px;height:10px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;">
+                            </div>
+                            Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Nested replies (recursive) ────────────────────────── -->
+            <div *ngIf="comment.replies && comment.replies.length > 0"
+                style="margin-top:4px; margin-left:-20px; margin-right:-20px;">
+                <app-comment-item *ngFor="let reply of comment.replies; let last = last" [comment]="reply"
+                    [depth]="depth + 1" [currentUserName]="currentUserName" [replyingTo]="replyingTo"
+                    [replyText]="replyText" [submittingReply]="submittingReply" [isLast]="last"
+                    [isPostAuthor]="isPostAuthor" (startReplyEvent)="startReplyEvent.emit($event)"
+                    (submitReplyEvent)="submitReplyEvent.emit($event)" (replyTextChange)="replyTextChange.emit($event)"
+                    (toggleVoteEvent)="toggleVoteEvent.emit($event)" (togglePinEvent)="togglePinEvent.emit($event)">
+                </app-comment-item>
+            </div>
+
+        </ng-container>
+    </div>
 </div>

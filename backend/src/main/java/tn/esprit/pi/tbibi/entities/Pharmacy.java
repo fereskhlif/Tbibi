@@ -20,5 +20,6 @@ public class Pharmacy {
     Long pharmacyId;
     String pharmacyName;
     String pharmacyAddress;
+    String pharmacyPhone;
 
 }

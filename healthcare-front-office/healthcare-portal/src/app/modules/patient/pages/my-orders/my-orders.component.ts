@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { PatientOrderService } from '../../services/patient-order.service';
+import { PatientOrderService, Page } from '../../services/patient-order.service';
+import { UserService } from '../../../../services/user.service';
 import { OrderResponse } from '../../models/order.model';
 import { MainLayoutComponent } from '../../../../shared/layouts/main-layout/main-layout.component';
 
@@ -8,23 +9,74 @@ import { MainLayoutComponent } from '../../../../shared/layouts/main-layout/main
     templateUrl: './my-orders.component.html'
 })
 export class MyOrdersComponent implements OnInit {
-    orders: OrderResponse[] = [];
+    userId: number | null = null;
+    
+    pagedOrders: OrderResponse[] = [];
+    totalElements = 0;
+    totalPages = 0;
     loading = true;
     error = '';
+    
     selectedOrder: OrderResponse | null = null;
     cancellingOrderId: number | null = null;
 
-    constructor(private orderService: PatientOrderService) { }
+    activeTab: string = 'ALL';
+    searchQuery = '';
+    sortBy = 'newest';
+
+    currentPage = 1;
+    readonly pageSize = 10;
+
+    readonly tabs: { key: string; label: string }[] = [
+        { key: 'ALL', label: 'All Orders' },
+        { key: 'PENDING', label: 'Pending' },
+        { key: 'CONFIRMED', label: 'Confirmed' },
+        { key: 'IN_PROGRESS', label: 'In Progress' },
+        { key: 'DELIVERED', label: 'Delivered' },
+        { key: 'CANCELLED', label: 'Cancelled' },
+    ];
+
+    constructor(
+        private orderService: PatientOrderService,
+        private userService: UserService
+    ) { }
 
     ngOnInit(): void {
-        this.loadOrders();
+        this.initUser();
     }
 
-    loadOrders(): void {
+    initUser(): void {
         this.loading = true;
-        this.orderService.getOrdersByUser(3).subscribe({ // Hardcoded userId 3
-            next: (data) => {
-                this.orders = data.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+        this.userService.getProfile().subscribe({
+            next: (profile) => {
+                this.userId = profile.userId;
+                this.fetchOrders();
+            },
+            error: (err) => {
+                this.error = 'Failed to identify user account. Please sign in again.';
+                this.loading = false;
+                console.error(err);
+            }
+        });
+    }
+
+    fetchOrders(): void {
+        if (!this.userId) return;
+        this.loading = true;
+        this.error = '';
+
+        this.orderService.getUserOrdersPaginated(
+            this.userId,
+            this.activeTab,
+            this.searchQuery.trim(),
+            this.sortBy,
+            this.currentPage - 1,
+            this.pageSize
+        ).subscribe({
+            next: (pageData: Page<OrderResponse>) => {
+                this.pagedOrders = pageData.content;
+                this.totalPages = pageData.totalPages;
+                this.totalElements = pageData.totalElements;
                 this.loading = false;
             },
             error: (err) => {
@@ -33,6 +85,37 @@ export class MyOrdersComponent implements OnInit {
                 console.error(err);
             }
         });
+    }
+
+    get pageNumbers(): number[] {
+        const total = this.totalPages;
+        if (total === 0) return [];
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+        if (this.currentPage <= 4) return [1, 2, 3, 4, 5, -1, total];
+        if (this.currentPage >= total - 3) return [1, -1, total - 4, total - 3, total - 2, total - 1, total];
+        return [1, -1, this.currentPage - 1, this.currentPage, this.currentPage + 1, -1, total];
+    }
+
+    selectTab(tab: string): void {
+        this.activeTab = tab;
+        this.currentPage = 1;
+        this.fetchOrders();
+    }
+
+    onSearchChange(): void {
+        this.currentPage = 1;
+        this.fetchOrders();
+    }
+
+    onSortChange(): void {
+        this.currentPage = 1;
+        this.fetchOrders();
+    }
+
+    goToPage(page: number): void {
+        if (page < 1 || page > this.totalPages) return;
+        this.currentPage = page;
+        this.fetchOrders();
     }
 
     viewDetails(order: OrderResponse): void {
@@ -50,9 +133,9 @@ export class MyOrdersComponent implements OnInit {
         this.orderService.cancelOrder(id).subscribe({
             next: () => {
                 MainLayoutComponent.showToast('Order cancelled successfully', 'success');
-                this.loadOrders();
                 this.cancellingOrderId = null;
                 this.closeDetails();
+                this.fetchOrders();
             },
             error: (err) => {
                 MainLayoutComponent.showToast('Failed to cancel order', 'error');
@@ -60,17 +143,5 @@ export class MyOrdersComponent implements OnInit {
                 console.error(err);
             }
         });
-    }
-
-    getStatusClass(status: string): string {
-        switch (status.toUpperCase()) {
-            case 'PENDING': return 'bg-yellow-50 text-yellow-600 border-yellow-100';
-            case 'CONFIRMED': return 'bg-blue-50 text-blue-600 border-blue-100';
-            case 'IN_PROGRESS': return 'bg-purple-50 text-purple-600 border-purple-100';
-            case 'DELIVERED': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-            case 'CANCELLED': return 'bg-gray-50 text-gray-500 border-gray-200';
-            case 'REJECTED': return 'bg-red-50 text-red-600 border-red-100';
-            default: return 'bg-gray-50 text-gray-500 border-gray-200';
-        }
     }
 }

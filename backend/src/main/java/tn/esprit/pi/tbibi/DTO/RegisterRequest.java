@@ -12,5 +12,8 @@ public record RegisterRequest(
                 String adresse,
                 String specialty,
                 String documentBase64,
-                String documentName) {
+                String documentName,
+                String pharmacyName,
+                String pharmacyAddress,
+                String pharmacyPhone) {
 }

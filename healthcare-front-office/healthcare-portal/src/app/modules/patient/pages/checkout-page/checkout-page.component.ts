@@ -5,23 +5,26 @@ import { PatientOrderService } from '../../services/patient-order.service';
 import { OrderRequest } from '../../models/order.model';
 import { MainLayoutComponent } from '../../../../shared/layouts/main-layout/main-layout.component';
 import { PatientMedicineService } from '../../services/patient-medicine.service';
+import { UserService, UserProfileDTO } from '../../../../services/user.service';
 import { Pharmacy } from '../../models/pharmacy.model';
 
 @Component({
   selector: 'app-checkout-page',
   templateUrl: './checkout-page.component.html'
 })
-export class CheckoutPageComponent implements OnInit {
+export class CheckoutPageComponent implements OnInit { // UI Refactor Trigger
 
   isOrdering = false;
   checkoutError = '';
   selectedPharmacy: Pharmacy | null = null;
   pharmacyId: number | null = null;
+  userProfile: UserProfileDTO | null = null;
 
   constructor(
     public cartService: CartService,
     private orderService: PatientOrderService,
     private medicineService: PatientMedicineService,
+    private userService: UserService,
     private router: Router
   ) { }
 
@@ -39,6 +42,15 @@ export class CheckoutPageComponent implements OnInit {
     if (this.pharmacyId) {
       this.loadPharmacyInfo(this.pharmacyId);
     }
+
+    this.loadUserProfile();
+  }
+
+  loadUserProfile(): void {
+    this.userService.getProfile().subscribe({
+      next: (profile) => this.userProfile = profile,
+      error: (err) => console.error('Failed to load user profile during checkout:', err)
+    });
   }
 
   loadPharmacyInfo(id: number): void {
@@ -46,6 +58,12 @@ export class CheckoutPageComponent implements OnInit {
     this.medicineService.getPharmacies().subscribe(pharms => {
       this.selectedPharmacy = pharms.find(p => p.pharmacyId === id) || null;
     });
+  }
+
+  getFirstImage(medicine: any): string {
+    return medicine.imageUrls && medicine.imageUrls.length > 0
+      ? medicine.imageUrls[0]
+      : 'assets/images/placeholder-medicine.png';
   }
 
   placeOrder(): void {
@@ -60,7 +78,7 @@ export class CheckoutPageComponent implements OnInit {
     this.isOrdering = true;
 
     const request: OrderRequest = {
-      userId: 3, // Hardcoded as per spec
+      userId: this.userProfile?.userId || 3, // Fallback to 3 if profile not loaded yet, but ideally it should be loaded
       pharmacyId: this.pharmacyId,
       orderLines: items.map(item => ({
         medicineId: item.medicine.medicineId,

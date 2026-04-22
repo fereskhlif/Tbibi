@@ -77,4 +77,8 @@ export class PharmacistMedicineService {
             params: { imageUrl }
         });
     }
+
+    getTopSellingMedicines(pharmacyId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/pharmacy/${pharmacyId}/top-selling`);
+    }
 }

@@ -11,7 +11,9 @@ import { MarkdownPipe } from './pipes/markdown.pipe';
 import {
   LucideAngularModule,
   LayoutDashboard,
+  Flag,
   User,
+  Pin,
   FileText,
   MessageSquare,
   Calendar,
@@ -88,6 +90,11 @@ import {
   Link,
   Bookmark,
   SortAsc,
+  Target,
+  AlertTriangle,
+  Info,
+  ClipboardCheck,
+  RefreshCcw
 } from 'lucide-angular';
 
 @NgModule({
@@ -104,7 +111,7 @@ import {
     RouterModule,
     FormsModule,
     LucideAngularModule.pick({
-      LayoutDashboard, User, FileText, MessageSquare, Calendar, Users, Pill, ShoppingBag,
+      LayoutDashboard, User, Flag, FileText, MessageSquare, Calendar, Users, Pill, ShoppingBag,
       Activity, Share2, Edit3, Clock, CreditCard, History, Video, Search, Bell, Menu, X, Plus,
       Home, Settings, LogOut, ChevronDown, ChevronRight, Stethoscope, Microscope,
       Clipboard, ShieldCheck, Phone, Mail, MapPin, Star, Pencil, RotateCcw, Image, Trash2,
@@ -115,7 +122,8 @@ import {
       ShieldAlert, Cpu, CirclePlus, FlaskConical, CornerDownRight,
       // Forum Post
       ArrowLeft, Lock, ThumbsUp, Bold, Italic, Strikethrough, Type, Quote, Code,
-      List, ListOrdered, Link, Bookmark, SortAsc,
+      List, ListOrdered, Link, Bookmark, SortAsc, Pin, Target, AlertTriangle, Info,
+      ClipboardCheck, RefreshCcw
     }),
   ],
   exports: [
@@ -131,4 +139,4 @@ import {
     MarkdownPipe,            // ← kept from e-pharmacy
   ],
 })
-export class SharedModule {}
+export class SharedModule { }

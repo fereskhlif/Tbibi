@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { PharmacistOrder, OrderStatus } from '../../models/pharmacist-order.model';
-import { PharmacistOrderService } from '../../services/pharmacist-order.service';
+import { PharmacistOrderService, Page } from '../../services/pharmacist-order.service';
 import { MainLayoutComponent } from '../../../../shared/layouts/main-layout/main-layout.component';
 
 @Component({
@@ -10,25 +10,34 @@ import { MainLayoutComponent } from '../../../../shared/layouts/main-layout/main
 export class OrderManagementComponent implements OnInit {
     readonly PHARMACY_ID = 1;
 
-    allOrders: PharmacistOrder[] = [];
-    filteredOrders: PharmacistOrder[] = [];
+    pagedOrders: PharmacistOrder[] = [];
+    totalElements = 0;
+    totalPages = 0;
     loading = true;
     error = '';
 
-    activeTab: OrderStatus | 'ALL' = 'ALL';
+    // Default to PENDING
+    activeTab: OrderStatus | 'ALL' = 'PENDING';
     updatingOrderId: number | null = null;
     expandedOrderId: number | null = null;
+
+    // Search & Sort
+    searchQuery = '';
+    sortBy = 'newest';
+
+    // Bulk Selection
+    selectedOrderIds = new Set<number>();
+
+    // Refresh timestamp
+    lastFetched: Date | null = null;
 
     // Pagination
     currentPage = 1;
     readonly pageSize = 10;
-    get totalPages(): number { return Math.ceil(this.filteredOrders.length / this.pageSize); }
-    get pagedOrders(): PharmacistOrder[] {
-        const start = (this.currentPage - 1) * this.pageSize;
-        return this.filteredOrders.slice(start, start + this.pageSize);
-    }
+    
     get pageNumbers(): number[] {
         const total = this.totalPages;
+        if (total === 0) return [];
         if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
         if (this.currentPage <= 4) return [1, 2, 3, 4, 5, -1, total];
         if (this.currentPage >= total - 3) return [1, -1, total - 4, total - 3, total - 2, total - 1, total];
@@ -41,7 +50,8 @@ export class OrderManagementComponent implements OnInit {
         orderId: number | null;
         newStatus: OrderStatus | null;
         message: string;
-    } = { visible: false, orderId: null, newStatus: null, message: '' };
+        isBulk: boolean;
+    } = { visible: false, orderId: null, newStatus: null, message: '', isBulk: false };
 
     selectedOrder: PharmacistOrder | null = null;
 
@@ -57,20 +67,30 @@ export class OrderManagementComponent implements OnInit {
     constructor(private orderService: PharmacistOrderService) { }
 
     ngOnInit(): void {
-        this.loadOrders();
+        this.fetchOrders();
     }
 
-    loadOrders(): void {
+    fetchOrders(): void {
         this.loading = true;
         this.error = '';
-        this.orderService.getOrdersByPharmacy(this.PHARMACY_ID).subscribe({
-            next: (data) => {
-                this.allOrders = data.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-                this.applyFilter();
+        
+        this.orderService.getOrdersPaginated(
+            this.PHARMACY_ID,
+            this.activeTab,
+            this.searchQuery.trim(),
+            this.sortBy,
+            this.currentPage - 1, // backend is 0-indexed
+            this.pageSize
+        ).subscribe({
+            next: (pageData: Page<PharmacistOrder>) => {
+                this.pagedOrders = pageData.content;
+                this.totalPages = pageData.totalPages;
+                this.totalElements = pageData.totalElements;
+                this.lastFetched = new Date();
                 this.loading = false;
             },
             error: (err) => {
-                this.error = err.message || 'Failed to load orders.';
+                this.error = err.error?.message || err.message || 'Failed to load orders.';
                 this.loading = false;
             }
         });
@@ -79,37 +99,107 @@ export class OrderManagementComponent implements OnInit {
     selectTab(tab: OrderStatus | 'ALL'): void {
         this.activeTab = tab;
         this.currentPage = 1;
-        this.applyFilter();
+        this.selectedOrderIds.clear();
+        this.fetchOrders();
     }
 
-    applyFilter(): void {
-        if (this.activeTab === 'ALL') {
-            this.filteredOrders = [...this.allOrders];
-        } else {
-            this.filteredOrders = this.allOrders.filter(o => o.orderStatus === this.activeTab);
-        }
+    onSearchChange(): void {
         this.currentPage = 1;
+        this.fetchOrders();
+    }
+
+    onSortChange(): void {
+        this.currentPage = 1;
+        this.fetchOrders();
     }
 
     goToPage(page: number): void {
         if (page < 1 || page > this.totalPages) return;
         this.currentPage = page;
+        this.fetchOrders();
     }
 
-    getCount(status: OrderStatus | 'ALL'): number {
-        if (status === 'ALL') return this.allOrders.length;
-        return this.allOrders.filter(o => o.orderStatus === status).length;
+    // ─── Bulk Selection ─────────────────────────────────────
+    get selectableOrders(): PharmacistOrder[] {
+        return this.pagedOrders.filter(o => o.orderStatus === 'PENDING');
     }
 
+    get allSelectableChecked(): boolean {
+        const selectable = this.selectableOrders;
+        return selectable.length > 0 && selectable.every(o => this.selectedOrderIds.has(o.orderId));
+    }
+
+    toggleSelectOrder(orderId: number): void {
+        if (this.selectedOrderIds.has(orderId)) {
+            this.selectedOrderIds.delete(orderId);
+        } else {
+            this.selectedOrderIds.add(orderId);
+        }
+    }
+
+    toggleSelectAll(): void {
+        if (this.allSelectableChecked) {
+            this.selectableOrders.forEach(o => this.selectedOrderIds.delete(o.orderId));
+        } else {
+            this.selectableOrders.forEach(o => this.selectedOrderIds.add(o.orderId));
+        }
+    }
+
+    openBulkConfirmDialog(newStatus: OrderStatus): void {
+        const count = this.selectedOrderIds.size;
+        const action = newStatus === 'CONFIRMED' ? 'confirm' : 'reject';
+        this.confirmDialog = {
+            visible: true,
+            orderId: null,
+            newStatus,
+            message: `Are you sure you want to ${action} ${count} selected order${count > 1 ? 's' : ''}?`,
+            isBulk: true,
+        };
+    }
+
+    executeBulkAction(): void {
+        if (!this.confirmDialog.newStatus) return;
+        const status = this.confirmDialog.newStatus;
+        const ids = [...this.selectedOrderIds];
+        this.cancelDialog();
+
+        let completed = 0;
+        ids.forEach(id => {
+            this.orderService.updateOrderStatus(id, status).subscribe({
+                next: () => {
+                    completed++;
+                    if (completed === ids.length) {
+                        this.selectedOrderIds.clear();
+                        const action = status === 'CONFIRMED' ? 'confirmed' : 'rejected';
+                        MainLayoutComponent.showToast(`${ids.length} order(s) ${action} successfully.`, status === 'REJECTED' ? 'error' : 'success');
+                        this.fetchOrders();
+                    }
+                },
+                error: (err) => {
+                    completed++;
+                    MainLayoutComponent.showToast(`Failed to update order #${id}`, 'error');
+                    if (completed === ids.length) {
+                        this.fetchOrders();
+                    }
+                }
+            });
+        });
+    }
+
+    // ─── Single Order Actions ────────────────────────────────
     openConfirmDialog(orderId: number, newStatus: OrderStatus, message: string): void {
-        this.confirmDialog = { visible: true, orderId, newStatus, message };
+        this.confirmDialog = { visible: true, orderId, newStatus, message, isBulk: false };
     }
 
     cancelDialog(): void {
-        this.confirmDialog = { visible: false, orderId: null, newStatus: null, message: '' };
+        this.confirmDialog = { visible: false, orderId: null, newStatus: null, message: '', isBulk: false };
     }
 
     confirmAction(): void {
+        if (this.confirmDialog.isBulk) {
+            this.executeBulkAction();
+            return;
+        }
         if (!this.confirmDialog.orderId || !this.confirmDialog.newStatus) return;
         const { orderId, newStatus } = this.confirmDialog;
         this.cancelDialog();
@@ -121,12 +211,8 @@ export class OrderManagementComponent implements OnInit {
         this.orderService.updateOrderStatus(orderId, newStatus).subscribe({
             next: () => {
                 this.updatingOrderId = null;
-                // Update in-memory
-                const order = this.allOrders.find(o => o.orderId === orderId);
-                if (order) order.orderStatus = newStatus;
-                if (this.selectedOrder?.orderId === orderId) this.selectedOrder.orderStatus = newStatus;
-                this.applyFilter();
-
+                this.selectedOrderIds.delete(orderId);
+                
                 const msgs: Partial<Record<OrderStatus, string>> = {
                     CONFIRMED: 'Order confirmed successfully.',
                     REJECTED: 'Order rejected.',
@@ -134,6 +220,7 @@ export class OrderManagementComponent implements OnInit {
                     DELIVERED: 'Order delivered successfully.',
                 };
                 MainLayoutComponent.showToast(msgs[newStatus] || 'Order status updated.', newStatus === 'REJECTED' ? 'error' : 'success');
+                this.fetchOrders();
             },
             error: (err) => {
                 this.updatingOrderId = null;
@@ -142,12 +229,44 @@ export class OrderManagementComponent implements OnInit {
         });
     }
 
+    quickConfirm(orderId: number, event: Event): void {
+        event.stopPropagation();
+        this.openConfirmDialog(orderId, 'CONFIRMED', 'Confirm this order?');
+    }
+
+    quickReject(orderId: number, event: Event): void {
+        event.stopPropagation();
+        this.openConfirmDialog(orderId, 'REJECTED', 'Reject this order?');
+    }
+
+    quickProgress(orderId: number, event: Event): void {
+        event.stopPropagation();
+        this.openConfirmDialog(orderId, 'IN_PROGRESS', 'Mark as In Progress?');
+    }
+
+    quickDeliver(orderId: number, event: Event): void {
+        event.stopPropagation();
+        this.openConfirmDialog(orderId, 'DELIVERED', 'Mark as Delivered?');
+    }
+
     openDetail(order: PharmacistOrder): void {
         this.selectedOrder = order;
     }
 
     closeDetail(): void {
         this.selectedOrder = null;
+    }
+
+    refreshOrders(): void {
+        this.fetchOrders();
+    }
+
+    getTimeSinceRefresh(): string {
+        if (!this.lastFetched) return '';
+        const seconds = Math.floor((Date.now() - this.lastFetched.getTime()) / 1000);
+        if (seconds < 60) return `${seconds}s ago`;
+        const minutes = Math.floor(seconds / 60);
+        return `${minutes}m ago`;
     }
 
     getStatusClass(status: string): string {

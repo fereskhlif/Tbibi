@@ -16,6 +16,8 @@ import tn.esprit.pi.tbibi.entities.EmailTemplateName;
 import tn.esprit.pi.tbibi.entities.Role;
 import tn.esprit.pi.tbibi.entities.Token;
 import tn.esprit.pi.tbibi.entities.User;
+import tn.esprit.pi.tbibi.entities.Pharmacy;
+import tn.esprit.pi.tbibi.repositories.PharmacyRepository;
 import tn.esprit.pi.tbibi.repositories.RoleRepo;
 import tn.esprit.pi.tbibi.repositories.TokenRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
@@ -33,6 +35,7 @@ public class IAuthServiceImp implements IAuthService {
     private final UserRepo userRepository;
     private final RoleRepo roleRepository;
     private final TokenRepo tokenRepository;
+    private final PharmacyRepository pharmacyRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
@@ -152,7 +155,7 @@ public class IAuthServiceImp implements IAuthService {
         }
 
         // Créer l'utilisateur avec le builder
-        User user = User.builder()
+        User.UserBuilder userBuilder = User.builder()
                 .name(req.name() == null ? "Not Available" : req.name())
                 .email(req.email())
                 .password(passwordEncoder.encode(req.password()))
@@ -162,9 +165,33 @@ public class IAuthServiceImp implements IAuthService {
                 .specialty(req.specialty())
                 .role(role)
                 .accountStatus(status)
-                .enabled(true) // Email verification disabled, user is enabled by default
-                .profilePicture(documentPath) // Save document name in profilePicture for admin view
-                .build();
+                .enabled(true)
+                .profilePicture(documentPath);
+
+        if (roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS") || roleNameUpper.equals("PHARMACIST")) {
+            if (req.pharmacyName() == null || req.pharmacyName().isBlank()) {
+                throw new IllegalArgumentException("Pharmacy name is required for pharmacists");
+            }
+            if (req.pharmacyAddress() == null || req.pharmacyAddress().isBlank()) {
+                throw new IllegalArgumentException("Pharmacy address is required for pharmacists");
+            }
+            if (req.pharmacyPhone() == null || req.pharmacyPhone().isBlank()) {
+                throw new IllegalArgumentException("Pharmacy phone is required for pharmacists");
+            }
+            if (!req.pharmacyPhone().trim().matches("\\d+")) {
+                throw new IllegalArgumentException("Pharmacy phone must contain only numbers");
+            }
+
+            Pharmacy pharmacy = new Pharmacy();
+            pharmacy.setPharmacyName(req.pharmacyName());
+            pharmacy.setPharmacyAddress(req.pharmacyAddress());
+            pharmacy.setPharmacyPhone(req.pharmacyPhone().trim());
+            Pharmacy savedPharmacy = pharmacyRepository.save(pharmacy);
+            
+            userBuilder.pharmacy(savedPharmacy);
+        }
+
+        User user = userBuilder.build();
 
         log.info("Saving user with role: {}", role.getRoleName());
 
@@ -269,7 +296,13 @@ public class IAuthServiceImp implements IAuthService {
 
             log.info("Login successful for user: {}, role: {}", req.email(), role);
 
+<<<<<<< Updated upstream
             return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId(), user.getName());
+=======
+            Long pharmacyId = (user.getPharmacy() != null) ? user.getPharmacy().getPharmacyId() : null;
+
+            return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId(), pharmacyId);
+>>>>>>> Stashed changes
 
         } catch (org.springframework.security.authentication.DisabledException e) {
             log.error("Login disabled for user {}: account not activated or approved yet.", req.email());

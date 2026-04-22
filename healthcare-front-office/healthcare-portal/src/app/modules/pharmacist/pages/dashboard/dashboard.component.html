@@ -1,0 +1,787 @@
+<div class="dashboard-page">
+  <div class="sidebar-mock"></div>
+  <div class="dashboard-container">
+
+    <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+    <div class="dashboard-header animate-in">
+      <div class="header-left">
+        <h1 class="header-title">Pharmacy Sales Results</h1>
+      </div>
+      <div class="header-right">
+        <div class="header-date-badge">
+          <span>🗓️</span> {{ today | date:'MMMM d, y' }}
+        </div>
+        <button class="refresh-btn" (click)="refreshAll()" [class.spinning]="loading" title="Refresh dashboard">
+          <lucide-icon name="rotate-ccw" [size]="18"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ LOADING STATE ═══════════════════════ -->
+    <ng-container *ngIf="loading">
+      <div class="skeleton-grid">
+        <div class="skeleton-card" *ngFor="let i of [1,2,3,4]">
+          <div class="skeleton-line" style="width: 60%; margin-bottom: 8px;"></div>
+          <div class="skeleton-value"></div>
+          <div class="skeleton-line" style="width: 40%;"></div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══════════════════════ DASHBOARD CONTENT ═══════════════════════ -->
+    <ng-container *ngIf="!loading">
+
+      <!-- ─── KPI CARDS (4 columns) ────────────────────────── -->
+      <div class="kpi-grid">
+        <!-- Card 1: Today's Sales -->
+        <div class="kpi-card bg-kpi-1 animate-in" (click)="openCardDetails('sales', $event)">
+          <div class="kpi-top">
+            <div class="kpi-icon-wrap">💰</div>
+            <div class="dropdown-anchor">
+              <button class="kpi-menu" (click)="toggleDropdown('stat-sales', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-sales'" (click)="$event.stopPropagation()">
+                <button *ngFor="let item of menuConfig['stat-sales']" class="dropdown-item" (click)="onMenuAction('stat-sales', item.label, $event)">
+                  <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-label">{{ salesPeriodLabel }}</div>
+          <div class="kpi-value-row">
+            <div class="kpi-value">{{ displayedSalesRevenue | number:'1.2-2' }} DT</div>
+          </div>
+        </div>
+
+        <!-- Card 2: Categories -->
+        <div class="kpi-card bg-kpi-2 animate-in" style="animation-delay: 50ms;" (click)="openCardDetails('categories', $event)">
+          <div class="kpi-top">
+            <div class="kpi-icon-wrap">🗂️</div>
+            <div class="dropdown-anchor">
+              <button class="kpi-menu" (click)="toggleDropdown('stat-categories', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-categories'" (click)="$event.stopPropagation()">
+                <button *ngFor="let item of menuConfig['stat-categories']" class="dropdown-item" (click)="onMenuAction('stat-categories', item.label, $event)">
+                  <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-label">Available Categories</div>
+          <div class="kpi-value-row">
+            <div class="kpi-value">{{ uniqueCategories }}</div>
+          </div>
+        </div>
+
+        <!-- Card 3: Expired Medicines -->
+        <div class="kpi-card bg-kpi-3 animate-in" style="animation-delay: 100ms;" (click)="openCardDetails('expired', $event)">
+          <div class="kpi-top">
+            <div class="kpi-icon-wrap">⚠️</div>
+            <div class="dropdown-anchor">
+              <button class="kpi-menu" (click)="toggleDropdown('stat-expired', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-expired'" (click)="$event.stopPropagation()">
+                <button *ngFor="let item of menuConfig['stat-expired']" class="dropdown-item" (click)="onMenuAction('stat-expired', item.label, $event)">
+                  <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-label">Expired Medicines</div>
+          <div class="kpi-value-row">
+            <div class="kpi-value">{{ expiredPercent }}%</div>
+          </div>
+        </div>
+
+        <!-- Card 4: Customers -->
+        <div class="kpi-card bg-kpi-4 animate-in" style="animation-delay: 150ms;" (click)="openCardDetails('users', $event)">
+          <div class="kpi-top">
+            <div class="kpi-icon-wrap">🧑‍⚕️</div>
+            <div class="dropdown-anchor">
+              <button class="kpi-menu" (click)="toggleDropdown('stat-users', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-users'" (click)="$event.stopPropagation()">
+                <button *ngFor="let item of menuConfig['stat-users']" class="dropdown-item" (click)="onMenuAction('stat-users', item.label, $event)">
+                  <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-label">Customers</div>
+          <div class="kpi-value-row">
+            <div class="kpi-value">{{ uniquePatients }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── CHARTS ROW ────────────────────────────────────── -->
+      <div class="charts-row">
+        
+        <!-- Graph Report (Donut) -->
+        <div class="dash-card graph-report animate-in" style="animation-delay: 200ms;">
+          <div class="dash-card-header">
+            <h3>Graph Report</h3>
+            <div class="dropdown-anchor">
+              <button class="kpi-menu" (click)="toggleDropdown('graph-report', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <div class="dropdown-panel" *ngIf="activeDropdown === 'graph-report'" (click)="$event.stopPropagation()">
+                <button *ngFor="let item of menuConfig['graph-report']" class="dropdown-item" (click)="onMenuAction('graph-report', item.label, $event)">
+                  <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="dash-card-body flex-center col">
+            <div class="chart-toggle-wrapper">
+
+              <!-- DONUT VIEW -->
+              <div class="chart-view" *ngIf="graphChartType === 'donut'">
+                <div class="donut-container">
+                  <svg viewBox="0 0 120 120" width="220" height="220">
+                    <circle cx="60" cy="60" r="45" fill="none" class="donut-track" stroke-width="20" />
+                    <circle *ngIf="donutHealthy.length > 0" cx="60" cy="60" r="45" fill="none"
+                            class="donut-segment green" stroke-width="20"
+                            [attr.stroke-dasharray]="healthyArc + ' ' + (282.74 - healthyArc)"
+                            stroke-dashoffset="70">
+                      <title>In Stock / Healthy: {{ healthyPercent }}%</title>
+                    </circle>
+                    <circle *ngIf="donutLowStock.length > 0" cx="60" cy="60" r="45" fill="none"
+                            class="donut-segment teal" stroke-width="20"
+                            [attr.stroke-dasharray]="lowStockArc + ' ' + (282.74 - lowStockArc)"
+                            [attr.stroke-dashoffset]="70 - healthyArc">
+                      <title>Low Stock: {{ lowStockPercent }}%</title>
+                    </circle>
+                    <circle *ngIf="donutOutOfStock.length > 0" cx="60" cy="60" r="45" fill="none"
+                            class="donut-segment pink" stroke-width="20"
+                            [attr.stroke-dasharray]="outOfStockArc + ' ' + (282.74 - outOfStockArc)"
+                            [attr.stroke-dashoffset]="70 - healthyArc - lowStockArc">
+                      <title>Out of Stock: {{ outOfStockPercent }}%</title>
+                    </circle>
+                    <circle *ngIf="donutExpired.length > 0" cx="60" cy="60" r="45" fill="none"
+                            class="donut-segment red" stroke-width="20"
+                            [attr.stroke-dasharray]="expiredArc + ' ' + (282.74 - expiredArc)"
+                            [attr.stroke-dashoffset]="70 - healthyArc - lowStockArc - outOfStockArc">
+                      <title>Expired: {{ expiredPercentNum }}%</title>
+                    </circle>
+                  </svg>
+                  <div class="donut-center">
+                    <span class="donut-total-title">Total Base</span>
+                    <span class="donut-total-val">{{ totalMedicines }}</span>
+                  </div>
+                  <div *ngFor="let label of donutLabels"
+                       class="floating-label" [ngClass]="label.class"
+                       [style.left]="label.left" [style.top]="label.top">
+                    {{ label.percent }}%
+                  </div>
+                </div>
+                <div class="donut-legend">
+                  <div class="legend-item"><span class="dot green"></span> Healthy</div>
+                  <div class="legend-item"><span class="dot teal"></span> Low Stock</div>
+                  <div class="legend-item"><span class="dot pink"></span> Out of Stock</div>
+                  <div class="legend-item"><span class="dot red"></span> Expired</div>
+                </div>
+              </div>
+
+              <!-- HORIZONTAL BAR VIEW -->
+              <div class="chart-view" *ngIf="graphChartType === 'bars'">
+                <div class="hbar-chart">
+                  <div class="hbar-row" *ngFor="let bar of getHBarData()">
+                    <div class="hbar-label">{{ bar.label }}</div>
+                    <div class="hbar-track">
+                      <div class="hbar-fill" [style.width.%]="bar.percent" [style.background]="bar.color"></div>
+                    </div>
+                    <div class="hbar-value">{{ bar.count }} <span class="hbar-pct">({{ bar.percent }}%)</span></div>
+                  </div>
+                </div>
+                <div class="hbar-total">Total: {{ totalMedicines }} medicines</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Sales Overview (Bar Chart) -->
+        <div class="dash-card total-sales hidden-scrollbar animate-in" style="animation-delay: 250ms;">
+          <div class="dash-card-header">
+            <div class="header-with-badge">
+              <h3>Total Sales Overview</h3>
+              <span class="date-range-badge">{{ barChartDateLabel }}</span>
+            </div>
+            <div class="dropdown-anchor">
+              <button class="kpi-menu" (click)="toggleDropdown('total-sales', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <div class="dropdown-panel" *ngIf="activeDropdown === 'total-sales'" (click)="$event.stopPropagation()">
+                <button *ngFor="let item of menuConfig['total-sales']"
+                        class="dropdown-item" [class.dropdown-disabled]="item.disabled"
+                        [attr.title]="item.disabled ? 'Not enough historical data yet' : null"
+                        (click)="!item.disabled && onMenuAction('total-sales', item.label, $event)">
+                  <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
+                  <span *ngIf="item.disabled" class="coming-soon-badge">Soon</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="dash-card-body">
+            
+            <div class="bar-chart-container">
+              <!-- Y-Axis labels (Dynamic depending on True Max) -->
+              <div class="y-axis">
+                <span *ngFor="let lbl of getYAxisLabels()">{{lbl}}</span>
+              </div>
+              
+              <!-- Grid lines -->
+              <div class="grid-lines">
+                <div class="grid-line"></div>
+                <div class="grid-line"></div>
+                <div class="grid-line"></div>
+                <div class="grid-line"></div>
+                <div class="grid-line"></div>
+                <div class="grid-line"></div>
+              </div>
+
+              <!-- Bars -->
+              <div class="bars-area">
+                <div class="bar-group" *ngFor="let day of dailyRevenue; let i = index">
+                  <!-- Tooltip -->
+                  <div class="bar-tooltip">
+                    <span class="tt-date">{{ day.day }}</span>
+                    <span class="tt-val">{{ day.amount | number:'1.2-2' }} DT</span>
+                  </div>
+                  <!-- The visual bar itself -->
+                  <div class="chart-bar-wrapper">
+                    <div class="chart-bar-ghost"></div>
+                    <!-- Previous period comparison bar -->
+                    <div class="chart-bar-fill compare-bar" *ngIf="compareMode && previousPeriodRevenue[i]"
+                         [style.height.%]="getPrevBarHeight(previousPeriodRevenue[i].amount)"
+                         style="background: rgba(0,0,0,0.1); position: absolute; bottom: 0; width: 100%; border-radius: 16px; z-index: 0;">
+                    </div>
+                    <div class="chart-bar-fill"
+                         [style.height.%]="getBarHeight(day.amount)"
+                         [style.background]="getBarColor(i)">
+                      <div class="bar-dot"></div>
+                    </div>
+                  </div>
+                  <div class="bar-x-label">{{ day.shortDay }}</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Stock & Expiry Alerts -->
+        <div class="dash-card alerts-card animate-in" style="animation-delay: 280ms;">
+          <div class="dash-card-header">
+            <h3>Inventory Alerts</h3>
+            <span class="card-badge" (click)="navigateTo('medications')">Manage →</span>
+          </div>
+          <div class="dash-card-body no-pad">
+            <div class="alerts-list scroll-container">
+              <div class="alert-item" *ngFor="let item of combinedAlerts" [ngClass]="item.type" (click)="navigateTo('medications')">
+                <div class="alert-icon-wrap" *ngIf="item.type === 'critical'">🔴</div>
+                <div class="alert-icon-wrap" *ngIf="item.type === 'warning'">🟡</div>
+                <div class="alert-icon-wrap" *ngIf="item.type === 'expired'">⛔</div>
+                <div class="alert-info-mini">
+                  <div class="alert-name">{{ item.name }}</div>
+                  <div class="alert-stock">
+                    <span *ngIf="item.type !== 'expired'">{{ item.stock }} left</span>
+                    <span *ngIf="item.type === 'expired'">Expired</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="empty-state" *ngIf="combinedAlerts.length === 0">
+                <div class="empty-icon">✅</div>
+                <div class="empty-text">All stock healthy</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ─── ACTION ROW (Quick Actions & Pipeline) ────────── -->
+      <div class="action-row animate-in" style="animation-delay: 180ms;">
+        
+        <!-- Quick Actions -->
+        <div class="dash-card quick-actions-card">
+          <div class="dash-card-header">
+            <h3>Quick Actions</h3>
+          </div>
+          <div class="dash-card-body">
+            <div class="quick-actions-grid">
+              <button class="qa-btn" (click)="navigateTo('medications')">
+                <span class="qa-icon">➕</span>
+                <span class="qa-text">Add Medicine</span>
+              </button>
+              <button class="qa-btn" (click)="navigateTo('orders')">
+                <span class="qa-icon">📦</span>
+                <span class="qa-text">Process Orders</span>
+              </button>
+              <button class="qa-btn" (click)="navigateTo('prescriptions')">
+                <span class="qa-icon">📜</span>
+                <span class="qa-text">Prescriptions</span>
+              </button>
+              <button class="qa-btn" (click)="navigateTo('availability')">
+                <span class="qa-icon">🔍</span>
+                <span class="qa-text">Check Stock</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prescription Pipeline -->
+        <div class="dash-card pipeline-card">
+          <div class="dash-card-header">
+            <h3>Prescription Pipeline</h3>
+            <span class="card-badge" (click)="navigateTo('prescriptions')">View all →</span>
+          </div>
+          <div class="dash-card-body">
+            <div class="rx-pipeline-ui">
+              <div class="rx-node pending" (click)="navigateTo('prescriptions')">
+                <div class="rx-count">{{ rxCounts.pending }}</div>
+                <div class="rx-label">Pending</div>
+              </div>
+              <div class="rx-line"></div>
+              <div class="rx-node validated" (click)="navigateTo('prescriptions')">
+                <div class="rx-count">{{ rxCounts.validated }}</div>
+                <div class="rx-label">Validated</div>
+              </div>
+              <div class="rx-line"></div>
+              <div class="rx-node dispensed" (click)="navigateTo('prescriptions')">
+                <div class="rx-count">{{ rxCounts.dispensed }}</div>
+                <div class="rx-label">Dispensed</div>
+              </div>
+              <div class="rx-line"></div>
+              <div class="rx-node completed" (click)="navigateTo('prescriptions')">
+                <div class="rx-count">{{ rxCounts.completed }}</div>
+                <div class="rx-label">Completed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Selling Medicines (JPQL) -->
+        <div class="dash-card pipeline-card">
+          <div class="dash-card-header">
+            <h3>🔥 Top Selling Medicines</h3>
+          </div>
+          <div class="dash-card-body">
+            <div *ngIf="topSellingMedicines?.length === 0" class="text-gray-500">No data available</div>
+            <ul class="top-selling-list" style="list-style: none; padding: 0; margin: 0;">
+              <li *ngFor="let item of topSellingMedicines.slice(0, 5)" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+                <span class="font-medium">{{ item[0] }}</span>
+                <span class="qty-badge" style="background:#d1fae5; color:#065f46;">{{ item[1] }} sold</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ─── RECENT SALES LIST (Table) ────────────────────── -->
+      <div class="dash-card full-width-section animate-in" style="animation-delay: 300ms;">
+        <div class="dash-card-header py-4">
+          <h3>Recent Sales List</h3>
+          
+          <div class="table-controls">
+            <div class="search-box">
+              <lucide-icon name="search" [size]="14"></lucide-icon>
+              <input type="text" placeholder="Search..."
+                     [ngModel]="salesSearchTerm"
+                     (ngModelChange)="onSalesSearch($event)" />
+            </div>
+            
+            <button class="control-btn border-btn">
+              <lucide-icon name="filter" [size]="14"></lucide-icon> Filter
+            </button>
+            <button class="control-btn border-btn">
+              <lucide-icon name="list-ordered" [size]="14"></lucide-icon> Sort By
+            </button>
+            <div class="dropdown-anchor">
+              <button class="kpi-menu" (click)="toggleDropdown('recent-sales', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <div class="dropdown-panel" *ngIf="activeDropdown === 'recent-sales'" (click)="$event.stopPropagation()">
+                <button *ngFor="let item of menuConfig['recent-sales']" class="dropdown-item" (click)="onMenuAction('recent-sales', item.label, $event)">
+                  <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="dash-card-body no-pad">
+          <div class="table-responsive">
+            <table class="sales-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px"><input type="checkbox" class="cbx" /></th>
+                  <th>Patient Name</th>
+                  <th>Medicine</th>
+                  <th>Quantity</th>
+                  <th>Total Price</th>
+                  <th>Order Date</th>
+                  <th>Status</th>
+                  <th style="text-align: right;"><lucide-icon name="list" [size]="16"></lucide-icon></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="filteredSalesList.length === 0">
+                  <td colspan="8" class="text-center py-10 text-gray-500 font-medium">
+                    No sales records found matching your criteria.
+                  </td>
+                </tr>
+                <tr *ngFor="let row of pagedSalesList" (click)="navigateTo('orders')">
+                  <td (click)="$event.stopPropagation()"><input type="checkbox" class="cbx" /></td>
+                  <td>
+                    <div class="user-cell">
+                      <div class="user-avatar" [style.background]="getAvatarColor(row.userName)">
+                        {{ getInitials(row.userName) }}
+                      </div>
+                      <div class="user-info-stack">
+                        <span class="user-name">{{ row.userName }}</span>
+                        <span class="user-email-sub">{{ row.userEmail }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="font-medium">{{ row.medicineName }}</td>
+                  <td>
+                    <div class="qty-badge">{{ row.quantity }}</div>
+                  </td>
+                  <td class="font-bold">{{ row.totalPrice | number:'1.2-2' }} DT</td>
+                  <td class="text-gray-500">{{ row.orderDate | date:'MMM d, y, h:mm a' }}</td>
+                  <td>
+                    <span class="status-badge" [ngClass]="getStatusCssClass(row.orderStatus)">
+                      {{ row.orderStatus }}
+                    </span>
+                  </td>
+                  <td class="table-actions" (click)="$event.stopPropagation()">
+                    <button><lucide-icon name="edit-3" [size]="14"></lucide-icon></button>
+                    <button class="del"><lucide-icon name="trash-2" [size]="14"></lucide-icon></button>
+                    <button><lucide-icon name="more-vertical" [size]="14"></lucide-icon></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="table-footer">
+            <div class="pagination">
+              <button class="page-btn" (click)="goToSalesPage(salesPage - 1)" [disabled]="salesPage === 1">Prev</button>
+              
+              <ng-container *ngFor="let p of salesPageNumbers">
+                <button *ngIf="p !== -1" 
+                        class="page-btn num" 
+                        [class.active]="p === salesPage"
+                        (click)="goToSalesPage(p)">
+                  {{ p }}
+                </button>
+                <span *ngIf="p === -1" class="page-dots">...</span>
+              </ng-container>
+
+              <button class="page-btn" (click)="goToSalesPage(salesPage + 1)" [disabled]="salesPage === salesTotalPages">Next</button>
+            </div>
+            
+            <div class="showing-text">
+              Showing {{ filteredSalesList.length > 0 ? ((salesPage - 1) * salesPageSize) + 1 : 0 }} to 
+              {{ Math.min(salesPage * salesPageSize, filteredSalesList.length) }} of {{ filteredSalesList.length }} Entries
+            </div>
+            
+            <button class="control-btn border-btn radius-md">
+              Show {{ salesPageSize }} <lucide-icon name="chevron-down" [size]="14"></lucide-icon>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </ng-container>
+
+  </div>
+
+  <!-- ═══════════════════════ MODALS ═══════════════════════ -->
+
+  <!-- Details: Today's Sales -->
+  <div class="modal-overlay" *ngIf="activeModal === 'details-sales'" (click)="onOverlayClick($event)">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>💰 {{ salesPeriodLabel === "Today's Sales" ? "Today's Sales Details" : salesPeriodLabel }}</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Most sold highlight -->
+        <div class="highlight-banner green-bg" *ngIf="mostSoldToday">
+          <span class="highlight-icon">🏆</span>
+          <span class="highlight-text">Most sold: <strong>{{ mostSoldToday.name }}</strong> — {{ mostSoldToday.qty }} units</span>
+        </div>
+
+        <div class="empty-state" *ngIf="todaySalesDetails.length === 0">
+          <div class="empty-icon">📊</div>
+          <div class="empty-text">No sales recorded for this period</div>
+        </div>
+
+        <table class="detail-table" *ngIf="todaySalesDetails.length > 0">
+          <thead><tr><th>Patient Name</th><th>Medicine</th><th>Qty</th><th>Price (DT)</th><th>Time</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of todaySalesDetails">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar" [style.background]="getAvatarColor(r.userName)">{{ getInitials(r.userName) }}</div>
+                  <div class="user-info-stack">
+                    <span class="user-name">{{ r.userName }}</span>
+                    <span class="user-email-sub text-xs text-gray-400">{{ r.userEmail }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="font-medium">{{ r.medicineName }}</td>
+              <td><div class="qty-badge">{{ r.quantity }}</div></td>
+              <td class="font-bold">{{ r.totalPrice | number:'1.2-2' }}</td>
+              <td class="text-gray-500">{{ r.orderDate | date:'h:mm a' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Revenue footer -->
+        <div class="modal-footer-stat" *ngIf="todaySalesDetails.length > 0">
+          Total Revenue: <strong>{{ todaySalesTotal | number:'1.2-2' }} DT</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details: Categories -->
+  <div class="modal-overlay" *ngIf="activeModal === 'details-categories'" (click)="onOverlayClick($event)">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>🗂️ Medicine Categories</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <table class="detail-table">
+          <thead><tr><th>Category Name</th><th>Medicines</th><th>Stock Status</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let c of categoriesWithStatus">
+              <td class="font-medium">{{ c.category }}</td>
+              <td>{{ c.count }}</td>
+              <td><span class="cat-status" [ngClass]="c.statusClass">{{ c.stockLabel }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details: Expired -->
+  <div class="modal-overlay" *ngIf="activeModal === 'details-expired'" (click)="onOverlayClick($event)">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⚠️ Medicine Expiry Status</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Already Expired Section -->
+        <div class="section-label"><span class="section-dot red"></span> Already Expired ({{ expiredItems.length }})</div>
+        <div class="empty-state-sm" *ngIf="expiredItems.length === 0">
+          <span>✅ No expired medicines found</span>
+        </div>
+        <table class="detail-table" *ngIf="expiredItems.length > 0">
+          <thead><tr><th>Medicine</th><th>Category</th><th>Expiry Date</th><th>Stock</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of expiredItems">
+              <td class="font-medium">{{ m.medicineName }}</td>
+              <td>{{ m.category || 'N/A' }}</td>
+              <td class="text-danger">{{ m.dateOfExpiration | date:'MMM d, y' }}</td>
+              <td>{{ m.stock }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Expiring Soon Section -->
+        <div class="section-label" style="margin-top: 24px;"><span class="section-dot yellow"></span> Expiring Soon — Next 30 Days ({{ expiringSoonItems.length }})</div>
+        <div class="empty-state-sm" *ngIf="expiringSoonItems.length === 0">
+          <span>✅ No medicines expiring in the next 30 days</span>
+        </div>
+        <table class="detail-table" *ngIf="expiringSoonItems.length > 0">
+          <thead><tr><th>Medicine</th><th>Category</th><th>Expiry Date</th><th>Days Left</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let item of expiringSoonItems">
+              <td class="font-medium">{{ item.name }}</td>
+              <td>{{ item.category }}</td>
+              <td>{{ item.expDate | date:'MMM d, y' }}</td>
+              <td>
+                <span class="days-left-badge" [class.urgent]="item.daysLeft <= 7">{{ item.daysLeft }}d</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details: Customers -->
+  <div class="modal-overlay" *ngIf="activeModal === 'details-users'" (click)="onOverlayClick($event)">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>🧑‍⚕️ Registered Customers</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="empty-state" *ngIf="customerDetails.length === 0">
+          <div class="empty-icon">👥</div>
+          <div class="empty-text">No customers found</div>
+        </div>
+        <table class="detail-table" *ngIf="customerDetails.length > 0">
+          <thead><tr><th>Name</th><th>Email</th><th>Total Orders</th><th>Last Order Date</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let c of customerDetails">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar" [style.background]="getAvatarColor(c.name)">{{ getInitials(c.name) }}</div>
+                  <span class="user-name">{{ c.name }}</span>
+                </div>
+              </td>
+              <td class="text-gray-500 text-sm font-mono">{{ c.email }}</td>
+              <td><div class="qty-badge">{{ c.totalOrders }}</div></td>
+              <td class="text-gray-500">{{ c.lastOrderDate | date:'MMM d, y, h:mm a' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Full Report -->
+  <div class="modal-overlay" *ngIf="activeModal === 'view-report'" (click)="onOverlayClick($event)">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📋 Inventory Health Report</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="report-summary-grid">
+          <div class="report-stat green-bg"><span class="stat-num">{{ donutHealthy.length }}</span><span class="stat-lbl">Healthy</span></div>
+          <div class="report-stat teal-bg"><span class="stat-num">{{ donutLowStock.length }}</span><span class="stat-lbl">Low Stock</span></div>
+          <div class="report-stat pink-bg"><span class="stat-num">{{ donutOutOfStock.length }}</span><span class="stat-lbl">Out of Stock</span></div>
+          <div class="report-stat red-bg"><span class="stat-num">{{ donutExpired.length }}</span><span class="stat-lbl">Expired</span></div>
+        </div>
+        <table class="detail-table">
+          <thead><tr><th>Medicine</th><th>Category</th><th>Stock</th><th>Min Stock</th><th>Expiry</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of allMedicines">
+              <td class="font-medium">{{ m.medicineName }}</td>
+              <td>{{ m.category || 'N/A' }}</td>
+              <td>{{ m.stock }}</td>
+              <td>{{ m.minStockAlert }}</td>
+              <td>{{ m.dateOfExpiration | date:'MMM d, y' }}</td>
+              <td>
+                <span class="status-badge delivered" *ngIf="m.stock > m.minStockAlert">Healthy</span>
+                <span class="status-badge pending" *ngIf="m.stock > 0 && m.stock <= m.minStockAlert">Low Stock</span>
+                <span class="status-badge cancelled" *ngIf="m.stock === 0">Out of Stock</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Raw Data -->
+  <div class="modal-overlay" *ngIf="activeModal === 'raw-data'" (click)="onOverlayClick($event)">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📄 Daily Revenue Data</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <table class="detail-table">
+          <thead><tr><th>Day</th><th>Revenue (DT)</th><th>Orders</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let d of dailyRevenue">
+              <td>{{ d.day }}</td>
+              <td>{{ d.amount | number:'1.2-2' }}</td>
+              <td>{{ d.orderCount }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Date Range Modal (Bar Chart) -->
+  <div class="modal-overlay" *ngIf="activeModal === 'date-range'" (click)="onOverlayClick($event)">
+    <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📅 Select Date Range</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" name="startDate" [max]="todayString" [(ngModel)]="dateRangeStart" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" name="endDate" [max]="todayString" [(ngModel)]="dateRangeEnd" class="form-input" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" (click)="resetDateRange()">Reset</button>
+          <button class="btn-primary" (click)="applyDateRange()">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Period Picker (KPI Card) -->
+  <div class="modal-overlay" *ngIf="activeModal === 'sales-period'" (click)="onOverlayClick($event)">
+    <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📅 Select Sales Period</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="form-hint">Choose a date range to view sales for that period. The card will update accordingly.</p>
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" [max]="todayString" [(ngModel)]="salesPeriodStart" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" [max]="todayString" [(ngModel)]="salesPeriodEnd" class="form-input" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" (click)="resetSalesPeriod()">Reset to Today</button>
+          <button class="btn-primary" (click)="applySalesPeriod()">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter by Category Modal -->
+  <div class="modal-overlay" *ngIf="activeModal === 'filter-category'" (click)="onOverlayClick($event)">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>🏷️ Filter by Category</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <input type="text" [(ngModel)]="categoryFilter" class="form-input" placeholder="Search categories..." />
+        </div>
+        <div class="category-chips">
+          <button *ngFor="let c of getFilteredCategoryCounts()" class="category-chip"
+                  (click)="categoryFilter = c.category; applyCategoryFilter()">
+            {{ c.category }} <span class="chip-count">{{ c.count }}</span>
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" (click)="categoryFilter = ''; applyCategoryFilter()">Clear Filter</button>
+          <button class="btn-primary" (click)="applyCategoryFilter()">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ TOAST CONTAINER ═══════════════════════ -->
+  <div class="toast-container">
+    <div *ngFor="let toast of toasts" class="toast-item" [ngClass]="'toast-' + toast.type">
+      <span class="toast-icon" *ngIf="toast.type === 'success'">✅</span>
+      <span class="toast-icon" *ngIf="toast.type === 'error'">❌</span>
+      <span class="toast-msg">{{ toast.message }}</span>
+    </div>
+  </div>
+
+</div>

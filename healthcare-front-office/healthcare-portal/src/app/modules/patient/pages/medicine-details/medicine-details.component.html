@@ -1,153 +1,141 @@
-<div class="min-h-screen bg-gray-50 font-sans pb-20 pt-8 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
+<div style="min-height: 100vh; background-color: #f8fafc; padding-bottom: 5rem; font-family: ui-sans-serif, system-ui, sans-serif;">
+    
+    <!-- Header Navigation -->
+    <div style="max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+        <button (click)="goBack()" 
+            style="display: flex; align-items: center; gap: 8px; background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);"
+            onmouseover="this.style.borderColor='#cbd5e1'; this.style.color='#1e293b'; this.style.transform='translateX(-4px)';"
+            onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#64748b'; this.style.transform='translateX(0)';">
+            <lucide-icon name="arrow-left" [size]="18"></lucide-icon>
+            Back to Catalog
+        </button>
         
-        <!-- Top Navigation -->
-        <div class="flex items-center justify-between mb-8">
-            <button (click)="goBack()"
-                    class="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 group transition-all">
-                <lucide-icon name="arrow-left" [size]="18" class="group-hover:-translate-x-1 transition-transform"></lucide-icon>
-                <span>Back to Shop</span>
-            </button>
+        <div style="display: flex; gap: 12px;">
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                <lucide-icon name="info" [size]="14" style="color: #2563eb;"></lucide-icon>
+                Ref: #{{ medicine?.medicineId }}
+            </div>
         </div>
+    </div>
 
+    <!-- Main Detail Content -->
+    <div style="max-width: 1280px; margin: 0 auto; padding: 1.5rem;">
+        
         <!-- Loading State -->
-        <div *ngIf="loading" class="flex flex-col items-center justify-center py-24">
-            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p class="text-gray-500 font-medium">Fetching details for your medication...</p>
+        <div *ngIf="loading" style="background: white; border-radius: 2.5rem; padding: 8rem 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #f1f5f9;">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p style="margin-top: 1.5rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px;">Compiling clinical data...</p>
         </div>
 
         <!-- Error State -->
-        <div *ngIf="error" class="bg-red-50 border border-red-100 p-12 rounded-3xl text-center shadow-sm max-w-2xl mx-auto">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <lucide-icon name="alert-circle" class="w-8 h-8 text-red-600"></lucide-icon>
+        <div *ngIf="error" style="background: white; border: 1px solid #fee2e2; border-radius: 2.5rem; padding: 6rem 2rem; text-align: center;">
+            <div style="width: 4rem; height: 4rem; background: #fee2e2; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #dc2626;">
+                <lucide-icon name="alert-triangle" [size]="32"></lucide-icon>
             </div>
-            <h2 class="text-xl font-bold text-gray-900 mb-2">Something went wrong</h2>
-            <p class="text-red-700 font-medium mb-6">{{error}}</p>
-            <button (click)="goBack()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all">
-                Return to Shop
-            </button>
+            <h3 style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">Could not load medication</h3>
+            <p style="color: #64748b; margin-top: 0.5rem; margin-bottom: 2rem;">{{ error }}</p>
+            <button (click)="goBack()" style="background: #1e293b; color: white; padding: 12px 32px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer;">Return to Catalog</button>
         </div>
 
-        <!-- Medicine Detail View -->
-        <div *ngIf="!loading && !error && medicine" class="bg-white rounded-[32px] shadow-xl shadow-blue-900/5 border border-gray-100 overflow-hidden min-h-[600px] flex flex-col md:flex-row animate-scale-up">
+        <!-- Detail Product Card -->
+        <div *ngIf="!loading && !error && medicine" 
+            style="background: white; border-radius: 3rem; overflow: hidden; display: flex; flex-wrap: wrap; box-shadow: 0 50px 100px -20px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; min-height: 700px;">
             
-            <!-- Product Gallery (Left) -->
-            <div class="md:w-1/2 bg-gray-50/50 p-8 sm:p-12 flex flex-col border-r border-gray-50">
-                <div class="flex-1 bg-white rounded-[2.5rem] p-12 shadow-sm border border-gray-100 flex items-center justify-center relative min-h-[400px]">
-                    <!-- Badges Overlay -->
-                    <div class="absolute top-8 left-8 flex flex-col gap-3 z-10">
-                        <span *ngIf="medicine.stock > 10"
-                              class="bg-emerald-100 text-emerald-700 font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-emerald-200">
-                            In Stock
-                        </span>
-                        <span *ngIf="medicine.stock > 0 && medicine.stock <= 10"
-                              class="bg-orange-100 text-orange-700 font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-orange-200">
-                            Low Stock
-                        </span>
-                        <span *ngIf="medicine.stock === 0"
-                              class="bg-red-100 text-red-700 font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-red-200">
-                            Out of Stock
-                        </span>
-                    </div>
+            <!-- Left Side: Product Gallery -->
+            <div style="flex: 1; min-width: 400px; background: #fcfdfe; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem; border-right: 1px solid #f1f5f9;">
+                <div style="width: 100%; height: 450px; display: flex; align-items: center; justify-content: center; position: relative;">
+                    <!-- Floating Background Element -->
+                    <div style="position: absolute; width: 300px; height: 300px; background: #eff6ff; border-radius: 50%; filter: blur(50px); opacity: 0.6; z-index: 1;"></div>
                     
-                    <img [src]="getFirstImage()" class="max-w-full max-h-[450px] object-contain drop-shadow-2xl mix-blend-multiply" [alt]="medicine.medicineName">
+                    <img [src]="getFirstImage()" [alt]="medicine.medicineName" 
+                        style="max-width: 100%; max-height: 100%; object-fit: contain; mix-blend-multiply; z-index: 2; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.12));">
                 </div>
-
-                <!-- Thumbnail strip if multiple images -->
-                <div *ngIf="medicine.imageUrls && medicine.imageUrls.length > 1" class="flex gap-4 mt-8 px-2 overflow-x-auto pb-4 custom-scrollbar">
-                    <div *ngFor="let img of medicine.imageUrls" class="w-24 h-24 rounded-2xl bg-white border-2 border-transparent hover:border-blue-500 shadow-sm p-3 cursor-pointer shrink-0 transition-all">
-                        <img [src]="img" class="w-full h-full object-contain">
+                
+                <!-- Thumbnails -->
+                <div *ngIf="medicine.imageUrls && medicine.imageUrls.length > 1" style="margin-top: 3rem; display: flex; gap: 12px;">
+                    <div *ngFor="let img of medicine.imageUrls" style="width: 80px; height: 80px; background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 8px; cursor: pointer; transition: all 0.2s;" class="hover:border-blue-500">
+                        <img [src]="img" style="width: 100%; height: 100%; object-fit: contain;">
                     </div>
                 </div>
             </div>
 
-            <!-- Product Info (Right) -->
-            <div class="md:w-1/2 p-10 sm:p-14 lg:p-20 flex flex-col bg-white">
-                <div class="flex flex-col gap-6 mb-10">
-                    <div class="flex flex-wrap gap-2.5">
-                        <span class="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border border-blue-100">
-                            {{ medicine.dosage || '—' }}
-                        </span>
-                        <span *ngIf="medicine.form" class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border border-gray-100">
-                            {{ formatForm(medicine.form) }}
-                        </span>
+            <!-- Right Side: Content & Actions -->
+            <div style="flex: 1.2; min-width: 400px; padding: 5rem; display: flex; flex-direction: column;">
+                <!-- Category Tags -->
+                <div style="display: flex; gap: 10px; margin-bottom: 2rem;">
+                    <div style="background: #eff6ff; color: #2563eb; padding: 8px 18px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #dbeafe;">
+                        {{ medicine.dosage || 'Standard Concentration' }}
                     </div>
-
-                    <h1 class="text-4xl sm:text-5xl font-extrabold text-[#0F172A] leading-[1.1] tracking-tight">
-                        {{ medicine.medicineName }}
-                    </h1>
-
-                    <div class="flex items-center gap-6 mt-2 text-sm font-medium text-gray-400">
-                      <div class="flex items-center gap-2">
-                        <lucide-icon name="info" [size]="16" class="text-gray-300"></lucide-icon>
-                        <span>ID: #{{ medicine.medicineId }}</span>
-                      </div>
-                      <div *ngIf="medicine.expirationDate || medicine.dateOfExpiration" class="flex items-center gap-2">
-                        <lucide-icon name="calendar" [size]="16" class="text-gray-300"></lucide-icon>
-                        <span>Expires: {{ (medicine.expirationDate || medicine.dateOfExpiration) | date:'MMM yyyy' }}</span>
-                      </div>
+                    <div style="background: #f8fafc; color: #64748b; padding: 8px 18px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #f1f5f9;">
+                        {{ formatForm(medicine.form) }}
                     </div>
-
-                    <div class="w-20 h-1.5 bg-blue-600 rounded-full my-2"></div>
                 </div>
 
-                <div class="flex-1">
-                    <p class="text-gray-600 text-lg leading-relaxed max-w-xl font-medium">
-                        {{ medicine.description || 'Comprehensive clinical data for this medication is currently being updated. Please refer to packaging for full usage guidelines.' }}
+                <h1 style="font-size: 4rem; font-weight: 900; color: #0f172a; margin-bottom: 1rem; letter-spacing: -0.04em; line-height: 1;">
+                    {{ medicine.medicineName }}
+                </h1>
+
+                <div style="display: flex; gap: 24px; margin-bottom: 3rem; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #94a3b8;">
+                        <lucide-icon name="calendar" [size]="18"></lucide-icon>
+                        <span>Expires: {{ (medicine.expirationDate || medicine.dateOfExpiration) | date:'MMMM yyyy' }}</span>
+                    </div>
+                    <div style="width: 6px; height: 6px; background: #e2e8f0; border-radius: 50%;"></div>
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700;">
+                        <span [style.color]="medicine.stock > 0 ? '#166534' : '#991b1b'" style="display: flex; align-items: center; gap: 8px;">
+                            <div [style.background]="medicine.stock > 0 ? '#22c55e' : '#ef4444'" style="width: 8px; height: 8px; border-radius: 50%;"></div>
+                            {{ medicine.stock > 10 ? 'High Stock Availability' : medicine.stock > 0 ? 'Limited Availability' : 'Currently Out of Stock' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div style="width: 80px; height: 6px; background: #2563eb; border-radius: 99px; margin-bottom: 3rem;"></div>
+
+                <div style="flex: 1;">
+                    <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #94a3b8; margin-bottom: 1rem;">Clinical Summary</h4>
+                    <p style="font-size: 1.125rem; color: #475569; line-height: 1.7; font-weight: 500; max-width: 600px;">
+                        {{ medicine.description || 'Professional clinical data for this medication is provided by our network of licensed pharmacists. Please check the physical packaging for full contraindications and side effects.' }}
                     </p>
                 </div>
 
-                <!-- Action Panel -->
-                <div class="mt-16 bg-gray-50/80 rounded-[2.5rem] p-8 sm:p-10 border border-gray-100 backdrop-blur-sm">
-                    <div class="flex items-end justify-between mb-8">
+                <!-- Price & Action Box -->
+                <div style="margin-top: 4rem; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 2.5rem; padding: 3rem; display: flex; flex-direction: column; gap: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                         <div>
-                            <p class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Unit Price</p>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-5xl font-black text-[#0F172A] tracking-tighter">{{ medicine.price | number:'1.2-2' }}</span>
-                                <span class="text-xl text-gray-400 font-bold uppercase">DT</span>
+                            <p style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Unit Retail Price</p>
+                            <div style="display: flex; align-items: baseline; gap: 8px;">
+                                <span style="font-size: 4rem; font-weight: 900; color: #0f172a; tracking: -0.02em;">{{ medicine.price | number:'1.2-2' }}</span>
+                                <span style="font-size: 1.5rem; font-weight: 700; color: #94a3b8;">DT</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row items-center gap-5">
-                        <!-- Qty Selector -->
-                        <div class="flex items-center bg-white rounded-2xl p-2 border border-blue-100 shadow-sm w-full sm:w-auto h-[72px]">
-                            <button (click)="decreaseQuantity()"
-                                    [disabled]="quantity <= 1"
-                                    class="w-14 h-14 flex items-center justify-center bg-gray-50 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-2xl disabled:opacity-30">−</button>
-                            <span class="flex-1 min-w-[3.5rem] text-center font-black text-[#0F172A] text-xl select-none px-2">{{quantity}}</span>
-                            <button (click)="increaseQuantity()"
-                                    [disabled]="quantity >= medicine.stock"
-                                    class="w-14 h-14 flex items-center justify-center bg-gray-50 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-2xl disabled:opacity-30">+</button>
+                    <div style="display: flex; gap: 16px; width: 100%;">
+                        <!-- Quantity -->
+                        <div style="display: flex; align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; padding: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); flex: 1; height: 80px; justify-content: space-between; padding: 0 1rem;">
+                            <button (click)="decreaseQuantity()" [disabled]="quantity <= 1"
+                                style="width: 56px; height: 56px; font-size: 28px; color: #64748b; border: none; background: #f8fafc; border-radius: 12px; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">-</button>
+                            <span style="font-size: 1.75rem; font-weight: 900; color: #0f172a;">{{ quantity }}</span>
+                            <button (click)="increaseQuantity()" [disabled]="quantity >= medicine.stock"
+                                style="width: 56px; height: 56px; font-size: 28px; color: #64748b; border: none; background: #f8fafc; border-radius: 12px; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">+</button>
                         </div>
-
-                        <!-- Main Button -->
-                        <button (click)="addToCart()"
-                                [disabled]="medicine.stock === 0"
-                                class="flex-1 w-full h-[72px] bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 text-white font-black text-lg rounded-2xl shadow-2xl shadow-blue-500/30 transition-all active:scale-[0.98] transform hover:-translate-y-1 flex items-center justify-center gap-4">
-                            <lucide-icon name="shopping-cart" [size]="24" *ngIf="medicine.stock > 0"></lucide-icon>
-                            {{ medicine.stock === 0 ? 'NOT AVAILABLE' : 'ADD TO CART' }}
+                        
+                        <!-- CTA -->
+                        <button (click)="addToCart()" [disabled]="medicine.stock === 0"
+                            style="flex: 2; height: 80px; background: #2563eb; color: white; border: none; border-radius: 1.25rem; font-size: 1.25rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.2s; box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.4);"
+                            onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-4px)';"
+                            onmouseout="this.style.background='#2563eb'; this.style.transform='translateY(0)';"
+                            [style.opacity]="medicine.stock === 0 ? '0.5' : '1'"
+                            [style.cursor]="medicine.stock === 0 ? 'not-allowed' : 'pointer'">
+                            <lucide-icon name="shopping-cart" [size]="24"></lucide-icon>
+                            {{ medicine.stock === 0 ? 'OUT OF STOCK' : 'ADD TO CART' }}
                         </button>
                     </div>
                 </div>
 
             </div>
         </div>
-
     </div>
 </div>
-
-<style>
-    .animate-scale-up {
-        animation: scaleUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    @keyframes scaleUp {
-        0% { opacity: 0; transform: scale(0.9) translateY(20px); }
-        100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    .custom-scrollbar::-webkit-scrollbar { height: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
-</style>

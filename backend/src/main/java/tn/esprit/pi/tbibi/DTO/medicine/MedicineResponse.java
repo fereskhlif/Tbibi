@@ -2,6 +2,7 @@ package tn.esprit.pi.tbibi.DTO.medicine;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import tn.esprit.pi.tbibi.entities.MedicineCategory;
 import tn.esprit.pi.tbibi.entities.MedicineForm;
 
 import java.util.Date;
@@ -27,5 +28,6 @@ public class MedicineResponse {
     Long pharmacyId;
     MedicineForm form;
     String activeIngredient;
+    MedicineCategory category;
 
 }

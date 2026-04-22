@@ -23,6 +23,9 @@ export class LoginComponent {
   gender = '';
   adresse = '';
   specialty = '';
+  pharmacyName = '';
+  pharmacyAddress = '';
+  pharmacyPhone = '';
   uploadedDocument: string | null = null;
   uploadedDocumentBase64: string | null = null;
   isLoading = false;
@@ -166,6 +169,25 @@ export class LoginComponent {
         return;
       }
 
+      if (this.selectedRole === 'PHARMASIS') {
+        if (!this.pharmacyName || !this.pharmacyName.trim()) {
+          this.errorMessage = 'Pharmacy Name is required for pharmacists.';
+          return;
+        }
+        if (!this.pharmacyAddress || !this.pharmacyAddress.trim()) {
+          this.errorMessage = 'Pharmacy Address is required for pharmacists.';
+          return;
+        }
+        if (!this.pharmacyPhone || !this.pharmacyPhone.trim()) {
+          this.errorMessage = 'Pharmacy Phone Number is required for pharmacists.';
+          return;
+        }
+        if (!/^\d+$/.test(this.pharmacyPhone)) {
+          this.errorMessage = 'Pharmacy Phone Number must contain only numbers.';
+          return;
+        }
+      }
+
       this.isLoading = true;
 
       const registerData: any = {
@@ -180,6 +202,11 @@ export class LoginComponent {
         }),
         ...(this.selectedRole === 'DOCTEUR' && this.specialty && {
           specialty: this.specialty
+        }),
+        ...(this.selectedRole === 'PHARMASIS' && {
+          pharmacyName: this.pharmacyName,
+          pharmacyAddress: this.pharmacyAddress,
+          pharmacyPhone: this.pharmacyPhone
         })
       };
 
@@ -270,9 +297,14 @@ export class LoginComponent {
           } else {
             localStorage.setItem('userId', "0");
           }
+<<<<<<< Updated upstream
           // Store user name
           if (response.name) {
             localStorage.setItem('UserName', response.name);
+=======
+          if (response.pharmacyId) {
+            localStorage.setItem('pharmacyId', response.pharmacyId.toString());
+>>>>>>> Stashed changes
           }
 
           // Redirection
@@ -334,6 +366,9 @@ export class LoginComponent {
     this.gender = '';
     this.adresse = '';
     this.specialty = '';
+    this.pharmacyName = '';
+    this.pharmacyAddress = '';
+    this.pharmacyPhone = '';
     this.selectedRole = '';
     this.uploadedDocument = null;
     this.uploadedDocumentBase64 = null;

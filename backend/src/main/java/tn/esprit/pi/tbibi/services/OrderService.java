@@ -193,4 +193,67 @@ public class OrderService implements IOrderService {
     public void deleteOrder(Long id) {
         orderRepo.deleteById(id);
     }
+
+    @Override
+    @Transactional
+    public List<OrderResponse> getOrdersByPharmacyAndUserEmail(Long pharmacyId, String email) {
+        return orderRepo.findByPharmacy_PharmacyIdAndUser_EmailOrderByOrderDateDesc(pharmacyId, email)
+                .stream()
+                .map(this::mapWithLines)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public org.springframework.data.domain.Page<OrderResponse> getOrdersPaginated(Long pharmacyId, String status, String search, String sortType, int page, int size) {
+        org.springframework.data.domain.Sort sort;
+        switch (sortType != null ? sortType : "newest") {
+            case "oldest":
+                sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "orderDate");
+                break;
+            case "highest":
+                sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "totalAmount");
+                break;
+            case "lowest":
+                sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "totalAmount");
+                break;
+            case "newest":
+            default:
+                sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "orderDate");
+                break;
+        }
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
+        Status enumStatus = ("ALL".equalsIgnoreCase(status) || status == null || status.isBlank()) ? null : Status.valueOf(status);
+        String searchParam = (search == null || search.isBlank()) ? null : search;
+        
+        return orderRepo.searchOrdersPaginated(pharmacyId, enumStatus, searchParam, pageable)
+                .map(this::mapWithLines);
+    }
+
+    @Override
+    @Transactional
+    public org.springframework.data.domain.Page<OrderResponse> getUserOrdersPaginated(Integer userId, String status, String search, String sortType, int page, int size) {
+        org.springframework.data.domain.Sort sort;
+        switch (sortType != null ? sortType : "newest") {
+            case "oldest":
+                sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "orderDate");
+                break;
+            case "highest":
+                sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "totalAmount");
+                break;
+            case "lowest":
+                sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "totalAmount");
+                break;
+            case "newest":
+            default:
+                sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "orderDate");
+                break;
+        }
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
+        Status enumStatus = ("ALL".equalsIgnoreCase(status) || status == null || status.isBlank()) ? null : Status.valueOf(status);
+        String searchParam = (search == null || search.isBlank()) ? null : search;
+        
+        return orderRepo.searchUserOrdersPaginated(userId, enumStatus, searchParam, pageable)
+                .map(this::mapWithLines);
+    }
 }

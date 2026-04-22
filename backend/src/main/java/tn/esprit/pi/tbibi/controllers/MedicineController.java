@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.pi.tbibi.DTO.medicine.MedicineRequest;
 import tn.esprit.pi.tbibi.DTO.medicine.MedicineResponse;
+import tn.esprit.pi.tbibi.entities.MedicineCategory;
 import tn.esprit.pi.tbibi.services.IMedicineService;
 
 import java.util.List;
@@ -59,6 +60,11 @@ public class MedicineController {
         return medicineService.getMedicinesByPharmacy(pharmacyId);
     }
 
+    @GetMapping("/pharmacy/{pharmacyId}/top-selling")
+    public List<Object[]> getTopSellingByPharmacy(@PathVariable("pharmacyId") Long pharmacyId) {
+        return medicineService.getTopSellingMedicinesForPharmacy(pharmacyId);
+    }
+
     @GetMapping("/pharmacy/{pharmacyId}/paginated")
     public Page<MedicineResponse> getByPharmacyPaginated(
             @PathVariable("pharmacyId") Long pharmacyId,
@@ -70,8 +76,10 @@ public class MedicineController {
 
     @GetMapping("/search/paginated")
     public Page<MedicineResponse> searchPaginated(
-            @RequestParam("name") String name,
+            @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "pharmacyId", required = false) Long pharmacyId,
+            @RequestParam(name = "category", required = false) MedicineCategory category,
+            @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(defaultValue = "medicineName,asc") String[] sort) {
@@ -80,7 +88,7 @@ public class MedicineController {
         Sort.Order order = new Sort.Order(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, size, Sort.by(order));
         
-        return medicineService.searchMedicinesPaginated(name, pharmacyId, pageable);
+        return medicineService.searchMedicinesPaginated(name, pharmacyId, category, inStockOnly, pageable);
     }
 
     @PutMapping("/{id}")

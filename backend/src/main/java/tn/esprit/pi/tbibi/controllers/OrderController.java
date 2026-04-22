@@ -27,6 +27,13 @@ public class OrderController {
         return orderService.getOrdersByPharmacy(pharmacyId);
     }
 
+    @GetMapping("/pharmacy/{pharmacyId}/user/{email}")
+    public List<OrderResponse> getOrdersByPharmacyAndUserEmail(
+            @PathVariable("pharmacyId") Long pharmacyId, 
+            @PathVariable("email") String email) {
+        return orderService.getOrdersByPharmacyAndUserEmail(pharmacyId, email);
+    }
+
     @GetMapping("/pending")
     public List<OrderResponse> getPendingOrders() {
         return orderService.getPendingOrders();
@@ -57,5 +64,25 @@ public class OrderController {
         return orderService.getOrdersByUser(userId);
     }
 
+    @GetMapping("/pharmacy/{pharmacyId}/paged")
+    public org.springframework.data.domain.Page<OrderResponse> getOrdersPaginated(
+            @PathVariable("pharmacyId") Long pharmacyId,
+            @RequestParam(required = false, defaultValue = "ALL") String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false, defaultValue = "newest") String sortType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return orderService.getOrdersPaginated(pharmacyId, status, search, sortType, page, size);
+    }
 
+    @GetMapping("/user/{userId}/paged")
+    public org.springframework.data.domain.Page<OrderResponse> getUserOrdersPaginated(
+            @PathVariable("userId") Integer userId,
+            @RequestParam(required = false, defaultValue = "ALL") String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false, defaultValue = "newest") String sortType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return orderService.getUserOrdersPaginated(userId, status, search, sortType, page, size);
+    }
 }

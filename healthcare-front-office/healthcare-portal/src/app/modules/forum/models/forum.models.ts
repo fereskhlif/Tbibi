@@ -42,6 +42,7 @@ export interface CommentResponse {
   voteCount?: number;
   userHasVoted?: boolean;
   isPinned: boolean;
+  roleBadge?: string;
 }
 
 export interface VoteResponse {

@@ -17,4 +17,5 @@ public class MedicineOcrResult {
     String description;
     MedicineForm form;
     String activeIngredient;
+    String category;
 }

@@ -14,5 +14,10 @@ public interface IOrderService {
     List<OrderResponse> getOrdersByUser(Integer userId);
     List<OrderResponse> getPendingOrders();
     List<OrderResponse> getOrdersByPharmacy(Long pharmacyId);
+    List<OrderResponse> getOrdersByPharmacyAndUserEmail(Long pharmacyId, String email);
+    
+    org.springframework.data.domain.Page<OrderResponse> getOrdersPaginated(Long pharmacyId, String status, String search, String sortType, int page, int size);
+    
+    org.springframework.data.domain.Page<OrderResponse> getUserOrdersPaginated(Integer userId, String status, String search, String sortType, int page, int size);
 
 }

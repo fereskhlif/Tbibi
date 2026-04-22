@@ -50,7 +50,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'my-orders', icon: 'package', label: 'My Orders' },
     { path: 'lab-results', icon: 'microscope', label: 'Lab Results' },
     { path: 'reminders', icon: 'clock', label: 'Reminders' },
-    { path: 'payment', icon: 'credit-card', label: 'Payment' },
     { path: 'interaction-history', icon: 'history', label: 'History' },
     { path: 'chronic-monitor', icon: 'activity', label: 'Health Monitor' },
     { path: 'health-goals', icon: 'target', label: 'Health Goals' },
@@ -91,7 +90,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'profile', icon: 'user', label: 'Professional Profile' },
     { path: 'orders', icon: 'shopping-bag', label: 'Order Validation' },
     { path: 'medications', icon: 'pill', label: 'Medication Management' },
-    { path: 'inventory', icon: 'clipboard', label: 'Inventory Management' },
     { path: 'prescriptions', icon: 'file-text', label: 'Prescription Receiving' },
     { path: 'availability', icon: 'search', label: 'Drug Availability' },
     { path: 'forum', icon: 'users', label: 'Community Forum' }
@@ -238,7 +236,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   private updateCurrentPage() {
     const url = this.router.url;
-    const segments = url.split('/').filter(s => s && s !== this.roleUrlPrefix);
+    const pathOnly = url.split('?')[0];
+    const segments = pathOnly.split('/').filter(s => s && s !== this.roleUrlPrefix);
 
     this.currentPage = segments[0] || 'dashboard';
 

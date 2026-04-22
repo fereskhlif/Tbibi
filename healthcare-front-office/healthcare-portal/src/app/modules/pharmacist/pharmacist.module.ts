@@ -39,6 +39,19 @@ import {
     ClipboardList,
     AlertTriangle,
     FileText,
+    MoreHorizontal,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    User,
+    Calendar,
+    Pill,
+    Activity,
+    CircleDot,
+    Search,
+    ArrowUpDown,
+    RefreshCw,
+    Filter,
 } from 'lucide-angular';
 import { WebcamModule } from 'ngx-webcam';
 
@@ -87,6 +100,19 @@ import { WebcamModule } from 'ngx-webcam';
             ClipboardList,
             AlertTriangle,
             FileText,
+            MoreHorizontal,
+            ChevronDown,
+            ChevronLeft,
+            ChevronRight,
+            User,
+            Calendar,
+            Pill,
+            Activity,
+            CircleDot,
+            Search,
+            ArrowUpDown,
+            RefreshCw,
+            Filter,
         })
     ]
 })

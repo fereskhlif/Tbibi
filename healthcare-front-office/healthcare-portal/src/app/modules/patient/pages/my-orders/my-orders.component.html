@@ -1,213 +1,308 @@
-<div class="min-h-screen bg-[#F8FAFC] p-6 lg:p-10 font-sans">
-    <div class="max-w-6xl mx-auto flex flex-col gap-8">
-
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">My Orders</h1>
-                <p class="text-sm text-gray-500 mt-1 font-medium">Track your medication orders and history</p>
+<div style="min-height: 100vh; background-color: #F8FAFC; padding-bottom: 5rem; font-family: ui-sans-serif, system-ui, sans-serif;">
+    
+    <!-- Ultra Modern Header -->
+    <div style="background: linear-gradient(135deg, #0f172a, #1e293b); padding: 5rem 1.5rem; position: relative; overflow: hidden; color: white;">
+        <div style="position: absolute; top: -10%; left: -5%; width: 300px; height: 300px; background: rgba(37, 99, 235, 0.1); border-radius: 50%; filter: blur(60px);"></div>
+        <div style="position: absolute; bottom: -10%; right: -5%; width: 400px; height: 400px; background: rgba(37, 99, 235, 0.05); border-radius: 50%; filter: blur(60px);"></div>
+        
+        <div style="max-width: 1280px; margin: 0 auto; position: relative; z-index: 10;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="background: rgba(255,255,255,0.1); width: fit-content; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; padding: 4px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.15); margin-bottom: 8px;">
+                    Order History
+                </div>
+                <h1 style="font-size: 3rem; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 0.5rem; line-height: 1;">My Medical Orders</h1>
+                <p style="font-size: 1.125rem; color: #94a3b8; font-weight: 500; max-width: 600px;">
+                    Track and manage your pharmaceutical requests across our partner network.
+                </p>
             </div>
-        </div>
-
-        <!-- Error State -->
-        <div *ngIf="error" class="bg-red-50 border border-red-100 p-8 rounded-3xl text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <lucide-icon name="alert-circle" class="text-red-600"></lucide-icon>
-            </div>
-            <p class="text-red-900 font-bold text-lg">Oops! Something went wrong</p>
-            <p class="text-red-500 text-sm mt-1 max-w-xs mx-auto">{{error}}</p>
-            <button (click)="loadOrders()"
-                class="mt-6 bg-red-600 text-white px-8 py-2 rounded-xl text-sm font-bold hover:bg-red-700 transition-all">Retry
-                Loading</button>
-        </div>
-
-        <!-- Loading State -->
-        <div *ngIf="loading"
-            class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
-            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p class="mt-4 text-gray-400 font-bold uppercase tracking-widest text-[10px]">Updating Order History...</p>
-        </div>
-
-        <!-- Orders Table/List -->
-        <div *ngIf="!loading && !error && orders.length > 0"
-            class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-50/50">
-                        <th
-                            class="p-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
-                            Order info</th>
-                        <th
-                            class="p-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
-                            Pharmacy</th>
-                        <th
-                            class="p-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 text-center">
-                            Date</th>
-                        <th
-                            class="p-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 text-center">
-                            Status</th>
-                        <th
-                            class="p-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 text-right">
-                            Total</th>
-                        <th
-                            class="p-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 text-center">
-                            Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                    <tr *ngFor="let order of orders" class="hover:bg-gray-50/30 transition-colors group">
-                        <td class="p-6">
-                            <span class="text-sm font-bold text-gray-900">#ORD-{{order.orderId}}</span>
-                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tight mt-0.5">
-                                {{order.orderLines.length}} Items</p>
-                        </td>
-                        <td class="p-6">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                                    <lucide-icon name="map-pin" [size]="16" class="text-blue-600"></lucide-icon>
-                                </div>
-                                <span class="text-xs font-bold text-gray-700">{{order.pharmacyName}}</span>
-                            </div>
-                        </td>
-                        <td class="p-6 text-center">
-                            <span class="text-xs font-medium text-gray-500">{{order.orderDate |
-                                date:'mediumDate'}}</span>
-                        </td>
-                        <td class="p-6">
-                            <div class="flex justify-center">
-                                <span
-                                    [class]="'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(order.orderStatus)">
-                                    {{order.orderStatus}}
-                                </span>
-                            </div>
-                        </td>
-                        <td class="p-6 text-right">
-                            <span class="text-sm font-bold text-blue-600">{{order.totalAmount | number:'1.2-2'}}
-                                DT</span>
-                        </td>
-                        <td class="p-6">
-                            <div class="flex items-center justify-center gap-2">
-                                <button (click)="viewDetails(order)"
-                                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all group/btn">
-                                    <lucide-icon name="eye" [size]="18"
-                                        class="group-hover/btn:scale-110 transition-transform"></lucide-icon>
-                                </button>
-                                <button *ngIf="order.orderStatus === 'PENDING'" (click)="cancelOrder(order.orderId)"
-                                    [disabled]="cancellingOrderId === order.orderId"
-                                    class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                                    <lucide-icon *ngIf="cancellingOrderId !== order.orderId" name="trash-2"
-                                        [size]="18"></lucide-icon>
-                                    <lucide-icon *ngIf="cancellingOrderId === order.orderId" name="loader-2" [size]="18"
-                                        class="animate-spin"></lucide-icon>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Empty State -->
-        <div *ngIf="!loading && !error && orders.length === 0"
-            class="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-200">
-            <div class="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <lucide-icon name="package" class="w-10 h-10 text-gray-300"></lucide-icon>
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 uppercase tracking-widest text-sm">No orders yet</h3>
-            <p class="text-gray-400 text-xs mt-3 max-w-[200px] mx-auto leading-relaxed">You haven't placed any
-                medication orders yet. Head to the catalog to get started!</p>
-            <button routerLink="/patient/medicine-catalog"
-                class="mt-8 bg-blue-600 text-white px-8 py-3 rounded-2xl text-xs font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">Browse
-                Medications</button>
         </div>
     </div>
 
-    <!-- ─── ORDER DETAILS MODAL ────────────────────────────────────────── -->
-    <div *ngIf="selectedOrder" class="fixed inset-0 z-[120] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md" (click)="closeDetails()"></div>
-
-        <div
-            class="bg-white rounded-[32px] shadow-2xl w-full max-w-xl overflow-hidden flex flex-col relative animate-in zoom-in duration-300">
-            <!-- Modal Header -->
-            <div class="p-8 border-b border-gray-50 flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-900">Order Details</h2>
-                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                        #ORD-{{selectedOrder.orderId}} • {{selectedOrder.orderDate | date:'fullDate'}}</p>
-                </div>
-                <button (click)="closeDetails()"
-                    class="p-2 text-gray-400 hover:text-gray-900 rounded-lg transition-all">
-                    <lucide-icon name="x" [size]="24"></lucide-icon>
+    <div style="max-width: 1280px; margin: -3rem auto 0; padding: 0 1.5rem; position: relative; z-index: 20;">
+        
+        <!-- ─── CONTROL PANEL ────────────────────────────────────────────────── -->
+        <div class="bg-white rounded-[2rem] p-4 mb-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-gray-100 flex flex-col xl:flex-row gap-4 items-center justify-between">
+            
+            <!-- Tabs -->
+            <div class="flex items-center gap-2 overflow-x-auto w-full xl:w-auto pb-2 xl:pb-0 hide-scrollbar" style="scroll-snap-type: x mandatory;">
+                <button *ngFor="let tab of tabs" (click)="selectTab(tab.key)"
+                    [class]="activeTab === tab.key ? 'bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-100'"
+                    class="flex items-center gap-2 px-5 py-2.5 min-h-[44px] shrink-0 rounded-2xl text-sm font-bold transition-all duration-200" style="scroll-snap-align: start;">
+                    {{ tab.label }}
+                    <span *ngIf="activeTab === tab.key" class="text-[10px] uppercase px-2.5 py-0.5 rounded-full font-black bg-white/20 text-white">
+                        Active
+                    </span>
                 </button>
             </div>
 
-            <!-- Modal Body -->
-            <div class="p-8 overflow-y-auto max-h-[60vh] space-y-8">
-                <!-- Status & Delivery -->
-                <div class="flex items-center justify-between bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                    <div class="space-y-1">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Store</span>
-                        <p class="text-sm font-bold text-gray-900">{{selectedOrder.pharmacyName}}</p>
+            <!-- Search & Sort -->
+            <div class="flex items-center gap-3 w-full xl:w-auto">
+                <div class="relative flex-1 xl:w-64">
+                    <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="onSearchChange()"
+                        placeholder="Search pharmacy or ID..."
+                        class="w-full pl-11 pr-4 py-3 min-h-[48px] bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                    <lucide-icon name="search" [size]="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></lucide-icon>
+                </div>
+                <select [(ngModel)]="sortBy" (change)="onSortChange()"
+                    class="pl-4 pr-10 py-3 min-h-[48px] bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer transition-all">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="highest">Highest Amount</option>
+                    <option value="lowest">Lowest Amount</option>
+                </select>
+                <!-- Refresh Button -->
+                <button (click)="fetchOrders()" [disabled]="loading"
+                        class="w-12 h-12 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 flex items-center justify-center transition-all active:scale-90 disabled:opacity-50 shrink-0"
+                        title="Refresh">
+                    <lucide-icon name="refresh-cw" [size]="18" class="text-gray-500" [class.animate-spin]="loading"></lucide-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- ─── RESULTS METRIC ───────────────────────────────────────────────── -->
+        <div class="flex justify-between items-center mb-6 px-2">
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">Active Overview</h2>
+            <div class="px-4 py-2 bg-white border border-gray-100 rounded-2xl flex items-center gap-2 shadow-sm">
+                <lucide-icon name="database" [size]="14" class="text-gray-400"></lucide-icon>
+                <span class="text-xs font-bold text-gray-500">
+                    {{ totalElements }} total orders
+                </span>
+            </div>
+        </div>
+
+        <!-- ─── STATES ───────────────────────────────────────────────────────── -->
+        <div *ngIf="error" style="background: white; border: 1px solid #fee2e2; border-radius: 2.5rem; padding: 4rem; text-align: center; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05); margin-bottom: 2rem;">
+            <div style="width: 4rem; height: 4rem; background: #fee2e2; border-radius: 1.25rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #dc2626;">
+                <lucide-icon name="alert-circle" [size]="32"></lucide-icon>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">Sync Interrupted</h3>
+            <p style="color: #64748b; margin-bottom: 2.5rem;">{{error}}</p>
+            <button (click)="fetchOrders()"
+                style="background: #ef4444; color: white; padding: 14px 32px; min-height: 48px; border-radius: 1rem; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                Retry Connection
+            </button>
+        </div>
+
+        <div *ngIf="loading && pagedOrders.length === 0" style="background: white; border: 1px solid #f1f5f9; border-radius: 2.5rem; padding: 6rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2rem;">
+            <div style="width: 3rem; height: 3rem; border: 4px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%;" class="animate-spin"></div>
+            <p style="margin-top: 1.5rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; font-size: 11px;">Polling Database...</p>
+        </div>
+
+        <!-- ─── ORDERS GRID ──────────────────────────────────────────────────── -->
+        <div *ngIf="!error && pagedOrders.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem;" [class.opacity-50]="loading">
+            
+            <div *ngFor="let order of pagedOrders" 
+                style="background: white; border: 1px solid #e2e8f0; border-radius: 2rem; padding: 2rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 1.5rem;"
+                (click)="viewDetails(order)"
+                onmouseover="this.style.boxShadow='0 30px 60px -12px rgba(15, 23, 42, 0.1)'; this.style.borderColor='#cbd5e1'; this.style.transform='translateY(-4px)';"
+                onmouseout="this.style.boxShadow='none'; this.style.borderColor='#e2e8f0'; this.style.transform='translateY(0)';">
+                
+                <!-- Status Badge -->
+                <div style="position: absolute; top: 2rem; right: 2rem;">
+                    <span [style.background]="order.orderStatus === 'PENDING' ? '#fefce8' : order.orderStatus === 'CONFIRMED' ? '#f0fdf4' : '#f8fafc'"
+                          [style.color]="order.orderStatus === 'PENDING' ? '#854d0e' : order.orderStatus === 'CONFIRMED' ? '#166534' : '#64748b'"
+                          [style.border]="order.orderStatus === 'PENDING' ? '1px solid #fef08a' : order.orderStatus === 'CONFIRMED' ? '1px solid #bbf7d0' : '1px solid #e2e8f0'"
+                          style="font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 14px; border-radius: 99px; letter-spacing: 0.05em;">
+                        {{order.orderStatus}}
+                    </span>
+                </div>
+
+                <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
+                    <div style="width: 56px; height: 56px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 1.25rem; display: flex; align-items: center; justify-content: center; color: #2563eb;">
+                        <lucide-icon name="package" [size]="24"></lucide-icon>
                     </div>
-                    <div class="text-right space-y-1">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</span>
-                        <div>
-                            <span
-                                [class]="'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(selectedOrder.orderStatus)">
-                                {{selectedOrder.orderStatus}}
-                            </span>
+                    <div>
+                        <h3 style="font-size: 1.25rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">#ORD-{{order.orderId}}</h3>
+                        <p style="font-size: 13px; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
+                            <lucide-icon name="calendar" [size]="14"></lucide-icon>
+                            {{order.orderDate | date:'mediumDate'}}
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: #fcfdfe; border: 1px solid #f1f5f9; border-radius: 1.25rem; padding: 1.25rem; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <lucide-icon name="map-pin" [size]="14" style="color: #64748b;"></lucide-icon>
+                        <span style="font-size: 14px; font-weight: 700; color: #334155;">{{order.pharmacyName}}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <lucide-icon name="clipboard-check" [size]="14" style="color: #64748b;"></lucide-icon>
+                        <span style="font-size: 14px; font-weight: 700; color: #334155;">{{order.orderLines.length}} Items Processed</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Total Value</span>
+                        <span style="font-size: 1.5rem; font-weight: 950; color: #2563eb;">{{order.totalAmount | number:'1.2-2'}} <span style="font-size: 11px;">DT</span></span>
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px;" (click)="$event.stopPropagation()">
+                        <button (click)="viewDetails(order)"
+                            style="width: 48px; height: 48px; min-width: 48px; background: #eff6ff; border: none; border-radius: 12px; color: #2563eb; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                            onmouseover="this.style.background='#2563eb'; this.style.color='white'"
+                            onmouseout="this.style.background='#eff6ff'; this.style.color='#2563eb'">
+                            <lucide-icon name="eye" [size]="18"></lucide-icon>
+                        </button>
+                        <button *ngIf="order.orderStatus === 'PENDING'" (click)="cancelOrder(order.orderId)"
+                            [disabled]="cancellingOrderId === order.orderId"
+                            style="width: 48px; height: 48px; min-width: 48px; background: #fef2f2; border: none; border-radius: 12px; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                            onmouseover="this.style.background='#ef4444'; this.style.color='white'"
+                            onmouseout="this.style.background='#fef2f2'; this.style.color='#ef4444'">
+                            <lucide-icon *ngIf="cancellingOrderId !== order.orderId" name="trash-2" [size]="18"></lucide-icon>
+                            <div *ngIf="cancellingOrderId === order.orderId" style="width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%;" class="animate-spin"></div>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ─── PAGINATION ───────────────────────────────────────────────────── -->
+        <div *ngIf="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between mt-8 mb-4 px-2 gap-4">
+            <span class="text-sm text-gray-500 font-bold bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">Page {{currentPage}} of {{totalPages}}</span>
+            <div class="flex items-center gap-2">
+                <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"
+                    class="flex items-center gap-2 px-4 min-h-[48px] bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm">
+                    <lucide-icon name="chevron-left" [size]="18" class="text-gray-500"></lucide-icon>
+                    <span class="hidden sm:inline">Previous</span>
+                </button>
+                <div class="flex items-center gap-1">
+                    <ng-container *ngFor="let p of pageNumbers">
+                        <button *ngIf="p !== -1" (click)="goToPage(p)"
+                            [class]="p === currentPage ? 'w-12 h-12 flex items-center justify-center rounded-xl bg-blue-600 text-white font-black text-base shadow-[0_4px_12px_rgba(37,99,235,0.3)] transition-all' : 'w-12 h-12 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all'">
+                            {{p}}
+                        </button>
+                        <span *ngIf="p === -1" class="text-gray-400 font-bold tracking-widest px-2">...</span>
+                    </ng-container>
+                </div>
+                <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+                    class="flex items-center gap-2 px-4 min-h-[48px] bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm">
+                    <span class="hidden sm:inline">Next</span>
+                    <lucide-icon name="chevron-right" [size]="18" class="text-gray-500"></lucide-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- ─── EMPTY STATE ──────────────────────────────────────────────────── -->
+        <div *ngIf="!loading && !error && totalElements === 0" style="background: white; border: 2px dashed #e2e8f0; border-radius: 2.5rem; padding: 8rem 2rem; text-align: center;">
+            <div style="width: 5rem; height: 5rem; background: #f8fafc; border-radius: 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: #cbd5e1;">
+                <lucide-icon name="package" [size]="40"></lucide-icon>
+            </div>
+            <h3 style="font-size: 1.75rem; font-weight: 900; color: #1e293b; margin-bottom: 0.75rem;">No Orders Found</h3>
+            <p style="color: #64748b; margin-bottom: 3rem; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                {{ searchQuery ? 'No results match "' + searchQuery + '". Try a different search.' : 'There are no orders matching this filter.' }}
+            </p>
+            <button *ngIf="activeTab === 'ALL' && !searchQuery" routerLink="/patient/medicine-catalog"
+                style="background: #2563eb; color: white; font-weight: 800; font-size: 15px; padding: 16px 40px; border-radius: 1rem; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.4);"
+                onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-2px)';"
+                onmouseout="this.style.background='#2563eb'; this.style.transform='translateY(0)';"
+                class="hover-lift min-h-[48px]">
+                Explore Medications
+            </button>
+        </div>
+
+    </div>
+
+    <!-- ─── ORDER DETAILS MODAL (Premium Full height sidebar style) ────────────────────────────────────────── -->
+    <div *ngIf="selectedOrder" style="position: fixed; inset: 0; z-index: 120; display: flex; justify-content: flex-end; font-family: ui-sans-serif, system-ui, sans-serif;">
+        <div style="absolute: inset 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px);" (click)="closeDetails()" class="animate-fade-in"></div>
+        
+        <div style="background: white; width: 100%; max-width: 500px; height: 100vh; overflow-y: auto; position: relative; z-index: 10; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15);" class="animate-slide-left">
+            
+            <!-- Modal Header -->
+            <div style="padding: 3rem; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; background: white; z-index: 20;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                    <div style="background: #eff6ff; color: #2563eb; padding: 8px 18px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">
+                        Order Details
+                    </div>
+                    <button (click)="closeDetails()" style="width: 44px; height: 44px; background: #f8fafc; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;"
+                        onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b'">
+                        <lucide-icon name="x" [size]="20"></lucide-icon>
+                    </button>
+                </div>
+                <h2 style="font-size: 2.25rem; font-weight: 950; color: #0f172a; letter-spacing: -0.04em; margin-bottom: 0.5rem;">#ORD-{{selectedOrder.orderId}}</h2>
+                <p style="font-size: 14px; color: #64748b; font-weight: 600;">Ordered on {{selectedOrder.orderDate | date:'fullDate'}}</p>
+            </div>
+
+            <!-- Modal Content -->
+            <div style="flex: 1; padding: 3rem; display: flex; flex-direction: column; gap: 3rem;">
+                
+                <!-- Brief Info -->
+                <div style="display: flex; gap: 1.5rem;">
+                    <div style="flex: 1; background: #f8fafc; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Provider</span>
+                        <p style="font-size: 14px; font-weight: 800; color: #1e293b;">{{selectedOrder.pharmacyName}}</p>
+                    </div>
+                    <div style="flex: 1; background: #f8fafc; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Status</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div [style.background]="selectedOrder.orderStatus === 'CONFIRMED' ? '#10b981' : '#f59e0b'" style="width: 8px; height: 8px; border-radius: 50%;"></div>
+                            <p style="font-size: 14px; font-weight: 800; color: #1e293b;">{{selectedOrder.orderStatus}}</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Items -->
-                <div class="space-y-4">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Order Summary</h3>
-                    <div class="space-y-3">
-                        <div *ngFor="let item of selectedOrder.orderLines"
-                            class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl">
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-blue-600 font-bold text-xs ring-1 ring-inset ring-gray-100">
+                <!-- Items List -->
+                <div>
+                    <h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem;">Inventory Dispatch</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div *ngFor="let item of selectedOrder.orderLines" 
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; background: #fcfdfe; border: 1px solid #f1f5f9; border-radius: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="width: 44px; height: 44px; background: white; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #2563eb;">
                                     {{item.quantity}}x
                                 </div>
                                 <div>
-                                    <h4 class="text-sm font-bold text-gray-900 leading-tight">{{item.medicineName}}</h4>
-                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tight mt-0.5">Unit
-                                        Price: {{item.unitPrice | number:'1.2-2'}} DT</p>
+                                    <h4 style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 2px;">{{item.medicineName}}</h4>
+                                    <p style="font-size: 11px; font-weight: 600; color: #94a3b8;">Unit: {{item.unitPrice | number:'1.2-2'}} DT</p>
                                 </div>
                             </div>
-                            <span class="text-sm font-bold text-gray-900">{{item.quantity * item.unitPrice |
-                                number:'1.2-2'}} DT</span>
+                            <span style="font-size: 15px; font-weight: 900; color: #0f172a;">{{item.quantity * item.unitPrice | number:'1.2-2'}} <span style="font-size: 10px;">DT</span></span>
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <!-- Modal Footer -->
-            <div class="p-8 bg-gray-50 border-t border-gray-100 space-y-6">
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-500 font-medium">Grand Total</span>
-                    <span class="text-3xl font-black text-gray-900 tracking-tight">{{selectedOrder.totalAmount |
-                        number:'1.2-2'}} <span class="text-sm font-bold">DT</span></span>
+            <div style="padding: 3rem; background: #f8fafc; border-top: 1px solid #f1f5f9; position: sticky; bottom: 0; z-index: 20;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem;">
+                    <span style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Total Invested</span>
+                    <span style="font-size: 2.75rem; font-weight: 950; color: #0f172a; letter-spacing: -0.04em;">{{selectedOrder.totalAmount | number:'1.2-2'}} <span style="font-size: 1.25rem; color: #94a3b8;">DT</span></span>
                 </div>
-
-                <div class="flex gap-3">
+                
+                <div style="display: flex; gap: 12px;">
                     <button (click)="closeDetails()"
-                        class="flex-1 py-4 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-2xl hover:bg-gray-100 transition-all active:scale-95 shadow-sm">
-                        Close Details
+                        style="flex: 1; height: 4rem; background: white; border: 2px solid #e2e8f0; border-radius: 1.25rem; font-size: 15px; font-weight: 800; color: #64748b; cursor: pointer;">
+                        Dismiss
                     </button>
                     <button *ngIf="selectedOrder.orderStatus === 'PENDING'" (click)="cancelOrder(selectedOrder.orderId)"
                         [disabled]="cancellingOrderId === selectedOrder.orderId"
-                        class="flex-1 py-4 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-all active:scale-95 shadow-lg shadow-red-100 flex items-center justify-center gap-2">
-                        <lucide-icon *ngIf="cancellingOrderId !== selectedOrder.orderId" name="trash-2"
-                            [size]="18"></lucide-icon>
-                        <lucide-icon *ngIf="cancellingOrderId === selectedOrder.orderId" name="loader-2" [size]="18"
-                            class="animate-spin"></lucide-icon>
-                        Cancel Order
+                        style="flex: 1.5; height: 4rem; background: #ef4444; color: white; border: none; border-radius: 1.25rem; font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.4);"
+                        onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                        <lucide-icon *ngIf="cancellingOrderId !== selectedOrder.orderId" name="trash-2" [size]="18"></lucide-icon>
+                        <div *ngIf="cancellingOrderId === selectedOrder.orderId" style="width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%;" class="animate-spin"></div>
+                        Abort Order
                     </button>
                 </div>
             </div>
+
         </div>
     </div>
+
 </div>
+
+<style>
+    @keyframes slideLeft {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .animate-slide-left { animation: slideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+</style>

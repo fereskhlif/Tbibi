@@ -13,6 +13,7 @@ export interface Medicine {
     imageUrls: string[];
     pharmacy?: any; // Add pharmacy object for global search branding
     form?: string;
+    category?: string;
 }
 
 export interface Page<T> {
