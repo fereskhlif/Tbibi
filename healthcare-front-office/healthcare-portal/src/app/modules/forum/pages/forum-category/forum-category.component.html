@@ -90,7 +90,7 @@
               <div class="flex items-center gap-2 flex-wrap mb-2">
                 <span *ngIf="post.isPinned"
                   class="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                  📌 Pinned
+                  <lucide-icon name="pin" [size]="12" class="text-amber-800 inline-flex fill-amber-500/20 mr-1"></lucide-icon> Pinned
                 </span>
                 <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
                   [ngClass]="getStatusColor(post.postStatus)">

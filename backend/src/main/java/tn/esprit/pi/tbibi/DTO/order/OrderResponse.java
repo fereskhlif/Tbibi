@@ -22,6 +22,7 @@ public class OrderResponse {
     Long pharmacyId;
     String pharmacyName;
     String userName;
+    String userEmail;
     Integer userId;
     List<OrderLineResponse> orderLines;
 }

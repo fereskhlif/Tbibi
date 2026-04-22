@@ -53,4 +53,7 @@ public class Medicine {
 
     @Enumerated(EnumType.STRING) // saves as text in MySQL, not number
     private MedicineForm form;
+
+    @Enumerated(EnumType.STRING)
+    private MedicineCategory category;
 }

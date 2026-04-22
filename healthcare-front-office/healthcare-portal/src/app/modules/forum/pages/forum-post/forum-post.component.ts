@@ -150,6 +150,30 @@ export class ForumPostComponent implements OnInit, OnDestroy {
 
   // ─── Comment Sorting & Voting ───────────────────────────────────────────
 
+  // Add these helpers for media rendering
+  isImage(url: string): boolean {
+    return /\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i.test(url) ||
+      (!url.includes('.mp4') && !url.includes('.mov') && !url.includes('.webm') && !url.includes('video'));
+  }
+
+  isVideo(url: string): boolean {
+    return /\.(mp4|mov|webm|mkv)$/i.test(url) || url.includes('video');
+  }
+
+  // Report stub
+  reportPost(): void {
+    if (confirm('Report this post to moderators?')) {
+      // TODO: wire to this.forumService.reportPost(this.postId, this.currentUserId)...
+      alert('Thank you. Our moderation team will review this post.');
+    }
+  }
+
+  // Smooth scroll to comments
+  scrollToComments(): void {
+    const el = document.getElementById('comments-section');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   sortComments(): void {
     if (!this.comments) return;
     this.comments.sort((a, b) => {
@@ -174,7 +198,7 @@ export class ForumPostComponent implements OnInit, OnDestroy {
 
   toggleCommentVote(comment: CommentResponse): void {
     if (!this.currentUserId || this.currentUserId <= 0) return;
-    
+
     if (comment.userHasVoted) {
       this.forumService.unvoteComment(this.currentUserId, comment.commentId).subscribe({
         next: () => {
@@ -196,7 +220,7 @@ export class ForumPostComponent implements OnInit, OnDestroy {
 
   onTogglePin(commentId: number): void {
     if (this.currentUserId <= 0) return;
-    
+
     this.forumService.togglePinComment(commentId, this.currentUserId).subscribe({
       next: () => {
         // Reload comments to reflect new positions and states

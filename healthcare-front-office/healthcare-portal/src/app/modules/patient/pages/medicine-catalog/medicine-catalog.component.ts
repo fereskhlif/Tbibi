@@ -25,6 +25,32 @@ export class MedicineCatalogComponent implements OnInit {
     // Sort and Filter
     sortOption: string = 'medicineName,asc';
     filterOption: string = 'all';
+    categoryOption: string = 'all';
+
+    categories = [
+        { value: 'all', label: 'All Categories' },
+        { value: 'COUGH_AND_COLD', label: 'Cough & Cold' },
+        { value: 'RESPIRATORY', label: 'Respiratory' },
+        { value: 'FEVER_AND_PAIN', label: 'Fever & Pain' },
+        { value: 'MUSCLE_AND_JOINT', label: 'Muscle & Joint' },
+        { value: 'ANTIBIOTIC', label: 'Antibiotics' },
+        { value: 'ANTIVIRAL', label: 'Antivirals' },
+        { value: 'ANTIFUNGAL', label: 'Antifungals' },
+        { value: 'DIGESTIVE', label: 'Digestive' },
+        { value: 'SKIN', label: 'Skin & Dermatology' },
+        { value: 'WOUND_CARE', label: 'Wound Care' },
+        { value: 'ALLERGY', label: 'Allergy' },
+        { value: 'EYE_AND_EAR', label: 'Eye & Ear' },
+        { value: 'DIABETES', label: 'Diabetes' },
+        { value: 'HYPERTENSION', label: 'Hypertension' },
+        { value: 'CARDIAC', label: 'Cardiac' },
+        { value: 'THYROID', label: 'Thyroid' },
+        { value: 'ANXIETY_AND_SLEEP', label: 'Anxiety & Sleep' },
+        { value: 'URINARY', label: 'Urinary' },
+        { value: 'VITAMINS_AND_SUPPLEMENTS', label: 'Vitamins & Supplements' },
+        { value: 'ORAL_AND_DENTAL', label: 'Oral & Dental' },
+        { value: 'OTHER', label: 'Other' }
+    ];
 
     // Pagination
     currentPage = 1;
@@ -82,6 +108,8 @@ export class MedicineCatalogComponent implements OnInit {
                 this.searchQuery = qp['q'] || '';
                 this.currentPage = qp['page'] ? +qp['page'] : 1;
                 this.sortOption = qp['sort'] || 'medicineName,asc';
+                this.filterOption = qp['filter'] || 'all';
+                this.categoryOption = qp['category'] || 'all';
                 
                 this.fetchData();
             });
@@ -94,26 +122,30 @@ export class MedicineCatalogComponent implements OnInit {
             queryParams: { 
                 q: this.searchQuery || null,
                 page: this.currentPage,
-                sort: this.sortOption
+                sort: this.sortOption,
+                filter: this.filterOption !== 'all' ? this.filterOption : null,
+                category: this.categoryOption !== 'all' ? this.categoryOption : null
             },
             queryParamsHandling: 'merge'
         });
     }
 
-    private fetchData(): void {
+    public fetchData(): void {
         this.loading = true;
         this.error = '';
 
         const page0 = this.currentPage - 1;
-        let obs$;
+        const inStockOnly = this.filterOption === 'in-stock';
 
-        if (this.searchQuery.trim()) {
-            obs$ = this.medicineService.searchPaginated(this.searchQuery, this.pharmacyId, page0, this.pageSize, this.sortOption);
-        } else if (this.pharmacyId) {
-            obs$ = this.medicineService.getByPharmacyPaginated(this.pharmacyId, page0, this.pageSize);
-        } else {
-            obs$ = this.medicineService.getAllPaginated(page0, this.pageSize, this.sortOption);
-        }
+        const obs$ = this.medicineService.searchPaginated(
+            this.searchQuery.trim(), 
+            this.pharmacyId, 
+            this.categoryOption, 
+            inStockOnly, 
+            page0, 
+            this.pageSize, 
+            this.sortOption
+        );
 
         obs$.subscribe({
             next: (page) => {
@@ -170,11 +202,17 @@ export class MedicineCatalogComponent implements OnInit {
     }
 
     onFilterChange(event: Event): void {
-        // Status filter (in-stock) is harder for server-side unless we add JPA filter.
-        // For now, let's keep it simple or implement in backend if requested.
         const select = event.target as HTMLSelectElement;
         this.filterOption = select.value;
-        this.fetchData();
+        this.currentPage = 1;
+        this.syncUrlAndLoad();
+    }
+
+    onCategoryChange(event: Event): void {
+        const select = event.target as HTMLSelectElement;
+        this.categoryOption = select.value;
+        this.currentPage = 1;
+        this.syncUrlAndLoad();
     }
 
     changePage(page: number): void {

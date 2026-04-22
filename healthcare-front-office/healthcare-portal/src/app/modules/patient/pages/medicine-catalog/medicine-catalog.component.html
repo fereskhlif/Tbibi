@@ -1,412 +1,306 @@
-<div class="min-h-screen bg-gray-50 font-sans pb-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-
-        <!-- NAVIGATION CRUMBS / BACK -->
-        <div class="mb-5 flex items-center gap-3">
-            <button (click)="router.navigate(['/patient/pharmacy-list'])" 
-                    class="group flex items-center gap-2 text-gray-500 hover:text-blue-600 font-medium text-xs transition-all">
-                <div class="p-1.5 rounded-lg bg-gray-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
-                    <lucide-icon name="arrow-left" [size]="14"></lucide-icon>
-                </div>
-                Back to Pharmacy Stores
-            </button>
-            <div class="w-1 h-1 rounded-full bg-gray-300"></div>
-            <span class="text-xs text-gray-400 font-medium">
-                {{ pharmacyId ? 'Browsing ' + pharmacyName : 'Global Search Results' }}
-            </span>
-        </div>
-
-        <!-- HERO BANNER -->
-        <div class="relative rounded-2xl overflow-hidden mb-6 shadow-sm shadow-blue-200/50"
-             style="background: linear-gradient(135deg, #1d4ed8, #2563eb);
-                    padding: 24px 32px; min-height: 80px;">
-            <p *ngIf="pharmacyName" class="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-0.5">
-                {{ pharmacyName }}
-            </p>
-            <p *ngIf="!pharmacyId" class="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-0.5">
-                Global Network
-            </p>
-            <h1 class="text-white text-xl font-bold mb-0.5">
-                {{ pharmacyId ? 'Order from ' + pharmacyName : 'Browse All Medications' }}
-            </h1>
-            <p class="text-blue-100 text-xs opacity-90">
-                {{ pharmacyId ? 'Everything you need from your trusted local pharmacy' : 'Find any medication from our network of verified pharmacies' }}
-            </p>
-            <!-- decorative circle -->
-            <div style="position:absolute;top:-20px;right:-20px;
-                      width:120px;height:120px;
-                      background:rgba(255,255,255,0.06);
-                      border-radius:50%;"></div>
-        </div>
-
-        <!-- SEARCH + FILTER BAR -->
-        <div class="flex flex-col md:flex-row items-center gap-3 mb-5 bg-white rounded-xl border border-gray-200 shadow-sm p-3 search-focus-glow">
-            <!-- Search -->
-            <div class="relative flex-1 w-full">
-                <lucide-icon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></lucide-icon>
-                <input [ngModel]="searchQuery" (input)="onSearchInput($any($event.target).value)"
-                       placeholder="Search medications..."
-                       class="w-full pl-9 pr-4 py-2 text-sm border-none outline-none bg-transparent text-gray-700 placeholder:text-gray-400" />
+<div style="min-height: 100vh; background-color: #F8FAFC; padding-bottom: 5rem; font-family: ui-sans-serif, system-ui, sans-serif;">
+    
+    <!-- Hero Header Component -->
+    <div style="background: linear-gradient(135deg, #1d4ed8, #2563eb, #60a5fa); padding: 4rem 1.5rem; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; text-align: center; color: white; margin-bottom: -2.5rem;">
+        <!-- Background Accents -->
+        <div style="position: absolute; top: -10%; left: -5%; width: 300px; height: 300px; background: rgba(255,255,255,0.08); border-radius: 50%; filter: blur(60px);"></div>
+        <div style="position: absolute; bottom: -15%; right: -5%; width: 400px; height: 400px; background: rgba(255,255,255,0.12); border-radius: 50%; filter: blur(60px);"></div>
+        
+        <div style="width: 100%; max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 10;">
+            <!-- Contextual Breadcrumb -->
+            <div (click)="goBack()" style="cursor: pointer; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 16px; border-radius: 99px; backdrop-filter: blur(12px); margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.2); transition: all 0.2s;" class="hover:bg-white hover:text-blue-600">
+                <lucide-icon name="arrow-left" [size]="14"></lucide-icon>
+                <span>Back to Pharmacies</span>
             </div>
+
+            <p style="font-size: 13px; font-weight: 800; color: #bfdbfe; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 0.5rem;">
+                {{ pharmacyId ? 'Now Viewing: ' + pharmacyName : 'Global Network' }}
+            </p>
+            <h1 style="font-size: 2.75rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 1.5rem; line-height: 1.1;">
+                {{ pharmacyId ? 'Catalog: ' + pharmacyName : 'Find Your Medication' }}
+            </h1>
             
-            <!-- Desktop Dividers & Selects -->
-            <div class="hidden md:flex items-center gap-3">
-                <div class="w-px h-6 bg-gray-200"></div>
-                <select (change)="onFilterChange($event)" [(ngModel)]="filterOption"
-                        class="text-sm text-gray-600 outline-none bg-transparent cursor-pointer pr-2 border-none focus:ring-0">
-                    <option value="all">All Items</option>
-                    <option value="in-stock">In Stock</option>
+            <!-- Main Search Field -->
+            <div style="width: 100%; max-width: 640px; position: relative; margin-top: 1rem;">
+                <div style="display: flex; align-items: center; background: rgba(255,255,255,0.98); padding: 6px; border-radius: 9999px; box-shadow: 0 15px 30px -5px rgba(0,0,0,0.15);">
+                    <div style="padding: 0 1rem; color: #94a3b8; display: flex; align-items: center;">
+                        <lucide-icon name="search" [size]="20"></lucide-icon>
+                    </div>
+                    <input [ngModel]="searchQuery" (input)="onSearchInput($any($event.target).value)"
+                        style="flex: 1; border: none; outline: none; background: transparent; padding: 12px 0; font-size: 16px; color: #1e293b; min-width: 0;"
+                        placeholder="Search for medication by name or keyword..." />
+                    <div style="background: #2563eb; color: white; padding: 10px 24px; border-radius: 9999px; font-weight: 700; font-size: 13px; cursor: default; user-select: none;">
+                        {{ totalElements }} Found
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interface Controls Wrapper -->
+    <div style="max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 20;">
+        
+        <!-- Filter Bar -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 1.25rem; padding: 0.75rem; display: flex; flex-wrap: wrap; gap: 12px; shadow: 0 4px 10px rgba(0,0,0,0.03); align-items: center;">
+            
+            <!-- Category Filter -->
+            <div style="flex: 1; min-width: 200px; display: flex; align-items: center; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 0.75rem; padding: 0 12px;">
+                <lucide-icon name="filter" [size]="14" style="color: #64748b;"></lucide-icon>
+                <select (change)="onCategoryChange($event)" [(ngModel)]="categoryOption"
+                    style="flex: 1; border: none; background: transparent; outline: none; padding: 12px 8px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer;">
+                    <option *ngFor="let cat of categories" [value]="cat.value">{{ cat.label }}</option>
                 </select>
-                <div class="w-px h-6 bg-gray-200"></div>
+            </div>
+
+            <!-- In Stock Toggle -->
+            <div style="display: flex; align-items: center; gap: 12px; padding: 0 12px;">
+                <lucide-icon name="package" [size]="14" style="color: #64748b;"></lucide-icon>
+                <select (change)="onFilterChange($event)" [(ngModel)]="filterOption"
+                    style="border: none; background: transparent; outline: none; padding: 12px 0; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer; min-width: 100px;">
+                    <option value="all">Availability: All</option>
+                    <option value="in-stock">In Stock Only</option>
+                </select>
+            </div>
+
+            <div style="width: 1px; height: 24px; background: #e2e8f0; margin: 0 4px;"></div>
+
+            <!-- Sorting -->
+            <div style="display: flex; align-items: center; gap: 12px; padding: 0 12px;">
+                <lucide-icon name="sort-asc" [size]="14" style="color: #64748b;"></lucide-icon>
                 <select (change)="onSortChange($event)" [(ngModel)]="sortOption"
-                        class="text-sm text-gray-600 outline-none bg-transparent cursor-pointer pr-2 border-none focus:ring-0">
-                    <option value="medicineName,asc">Name A-Z</option>
+                    style="border: none; background: transparent; outline: none; padding: 12px 0; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer; min-width: 120px;">
+                    <option value="medicineName,asc">Sort by: Name A-Z</option>
                     <option value="price,asc">Price: Low to High</option>
                     <option value="price,desc">Price: High to Low</option>
                 </select>
             </div>
+        </div>
 
-            <!-- Mobile Selects -->
-            <div class="flex md:hidden items-center gap-2 w-full pt-2 border-t border-gray-100">
-                <select (change)="onFilterChange($event)" [(ngModel)]="filterOption"
-                        class="flex-1 text-xs text-gray-600 outline-none bg-gray-50 rounded-lg p-2 border-none font-medium">
-                    <option value="all">All Items</option>
-                    <option value="in-stock">In Stock</option>
-                </select>
-                <select (change)="onSortChange($event)" [(ngModel)]="sortOption"
-                        class="flex-1 text-xs text-gray-600 outline-none bg-gray-50 rounded-lg p-2 border-none font-medium">
-                    <option value="medicineName,asc">Name A-Z</option>
-                    <option value="price,asc">Price: L-H</option>
-                    <option value="price,desc">Price: H-L</option>
-                </select>
+        <!-- Notification Bar -->
+        <div *ngIf="!loading && totalElements > 0" style="margin-top: 2rem; display: flex; align-items: center; justify-content: space-between;">
+            <p style="font-size: 13px; color: #64748b; font-weight: 500;">
+                Showing <strong style="color: #1e293b;">{{ medicines.length }}</strong> of {{ totalElements }} medical products
+            </p>
+        </div>
+
+        <!-- ERROR STATE -->
+        <div *ngIf="error" style="margin-top: 3rem; background: white; border: 1px solid #fee2e2; padding: 4rem; border-radius: 2rem; text-align: center;">
+            <div style="width: 4rem; height: 4rem; background: #fee2e2; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #dc2626;">
+                <lucide-icon name="alert-circle" [size]="32"></lucide-icon>
             </div>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b;">Something went wrong</h3>
+            <p style="color: #64748b; margin-top: 0.5rem; margin-bottom: 2rem;">{{ error }}</p>
+            <button (click)="fetchData()" style="background: #2563eb; color: white; padding: 12px 32px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s;">Retry Loading</button>
         </div>
 
-        <!-- BACK BUTTON + COUNT ROW -->
-        <div class="flex items-center justify-between mb-4">
-            <button (click)="goBack()"
-                    class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors font-medium">
-                ← Back to Pharmacies
-            </button>
-            <span *ngIf="!loading && !error" class="text-xs text-gray-400 font-medium">
-                Showing {{ totalElements }} medications
-            </span>
-        </div>
-
-        <!-- Error State -->
-        <div *ngIf="error" class="bg-red-50 border border-red-100 p-8 rounded-2xl text-center mb-8">
-            <p class="text-red-700 font-bold mb-4">{{error}}</p>
-            <button (click)="pharmacyId ? loadMedicinesByPharmacy(pharmacyId!) : loadMedicines()"
-                    class="bg-red-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-red-700 transition-all shadow-sm">
-                Retry Loading
-            </button>
-        </div>
-
-        <!-- Loading State (Skeletons) -->
-        <div *ngIf="loading" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div *ngFor="let i of [1,2,3,4,5,6,7,8]"
-                 class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
-                <div class="h-[160px] bg-slate-100"></div>
-                <div class="p-4 flex flex-col gap-2">
-                    <div class="h-3 bg-slate-100 rounded w-1/4"></div>
-                    <div class="h-4 bg-slate-100 rounded w-3/4"></div>
-                    <div class="h-3 bg-slate-100 rounded w-1/2"></div>
-                    <div class="mt-auto pt-4">
-                        <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
-                    </div>
+        <!-- LOADING SKELETONS -->
+        <div *ngIf="loading" style="margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem;">
+            <div *ngFor="let i of [1,2,3,4,5,6,7,8]" style="height: 380px; background: white; border: 1px solid #f1f5f9; border-radius: 1.5rem; overflow: hidden;">
+                <div style="height: 200px; background: #f8fafc;" class="animate-pulse"></div>
+                <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="height: 12px; width: 40%; background: #f1f5f9; border-radius: 99px;" class="animate-pulse"></div>
+                    <div style="height: 20px; width: 80%; background: #f1f5f9; border-radius: 99px;" class="animate-pulse"></div>
+                    <div style="height: 60px; width: 100%; background: #f1f5f9; border-radius: 12px;" class="animate-pulse"></div>
                 </div>
             </div>
         </div>
 
-        <!-- CARDS GRID -->
-        <div *ngIf="!loading && !error" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-
-            <!-- Empty State -->
-            <div *ngIf="filteredMedicines.length === 0" class="col-span-full py-20 text-center">
-                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                    💊
-                </div>
-                <p class="text-gray-600 font-semibold">No medications found</p>
-                <p class="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
+        <!-- EMPTY STATE -->
+        <div *ngIf="!loading && !error && medicines.length === 0" style="margin-top: 3rem; text-align: center; background: white; padding: 6rem 1rem; border-radius: 2rem; border: 2px dashed #f1f5f9;">
+            <div style="width: 5rem; height: 5rem; background: #f8fafc; border-radius: 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #cbd5e1;">
+                <lucide-icon name="shopping-bag" [size]="40"></lucide-icon>
             </div>
+            <h3 style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">No Medications Found</h3>
+            <p style="color: #64748b; margin-top: 0.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">We couldn't find any medications matching your current search or filters. Try adjusting them to see more results.</p>
+        </div>
 
-            <div *ngFor="let med of filteredMedicines; let i = index"
-                 class="bg-white rounded-2xl border border-gray-100 shadow-sm hover-lift transition-all duration-200 flex flex-col overflow-hidden group animate-fade-in-up stagger-item"
-                 [style.--index]="i">
-
-                <!-- IMAGE: STRICTLY 160px tall -->
-                <div class="relative overflow-hidden bg-gray-50 cursor-pointer group/img"
-                     style="height: 160px; min-height: 160px; max-height: 160px;">
-                    <img [src]="getFirstImage(med)"
-                         [alt]="med.medicineName"
-                         class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
-                         (click)="navigateToDetails(med)" />
+        <!-- PRODUCT GRID -->
+        <div *ngIf="!loading && !error && medicines.length > 0" style="margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem;">
+            
+            <div *ngFor="let med of medicines" 
+                style="background: white; border: 1px solid #e2e8f0; border-radius: 1.75rem; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); cursor: pointer;"
+                (click)="openDetails(med)"
+                onmouseover="this.style.boxShadow='0 25px 50px -12px rgba(0,0,0,0.08)'; this.style.borderColor='#93c5fd'; this.style.transform='translateY(-6px)';"
+                onmouseout="this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.03)'; this.style.borderColor='#e2e8f0'; this.style.transform='translateY(0)';"
+                class="group">
+                
+                <!-- Image Container -->
+                <div style="height: 200px; background: #fcfdfe; position: relative; display: flex; align-items: center; justify-content: center; padding: 2rem; overflow: hidden;">
+                    <img [src]="getFirstImage(med)" [alt]="med.medicineName" 
+                        style="max-width: 100%; max-height: 100%; object-fit: contain; mix-blend-multiply; transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);"
+                        class="group-hover:scale-110">
                     
-                    <!-- Quick View Overlay -->
-                    <div class="absolute inset-0 bg-black/10 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                        <button (click)="openDetails(med)" 
-                                class="bg-white/90 backdrop-blur-sm text-gray-900 px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-lg hover:bg-white transition-all transform translate-y-2 group-hover/img:translate-y-0 duration-300 flex items-center gap-1.5">
-                            <lucide-icon name="eye" [size]="14"></lucide-icon>
+                    <div style="position: absolute; inset: 0; background: rgba(30, 41, 59, 0.05); opacity: 0; transition: opacity 0.3s;"
+                        class="group-hover:opacity-100 flex items-center justify-center pointer-events-none">
+                        <div style="background: white; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 11px; color: #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(10px); transition: transform 0.3s;"
+                            class="group-hover:translate-y-0">
                             Quick View
-                        </button>
+                        </div>
                     </div>
-
-                    <!-- Stock Badge Overlay -->
                 </div>
 
-                <!-- CARD BODY -->
-                <div class="p-4 flex flex-col flex-1 gap-2">
-                    <!-- Name + Dosage -->
-                    <div>
-                        <h3 (click)="navigateToDetails(med)" 
-                            class="font-bold text-gray-900 text-sm leading-tight truncate hover:text-blue-600 cursor-pointer transition-colors">
-                            {{ med.medicineName }}
-                        </h3>
-                        <div class="flex items-center gap-2 mt-0.5 overflow-hidden">
-                            <span class="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-gray-50 text-gray-600 border border-gray-200 uppercase tracking-tight">
-                                {{ med.dosage || '—' }}
-                            </span>
-                            <span *ngIf="med.form" 
-                                  class="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-tight">
-                                {{ formatForm(med.form) }}
-                            </span>
-                        </div>
-                        
-                        <!-- Pharmacy Badge (Shown in Global Search) -->
-                        <div *ngIf="!pharmacyId && med.pharmacy" 
-                             class="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-50">
-                            <lucide-icon name="map-pin" [size]="10" class="text-gray-400"></lucide-icon>
-                            <span class="text-[9px] font-medium text-gray-500 truncate">
-                                Available at <span class="text-blue-600 font-bold">{{ med.pharmacy.pharmacyName }}</span>
-                            </span>
-                        </div>
+                <!-- Product Body -->
+                <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <span style="font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 6px; border: 1px solid #dbeafe;">
+                            {{ med.dosage || 'Standard' }}
+                        </span>
+                        <span *ngIf="med.form" style="font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; background: #f8fafc; color: #64748b; padding: 4px 10px; border-radius: 6px; border: 1px solid #f1f5f9;">
+                            {{ formatForm(med.form) }}
+                        </span>
                     </div>
 
-                    <!-- Description -->
-                    <p class="text-xs text-gray-500 leading-relaxed line-clamp-2 flex-1">
-                        {{ med.description || 'No description available.' }}
+                    <h3 style="font-size: 1.125rem; font-weight: 800; color: #1e293b; line-height: 1.2; margin: 4px 0; transition: color 0.15s;">
+                        {{ med.medicineName }}
+                    </h3>
+
+                    <p style="font-size: 13px; color: #64748b; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 39px;">
+                        {{ med.description || 'Verified medication from our pharmacy network.' }}
                     </p>
 
-                    <!-- Price + Stock Badge -->
-                    <div class="flex items-center justify-between mt-1">
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-lg font-bold text-blue-600">
-                                {{ med.price | number:'1.2-2' }}
-                            </span>
-                            <span class="text-xs text-gray-400 font-medium">DT</span>
+                    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; padding-top: 8px;">
+                        <div>
+                            <p style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px;">Unit Price</p>
+                            <div style="display: flex; align-items: baseline; gap: 4px;">
+                                <span style="font-size: 1.5rem; font-weight: 900; color: #1e293b;">{{ med.price | number:'1.2-2' }}</span>
+                                <span style="font-size: 11px; font-weight: 700; color: #94a3b8;">DT</span>
+                            </div>
                         </div>
-                        
-                        <span *ngIf="med.stock > 10"
-                              class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            In Stock
+
+                        <span *ngIf="med.stock > 0" 
+                            style="font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 99px;"
+                            [style.background]="med.stock > 10 ? '#f0fdf4' : '#fff7ed'"
+                            [style.color]="med.stock > 10 ? '#166534' : '#9a3412'"
+                            [style.border]="med.stock > 10 ? '1px solid #dcfce7' : '1px solid #ffedd5'">
+                            {{ med.stock > 10 ? 'In Stock' : 'Low Stock' }}
                         </span>
-                        <span *ngIf="med.stock <= 10 && med.stock > 0"
-                              class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
-                            Low Stock
-                        </span>
-                        <span *ngIf="med.stock === 0"
-                              class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200">
+                        <span *ngIf="med.stock === 0" style="font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 99px; background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2;">
                             Out of Stock
                         </span>
                     </div>
 
-                    <!-- Quantity Selector -->
-                    <div class="flex items-center rounded-xl border border-gray-200 overflow-hidden mt-1" *ngIf="med.stock > 0">
-                        <button (click)="decreaseQty(med)"
-                                [disabled]="getQty(med) <= 1"
-                                class="w-9 h-9 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold transition-colors border-r border-gray-200 text-base shrink-0 disabled:opacity-40">
-                            −
-                        </button>
-                        <span class="flex-1 text-center text-sm font-semibold text-gray-800">
-                            {{ getQty(med) }}
-                        </span>
-                        <button (click)="increaseQty(med)"
-                                [disabled]="getQty(med) >= med.stock"
-                                class="w-9 h-9 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold transition-colors border-l border-gray-200 text-base shrink-0 disabled:opacity-40 disabled:cursor-not-allowed">
-                            +
+                    <!-- Cart Control (Stop Prop to prevent open modal) -->
+                    <div *ngIf="med.stock > 0" style="margin-top: 8px; display: flex; gap: 8px;" (click)="$event.stopPropagation()">
+                        <div style="display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; flex-shrink: 0;">
+                            <button (click)="decreaseQuantity(med)" [disabled]="getQty(med) <= 1"
+                                style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; font-size: 18px; color: #64748b; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'"
+                                [style.opacity]="getQty(med) <= 1 ? '0.3' : '1'">-</button>
+                            <span style="width: 32px; text-align: center; font-size: 13px; font-weight: 800; color: #1e293b;">{{ getQty(med) }}</span>
+                            <button (click)="increaseQuantity(med)" [disabled]="getQty(med) >= med.stock"
+                                style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; font-size: 18px; color: #64748b; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'"
+                                [style.opacity]="getQty(med) >= med.stock ? '0.3' : '1'">+</button>
+                        </div>
+                        
+                        <button (click)="addToCart(med, getQty(med))" 
+                            style="flex: 1; height: 44px; background: #1e293b; color: white; border-radius: 12px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;"
+                            onmouseover="this.style.backgroundColor='#0f172a'; this.style.transform='scale(1.02)';"
+                            onmouseout="this.style.backgroundColor='#1e293b'; this.style.transform='scale(1)';">
+                            <lucide-icon name="shopping-cart" [size]="16"></lucide-icon>
+                            Add
                         </button>
                     </div>
 
-                    <!-- Add to Cart Button -->
-                    <button (click)="addToCart(med, getQty(med))" 
-                            [disabled]="med.stock === 0"
-                            class="shimmer-btn w-full h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-100 disabled:text-gray-400 text-white font-bold text-[11px] rounded-xl shadow-md shadow-blue-500/10 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-1">
-                        <lucide-icon name="shopping-cart" [size]="14" *ngIf="med.stock > 0"></lucide-icon>
-                        {{ med.stock === 0 ? 'Out of Stock' : 'Add to Cart' }}
+                    <button *ngIf="med.stock === 0" disabled
+                        style="width: 100%; height: 44px; background: #f1f5f9; color: #94a3b8; border-radius: 12px; border: none; font-size: 13px; font-weight: 700; cursor: not-allowed; margin-top: 8px;">
+                        Unavailable
                     </button>
+                </div>
             </div>
         </div>
 
-        <!-- PAGINATION CONTROLS -->
-        <div *ngIf="totalPages > 1 && !loading && !error" 
-             class="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-gray-100 pt-8">
-            
-            <div class="flex items-center gap-4">
-                <span class="text-xs text-gray-400 font-bold uppercase tracking-widest whitespace-nowrap">
-                    Page {{ currentPage }} of {{ totalPages }}
-                </span>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <!-- Prev -->
-                <button (click)="changePage(currentPage - 1)" 
-                        [disabled]="currentPage === 1"
-                        style="border: none !important; outline: none !important; box-shadow: none !important;"
-                        class="px-5 py-2.5 rounded-xl text-sm font-bold bg-white border border-gray-100 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm active:scale-95">
-                    ← Previous
+        <!-- PAGINATION -->
+        <div *ngIf="totalPages > 1" style="margin-top: 5rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1"
+                    style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #e2e8f0; border-radius: 12px; color: #64748b; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.borderColor='#cbd5e1'" onmouseout="this.style.borderColor='#e2e8f0'"
+                    [style.opacity]="currentPage === 1 ? '0.3' : '1'">
+                    <lucide-icon name="chevron-left" [size]="20"></lucide-icon>
                 </button>
 
-                <!-- Pages -->
-                <div class="flex items-center gap-1.5 mx-2">
-                    <button *ngFor="let p of getPageNumbers()" 
-                            (click)="changePage(p)"
-                            style="border: none !important; outline: none !important; box-shadow: none !important;"
-                            class="w-10 h-10 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm"
-                            [class.bg-blue-600]="p === currentPage"
-                            [class.text-white]="p === currentPage"
-                            [class.bg-white]="p !== currentPage"
-                            [class.text-gray-500]="p !== currentPage"
-                            [class.border]="p !== currentPage"
-                            [class.border-gray-100]="p !== currentPage"
-                            [class.hover:bg-blue-50]="p !== currentPage"
-                            [class.hover:text-blue-600]="p !== currentPage">
+                <div style="display: flex; gap: 4px;">
+                    <button *ngFor="let p of getPageNumbers()" (click)="changePage(p)"
+                        style="width: 44px; height: 44px; font-size: 13px; font-weight: 800; border-radius: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s;"
+                        [style.background]="p === currentPage ? '#2563eb' : 'white'"
+                        [style.color]="p === currentPage ? 'white' : '#64748b'"
+                        [style.border-color]="p === currentPage ? '#2563eb' : '#e2e8f0'"
+                        onmouseover="if(this.style.backgroundColor !== 'rgb(37, 99, 235)') this.style.background='#f8fafc'">
                         {{ p }}
                     </button>
-                    <span *ngIf="totalPages > 5 && currentPage < totalPages - 2" class="text-gray-300">...</span>
+                    <span *ngIf="totalPages > 5 && currentPage < totalPages - 2" style="padding: 12px 4px; color: #cbd5e1; font-weight: 800;">...</span>
                 </div>
 
-                <!-- Next -->
-                <button (click)="changePage(currentPage + 1)" 
-                        [disabled]="currentPage === totalPages"
-                        style="border: none !important; outline: none !important; box-shadow: none !important;"
-                        class="px-5 py-2.5 rounded-xl text-sm font-bold bg-white border border-gray-100 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm active:scale-95">
-                    Next →
+                <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages"
+                    style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #e2e8f0; border-radius: 12px; color: #64748b; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.borderColor='#cbd5e1'" onmouseout="this.style.borderColor='#e2e8f0'"
+                    [style.opacity]="currentPage === totalPages ? '0.3' : '1'">
+                    <lucide-icon name="chevron-right" [size]="20"></lucide-icon>
                 </button>
             </div>
-
-            <div class="text-[10px] text-gray-300 font-bold uppercase tracking-widest hidden lg:block">
-                Total {{ totalElements }} Items Available
-            </div>
+            <p style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em;">
+                Page {{ currentPage }} of {{ totalPages }}
+            </p>
         </div>
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- DETAIL MODAL (Quick View enhancement)      -->
-<!-- ========================================== -->
-<div *ngIf="selectedMedicine" class="fixed inset-0 z-[110] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50" (click)="closeDetails()"></div>
-
-    <div
-        class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative z-10 animate-scale-up">
-
-        <!-- Close Button -->
-        <button (click)="closeDetails()"
-            class="absolute top-6 right-6 z-20 w-11 h-11 bg-white/80 backdrop-blur-md shadow-xl hover:bg-white rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 transition-all border border-gray-100 group">
-            <lucide-icon name="x" [size]="22" class="group-hover:rotate-90 transition-transform duration-300"></lucide-icon>
+<!-- QUICK VIEW MODAL (Enhanced) -->
+<div *ngIf="selectedMedicine" style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px);" (click)="closeDetails()"></div>
+    <div style="background: white; width: 100%; max-width: 900px; border-radius: 2.5rem; overflow: hidden; position: relative; z-index: 10; box-shadow: 0 50px 100px -20px rgba(0,0,0,0.25);">
+        
+        <button (click)="closeDetails()" style="position: absolute; top: 1.5rem; right: 1.5rem; width: 3rem; height: 3rem; background: #f8fafc; border: none; border-radius: 99px; display: flex; align-items: center; justify-content: center; color: #64748b; cursor: pointer; z-index: 30; transition: all 0.2s;"
+            onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b'">
+            <lucide-icon name="x" [size]="20"></lucide-icon>
         </button>
 
-        <!-- Gallery Left -->
-        <div class="md:w-[50%] bg-gray-50/50 p-8 sm:p-12 flex flex-col gap-6 border-r border-gray-100">
-            <div
-                class="flex-1 rounded-[32px] overflow-hidden bg-white shadow-sm border border-gray-100 flex items-center justify-center min-h-[400px] relative p-10">
-                <!-- Badges over modal image -->
-                <div class="absolute top-8 left-8 flex flex-col gap-2.5 z-10">
-                    <span *ngIf="selectedMedicine.stock > 10"
-                        class="bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-emerald-200 shadow-sm">In
-                        Stock</span>
-                    <span *ngIf="selectedMedicine.stock > 0 && selectedMedicine.stock <= 10"
-                        class="bg-orange-100 text-orange-700 font-bold text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-orange-200 shadow-sm">Low
-                        Stock</span>
-                    <span *ngIf="selectedMedicine.stock === 0"
-                        class="bg-red-100 text-red-700 font-bold text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-full border border-red-200 shadow-sm">Out
-                        of Stock</span>
+        <div style="display: flex; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 320px; background: #fcfdfe; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; border-right: 1px solid #f1f5f9;">
+                <div style="width: 100%; height: 350px; display: flex; align-items: center; justify-content: center;">
+                    <img [src]="getFirstImage(selectedMedicine)" style="max-width: 100%; max-height: 100%; object-fit: contain; mix-blend-multiply; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));">
                 </div>
-                <img [src]="getFirstImage(selectedMedicine)"
-                    class="max-w-full max-h-[400px] object-contain drop-shadow-2xl mix-blend-multiply">
-            </div>
-
-            <!-- Thumbnail gallery -->
-            <div *ngIf="selectedMedicine.imageUrls && selectedMedicine.imageUrls.length > 1"
-                class="flex gap-4 overflow-x-auto pb-2 custom-scrollbar px-2">
-                <div *ngFor="let img of selectedMedicine.imageUrls"
-                    class="w-20 h-20 rounded-2xl bg-white border-2 border-transparent hover:border-blue-500 overflow-hidden shrink-0 cursor-pointer shadow-sm p-2 transition-all">
-                    <img [src]="img" class="w-full h-full object-contain">
+                <div style="margin-top: 2rem; display: flex; gap: 8px;">
+                    <div *ngFor="let img of (selectedMedicine.imageUrls || [])" style="width: 64px; height: 64px; border-radius: 12px; border: 2px solid #e2e8f0; cursor: pointer; padding: 4px;">
+                        <img [src]="img" style="width: 100%; height: 100%; object-fit: contain;">
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Info Right -->
-        <div class="md:w-[50%] p-8 sm:p-12 lg:p-16 flex flex-col overflow-y-auto bg-white">
-            <div class="space-y-6 mb-10">
-                <div class="flex flex-wrap gap-2.5">
-                    <span
-                        class="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border border-gray-200">
-                        {{selectedMedicine.dosage || '—'}}
-                    </span>
-                    <span *ngIf="selectedMedicine.form"
-                        class="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border border-blue-100">
-                        {{formatForm(selectedMedicine.form)}}
-                    </span>
+            <div style="flex: 1.2; min-width: 320px; padding: 3rem; display: flex; flex-direction: column;">
+                <div style="display: flex; gap: 8px; margin-bottom: 1.5rem;">
+                    <span style="font-size: 10px; font-weight: 800; background: #eff6ff; color: #2563eb; padding: 6px 14px; border-radius: 8px;">{{ selectedMedicine.dosage }}</span>
+                    <span style="font-size: 10px; font-weight: 800; background: #f8fafc; color: #64748b; padding: 6px 14px; border-radius: 8px;">{{ formatForm(selectedMedicine.form) }}</span>
                 </div>
-                
-                <h2 class="text-4xl lg:text-5xl font-extrabold text-[#0F172A] tracking-tight leading-[1.1]">
-                    {{selectedMedicine.medicineName}}
-                </h2>
-
-                <div class="flex items-center gap-4 text-sm font-medium text-gray-400">
-                    <span *ngIf="selectedMedicine.expirationDate || selectedMedicine.dateOfExpiration" class="flex items-center gap-2">
-                        <lucide-icon name="calendar" [size]="16" class="text-gray-300"></lucide-icon> 
-                        Exp: {{ (selectedMedicine.expirationDate || selectedMedicine.dateOfExpiration) | date:'MMM yyyy' }}
-                    </span>
-                </div>
-
-                <div class="w-20 h-1.5 bg-blue-600 rounded-full my-4"></div>
-
-                <p class="text-gray-600 leading-relaxed text-lg font-medium">{{selectedMedicine.description || 'No description available for this medication.'}}</p>
-            </div>
-
-            <div class="mt-auto">
-                <div class="bg-gray-50/80 rounded-[32px] p-8 lg:p-10 border border-gray-100 flex flex-col gap-8">
-                    <div class="flex items-end justify-between">
+                <h2 style="font-size: 2.25rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; letter-spacing: -0.02em;">{{ selectedMedicine.medicineName }}</h2>
+                <p style="font-size: 15px; color: #64748b; line-height: 1.6; margin-bottom: 2rem;">
+                    {{ selectedMedicine.description || 'Full medical guidance for this treatment is compiled based on verified pharmacist logs.' }}
+                </p>
+                <div style="margin-top: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
                         <div>
-                            <p class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Unit Price</p>
-                            <div class="flex items-baseline gap-1.5">
-                                <span class="text-5xl font-black text-[#0F172A] tracking-tighter">{{selectedMedicine.price | number:'1.2-2'}}</span>
-                                <span class="text-xl text-gray-400 font-bold uppercase">DT</span>
-                            </div>
+                            <p style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Unit Price</p>
+                            <span style="font-size: 3rem; font-weight: 900; color: #1e293b;">{{ selectedMedicine.price | number:'1.2-2' }} <span style="font-size: 1.25rem; color: #94a3b8;">DT</span></span>
                         </div>
                     </div>
-
-                    <div class="h-px w-full bg-gray-200/50"></div>
-
-                        <!-- Action Area -->
-                        <div class="flex flex-col gap-4 w-full">
-                            <div class="flex items-center justify-between bg-white rounded-2xl p-2 border border-gray-200 shadow-sm h-[68px]">
-                                <button (click)="detailQuantity = detailQuantity > 1 ? detailQuantity - 1 : 1"
-                                    class="w-14 h-12 flex items-center justify-center bg-gray-50 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-2xl">−</button>
-                                <div class="flex flex-col items-center">
-                                    <span class="font-black text-[#0F172A] text-xl px-2">{{detailQuantity}}</span>
-                                    <span class="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Quantity</span>
-                                </div>
-                                <button
-                                    (click)="detailQuantity = detailQuantity < selectedMedicine!.stock ? detailQuantity + 1 : selectedMedicine!.stock"
-                                    class="w-14 h-12 flex items-center justify-center bg-gray-50 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-2xl">+</button>
-                            </div>
-
-                            <button (click)="addToCart(selectedMedicine, detailQuantity)"
-                                [disabled]="selectedMedicine.stock === 0"
-                                class="w-full h-[68px] bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 text-white font-black text-lg rounded-2xl shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-4">
-                                <lucide-icon name="shopping-cart" [size]="22" *ngIf="selectedMedicine.stock > 0"></lucide-icon>
-                                {{ selectedMedicine.stock === 0 ? 'NOT AVAILABLE' : 'ADD TO CART' }}
-                            </button>
+                    <div style="display: flex; gap: 12px; width: 100%;">
+                        <div style="display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; flex: 1; height: 4rem; justify-content: space-between; padding: 0 1rem;">
+                            <button (click)="detailQuantity = detailQuantity > 1 ? detailQuantity - 1 : 1"
+                                style="width: 44px; height: 44px; font-size: 24px; color: #64748b; border: none; background: transparent; cursor: pointer;">-</button>
+                            <span style="font-size: 1.25rem; font-weight: 900; color: #1e293b;">{{ detailQuantity }}</span>
+                            <button (click)="detailQuantity = detailQuantity < selectedMedicine.stock ? detailQuantity + 1 : selectedMedicine.stock"
+                                style="width: 44px; height: 44px; font-size: 24px; color: #64748b; border: none; background: transparent; cursor: pointer;">+</button>
                         </div>
+                        <button (click)="addToCart(selectedMedicine, detailQuantity)" 
+                            style="flex: 2; height: 4rem; background: #2563eb; color: white; border: none; border-radius: 1rem; font-size: 18px; font-weight: 800; cursor: pointer; transition: all 0.2s;"
+                            onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-2px)';"
+                            onmouseout="this.style.background='#2563eb'; this.style.transform='translateY(0)';">
+                            Add to Cart
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    /* Local specialized styles can stay, but common animations are now in global styles.css */
-</style>

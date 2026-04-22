@@ -35,9 +35,12 @@ export class PatientMedicineService {
         return this.http.get<Medicine[]>(`${this.apiUrl}/search?name=${name}`);
     }
 
-    searchPaginated(name: string, pharmacyId: number | null, page: number, size: number, sort: string = 'medicineName,asc'): Observable<Page<Medicine>> {
-        const params: any = { name, page, size, sort };
+    searchPaginated(name: string, pharmacyId: number | null, category: string | null, inStockOnly: boolean, page: number, size: number, sort: string = 'medicineName,asc'): Observable<Page<Medicine>> {
+        const params: any = { page, size, sort };
+        if (name) params.name = name;
         if (pharmacyId) params.pharmacyId = pharmacyId;
+        if (category && category !== 'all') params.category = category;
+        if (inStockOnly) params.inStockOnly = true;
         return this.http.get<Page<Medicine>>(`${this.apiUrl}/search/paginated`, { params });
     }
 

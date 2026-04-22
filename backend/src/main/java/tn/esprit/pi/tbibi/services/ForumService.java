@@ -44,16 +44,8 @@ public class ForumService implements IForumService {
     @Autowired
     SimpMessagingTemplate messagingTemplate;
 
-    @Override
-    @Transactional
-    public PostResponse uploadPostMedia(Long postId, List<MultipartFile> files) {
-        Post post = postRepo.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
-        List<String> urls = cloudinaryService.uploadForumMediaFiles(files);
-        if (post.getMediaUrls() == null) post.setMediaUrls(new ArrayList<>());
-        post.getMediaUrls().addAll(urls);
-        return mapPostWithCounts(postRepo.save(post));
-    }
+    @Autowired                          // ✅ ADDED
+    AiModerationService aiModerationService;
 
     // ─── Helper: map post with counts ─────────────────────────────────────────
     private PostResponse mapPostWithCounts(Post post) {
@@ -73,6 +65,17 @@ public class ForumService implements IForumService {
         return dto;
     }
 
+    @Override
+    @Transactional
+    public PostResponse uploadPostMedia(Long postId, List<MultipartFile> files) {
+        Post post = postRepo.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+        List<String> urls = cloudinaryService.uploadForumMediaFiles(files);
+        if (post.getMediaUrls() == null) post.setMediaUrls(new ArrayList<>());
+        post.getMediaUrls().addAll(urls);
+        return mapPostWithCounts(postRepo.save(post));
+    }
+
     // ─── Category ─────────────────────────────────────────────────────────────
 
     @Override
@@ -83,9 +86,7 @@ public class ForumService implements IForumService {
         category.setCategoryDescription(request.getCategoryDescription());
         category.setCreatedAt(LocalDateTime.now());
         category.setActive(true);
-
         Category saved = categoryRepo.save(category);
-
         CategoryResponse dto = categoryMapper.toDto(saved);
         dto.setPostCount(0);
         return dto;
@@ -144,12 +145,9 @@ public class ForumService implements IForumService {
                 PostStatus postStatus = PostStatus.valueOf(status.toUpperCase());
                 return postRepo.findByPostStatusAndDeletedFalse(postStatus, pageable)
                         .map(this::mapPostWithCounts);
-            } catch (IllegalArgumentException e) {
-                // Fallback to all if invalid status
-            }
+            } catch (IllegalArgumentException e) { }
         }
-        return postRepo.findByDeletedFalse(pageable)
-                .map(this::mapPostWithCounts);
+        return postRepo.findByDeletedFalse(pageable).map(this::mapPostWithCounts);
     }
 
     @Override
@@ -160,10 +158,14 @@ public class ForumService implements IForumService {
         Category category = categoryRepo.findById(request.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.getCategoryId()));
 
+        // ✅ SANITIZE title and content before saving
+        String cleanTitle   = aiModerationService.sanitizeText(request.getTitle());
+        String cleanContent = aiModerationService.sanitizeText(request.getContent());
+
         Post post = new Post();
-        post.setTitle(request.getTitle());
+        post.setTitle(cleanTitle);          // ✅ cleaned
+        post.setContent(cleanContent);      // ✅ cleaned
         post.setMediaUrls(new ArrayList<>());
-        post.setContent(request.getContent());
         post.setAuthor(author);
         post.setCategory(category);
         post.setCreatedDate(LocalDateTime.now());
@@ -178,18 +180,17 @@ public class ForumService implements IForumService {
         // ─── Notify professionals based on category ───────────────────────
         String categoryName = category.getCategoryName();
         String roleToNotify = null;
-        if (categoryName.equals("Ask a Doctor")) roleToNotify = "DOCTOR";
-        else if (categoryName.equals("Ask a Pharmacist")) roleToNotify = "PHARMACIST";
-        else if (categoryName.equals("Ask a Lab")) roleToNotify = "LABORATORY";
+        if (categoryName.equals("Ask a Doctor"))           roleToNotify = "DOCTOR";
+        else if (categoryName.equals("Ask a Pharmacist"))  roleToNotify = "PHARMACIST";
+        else if (categoryName.equals("Ask a Lab"))         roleToNotify = "LABORATORY";
         else if (categoryName.equals("Ask a Physiotherapist")) roleToNotify = "PHYSIOTHERAPIST";
 
         if (roleToNotify != null) {
-            String url = "/forum/post/" + saved.getPostId();
             notificationService.notifyAllByRole(
                     roleToNotify,
                     author.getName() + " posted a question: \"" + saved.getTitle() + "\"",
                     NotificationType.FORUM,
-                    url
+                    "/forum/post/" + saved.getPostId()
             );
         }
 
@@ -211,8 +212,7 @@ public class ForumService implements IForumService {
     public List<PostResponse> getPostsByCategory(Long categoryId) {
         Category category = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + categoryId));
-        return postRepo
-                .findByCategoryAndDeletedFalseOrderByPinnedDescCreatedDateDesc(category)
+        return postRepo.findByCategoryAndDeletedFalseOrderByPinnedDescCreatedDateDesc(category)
                 .stream()
                 .map(this::mapPostWithCounts)
                 .collect(Collectors.toList());
@@ -223,18 +223,14 @@ public class ForumService implements IForumService {
     public Page<PostResponse> getPostsByCategoryPaginated(Long categoryId, String status, Pageable pageable) {
         Category category = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + categoryId));
-        
         if (status != null && !status.equalsIgnoreCase("all")) {
             try {
                 PostStatus postStatus = PostStatus.valueOf(status.toUpperCase());
                 return postRepo.findByCategoryAndPostStatusAndDeletedFalse(category, postStatus, pageable)
                         .map(this::mapPostWithCounts);
-            } catch (IllegalArgumentException e) {
-                // Fallback
-            }
+            } catch (IllegalArgumentException e) { }
         }
-        return postRepo.findByCategoryAndDeletedFalse(category, pageable)
-                .map(this::mapPostWithCounts);
+        return postRepo.findByCategoryAndDeletedFalse(category, pageable).map(this::mapPostWithCounts);
     }
 
     @Override
@@ -265,9 +261,7 @@ public class ForumService implements IForumService {
                 PostStatus postStatus = PostStatus.valueOf(status.toUpperCase());
                 return postRepo.findByTitleContainingIgnoreCaseAndPostStatusAndDeletedFalse(keyword, postStatus, pageable)
                         .map(this::mapPostWithCounts);
-            } catch (IllegalArgumentException e) {
-                // Fallback
-            }
+            } catch (IllegalArgumentException e) { }
         }
         return postRepo.findByTitleContainingIgnoreCaseAndDeletedFalse(keyword, pageable)
                 .map(this::mapPostWithCounts);
@@ -278,10 +272,8 @@ public class ForumService implements IForumService {
     public java.util.Map<String, Long> getCategoryStats(Long categoryId) {
         Category category = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
-        
-        long totalPosts = postRepo.countByCategoryAndDeletedFalse(category);
+        long totalPosts      = postRepo.countByCategoryAndDeletedFalse(category);
         long unansweredCount = postRepo.countUnansweredByCategory(category, PostStatus.OPEN);
-
         java.util.Map<String, Long> stats = new java.util.HashMap<>();
         stats.put("totalPosts", totalPosts);
         stats.put("unansweredCount", unansweredCount);
@@ -336,8 +328,11 @@ public class ForumService implements IForumService {
         Post post = postRepo.findById(request.getPostId())
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + request.getPostId()));
 
+        // ✅ SANITIZE comment before saving
+        String cleanComment = aiModerationService.sanitizeText(request.getComment());
+
         Comment comment = new Comment();
-        comment.setComment(request.getComment());
+        comment.setComment(cleanComment);   // ✅ cleaned
         comment.setAuthor(author);
         comment.setPost(post);
         comment.setCommentDate(LocalDateTime.now());
@@ -353,8 +348,8 @@ public class ForumService implements IForumService {
         Comment savedComment = commentRepo.save(comment);
 
         // ─── Notify post author when someone else comments ────────────────
-        Post commentPost = savedComment.getPost();
-        User postAuthor = commentPost.getAuthor();
+        Post commentPost   = savedComment.getPost();
+        User postAuthor    = commentPost.getAuthor();
         User commentAuthor = savedComment.getAuthor();
 
         if (!postAuthor.getUserId().equals(commentAuthor.getUserId())) {
@@ -380,7 +375,7 @@ public class ForumService implements IForumService {
             }
         }
 
-        // ─── Broadcast comment to everyone viewing this post ──────────────
+        // ─── Broadcast to everyone viewing this post ──────────────────────
         CommentResponse response = mapCommentWithReplies(savedComment);
         messagingTemplate.convertAndSend(
                 "/topic/post/" + post.getPostId() + "/comments", response
@@ -424,31 +419,19 @@ public class ForumService implements IForumService {
     public CommentResponse togglePinComment(Long commentId, Integer currentUserId) {
         Comment comment = commentRepo.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
-        
-        // 1. Authorization: Only the POST author can pin comments in that post
-        if (!comment.getPost().getAuthor().getUserId().equals(currentUserId)) {
+        if (!comment.getPost().getAuthor().getUserId().equals(currentUserId))
             throw new BusinessException("Only the post author can pin comments");
-        }
-        
-        // 2. Structural: Only parent comments can be pinned
-        if (comment.getParentComment() != null) {
+        if (comment.getParentComment() != null)
             throw new BusinessException("Only parent comments can be pinned");
-        }
-        
-        // 3. Logic: Toggle pinned state
         if (!comment.isPinned()) {
-            // Check limit if pinning
             long pinnedCount = commentRepo.countByPostAndPinnedTrueAndDeletedFalse(comment.getPost());
-            if (pinnedCount >= 3) {
+            if (pinnedCount >= 3)
                 throw new BusinessException("Maximum 3 pinned comments reached. Please unpin an existing comment first.");
-            }
             comment.setPinned(true);
         } else {
             comment.setPinned(false);
         }
-        
-        Comment saved = commentRepo.save(comment);
-        return mapCommentWithReplies(saved);
+        return mapCommentWithReplies(commentRepo.save(comment));
     }
 
     // ─── Vote ─────────────────────────────────────────────────────────────────
@@ -460,19 +443,13 @@ public class ForumService implements IForumService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
         Post post = postRepo.findById(request.getPostId())
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + request.getPostId()));
-
-        if (voteRepo.existsByUserAndPost(user, post)) {
+        if (voteRepo.existsByUserAndPost(user, post))
             throw new RuntimeException("You already voted on this post.");
-        }
-
         Vote vote = new Vote();
         vote.setUser(user);
         vote.setPost(post);
         vote.setCreatedAt(LocalDateTime.now());
-
         VoteResponse response = voteMapper.toDto(voteRepo.save(vote));
-
-        // ─── Notify post author about the vote ───────────────────────────
         User postAuthor = post.getAuthor();
         if (!postAuthor.getUserId().equals(user.getUserId())) {
             notificationService.createAndSend(
@@ -482,13 +459,8 @@ public class ForumService implements IForumService {
                     "/forum/post/" + post.getPostId()
             );
         }
-
-        // ─── Broadcast updated vote count to everyone viewing this post ──
         long updatedCount = voteRepo.countByPost(post);
-        messagingTemplate.convertAndSend(
-                "/topic/post/" + post.getPostId() + "/votes", updatedCount
-        );
-
+        messagingTemplate.convertAndSend("/topic/post/" + post.getPostId() + "/votes", updatedCount);
         return response;
     }
 
@@ -496,27 +468,21 @@ public class ForumService implements IForumService {
     @Transactional
     public void unvotePost(Integer userId, Long postId) {
         if (userId == null || postId == null) return;
-        userRepo.findById(userId).ifPresent(user -> {
-            postRepo.findById(postId).ifPresent(post -> {
-                voteRepo.findByUserAndPost(user, post).ifPresent(vote -> {
-                    voteRepo.delete(vote);
-
-                    // ─── Broadcast updated vote count ─────────────────────
-                    long updatedCount = voteRepo.countByPost(post);
-                    messagingTemplate.convertAndSend(
-                            "/topic/post/" + post.getPostId() + "/votes", updatedCount
-                    );
-                });
-            });
-        });
+        userRepo.findById(userId).ifPresent(user ->
+                postRepo.findById(postId).ifPresent(post ->
+                        voteRepo.findByUserAndPost(user, post).ifPresent(vote -> {
+                            voteRepo.delete(vote);
+                            long updatedCount = voteRepo.countByPost(post);
+                            messagingTemplate.convertAndSend("/topic/post/" + post.getPostId() + "/votes", updatedCount);
+                        })
+                )
+        );
     }
 
     @Override
     public long getVoteCount(Long postId) {
         if (postId == null) return 0;
-        return postRepo.findById(postId)
-                .map(post -> voteRepo.countByPost(post))
-                .orElse(0L);
+        return postRepo.findById(postId).map(post -> voteRepo.countByPost(post)).orElse(0L);
     }
 
     @Override
@@ -537,19 +503,13 @@ public class ForumService implements IForumService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
         Comment comment = commentRepo.findById(request.getCommentId())
                 .orElseThrow(() -> new RuntimeException("Comment not found with id: " + request.getCommentId()));
-
-        if (commentVoteRepo.existsByUserAndComment(user, comment)) {
+        if (commentVoteRepo.existsByUserAndComment(user, comment))
             throw new RuntimeException("You already voted on this comment.");
-        }
-
         CommentVote vote = new CommentVote();
         vote.setUser(user);
         vote.setComment(comment);
         vote.setCreatedAt(LocalDateTime.now());
-
         CommentVote saved = commentVoteRepo.save(vote);
-
-        // Notify comment author about the vote
         User author = comment.getAuthor();
         if (!author.getUserId().equals(user.getUserId())) {
             notificationService.createAndSend(
@@ -559,14 +519,11 @@ public class ForumService implements IForumService {
                     "/forum/post/" + comment.getPost().getPostId()
             );
         }
-
-        // Broadcast updated vote count to everyone viewing this post
         long updatedCount = commentVoteRepo.countByComment(comment);
         messagingTemplate.convertAndSend(
                 "/topic/post/" + comment.getPost().getPostId() + "/comment/" + comment.getCommentId() + "/votes",
                 updatedCount
         );
-
         return CommentVoteResponse.builder()
                 .voteId(saved.getVoteId())
                 .userId(user.getUserId())
@@ -578,20 +535,18 @@ public class ForumService implements IForumService {
     @Transactional
     public void unvoteComment(Integer userId, Long commentId) {
         if (userId == null || commentId == null) return;
-        userRepo.findById(userId).ifPresent(user -> {
-            commentRepo.findById(commentId).ifPresent(comment -> {
-                commentVoteRepo.findByUserAndComment(user, comment).ifPresent(vote -> {
-                    commentVoteRepo.delete(vote);
-
-                    // Broadcast updated vote count
-                    long updatedCount = commentVoteRepo.countByComment(comment);
-                    messagingTemplate.convertAndSend(
-                            "/topic/post/" + comment.getPost().getPostId() + "/comment/" + comment.getCommentId() + "/votes",
-                            updatedCount
-                    );
-                });
-            });
-        });
+        userRepo.findById(userId).ifPresent(user ->
+                commentRepo.findById(commentId).ifPresent(comment ->
+                        commentVoteRepo.findByUserAndComment(user, comment).ifPresent(vote -> {
+                            commentVoteRepo.delete(vote);
+                            long updatedCount = commentVoteRepo.countByComment(comment);
+                            messagingTemplate.convertAndSend(
+                                    "/topic/post/" + comment.getPost().getPostId() + "/comment/" + comment.getCommentId() + "/votes",
+                                    updatedCount
+                            );
+                        })
+                )
+        );
     }
 
     @Override
@@ -600,11 +555,9 @@ public class ForumService implements IForumService {
         Post post = postRepo.findById(postId).orElse(null);
         User user = userRepo.findById(userId).orElse(null);
         if (post == null || user == null) return new java.util.ArrayList<>();
-
-        // Optional optimization: fetch comment votes by post directly.
-        // For now, filter stream manually
         return commentVoteRepo.findAll().stream()
-                .filter(v -> v.getUser().getUserId().equals(userId) && v.getComment().getPost().getPostId().equals(postId))
+                .filter(v -> v.getUser().getUserId().equals(userId)
+                        && v.getComment().getPost().getPostId().equals(postId))
                 .map(v -> v.getComment().getCommentId())
                 .collect(Collectors.toList());
     }

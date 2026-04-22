@@ -1,5 +1,6 @@
 package tn.esprit.pi.tbibi.services;
 
+import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,7 @@ import tn.esprit.pi.tbibi.DTO.medicine.MedicineResponse;
 import tn.esprit.pi.tbibi.entities.Pharmacy;
 import tn.esprit.pi.tbibi.mappers.MedicineMapper;
 import tn.esprit.pi.tbibi.entities.Medicine;
+import tn.esprit.pi.tbibi.entities.MedicineCategory;
 import tn.esprit.pi.tbibi.repositories.MedicineRepository;
 import tn.esprit.pi.tbibi.repositories.PharmacyRepository;
 
@@ -75,12 +77,9 @@ public class MedicineService implements IMedicineService {
     }
 
     @Override
-    public Page<MedicineResponse> searchMedicinesPaginated(String name, Long pharmacyId, Pageable pageable) {
-        if (pharmacyId != null) {
-            return medicineRepo.findByMedicineNameContainingIgnoreCaseAndPharmacy_PharmacyIdAndAvailableTrue(name, pharmacyId, pageable)
-                    .map(medicineMapper::toDto);
-        }
-        return medicineRepo.findByMedicineNameContainingIgnoreCaseAndAvailableTrue(name, pageable)
+    public Page<MedicineResponse> searchMedicinesPaginated(String name, Long pharmacyId, MedicineCategory category, boolean inStockOnly, Pageable pageable) {
+        String searchName = (name != null && !name.trim().isEmpty()) ? name : null;
+        return medicineRepo.searchAndFilter(searchName, pharmacyId, category, inStockOnly, pageable)
                 .map(medicineMapper::toDto);
     }
 
@@ -158,5 +157,11 @@ public class MedicineService implements IMedicineService {
         Medicine medicine = medicineRepo.findById(id).orElseThrow();
         medicine.setAvailable(false); // ← soft delete
         medicineRepo.save(medicine);
+    }
+
+
+    @Override
+    public List<Object[]> getTopSellingMedicinesForPharmacy(Long pharmacyId) {
+        return medicineRepo.findTopSellingMedicinesForPharmacy(pharmacyId);
     }
 }

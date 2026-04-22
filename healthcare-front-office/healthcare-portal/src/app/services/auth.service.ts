@@ -14,6 +14,9 @@ export interface RegisterRequest {
   gender?: string;
   adresse?: string;
   specialty?: string;      // Spécialité pour les médecins (DOCTEUR)
+  pharmacyName?: string;
+  pharmacyAddress?: string;
+  pharmacyPhone?: string;
 }
 
 // Interface pour la connexion
@@ -27,7 +30,11 @@ export interface AuthResponse {
   email: string;
   role: string;
   userId?: number;
+<<<<<<< Updated upstream
   name?: string;
+=======
+  pharmacyId?: number;
+>>>>>>> Stashed changes
 }
 
 @Injectable({

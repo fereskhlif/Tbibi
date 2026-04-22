@@ -103,15 +103,16 @@ export class MedicationManagementComponent implements OnInit {
       description: [''],
       dosage: [''],
       price: [null, [Validators.required, Validators.min(0)]],
-      stock: [null, [Validators.required, Validators.min(0)]],
+      stock: [0, [Validators.required, Validators.min(0)]],
       minStockAlert: [10, [Validators.required, Validators.min(0)]],
       dateOfExpiration: ['', Validators.required],
-      form: [''],
-      activeIngredient: ['']
+      form: ['', Validators.required],
+      activeIngredient: ['', Validators.required],
+      category: ['', Validators.required]
     });
 
     this.restockForm = this.fb.group({
-      stock: [null, [Validators.required, Validators.min(0)]]
+      stock: [0, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -233,16 +234,50 @@ export class MedicationManagementComponent implements OnInit {
           medicineName: result.medicineName || '',
           dosage: result.dosage || '',
           description: result.description || '',
-          form: result.form || '',
-          activeIngredient: result.activeIngredient || ''
+          form: (result.form || '').toUpperCase(),
+          activeIngredient: result.activeIngredient || '',
+          category: result.category || ''
         });
+<<<<<<< Updated upstream
         // Keep fields enabled so pharmacist can correct the scan result
+=======
+
+        // Enable ALL scan fields first so user can fill any the OCR missed
+        this.medicineForm.get('medicineName')?.enable();
+        this.medicineForm.get('dosage')?.enable();
+        this.medicineForm.get('form')?.enable();
+        this.medicineForm.get('activeIngredient')?.enable();
+        this.medicineForm.get('category')?.enable();
+
+        // Then lock only the ones OCR successfully filled
+        if (result.medicineName) {
+          this.medicineForm.get('medicineName')?.disable();
+        }
+        if (result.dosage) {
+          this.medicineForm.get('dosage')?.disable();
+        }
+        if (result.form) {
+          this.medicineForm.get('form')?.disable();
+        }
+        if (result.activeIngredient) {
+          this.medicineForm.get('activeIngredient')?.disable();
+        }
+        if (result.category) {
+          this.medicineForm.get('category')?.disable();
+        }
+>>>>>>> Stashed changes
         this.scannedForm = result.form || '';
         this.scannedActiveIngredient = result.activeIngredient || '';
       },
       error: () => {
         this.isScanning = false;
         this.scanError = 'Scan failed. Please try again or fill manually.';
+        // Enable all fields so user can fill manually
+        this.medicineForm.get('medicineName')?.enable();
+        this.medicineForm.get('dosage')?.enable();
+        this.medicineForm.get('form')?.enable();
+        this.medicineForm.get('activeIngredient')?.enable();
+        this.medicineForm.get('category')?.enable();
       }
     });
   }
@@ -348,6 +383,7 @@ export class MedicationManagementComponent implements OnInit {
     this.medicineForm.get('dosage')?.enable();
     this.medicineForm.get('form')?.enable();
     this.medicineForm.get('activeIngredient')?.enable();
+    this.medicineForm.get('category')?.enable();
     this.medicineForm.reset({
       medicineName: '', description: '', dosage: '',
       price: null, stock: null, minStockAlert: 10, dateOfExpiration: '',
@@ -355,9 +391,17 @@ export class MedicationManagementComponent implements OnInit {
     });
     this.medicineForm.markAsUntouched();
     this.medicineForm.markAsPristine();
+<<<<<<< Updated upstream
 
     // In scan mode, disable name/dosage/form/activeIngredient until scan
     this.lockScanFields();
+=======
+    this.medicineForm.get('medicineName')?.disable();
+    this.medicineForm.get('dosage')?.disable();
+    this.medicineForm.get('form')?.disable();
+    this.medicineForm.get('activeIngredient')?.disable();
+    this.medicineForm.get('category')?.disable();
+>>>>>>> Stashed changes
 
     setTimeout(() => {
       const modal = document.querySelector('.overflow-y-auto');
@@ -427,7 +471,8 @@ export class MedicationManagementComponent implements OnInit {
       minStockAlert: med.minStockAlert,
       dateOfExpiration: expDate,
       form: med.form || '',
-      activeIngredient: med.activeIngredient || ''
+      activeIngredient: med.activeIngredient || '',
+      category: med.category || ''
     });
     this.medicineForm.markAsUntouched();
     this.medicineForm.markAsPristine();
@@ -556,15 +601,18 @@ export class MedicationManagementComponent implements OnInit {
     const payload: MedicineUpdateRequest = {
       medicineName: raw.medicineName,
       description: raw.description || '',
-      dosage: raw.dosage || '',
+      dosage: raw.dosage || null,
       price: Number(raw.price),
       stock: Number(raw.stock),
       minStockAlert: Number(raw.minStockAlert),
       dateOfExpiration: new Date(raw.dateOfExpiration).toISOString(),
-      activeIngredient: raw.activeIngredient || '',
-      form: raw.form || '',
-      pharmacyId: 1 // Link to pharmacy to prevent 500 error
+      activeIngredient: raw.activeIngredient || null,
+      form: raw.form ? raw.form.toUpperCase() : null,
+      category: raw.category || null,
+      pharmacyId: parseInt(localStorage.getItem('pharmacyId') || '1', 10) // Link to pharmacy to prevent 500 error
     };
+
+    console.log('Sending medicine payload:', JSON.stringify(payload, null, 2));
 
     if (this.activeModal === 'add' || this.activeModal === 'duplicate') {
       this.medicineService.create(payload, this.selectedFiles).subscribe({
@@ -575,7 +623,14 @@ export class MedicationManagementComponent implements OnInit {
         },
         error: (err) => {
           this.submitting = false;
-          const msg = err?.error?.message || err?.message || 'Unknown error';
+          console.error('Add medicine error - full response:', JSON.stringify(err?.error));
+          let msg = 'Unknown error';
+          if (err?.error && typeof err.error === 'object' && !err.error.message) {
+            // Backend validation errors: { fieldName: errorMessage, ... }
+            msg = Object.entries(err.error).map(([field, error]) => `${field}: ${error}`).join(', ');
+          } else {
+            msg = err?.error?.message || err?.message || 'Unknown error';
+          }
           this.formError = `Failed to add medicine: ${msg}`;
           console.error('Add medicine error:', err);
         }
@@ -612,8 +667,9 @@ export class MedicationManagementComponent implements OnInit {
       stock: newStock,
       minStockAlert: existing.minStockAlert,
       dateOfExpiration: existing.dateOfExpiration,
-      form: existing.form || '',
+      form: existing.form || null,
       activeIngredient: existing.activeIngredient || '',
+      category: existing.category || null,
       pharmacyId: 1
     };
 
@@ -653,7 +709,8 @@ export class MedicationManagementComponent implements OnInit {
       minStockAlert: med.minStockAlert,
       dateOfExpiration: med.dateOfExpiration,
       activeIngredient: med.activeIngredient || '',
-      form: med.form || '',
+      form: med.form || null,
+      category: med.category || null,
       pharmacyId: 1
     };
 

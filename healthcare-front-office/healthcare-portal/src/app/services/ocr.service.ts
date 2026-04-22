@@ -8,6 +8,7 @@ export interface MedicineOcrResult {
   description: string;
   form: string;
   activeIngredient: string;
+  category?: string;
 }
 
 @Injectable({

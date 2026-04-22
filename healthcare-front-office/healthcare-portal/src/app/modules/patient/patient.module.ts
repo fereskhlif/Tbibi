@@ -32,6 +32,7 @@ import { OrderSuccessComponent } from './pages/order-success/order-success.compo
 import {
   LucideAngularModule,
   ShoppingCart,
+  Pill,
   ShoppingBag,
   Package,
   Search,
@@ -57,8 +58,17 @@ import {
   Filter,
   ArrowUpDown,
   ArrowLeft,
+  Calendar,
+  AlertTriangle,
   Info,
-  Calendar
+  ClipboardCheck,
+  RefreshCcw,
+  History,
+  SortAsc,
+  Target,
+  Lock,
+  CreditCard,
+  Wallet
 } from 'lucide-angular';
 
 @NgModule({
@@ -96,6 +106,7 @@ import {
     SharedModule,
     LucideAngularModule.pick({
       ShoppingCart,
+      Pill,
       ShoppingBag,
       Package,
       Search,
@@ -122,7 +133,16 @@ import {
       ArrowUpDown,
       ArrowLeft,
       Info,
-      Calendar
+      Calendar,
+      AlertTriangle,
+      ClipboardCheck,
+      RefreshCcw,
+      History,
+      SortAsc,
+      Target,
+      Lock,
+      CreditCard,
+      Wallet
     })
   ]
 })

@@ -23,7 +23,7 @@ export class PrescriptionReceivingComponent implements OnInit {
   readonly statusKeys: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED', 'CANCELLED'];
   readonly STEPS: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'DISPENSED', 'COMPLETED'];
 
-  constructor(private prescriptionService: PrescriptionService) {}
+  constructor(private prescriptionService: PrescriptionService) { }
 
   ngOnInit(): void {
     this.loadPatients();

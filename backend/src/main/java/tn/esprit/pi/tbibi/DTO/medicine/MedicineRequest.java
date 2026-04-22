@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.Nulls;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import tn.esprit.pi.tbibi.entities.MedicineCategory;
 import tn.esprit.pi.tbibi.entities.MedicineForm;
 
 import java.util.Date;
@@ -43,4 +44,6 @@ public class MedicineRequest {
     String imageBase64;
 
     String activeIngredient;
+
+    MedicineCategory category;
 }

@@ -5,5 +5,9 @@ public record AuthResponse(
                 String email,
                 String role,
                 Integer userId,
+<<<<<<< Updated upstream
                 String name) {
+=======
+                Long pharmacyId) {
+>>>>>>> Stashed changes
 }

@@ -14,6 +14,7 @@ public interface OrderMapper {
     @Mapping(source = "pharmacy.pharmacyName", target = "pharmacyName")
     @Mapping(source = "user.userId", target = "userId")
     @Mapping(source = "user.name", target = "userName")
+    @Mapping(source = "user.email", target = "userEmail")
     @Mapping(source = "orderStatus", target = "orderStatus")
     OrderResponse toDto(Order order);
 }

@@ -21,19 +21,21 @@
     position: absolute !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 32px !important; /* Extremely wide hit area */
-    top: 36px !important; 
-    bottom: -20px !important; 
+    width: 32px !important;
+    /* Extremely wide hit area */
+    top: 36px !important;
+    bottom: -20px !important;
     display: flex !important;
     justify-content: center !important;
     cursor: pointer !important;
-    z-index: 9999 !important; /* Top layer */
+    z-index: 9999 !important;
+    /* Top layer */
     background: transparent !important;
 }
 
 /* Adjust top for nested comments (smaller avatars) */
-:host-context([depth="1"]), 
-:host-context([depth="2"]), 
+:host-context([depth="1"]),
+:host-context([depth="2"]),
 :host-context([depth="3"]),
 :host-context([depth="4"]) .thread-line-container {
     top: 28px !important;
@@ -41,7 +43,8 @@
 
 .thread-line {
     width: 3px !important;
-    background-color: #000 !important; /* Solid Black for debug */
+    background-color: #000 !important;
+    /* Solid Black for debug */
     height: 100% !important;
     border-radius: 9999px !important;
     transition: all 0.15s ease-in-out !important;
@@ -49,7 +52,8 @@
 }
 
 .thread-line-container:hover .thread-line {
-    background-color: #2563eb !important; /* Deep Blue hover */
+    background-color: #2563eb !important;
+    /* Deep Blue hover */
     width: 5px !important;
     box-shadow: 0 0 15px rgba(37, 99, 235, 0.6) !important;
 }
@@ -72,7 +76,8 @@
 .connector-l-draw {
     width: 20px !important;
     height: 12px !important;
-    border-left: 2px solid #94a3b8 !important; /* same as thread line */
+    border-left: 2px solid #94a3b8 !important;
+    /* same as thread line */
     border-bottom: 2px solid #94a3b8 !important;
     border-bottom-left-radius: 12px !important;
     /* This pushes the horizontal tail 100% to the right edge of the avatar column */
@@ -107,7 +112,8 @@
     background: transparent !important;
     border: none !important;
     white-space: nowrap !important;
-    margin-left: -12px !important; /* Pull slightly left to close gap with connector */
+    margin-left: -12px !important;
+    /* Pull slightly left to close gap with connector */
 }
 
 .show-more-btn-v3:hover {
@@ -131,4 +137,99 @@
     stroke-width: 3.5 !important;
     width: 14px !important;
     height: 14px !important;
+}
+
+/* ─── Forum Prose: lightweight markdown rendering ─── */
+:host ::ng-deep .forum-prose {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+:host ::ng-deep .forum-prose p {
+    margin-bottom: 0.75em;
+}
+
+:host ::ng-deep .forum-prose p:last-child {
+    margin-bottom: 0;
+}
+
+:host ::ng-deep .forum-prose a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+:host ::ng-deep .forum-prose a:hover {
+    text-decoration: underline;
+}
+
+:host ::ng-deep .forum-prose strong {
+    color: #111827;
+    font-weight: 600;
+}
+
+:host ::ng-deep .forum-prose blockquote {
+    border-left: 3px solid #93c5fd;
+    padding-left: 12px;
+    color: #6b7280;
+    font-style: italic;
+    margin: 8px 0;
+}
+
+:host ::ng-deep .forum-prose code {
+    color: #be185d;
+    background: #fdf2f8;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+:host ::ng-deep .forum-prose pre {
+    background: #111827;
+    color: #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+:host ::ng-deep .forum-prose pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+:host ::ng-deep .forum-prose ul,
+:host ::ng-deep .forum-prose ol {
+    padding-left: 1.5em;
+    margin: 8px 0;
+}
+
+:host ::ng-deep .forum-prose ul {
+    list-style-type: disc;
+}
+
+:host ::ng-deep .forum-prose ol {
+    list-style-type: decimal;
+}
+
+:host ::ng-deep .forum-prose h1,
+:host ::ng-deep .forum-prose h2,
+:host ::ng-deep .forum-prose h3 {
+    font-weight: 600;
+    color: #111827;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+:host ::ng-deep .forum-prose h1 { font-size: 1.5em; }
+:host ::ng-deep .forum-prose h2 { font-size: 1.25em; }
+:host ::ng-deep .forum-prose h3 { font-size: 1.1em; }
+
+:host ::ng-deep .forum-prose img {
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    max-width: 100%;
 }
