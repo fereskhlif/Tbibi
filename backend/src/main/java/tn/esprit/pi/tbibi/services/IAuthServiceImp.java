@@ -269,7 +269,7 @@ public class IAuthServiceImp implements IAuthService {
 
             log.info("Login successful for user: {}, role: {}", req.email(), role);
 
-            return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId());
+            return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId(), user.getName());
 
         } catch (org.springframework.security.authentication.DisabledException e) {
             log.error("Login disabled for user {}: account not activated or approved yet.", req.email());
@@ -278,5 +278,76 @@ public class IAuthServiceImp implements IAuthService {
             log.error("Login failed for user {}: {}", req.email(), e.getMessage());
             throw new RuntimeException("Bad credentials");
         }
+    }
+
+    @Override
+    public void forgotPassword(String email) throws MessagingException {
+        log.info("=== FORGOT PASSWORD ATTEMPT ===");
+        log.info("Email: {}", email);
+
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with this email"));
+
+        String resetToken = java.util.UUID.randomUUID().toString();
+
+        Token token = Token.builder()
+                .token(resetToken)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusMinutes(15))
+                .user(user)
+                .build();
+
+        tokenRepository.save(token);
+
+        // Send reset email
+        // Note: The frontend route for resetting password might be different, 
+        // using the environment's base URL for frontend or hardcoding for now as it's typically localhost:4200
+        String resetLink = "http://localhost:4200/reset-password?token=" + resetToken;
+        
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getName(), resetLink);
+        log.info("Password reset email sent to {}", email);
+    }
+
+    @Override
+    public void resetPassword(String tokenString, String newPassword) {
+        log.info("=== RESET PASSWORD ATTEMPT ===");
+
+        if (tokenString == null || tokenString.isBlank()) {
+            throw new IllegalArgumentException("Token is required");
+        }
+
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("Password must contain at least 8 characters");
+        }
+        if (!newPassword.matches(".*[A-Z].*")) {
+            throw new IllegalArgumentException("Password must contain at least one uppercase letter");
+        }
+        if (!newPassword.matches(".*[a-z].*")) {
+            throw new IllegalArgumentException("Password must contain at least one lowercase letter");
+        }
+        if (!newPassword.matches(".*\\d.*")) {
+            throw new IllegalArgumentException("Password must contain at least one number");
+        }
+
+        Token token = tokenRepository.findByToken(tokenString)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
+
+        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Token has expired. Please request a new password reset link.");
+        }
+
+        User user = token.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Invalidate token
+        token.setValidatedAt(LocalDateTime.now());
+        tokenRepository.save(token);
+
+        log.info("Password reset successfully for user {}", user.getEmail());
     }
 }

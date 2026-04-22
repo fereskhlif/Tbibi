@@ -1,0 +1,248 @@
+<div class="page-container">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Laboratory Results</h1>
+      <p class="page-subtitle">Review and manage laboratory test results</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateForm()">+ New Result</button>
+  </div>
+
+  <!-- ALERTS -->
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+  <div *ngIf="errorMessage && !showForm" class="alert alert-error">{{ errorMessage }}</div>
+
+  <!-- FILTER TABS -->
+  <div class="filter-tabs">
+    <button
+      *ngFor="let s of allStatuses"
+      class="filter-tab"
+      [class.active]="activeStatus === s"
+      (click)="filterByStatus(s)">
+      {{ s }}
+    </button>
+  </div>
+
+  <!-- ✅ NOUVEAU - FILTRES DE PRIORITÉ -->
+  <div class="filter-section">
+    <div class="filter-group">
+      <label class="filter-label">🎯 Priority:</label>
+      <div class="filter-tabs priority-tabs">
+        <button
+          *ngFor="let p of allPriorities"
+          class="filter-tab"
+          [class.active]="activePriority === p"
+          (click)="filterByPriority(p)">
+          {{ p }}
+        </button>
+      </div>
+    </div>
+    
+    <button 
+      class="btn-urgent-toggle" 
+      [class.active]="showUrgentOnly"
+      (click)="toggleUrgentOnly()">
+      🚨 {{ showUrgentOnly ? 'Show All' : 'Urgent Only' }}
+    </button>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-bar">
+    <span>🔍</span>
+    <input
+      type="text"
+      placeholder="Search by test, lab, technician, patient, status..."
+      [(ngModel)]="searchTerm" />
+  </div>
+
+  <!-- LOADING -->
+  <div *ngIf="isLoading" class="state-box">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div *ngIf="!isLoading && filteredResults.length === 0 && !errorMessage" class="state-box">
+    <div style="font-size:2.5rem">🔬</div>
+    <p>No results found</p>
+    <button class="btn-primary" (click)="openCreateForm()">Add first result</button>
+  </div>
+
+  <!-- TABLE -->
+  <div *ngIf="!isLoading && filteredResults.length > 0" class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Sample ID</th>
+          <th>Priority</th>
+          <th>Test Name</th>
+          <th>Laboratory</th>
+          <th>Patient</th>
+          <th>Doctor</th>
+          <th>Status</th>
+          <th>Requested</th>
+          <th>Notes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of filteredResults" [class]="getPriorityClass(r.priority || 'Normal')">
+          <td>
+            <span class="sample-id">LAB-{{ r.labId | number:'4.0-0' }}</span>
+          </td>
+          <td>
+            <span class="priority-badge" [ngClass]="getPriorityClass(r.priority || 'Normal')">
+              {{ getPriorityIcon(r.priority || 'Normal') }} {{ r.priority || 'Normal' }}
+            </span>
+          </td>
+          <td><strong>{{ r.testName }}</strong></td>
+          <td>{{ r.nameLabo }}</td>
+          <td>
+            <span *ngIf="r.patientName" class="patient">{{ r.patientName }}</span>
+            <span *ngIf="!r.patientName" class="chip chip-gray">—</span>
+          </td>
+          <td>
+            <span *ngIf="r.prescribedByDoctorName" class="doctor">Dr. {{ r.prescribedByDoctorName }}</span>
+            <span *ngIf="!r.prescribedByDoctorName" class="chip chip-gray">—</span>
+          </td>
+          <td>
+            <span class="chip" [ngClass]="getStatusClass(r.status)">{{ r.status }}</span>
+          </td>
+          <td>
+            <span *ngIf="r.requestedAt" class="date-time">
+              {{ r.requestedAt | date:'MMM d, HH:mm' }}
+            </span>
+            <span *ngIf="!r.requestedAt" class="chip chip-gray">—</span>
+          </td>
+          <td>
+            <span *ngIf="r.requestNotes" class="notes-preview" [title]="r.requestNotes">
+              {{ r.requestNotes.length > 30 ? (r.requestNotes.substring(0, 30) + '...') : r.requestNotes }}
+            </span>
+            <span *ngIf="!r.requestNotes" class="chip chip-gray">—</span>
+          </td>
+          <td class="actions">
+            <button 
+              class="btn-icon report" 
+              (click)="onGenerateReport(r)" 
+              title="Generate Report"
+              *ngIf="r.status === 'Completed' || r.status === 'Validated'">
+              📄
+            </button>
+            <button 
+              *ngIf="canAdvanceStatus(r.status)" 
+              class="btn-icon status" 
+              (click)="onQuickStatusUpdate(r, getNextStatus(r.status)!)" 
+              [title]="'Advance to ' + getNextStatus(r.status)">
+              ➡️
+            </button>
+            <button class="btn-icon edit" (click)="openEditForm(r)" title="Edit">✏️</button>
+            <button class="btn-icon del" (click)="onDelete(r.labId)" title="Delete">🗑️</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Edit Result' : 'New Result' }}</h2>
+      <button class="modal-close" (click)="closeForm()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+      <div class="form-section-title">🔬 Test Information</div>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>Test Name *</label>
+          <input type="text" [(ngModel)]="formData.testName" placeholder="e.g. Blood Count, CBC..." />
+        </div>
+
+        <div class="form-group">
+          <label>Laboratory Name *</label>
+          <input type="text" [(ngModel)]="formData.nameLabo" placeholder="e.g. BioLab Tunis..." />
+        </div>
+
+        <div class="form-group">
+          <label>Location *</label>
+          <input type="text" [(ngModel)]="formData.location" placeholder="e.g. Block A - Room 12..." />
+        </div>
+
+        <div class="form-group">
+          <label>Test Date *</label>
+          <input type="date" [(ngModel)]="formData.testDate" />
+        </div>
+
+        <div class="form-group">
+          <label>Result Value *</label>
+          <input type="text" [(ngModel)]="formData.resultValue" placeholder="e.g. 1.2 g/L, Normal..." />
+        </div>
+
+        <div class="form-group">
+          <label>Status *</label>
+          <select [(ngModel)]="formData.status">
+            <option value="">-- Select --</option>
+            <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Technician ID *</label>
+          <input type="number" [(ngModel)]="formData.laboratoryUserId" placeholder="Technician user ID" readonly />
+          <small class="form-hint">Automatically set to your user ID</small>
+        </div>
+
+        <div class="form-group">
+          <label>Patient</label>
+          <select [(ngModel)]="formData.patientId">
+            <option [value]="null">No patient (optional)</option>
+            <option *ngFor="let patient of patients" [value]="patient.userId">
+              {{ patient.name }} ({{ patient.email }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Prescribing Doctor ID</label>
+          <input type="number" [(ngModel)]="formData.prescribedByDoctorId" placeholder="Doctor ID (optional)" />
+        </div>
+
+        <!-- ✅ NOUVEAU - Champs de priorité -->
+        <div class="form-group">
+          <label>Priority *</label>
+          <select [(ngModel)]="formData.priority">
+            <option *ngFor="let p of priorityOptions" [value]="p">{{ p }}</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Request Notes</label>
+          <textarea 
+            [(ngModel)]="formData.requestNotes" 
+            placeholder="Additional notes from the prescribing doctor..."
+            rows="3"></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeForm()">Cancel</button>
+      <button class="btn-secondary" (click)="onSaveAsDraft()" [disabled]="isSaving" *ngIf="!isEditMode">
+        💾 Save as Draft
+      </button>
+      <button class="btn-primary" (click)="onSubmit()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : (isEditMode ? 'Update' : 'Save & Validate') }}
+      </button>
+    </div>
+
+  </div>
+</div>

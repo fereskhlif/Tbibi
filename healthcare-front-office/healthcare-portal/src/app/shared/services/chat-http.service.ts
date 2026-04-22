@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { MedicalChatDto } from './chat-websocket.service';
 
@@ -11,7 +11,8 @@ export interface UserProfile {
   dateOfBirth: string;
   gender: string;
   profilePicture: string;
-  role: string;
+  role: string;       // kept for backward compat
+  roleName: string;   // matches backend UserProfileDTO
 }
 
 @Injectable({
@@ -24,8 +25,15 @@ export class ChatHttpService {
 
   constructor(private http: HttpClient) { }
 
+  private authHeaders(): HttpHeaders {
+    let token = localStorage.getItem('TokenUserConnect') || localStorage.getItem('token') || '';
+    token = token.replace(/^"|"$/g, '').trim();
+    return new HttpHeaders({ Authorization: `Bearer ${token}` });
+  }
+
   public getConversationHistory(senderId: number, receiverId: number): Observable<MedicalChatDto[]> {
     return this.http.get<MedicalChatDto[]>(`${this.baseUrl}/conversation`, {
+      headers: this.authHeaders(),
       params: { 
         senderId: senderId.toString(), 
         receiverId: receiverId.toString() 
@@ -34,24 +42,31 @@ export class ChatHttpService {
   }
 
   public getRecentContacts(userId: number): Observable<MedicalChatDto[]> {
-    return this.http.get<MedicalChatDto[]>(`${this.baseUrl}/user/${userId}`);
+    return this.http.get<MedicalChatDto[]>(`${this.baseUrl}/user/${userId}`, {
+      headers: this.authHeaders()
+    });
   }
 
   public uploadAttachment(file: File): Observable<{ fileUrl: string }> {
     const formData = new FormData();
     formData.append('file', file, file.name);
-
-    return this.http.post<{ fileUrl: string }>(`${this.baseUrl}/upload`, formData);
+    return this.http.post<{ fileUrl: string }>(`${this.baseUrl}/upload`, formData, {
+      headers: new HttpHeaders({ Authorization: `Bearer ${(localStorage.getItem('TokenUserConnect') || '').replace(/^"|"$/g, '').trim()}` })
+    });
   }
 
   // Get all doctors for patient selection
   public getAllDoctors(): Observable<UserProfile[]> {
-    return this.http.get<UserProfile[]>(`${this.usersBaseUrl}/doctors`);
+    return this.http.get<UserProfile[]>(`${this.usersBaseUrl}/doctors`, {
+      headers: this.authHeaders()
+    });
   }
 
   // Get all patients for doctor selection
   public getAllPatients(): Observable<UserProfile[]> {
-    return this.http.get<UserProfile[]>(`${this.usersBaseUrl}/patients`);
+    return this.http.get<UserProfile[]>(`${this.usersBaseUrl}/patients`, {
+      headers: this.authHeaders()
+    });
   }
 
   // Search doctors by name

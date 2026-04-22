@@ -1,0 +1,111 @@
+package tn.esprit.pi.tbibi.services;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
+
+/**
+ * GemmaService — delegates to the local Python Gemma microservice.
+ *
+ * The Python service (tbibi-gemma-service/main.py) runs locally on port 5000.
+ * It loads Gemma via keras_nlp and uses In-Context Learning: it injects the
+ * full medical knowledge base directly into the prompt before calling
+ * gemma_lm.generate(). This ensures all answers are medically grounded.
+ *
+ * Flow:
+ *   Angular -> AiChatController -> GemmaService -> Python (localhost:5000/ask)
+ *                                                -> gemma_lm.generate(icl_prompt)
+ *                                                -> answer returned
+ */
+@Slf4j
+@Service
+public class GemmaService {
+
+    @Value("${gemma.service.url:http://localhost:5000}")
+    private String gemmaServiceUrl;
+
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public GemmaService() {
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10_000);      // 10s to connect
+        factory.setReadTimeout(120_000);        // 2 min to read (local GPU generation)
+        this.restTemplate = new RestTemplate(factory);
+    }
+
+    /**
+     * Sends the patient question to the local Python Gemma service.
+     * The Python service handles ICL (knowledge injection) and gemma_lm.generate().
+     *
+     * @param userQuestion the raw patient question
+     * @return AI-generated medical guidance
+     */
+    public String askMedical(String userQuestion) {
+        String endpoint = gemmaServiceUrl + "/ask";
+
+        try {
+            // ── Build request ──────────────────────────────────────────────
+            Map<String, String> requestBody = Map.of("question", userQuestion);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, String>> entity = new HttpEntity<>(requestBody, headers);
+
+            log.info("[GemmaService] Sending question to Python service: {}...",
+                    userQuestion.substring(0, Math.min(80, userQuestion.length())));
+
+            // ── Call Python service ───────────────────────────────────────
+            ResponseEntity<String> response = restTemplate.exchange(
+                    endpoint,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+
+            // ── Parse response ────────────────────────────────────────────
+            JsonNode root = objectMapper.readTree(response.getBody());
+            String answer = root.path("answer").asText();
+            int latencyMs = root.path("latency_ms").asInt(0);
+
+            log.info("[GemmaService] Answer received in {}ms ({} chars)", latencyMs, answer.length());
+            return answer;
+
+        } catch (ResourceAccessException e) {
+            // Python service is not running
+            log.error("[GemmaService] Python Gemma service not reachable at {}: {}", endpoint, e.getMessage());
+            return "⚠️ The local AI service is currently unavailable. " +
+                   "Please start the Gemma Python service (tbibi-gemma-service/start.bat) and try again.\n\n" +
+                   "For urgent health concerns, please contact your doctor directly or call emergency services.";
+
+        } catch (Exception e) {
+            log.error("[GemmaService] Unexpected error: {}", e.getMessage(), e);
+            return "⚠️ I encountered an unexpected error. Please try again in a moment.\n\n" +
+                   "If this persists, please contact support or consult your healthcare provider directly.";
+        }
+    }
+
+    /**
+     * Checks if the Python Gemma service is healthy.
+     * Called optionally by a health endpoint to verify the AI stack.
+     */
+    public boolean isHealthy() {
+        try {
+            ResponseEntity<String> resp = restTemplate.getForEntity(
+                    gemmaServiceUrl + "/health", String.class);
+            return resp.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            log.warn("[GemmaService] Health check failed: {}", e.getMessage());
+            return false;
+        }
+    }
+}

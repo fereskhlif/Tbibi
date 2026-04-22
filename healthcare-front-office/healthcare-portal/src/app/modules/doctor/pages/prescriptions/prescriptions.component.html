@@ -20,6 +20,14 @@
       <input type="text" [(ngModel)]="patientSearch" placeholder="🔍 Search patient..."
         class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
         style="min-width:200px;" />
+      <button *ngIf="selectedIds.size > 0" (click)="deleteSelected()"
+        style="display:flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:.6rem 1.2rem;border-radius:12px;font-size:.875rem;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(239,68,68,.35);">
+        🗑️ Delete ({{selectedIds.size}})
+      </button>
+      <button (click)="openRecentModal()"
+        style="display:flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;padding:.6rem 1.2rem;border-radius:12px;font-size:.875rem;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(14,165,233,.35);">
+        ⏱️ Recent Actives
+      </button>
       <button (click)="sortDesc = !sortDesc"
         class="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-1.5">
         <span>{{ sortDesc ? '↓' : '↑' }}</span> Date
@@ -99,10 +107,16 @@
   <div class="tbl-card" *ngIf="!loading && filtered.length > 0">
     <table class="ptbl">
       <thead><tr>
-        <th>Document</th><th>Patient / Date</th><th>Medicines</th><th>Status</th><th>Last Update</th><th>Actions</th>
+        <th style="width: 40px; text-align: center;">
+          <input type="checkbox" (click)="toggleAll($event)" [checked]="selectedIds.size === filtered.length && filtered.length > 0">
+        </th>
+        <th>Document</th><th>Patient / Date</th><th>Medicines & Tracking</th><th>Status</th><th>Last Update</th><th>Actions</th>
       </tr></thead>
       <tbody>
         <tr *ngFor="let rx of filtered; trackBy: trackById" class="prow" (click)="openDetail(rx, $event)">
+          <td style="text-align: center;">
+            <input type="checkbox" [checked]="selectedIds.has(rx.prescriptionID)" (click)="toggleSelection(rx.prescriptionID, $event); $event.stopPropagation()">
+          </td>
           <td><span class="dos-badge">Medical Prescription</span></td>
           <td>
             <div style="display:flex; align-items:center; gap:.75rem;">
@@ -117,22 +131,38 @@
             </div>
           </td>
           <td>
-            <span *ngIf="rx.medicines?.length" class="med-count">💊 {{rx.medicines.length}} medicine(s)</span>
-            <span *ngIf="!rx.medicines?.length" class="em">No medicines</span>
+            <div class="flex flex-col gap-2">
+              <div>
+                <span *ngIf="rx.medicines?.length" class="med-count">💊 {{rx.medicines.length}} medicine(s)</span>
+                <span *ngIf="!rx.medicines?.length" class="em">No medicines</span>
+              </div>
+              <div *ngIf="getTrackingCards(rx).length > 0" class="flex flex-col gap-1.5 mt-1" (click)="$event.stopPropagation()">
+                <div *ngFor="let card of getTrackingCards(rx)" 
+                     class="flex flex-col gap-1 p-2 rounded-lg border text-xs"
+                     [ngClass]="card.color" style="max-width: 280px;">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="font-bold truncate" [title]="card.medicineName">{{card.medicineName}}</span>
+                    <span class="px-1.5 py-0.5 rounded-full uppercase font-bold" style="font-size: 0.65rem" [ngClass]="card.bgLabel">
+                      {{card.status}}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </td>
           <td>
-            <span class="ch-tag"
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold"
               [style.background]="STATUS_META[rx.status].bg"
               [style.color]="STATUS_META[rx.status].color">
               {{STATUS_META[rx.status].label}}
             </span>
           </td>
-          <td class="em">
-            {{rx.statusUpdatedAt ? (rx.statusUpdatedAt | date: 'dd MMM, HH:mm') : '—'}}
-          </td>
+          <td class="text-xs text-gray-500">{{rx.statusUpdatedAt | date: 'dd/MM/yyyy HH:mm'}}</td>
           <td style="display:flex; gap:0.5rem; align-items:center;">
+            <button *ngIf="rx.status === 'PENDING'" style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;" (click)="validateRenewal(rx.prescriptionID, $event); $event.stopPropagation()">✅ Validate</button>
             <button style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;" (click)="openEditModal(rx, $event); $event.stopPropagation()">✏️ Edit</button>
-            <button style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;" (click)="openAssignModal(rx, $event); $event.stopPropagation()">👤 Assign</button>
+            <button style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;" (click)="openAssignModal(rx, $event); $event.stopPropagation()">🔗 Assign</button>
+            <button style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;" (click)="viewPatientReport(rx.patientId); $event.stopPropagation()">📊 Rapport</button>
             <button style="display:inline-flex;align-items:center;padding:.35rem .65rem;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;" (click)="deletePrescription(rx.prescriptionID, $event); $event.stopPropagation()">🗑️</button>
           </td>
         </tr>
@@ -231,6 +261,13 @@
           <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
           <p class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Doctor's Note</p>
           <p class="text-gray-800 text-sm leading-relaxed">{{detailRx.note || 'No notes provided.'}}</p>
+        </div>
+
+        <!-- Expiration Date -->
+        <div class="bg-white rounded-xl p-5 border border-red-100 shadow-sm relative overflow-hidden" *ngIf="detailRx.expirationDate">
+          <div class="absolute top-0 left-0 w-1 h-full bg-red-400"></div>
+          <p class="text-xs font-bold text-red-400 uppercase tracking-wider mb-2">Expiration Date</p>
+          <p class="text-gray-800 text-sm font-semibold">{{detailRx.expirationDate | date: 'dd MMMM yyyy'}}</p>
         </div>
 
         <!-- Medicines List -->
@@ -428,11 +465,22 @@
             <!-- Patient -->
             <div class="mb-4">
               <label class="block text-sm font-semibold text-gray-700 mb-1.5">Patient *</label>
-              <select [(ngModel)]="form.patientId"
+              <select [(ngModel)]="form.patientId" (ngModelChange)="onPatientChange($event)"
                 class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 bg-white">
                 <option [ngValue]="null" disabled>Select a patient...</option>
                 <option *ngFor="let p of patients" [ngValue]="p.patientId">{{p.patientName}}</option>
               </select>
+            </div>
+
+            <!-- Warning for active prescriptions -->
+            <div *ngIf="checkingActivePrescriptions" class="mb-4 text-xs text-blue-500 font-semibold">
+              Checking for active prescriptions...
+            </div>
+            <div *ngIf="activePrescriptionsWarning.length > 0" class="mb-4 bg-orange-50 border border-orange-200 p-3 rounded-lg">
+              <p class="text-sm font-bold text-orange-800 mb-1">
+                ⚠️ Attention! This patient has {{activePrescriptionsWarning.length}} active prescription(s).
+              </p>
+              <p class="text-xs text-orange-700">Please review to avoid medication conflicts or duplicates.</p>
             </div>
 
             <!-- Act Type -->
@@ -468,11 +516,212 @@
           </div>
         </ng-container>
 
-        <!-- Date -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Date (Act &amp; Prescription)</label>
-          <input type="datetime-local" [(ngModel)]="form.date" [min]="editMode ? minDate : null"
+        <!-- Act Date: only when creating a new act -->
+        <div *ngIf="!editMode">
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Date (Act)</label>
+          <input type="datetime-local" [(ngModel)]="form.date" (ngModelChange)="onDurationChange()"
             class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
+        </div>
+
+        <!-- Duration -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            Duration (days) — e.g. <strong>7</strong> = expires in 7 days
+          </label>
+          <input type="number" [(ngModel)]="form.duration" min="1" max="365"
+                 (ngModelChange)="onDurationChange()" placeholder="Enter number of days..."
+                 class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
+        </div>
+
+        <div *ngIf="form.expirationDate">
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">Expiration Date:</label>
+          <div class="px-4 py-2.5 border-2 border-green-200 rounded-xl text-sm font-semibold flex items-center gap-2" style="background:#f0fdf4;color:#15803d;">
+            📅 {{form.expirationDate | date: 'dd MMMM yyyy'}}
+            <span class="text-xs font-normal ml-auto" style="color:#4ade80;">
+              in {{ form.duration }} day(s)
+            </span>
+          </div>
+        </div>
+
+        <!-- Medication Logic with AI Substitution -->
+        <div class="mt-4 border-t border-gray-100 pt-4">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Medications & AI Substitutes</label>
+          
+          <!-- Add Medication Form -->
+          <div class="flex flex-col gap-3 mb-3">
+            
+            <!-- Medicine Search -->
+            <div class="flex gap-2 items-center">
+              <input type="text" [(ngModel)]="medicineInput" placeholder="Medication name (e.g., amoxicilline)"
+                class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
+              <button (click)="searchSpecific('medicine')"
+                      [disabled]="checkingSubstitute || (!medicineInput && !indicationInput && !familleInput) || !form.patientId"
+                      class="px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center text-white"
+                      style="border-radius: 12px; background: linear-gradient(135deg,#6366f1,#8b5cf6); min-width: 110px;"
+                      title="Chercher le médicament">
+                {{ checkingSubstitute && currentSearch === 'medicine' ? '⏳' : '🔎 Chercher' }}
+              </button>
+            </div>
+
+            <!-- Indication Search -->
+            <div class="flex gap-2 items-center">
+              <input type="text" [(ngModel)]="indicationInput" placeholder="Indic. ou description (ex: Le patient souffre d'une forte fièvre)"
+                class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
+            </div>
+
+            <!-- AI Predictive Button -->
+            <div class="mt-1 mb-2">
+               <button (click)="predictTherapeuticClass()"
+                       [disabled]="predictingClass || !indicationInput.trim() || !form.patientId"
+                       class="px-4 py-2 w-full rounded-xl text-sm font-bold transition disabled:opacity-50 flex items-center justify-center text-white"
+                       style="background: linear-gradient(135deg,#0ea5e9,#0284c7); box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);">
+                 {{ predictingClass ? '⏳ Analyse IA en cours...' : '🤖 Obtenir une Suggestion IA (Classe Thérapeutique)' }}
+               </button>
+            </div>
+
+            <!-- AI Prediction Banner - SUCCESS -->
+            <div *ngIf="predictedClassResponse?.classe_recommandee">
+
+              <!-- Bandeau principal : Classe + Molécule -->
+              <div class="mb-2 px-4 py-3 bg-blue-50 border-2 border-blue-200 text-blue-800 rounded-xl flex items-center justify-between shadow-sm">
+                <div class="flex-1">
+                  <p class="text-xs font-bold uppercase tracking-wider text-blue-500 mb-1">🤖 Recommandation IA - Classe Thérapeutique</p>
+                  <p class="text-sm font-semibold">Classe : <span class="bg-blue-200 text-blue-900 px-2 py-0.5 rounded ml-1">{{ predictedClassResponse.classe_recommandee }}</span>
+                    <span class="ml-2 text-xs text-blue-400">({{ predictedClassResponse.confiance }}%)</span>
+                  </p>
+                  <p *ngIf="predictedClassResponse.molecule_recommandee" class="text-xs text-blue-600 mt-0.5">
+                    💊 Molécule : <strong>{{ predictedClassResponse.molecule_recommandee }}</strong>
+                    <span *ngIf="predictedClassResponse.confiance_molecule" class="text-blue-400 ml-1">({{ predictedClassResponse.confiance_molecule }}%)</span>
+                  </p>
+                </div>
+                <button (click)="familleInput = predictedClassResponse.classe_recommandee; searchSpecific('famille')"
+                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow transition-colors ml-3">
+                  Utiliser cette classe
+                </button>
+              </div>
+
+              <!-- Score de Risque Patient -->
+              <div *ngIf="predictedClassResponse.risque_niveau"
+                   class="mb-2 px-4 py-2.5 rounded-xl border-2 flex items-start gap-3 shadow-sm"
+                   [ngClass]="{
+                     'bg-green-50 border-green-200 text-green-800': predictedClassResponse.risque_niveau === 'FAIBLE',
+                     'bg-yellow-50 border-yellow-200 text-yellow-800': predictedClassResponse.risque_niveau === 'MODERE',
+                     'bg-red-50 border-red-200 text-red-800': predictedClassResponse.risque_niveau === 'ELEVE'
+                   }">
+                <span class="text-lg mt-0.5">
+                  {{ predictedClassResponse.risque_niveau === 'FAIBLE' ? '🟢' : predictedClassResponse.risque_niveau === 'MODERE' ? '🟡' : '🔴' }}
+                </span>
+                <div>
+                  <p class="text-xs font-bold uppercase tracking-wider mb-0.5">Profil de Risque Patient : {{ predictedClassResponse.risque_niveau }}</p>
+                  <p *ngFor="let alerte of predictedClassResponse.risque_alertes" class="text-xs">• {{ alerte }}</p>
+                </div>
+              </div>
+
+              <!-- Interactions Médicamenteuses -->
+              <div *ngIf="predictedClassResponse.has_interactions"
+                   class="mb-2 px-4 py-2.5 bg-orange-50 border-2 border-orange-300 text-orange-800 rounded-xl flex items-start gap-3 shadow-sm">
+                <span class="text-lg mt-0.5">⚠️</span>
+                <div>
+                  <p class="text-xs font-bold uppercase tracking-wider text-orange-600 mb-0.5">Interactions Médicamenteuses Détectées</p>
+                  <p *ngFor="let inter of predictedClassResponse.interactions" class="text-xs">{{ inter }}</p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- AI Prediction Banner - ERROR -->
+            <div *ngIf="predictedClassError"
+                 class="mb-3 px-4 py-3 bg-red-50 border-2 border-red-200 text-red-800 rounded-xl flex items-start gap-3 shadow-sm">
+               <span class="text-xl mt-0.5">⚠️</span>
+               <div>
+                  <p class="text-xs font-bold uppercase tracking-wider text-red-500 mb-0.5">Indication non reconnue par l'IA</p>
+                  <p class="text-sm font-medium">{{ predictedClassError }}</p>
+               </div>
+            </div>
+
+            <!-- Famille Search -->
+            <div class="flex gap-2 items-center">
+              <input type="text" [(ngModel)]="familleInput" placeholder="Famille (e.g., Antibiotique)"
+                class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400" />
+              <button (click)="searchSpecific('famille')"
+                      [disabled]="checkingSubstitute || (!medicineInput && !indicationInput && !familleInput) || !form.patientId"
+                      class="px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center text-white"
+                      style="border-radius: 12px; background: linear-gradient(135deg,#6366f1,#8b5cf6); min-width: 110px;"
+                      title="Chercher par famille via l'IA">
+                {{ checkingSubstitute && currentSearch === 'famille' ? '⏳' : '🔎 Chercher' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Status / Error Message -->
+          <div *ngIf="medicineCheckStatus"
+               [ngClass]="{
+                 'bg-red-50 text-red-700 border-red-200':    aiSuggestions.length > 0,
+                 'bg-orange-50 text-orange-700 border-orange-200': aiSuggestions.length === 0 && !checkingSubstitute && medicineCheckStatus.includes('Aucun'),
+                 'bg-green-50 text-green-700 border-green-200':  aiSuggestions.length === 0 && !medicineCheckStatus.includes('Aucun') && !checkingSubstitute
+               }"
+               class="p-3 mb-3 border rounded-xl text-sm font-medium flex items-center gap-2">
+            <span *ngIf="aiSuggestions.length > 0">⚠️</span>
+            <span *ngIf="aiSuggestions.length === 0 && medicineCheckStatus.includes('Aucun')">🚫</span>
+            <span *ngIf="aiSuggestions.length === 0 && !medicineCheckStatus.includes('Aucun') && !checkingSubstitute">✅</span>
+            {{ medicineCheckStatus }}
+          </div>
+
+          <!-- AI Suggestions Panel -->
+          <div *ngIf="aiSuggestions.length > 0" class="mb-4 bg-gray-900 rounded-xl overflow-hidden shadow-lg border border-gray-800">
+             <div class="bg-gray-800 px-4 py-2 flex items-center gap-2 border-b border-gray-700">
+                <span class="text-xl">🤖</span>
+                <span class="text-sm font-bold text-teal-400 tracking-wide">AI_SUBSTITUTE_ANALYSIS</span>
+                <span class="ml-auto text-xs text-gray-400 font-mono">{{ aiSuggestions.length }} result(s)</span>
+             </div>
+             <div class="p-4 space-y-3">
+                <div *ngFor="let m of aiSuggestions; let idx = index"
+                     class="bg-gray-800/50 rounded p-3 border border-gray-700 hover:border-teal-500/50 transition-colors flex justify-between items-center group">
+                     <div class="font-mono text-sm leading-snug">
+                       <div class="flex items-center gap-2 mb-1">
+                         <span class="text-white font-bold">{{ m.nom || '—' }}</span>
+                         <span *ngIf="m.type === 'equivalent_exact'" class="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">⭐ Équivalent Exact</span>
+                         <span *ngIf="m.type === 'alternative_therapeutique'" class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">💊 Alternative</span>
+                       </div>
+                       <div *ngIf="m.molecule" class="mb-1"><span class="text-gray-400">Molécule:</span> <span class="text-gray-300">{{ m.molecule }}</span></div>
+                       <div>
+                         <span class="text-gray-400">Score:</span>
+                         <!-- Guard: if score is undefined/NaN, fallback to 0 -->
+                         <span [ngClass]="(m.score || 0) > 0.8 ? 'text-green-400' : ((m.score || 0) > 0.5 ? 'text-yellow-400' : 'text-red-400')">
+                           {{ ((m.score || 0) * 100).toFixed(0) }}%
+                         </span>
+                         <span class="text-gray-500 ml-2">| Classe:</span>
+                         <span class="text-teal-300">{{ m.sous_classe || m.sousClasse || 'N/A' }}</span>
+                       </div>
+                       <div class="text-gray-500 text-xs mt-0.5">{{ m.posologie || '' }}</div>
+                     </div>
+                   <button (click)="selectSubstitute(m)"
+                           class="bg-teal-500/10 text-teal-400 border border-teal-500/30 px-3 py-1.5 rounded font-mono text-xs hover:bg-teal-500 hover:text-white transition-all opacity-80 group-hover:opacity-100 cursor-pointer flex-shrink-0 ml-3">
+                     ✅ Choisir
+                   </button>
+                </div>
+             </div>
+          </div>
+
+          <!-- No Valid Substitute — Safe Empty State -->
+          <div *ngIf="!checkingSubstitute && medicineCheckStatus && aiSuggestions.length === 0 && medicineCheckStatus.includes('Aucun')"
+               class="mb-4 border-2 border-dashed border-orange-200 bg-orange-50 rounded-xl p-4 text-center">
+             <p class="text-2xl mb-1">🚫</p>
+             <p class="text-sm font-bold text-orange-800">Aucun substitut cliniquement valide</p>
+             <p class="text-xs text-orange-600 mt-1">Le système a refusé de suggérer un médicament non vérifié.<br>Veuillez consulter un pharmacien ou le référentiel ANSM.</p>
+          </div>
+
+          <!-- Added Medicines List View -->
+          <div *ngIf="addedMedicines.length > 0" class="bg-gray-50 p-3 rounded-xl border border-gray-200 mb-4">
+             <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Added Medications</p>
+             <div class="flex flex-wrap gap-2">
+               <div *ngFor="let med of addedMedicines; let i = index" class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-800 flex items-center gap-2 shadow-sm">
+                 💊 {{ med.name }}
+                 <span *ngIf="med.source === 'AI'" class="text-[10px] bg-teal-100 text-teal-800 px-1.5 rounded uppercase font-bold" title="AI Suggested alternative">AI</span>
+                 <button (click)="addedMedicines.splice(i, 1)" class="text-red-400 hover:text-red-600 ml-1 text-xs font-bold cursor-pointer">✕</button>
+               </div>
+             </div>
+          </div>
         </div>
 
         <!-- Note -->
@@ -497,4 +746,163 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════════════════════════════════
+       RECENT ACTIVES MODAL
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="showRecentModal"
+    class="fixed inset-0 flex items-center justify-center z-50 p-4"
+    style="background:rgba(15,23,42,.55);backdrop-filter:blur(4px);"
+    (click)="closeRecentModal()">
+
+    <div class="bg-white rounded-2xl w-full shadow-2xl overflow-hidden flex flex-col"
+      style="max-width:680px;max-height:90vh;"
+      (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between"
+        style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">⏱️ Recent Active Prescriptions</h2>
+          <p class="text-sm mt-0.5" style="color:rgba(255,255,255,.75);">Acts from the last 30 days with validated prescriptions</p>
+        </div>
+        <button (click)="closeRecentModal()"
+          style="background:rgba(255,255,255,.2);border:none;cursor:pointer;padding:.4rem .55rem;border-radius:8px;color:white;font-size:1.1rem;">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4 overflow-y-auto flex-1" style="background:#f8fafc;">
+        <div *ngIf="loadingRecent" class="text-center py-10">
+          <p class="text-gray-500 font-medium">Loading recent acts...</p>
+        </div>
+
+        <div *ngIf="!loadingRecent && recentActes.length === 0" class="text-center py-10 border border-dashed border-gray-300 rounded-xl bg-white">
+          <p class="text-3xl mb-2">✅</p>
+          <p class="text-gray-500 font-medium">No recent acts with active prescriptions found.</p>
+        </div>
+
+        <div *ngIf="!loadingRecent && recentActes.length > 0" class="grid gap-3">
+          <div *ngFor="let acte of recentActes" class="bg-white border-2 border-sky-100 rounded-xl p-4 shadow-sm hover:border-sky-300 transition-colors">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-1 bg-sky-100 text-sky-800 text-xs font-bold rounded">🩺 {{acte.typeOfActe || 'Acte Medical'}}</span>
+                  <span class="text-xs text-gray-500">{{acte.date | date:'dd/MM/yyyy'}}</span>
+                </div>
+                <p class="font-bold text-gray-900 text-sm mt-2">👤 Patient: <span class="text-indigo-600">{{acte.patientName}}</span></p>
+                <p *ngIf="acte.description" class="text-sm text-gray-600 mt-1 italic">"{{acte.description}}"</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 bg-gray-50 border-t border-gray-200 flex justify-end">
+        <button (click)="closeRecentModal()"
+          class="px-6 py-2.5 text-sm font-bold bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors shadow-sm">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= MODAL DU RAPPORT PATIENT ================= -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" *ngIf="showPatientReportModal" (click)="closePatientReport()">
+  <div class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-xl flex flex-col" (click)="$event.stopPropagation()">
+    
+    <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-t-2xl">
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        Rapport Medical Consolidation
+      </h2>
+      <button class="text-white hover:text-gray-200 transition-colors" (click)="closePatientReport()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <div class="p-6 bg-gray-50 flex-1 relative">
+      
+      <div *ngIf="loadingReport" class="flex flex-col items-center justify-center py-12">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+        <p class="mt-4 text-gray-500 font-medium">Analyse de l'historique en cours...</p>
+      </div>
+
+      <div *ngIf="!loadingReport && patientReport" class="flex flex-col gap-6">
+        <!-- Patient Info -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center">
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">Patient: {{patientReport.patientName}}</h3>
+            <p class="text-gray-500 text-sm mt-1 flex items-center gap-1">{{patientReport.patientEmail}}</p>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-5 rounded-xl border-l-4 border-blue-500 shadow-sm">
+            <p class="text-gray-500 text-sm font-medium">Total Prescriptions</p>
+            <p class="text-3xl font-black text-gray-800 mt-1">{{patientReport.totalPrescriptions}}</p>
+          </div>
+          <div class="bg-white p-5 rounded-xl border-l-4 border-emerald-500 shadow-sm">
+            <p class="text-gray-500 text-sm font-medium">Prescriptions Actives</p>
+            <p class="text-3xl font-black text-gray-800 mt-1">{{patientReport.activePrescriptions}}</p>
+          </div>
+          <div class="bg-white p-5 rounded-xl border-l-4 border-violet-500 shadow-sm">
+            <p class="text-gray-500 text-sm font-medium">Medicaments Uniques</p>
+            <p class="text-3xl font-black text-gray-800 mt-1">{{patientReport.uniqueMedicinesCount}}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Timeline -->
+          <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <h4 class="text-md font-bold border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">Historique Chronologique</h4>
+            
+            <div *ngIf="!patientReport.prescriptions?.length" class="text-center py-8 text-gray-500">Aucun historique disponible.</div>
+            
+            <div class="space-y-4">
+                <div *ngFor="let rx of patientReport.prescriptions; let i = index" class="relative pl-6 pb-2 border-l-2 border-gray-200 last:border-0 last:pb-0">
+                <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-white border-4 border-blue-500"></div>
+                
+                <div class="flex flex-wrap justify-between items-start mb-2">
+                    <span class="font-bold text-gray-800">{{rx.date | date: 'dd/MM/yyyy HH:mm'}}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-bold" [style.background]="STATUS_META[rx.status].bg" [style.color]="STATUS_META[rx.status].color">
+                    {{STATUS_META[rx.status].label}}
+                    </span>
+                </div>
+                
+                <div class="text-sm text-gray-500 mb-2" *ngIf="rx.doctorName">Prescrit par: Dr. {{rx.doctorName}}</div>
+                
+                <div *ngIf="rx.medicines?.length" class="bg-gray-50 p-3 rounded-lg text-sm border border-gray-100">
+                    <div *ngFor="let m of rx.medicines" class="flex justify-between items-center py-1 border-b border-gray-200 last:border-0">
+                    <span class="font-medium text-gray-700">{{m.medicineName}}</span>
+                    <span class="text-gray-500 font-semibold bg-white px-2 py-0.5 rounded-md border border-gray-200">Qt�: {{m.quantity}}</span>
+                    </div>
+                </div>
+                </div>
+            </div>
+          </div>
+
+          <!-- Top Medicines -->
+          <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm h-fit">
+            <h4 class="text-md font-bold border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">Molecules Frequentes</h4>
+            
+            <div *ngFor="let top of patientReport.topMedicines" class="mb-4 last:mb-0">
+              <div class="flex justify-between items-end mb-1.5 text-sm">
+                <span class="font-semibold text-gray-700">{{top.medicineName}}</span>
+                <span class="font-bold text-gray-500">{{top.count}}x</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-blue-500 h-2 rounded-full" [style.width.%]="(top.count / patientReport.totalPrescriptions) * 100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end rounded-b-2xl">
+      <button class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition-colors" (click)="closePatientReport()">
+        Fermer
+      </button>
+    </div>
+  </div>
 </div>

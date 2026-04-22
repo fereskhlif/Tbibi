@@ -1,5 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DoctorNotificationService, NotificationDTO } from '../../services/doctor-notification.service';
+import { PrescriptionService } from '../../../../services/prescription-service.service';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-doctor-notifications',
@@ -9,8 +12,8 @@ import { DoctorNotificationService, NotificationDTO } from '../../services/docto
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Appointment Requests</h1>
-          <p class="text-gray-500 mt-1">Review and respond to new appointment requests from patients</p>
+          <h1 class="text-2xl font-bold text-gray-900">Notifications & Requests</h1>
+          <p class="text-gray-500 mt-1">Review new appointments and prescription renewals</p>
         </div>
         <span *ngIf="unreadCount > 0"
           class="inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-700">
@@ -29,7 +32,7 @@ import { DoctorNotificationService, NotificationDTO } from '../../services/docto
         class="text-center py-20 bg-white rounded-2xl border border-gray-200 shadow-sm">
         <p class="text-5xl mb-4">🔔</p>
         <h3 class="text-lg font-semibold text-gray-700 mb-1">No notifications yet</h3>
-        <p class="text-gray-400 text-sm">New appointment requests will appear here.</p>
+        <p class="text-gray-400 text-sm">New requests will appear here.</p>
       </div>
 
       <!-- Notification Cards -->
@@ -43,7 +46,13 @@ import { DoctorNotificationService, NotificationDTO } from '../../services/docto
             <div class="flex items-center gap-3">
               <span *ngIf="!n.read" class="w-2.5 h-2.5 rounded-full bg-blue-500 mt-1 flex-shrink-0"></span>
               <span *ngIf="n.read"  class="w-2.5 h-2.5 rounded-full bg-gray-300 mt-1 flex-shrink-0"></span>
-              <div>
+              
+              <div *ngIf="n.type === 'PRESCRIPTION_RENEWAL'">
+                <p class="font-semibold text-gray-900 text-lg">{{n.title || 'Renewal Request'}}</p>
+                <p class="text-sm text-blue-600">Medical Prescription</p>
+              </div>
+              
+              <div *ngIf="n.type !== 'PRESCRIPTION_RENEWAL'">
                 <p class="font-semibold text-gray-900 text-lg">{{n.patientName}}</p>
                 <p class="text-sm text-blue-600">{{n.specialty}}</p>
               </div>
@@ -51,44 +60,66 @@ import { DoctorNotificationService, NotificationDTO } from '../../services/docto
             <span class="text-xs text-gray-400">{{formatDate(n.createdDate)}}</span>
           </div>
 
-          <!-- Schedule info -->
-          <div class="flex gap-6 text-sm text-gray-600 mb-3">
-            <span *ngIf="n.scheduleDate">📅 {{formatScheduleDate(n.scheduleDate)}}</span>
-            <span *ngIf="n.scheduleTime">🕐 {{formatTime(n.scheduleTime)}}</span>
-          </div>
+          <!-- Content (Renewal vs Appointment) -->
+          <ng-container *ngIf="n.type === 'PRESCRIPTION_RENEWAL'">
+            <p class="text-sm text-gray-700 mb-4 bg-gray-50 rounded-lg p-3 border border-gray-100">
+              <span class="font-medium text-gray-500">Details: </span>{{n.message || 'The patient requested a prescription renewal.'}}
+            </p>
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                PENDING RENEWAL
+              </span>
+              <div class="flex gap-3">
+                <button (click)="validateRenewal(n)"
+                  [disabled]="actionLoading === n.notificationId"
+                  class="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50">
+                  {{actionLoading === n.notificationId ? '…' : '✅ Valider'}}
+                </button>
+              </div>
+            </div>
+          </ng-container>
 
-          <!-- Reason -->
-          <p class="text-sm text-gray-700 mb-4 bg-gray-50 rounded-lg p-3 border border-gray-100">
-            <span class="font-medium text-gray-500">Reason: </span>{{n.reasonForVisit}}
-          </p>
-
-          <!-- Status badge -->
-          <div class="flex items-center justify-between">
-            <span [class]="statusClass(n.statusAppointement)"
-              class="px-3 py-1 rounded-full text-xs font-semibold">
-              {{n.statusAppointement}}
-            </span>
-
-            <!-- Accept / Refuse buttons — only for PENDING -->
-            <div *ngIf="n.statusAppointement === 'PENDING'" class="flex gap-3">
-              <button (click)="refuse(n)"
-                [disabled]="actionLoading === n.notificationId"
-                class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors disabled:opacity-50">
-                {{actionLoading === n.notificationId ? '…' : '❌ Refuse'}}
-              </button>
-              <button (click)="accept(n)"
-                [disabled]="actionLoading === n.notificationId"
-                class="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50">
-                {{actionLoading === n.notificationId ? '…' : '✅ Accept'}}
-              </button>
+          <ng-container *ngIf="n.type !== 'PRESCRIPTION_RENEWAL'">
+            <!-- Schedule info -->
+            <div class="flex gap-6 text-sm text-gray-600 mb-3">
+              <span *ngIf="n.scheduleDate">📅 {{formatScheduleDate(n.scheduleDate)}}</span>
+              <span *ngIf="n.scheduleTime">🕐 {{formatTime(n.scheduleTime)}}</span>
             </div>
 
-            <!-- Already handled label -->
-            <span *ngIf="n.statusAppointement === 'CONFIRMED'"
-              class="text-xs text-green-600 font-medium">Accepted ✓</span>
-            <span *ngIf="n.statusAppointement === 'CANCELLED'"
-              class="text-xs text-red-500 font-medium">Refused ✓</span>
-          </div>
+            <!-- Reason -->
+            <p class="text-sm text-gray-700 mb-4 bg-gray-50 rounded-lg p-3 border border-gray-100">
+              <span class="font-medium text-gray-500">Reason: </span>{{n.reasonForVisit}}
+            </p>
+
+            <!-- Status badge -->
+            <div class="flex items-center justify-between">
+              <span [class]="statusClass(n.statusAppointement)"
+                class="px-3 py-1 rounded-full text-xs font-semibold">
+                {{n.statusAppointement}}
+              </span>
+
+              <!-- Accept / Refuse buttons — only for PENDING -->
+              <div *ngIf="n.statusAppointement === 'PENDING'" class="flex gap-3">
+                <button (click)="refuse(n)"
+                  [disabled]="actionLoading === n.notificationId"
+                  class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors disabled:opacity-50">
+                  {{actionLoading === n.notificationId ? '…' : '❌ Refuse'}}
+                </button>
+                <button (click)="accept(n)"
+                  [disabled]="actionLoading === n.notificationId"
+                  class="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50">
+                  {{actionLoading === n.notificationId ? '…' : '✅ Accept'}}
+                </button>
+              </div>
+
+              <!-- Already handled label -->
+              <span *ngIf="n.statusAppointement === 'CONFIRMED'"
+                class="text-xs text-green-600 font-medium">Accepted ✓</span>
+              <span *ngIf="n.statusAppointement === 'CANCELLED'"
+                class="text-xs text-red-500 font-medium">Refused ✓</span>
+            </div>
+          </ng-container>
+
         </div>
       </div>
 
@@ -106,7 +137,7 @@ import { DoctorNotificationService, NotificationDTO } from '../../services/docto
     </div>
   `
 })
-export class DoctorNotificationsComponent implements OnInit {
+export class DoctorNotificationsComponent implements OnInit, OnDestroy {
 
     notifications: NotificationDTO[] = [];
     loading = true;
@@ -115,15 +146,37 @@ export class DoctorNotificationsComponent implements OnInit {
     successMsg = '';
 
     private doctorId: number = Number(localStorage.getItem('userId') ?? 0);
+    private wsSub?: Subscription;
 
     get unreadCount(): number {
-        return this.notifications.filter(n => !n.read && n.statusAppointement === 'PENDING').length;
+        return this.notifications.filter(n => !n.read && (n.statusAppointement === 'PENDING' || n.type === 'PRESCRIPTION_RENEWAL')).length;
     }
 
-    constructor(private svc: DoctorNotificationService) { }
+    constructor(
+      private svc: DoctorNotificationService,
+      private rxSvc: PrescriptionService
+    ) { }
 
     ngOnInit() {
         this.load();
+
+        // Subscribe to real-time WebSocket and reload when a new notification arrives
+        this.svc.subscribeToRealTime(this.doctorId);
+        this.wsSub = this.svc.newNotification$
+            .pipe(filter(n => n !== null))
+            .subscribe(newNotif => {
+                // Re-fetch the full list so we get all details (schedule, patient, etc.)
+                this.svc.getNotifications(this.doctorId).subscribe({
+                    next: data => {
+                        this.notifications = data;
+                        this.showSuccess(`🔔 New appointment request from ${(newNotif as NotificationDTO).patientName || 'a patient'}!`);
+                    }
+                });
+            });
+    }
+
+    ngOnDestroy() {
+        this.wsSub?.unsubscribe();
     }
 
     load() {
@@ -157,6 +210,36 @@ export class DoctorNotificationsComponent implements OnInit {
                 this.showSuccess('Appointment refused. The schedule slot has been freed.');
             },
             error: () => { this.actionLoading = null; this.showError('Could not refuse appointment.'); }
+        });
+    }
+
+    validateRenewal(n: NotificationDTO) {
+        if (!n.prescriptionId) {
+            this.showError('Prescription ID is missing!');
+            return;
+        }
+        this.actionLoading = n.notificationId;
+        this.rxSvc.updateStatus(n.prescriptionId, 'VALIDATED').subscribe({
+            next: () => {
+                // Mark associated notification as read
+                this.svc.markRead(n.notificationId).subscribe({
+                    next: () => {
+                        n.read = true;
+                        // To physically remove it or keep it, we could filter it out. Let's just remove it.
+                        this.notifications = this.notifications.filter(notif => notif.notificationId !== n.notificationId);
+                        this.actionLoading = null;
+                        this.showSuccess('✅ Renewal validated successfully!');
+                    },
+                    error: () => {
+                        this.actionLoading = null;
+                        this.showError('Failed to mark notification as read, but prescription was validated.');
+                    }
+                });
+            },
+            error: () => {
+                this.actionLoading = null;
+                this.showError('Erreur lors de la validation du renouvellement.');
+            }
         });
     }
 

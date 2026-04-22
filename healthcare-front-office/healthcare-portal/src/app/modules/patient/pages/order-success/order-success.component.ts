@@ -33,6 +33,6 @@ export class OrderSuccessComponent implements OnInit {
   }
 
   continueShopping(): void {
-    this.router.navigate(['/patient/pharmacies']);
+    this.router.navigate(['/patient/medicine-catalog']);
   }
 }

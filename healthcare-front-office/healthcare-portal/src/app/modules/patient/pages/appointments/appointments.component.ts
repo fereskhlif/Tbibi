@@ -40,6 +40,11 @@ import {
         </div>
       </div>
 
+      <!-- Load error -->
+      <div *ngIf="loadError && !loadingList" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        ⚠️ {{loadError}}
+      </div>
+
       <!-- Loading state -->
       <div *ngIf="loadingList" class="text-center py-12 text-gray-400">
         <p>Loading appointments…</p>
@@ -253,10 +258,20 @@ import {
                 <div class="flex items-center justify-between px-2">
                   <span class="font-bold text-gray-700 text-base">{{getCurrentMonthYear()}}</span>
                   <div class="flex gap-2">
-                    <button class="p-1 hover:bg-gray-100 rounded-full text-gray-400">
+                    <button
+                      (click)="prevDatePage()"
+                      [disabled]="datePageStartIndex === 0"
+                      class="p-1 rounded-full text-gray-400 transition-colors"
+                      [class.hover:bg-gray-100]="datePageStartIndex > 0"
+                      [class.opacity-30]="datePageStartIndex === 0">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     </button>
-                    <button class="p-1 hover:bg-gray-100 rounded-full text-gray-400">
+                    <button
+                      (click)="nextDatePage()"
+                      [disabled]="datePageStartIndex + 7 >= groupedSlots.length"
+                      class="p-1 rounded-full text-gray-400 transition-colors"
+                      [class.hover:bg-gray-100]="datePageStartIndex + 7 < groupedSlots.length"
+                      [class.opacity-30]="datePageStartIndex + 7 >= groupedSlots.length">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </button>
                   </div>
@@ -264,7 +279,7 @@ import {
 
                 <!-- Horizontal Date Picker -->
                 <div class="flex gap-2.5 overflow-x-auto pb-4 px-1 scrollbar-hide">
-                  <button *ngFor="let group of groupedSlots"
+                  <button *ngFor="let group of paginatedGroupedSlots"
                     (click)="selectDate(group.date)"
                     [class.bg-blue-600]="selectedDate === group.date"
                     [class.text-white]="selectedDate === group.date"
@@ -287,25 +302,27 @@ import {
 
                 <!-- Time Grid -->
                 <div *ngFor="let group of groupedSlots">
-                  <div *ngIf="selectedDate === group.date" class="grid grid-cols-4 gap-3">
-                    <button *ngFor="let slot of group.slots"
-                      (click)="selectSlot(slot)"
-                      [class.bg-blue-600]="selectedSlot?.scheduleId === slot.scheduleId"
-                      [class.text-white]="selectedSlot?.scheduleId === slot.scheduleId"
-                      [class.ring-2]="selectedSlot?.scheduleId === slot.scheduleId"
-                      [class.ring-blue-200]="selectedSlot?.scheduleId === slot.scheduleId"
-                      [class.bg-gray-100]="selectedSlot?.scheduleId !== slot.scheduleId"
-                      [class.text-gray-900]="selectedSlot?.scheduleId !== slot.scheduleId"
-                      class="py-3 px-1 rounded-lg text-sm font-semibold transition-all hover:bg-gray-200 hover:shadow-sm border border-transparent flex items-center justify-center">
-                      {{formatTime(slot.startTime)}}
-                    </button>
-                  </div>
-                </div>
+                  <div *ngIf="selectedDate === group.date">
+                    <div class="grid grid-cols-4 gap-3">
+                      <button *ngFor="let slot of getVisibleSlots(group.slots)"
+                        (click)="selectSlot(slot)"
+                        [class.bg-blue-600]="selectedSlot?.scheduleId === slot.scheduleId"
+                        [class.text-white]="selectedSlot?.scheduleId === slot.scheduleId"
+                        [class.ring-2]="selectedSlot?.scheduleId === slot.scheduleId"
+                        [class.ring-blue-200]="selectedSlot?.scheduleId === slot.scheduleId"
+                        [class.bg-gray-100]="selectedSlot?.scheduleId !== slot.scheduleId"
+                        [class.text-gray-900]="selectedSlot?.scheduleId !== slot.scheduleId"
+                        class="py-3 px-1 rounded-lg text-sm font-semibold transition-all hover:bg-gray-200 hover:shadow-sm border border-transparent flex items-center justify-center">
+                        {{formatTime(slot.startTime)}}
+                      </button>
+                    </div>
 
-                <div class="text-center mt-4">
-                  <button class="text-blue-500 font-semibold text-sm hover:underline">
-                    Voir plus d'horaires
-                  </button>
+                    <div *ngIf="group.slots.length > 4" class="text-center mt-4">
+                      <button (click)="showAllSlotsForDate = !showAllSlotsForDate" class="text-blue-500 font-semibold text-sm hover:underline">
+                        {{showAllSlotsForDate ? "Voir moins d'horaires" : "Voir plus d'horaires"}}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -420,8 +437,9 @@ import {
 })
 export class AppointmentsComponent implements OnInit {
 
-  // ─── Patient ID (reads from localStorage after login) ───────────────────────
-  private patientId: number = Number(localStorage.getItem('userId') ?? 1);
+  // ─── Patient ID (read dynamically to avoid stale class-init values) ─────────
+  private patientId: number = 0;
+  loadError: string = '';
 
   // ─── Page state ──────────────────────────────────────────────────────────────
   myAppointments: AppointmentResponse[] = [];
@@ -465,19 +483,41 @@ export class AppointmentsComponent implements OnInit {
   scheduleError = ''; // New: track errors specifically for schedule loading
   selectedSlot: ScheduleSlot | null = null;
   selectedDate: string = ''; // New: track selected date for calendar picker
+  datePageStartIndex = 0; // New: start index for week pagination
+  showAllSlotsForDate = false; // New: toggle for "Voir plus d'horaires"
 
   constructor(private svc: AppointmentService) { }
 
   ngOnInit() {
-    this.loadMyAppointments();
+    // Always read userId fresh from localStorage here, never at field-init time.
+    // Number('0') is falsy, so || 0 handles the '0'-string edge case correctly.
+    const storedId = localStorage.getItem('userId');
+    this.patientId = storedId ? Number(storedId) : 0;
+    if (this.patientId > 0) {
+      this.loadMyAppointments();
+    } else {
+      this.loadError = 'Unable to identify your account. Please log out and log in again.';
+      this.loadingList = false;
+    }
   }
 
   // ─── Load patient appointments ───────────────────────────────────────────────
   loadMyAppointments() {
     this.loadingList = true;
+    this.loadError = '';
+    console.log('[Appointments] Loading for patientId:', this.patientId);
     this.svc.getPatientAppointments(this.patientId).subscribe({
-      next: (data: AppointmentResponse[]) => { this.myAppointments = data; this.loadingList = false; },
-      error: () => { this.myAppointments = []; this.loadingList = false; }
+      next: (data: AppointmentResponse[]) => {
+        console.log('[Appointments] Received:', data);
+        this.myAppointments = data;
+        this.loadingList = false;
+      },
+      error: (err: any) => {
+        console.error('[Appointments] Failed to load:', err);
+        this.myAppointments = [];
+        this.loadingList = false;
+        this.loadError = `Failed to load appointments (${err?.status ?? 'network error'}). Please try refreshing the page.`;
+      }
     });
   }
 
@@ -507,6 +547,8 @@ export class AppointmentsComponent implements OnInit {
     this.doctors = [];
     this.scheduleSlots = [];
     this.showNewModal = true;
+    this.datePageStartIndex = 0;
+    this.showAllSlotsForDate = false;
     this.loadSpecialties();
   }
 
@@ -577,6 +619,8 @@ export class AppointmentsComponent implements OnInit {
           const grouped = this.groupedSlots;
           if (grouped.length > 0) {
             this.selectedDate = grouped[0].date;
+            this.showAllSlotsForDate = false;
+            this.datePageStartIndex = 0;
           }
         }
       },
@@ -591,6 +635,7 @@ export class AppointmentsComponent implements OnInit {
 
   selectDate(date: string) {
     this.selectedDate = date;
+    this.showAllSlotsForDate = false; // Reset toggle when date changes
     // We don't necessarily clear selectedSlot if it's on a different date,
     // but the UI only shows slots for selectedDate.
   }
@@ -610,8 +655,16 @@ export class AppointmentsComponent implements OnInit {
     this.booking = true;
     this.bookingError = '';
 
+    // Re-read userId at booking time to guarantee freshness
+    const currentUserId = Number(localStorage.getItem('userId') || 0);
+    if (!currentUserId) {
+      this.bookingError = 'Your session has expired. Please log in again.';
+      this.booking = false;
+      return;
+    }
+
     const req = {
-      userId: this.patientId,
+      userId: currentUserId,
       doctor: this.selectedDoctorName,
       service: this.selectedSpecialty,
       specialty: this.selectedSpecialty,
@@ -699,7 +752,31 @@ export class AppointmentsComponent implements OnInit {
     }
     return Array.from(map.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, slots]) => ({ date, slots: slots.sort((x, y) => x.startTime.localeCompare(y.startTime)) }));
+      .map(([date, slots]) => ({ date, slots: slots.sort((x, y) => String(x.startTime).localeCompare(String(y.startTime))) }));
+  }
+
+  // ─── Pagination & Limits ───────────────────────────────────────────────────
+  get paginatedGroupedSlots() {
+    return this.groupedSlots.slice(this.datePageStartIndex, this.datePageStartIndex + 7);
+  }
+
+  nextDatePage() {
+    if (this.datePageStartIndex + 7 < this.groupedSlots.length) {
+      this.datePageStartIndex += 7;
+    }
+  }
+
+  prevDatePage() {
+    if (this.datePageStartIndex > 0) {
+      this.datePageStartIndex -= 7;
+    }
+  }
+
+  getVisibleSlots(slots: ScheduleSlot[]): ScheduleSlot[] {
+    if (this.showAllSlotsForDate) {
+      return slots;
+    }
+    return slots.slice(0, 4);
   }
 
   // ─── Formatting helpers ──────────────────────────────────────────────────────

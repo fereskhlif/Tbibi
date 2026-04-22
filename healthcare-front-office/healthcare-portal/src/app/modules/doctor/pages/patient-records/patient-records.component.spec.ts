@@ -130,7 +130,7 @@ describe('PatientRecordsComponent', () => {
       component.fetch('');
       const req = httpMock.expectOne(r => r.url.includes('/patients/search'));
       req.error(new ErrorEvent('Network error'));
-      expect(component.error).toBe('Erreur chargement patients.');
+      expect(component.error).toBe('Error loading patients.');
       expect(component.loading).toBeFalse();
     });
 
@@ -199,7 +199,7 @@ describe('PatientRecordsComponent', () => {
 
     xit('doit afficher "Jamais" si aucun historique', () => {
       component.openForm(JSON.parse(JSON.stringify(mockPatient)));
-      expect(component.derniereVisite).toBe('Jamais');
+      expect(component.derniereVisite).toBe('Never');
     });
 
     it('doit extraire la date de la dernière visite si historique présent', () => {
@@ -459,6 +459,7 @@ describe('PatientRecordsComponent', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body.visitNote).toBe('Bilan annuel');
       req.flush({ medical_historuy: '─── Visite du 01/01/2026 10:00 ───\nNotes : Bilan annuel' });
+      httpMock.expectOne(r => r.url.includes('/patients/search')).flush([]);
     });
 
     it('doit mettre saving=true pendant la requête', () => {
@@ -466,12 +467,14 @@ describe('PatientRecordsComponent', () => {
       expect(component.saving).toBeTrue();
       const req = httpMock.expectOne(r => r.url.includes('/history'));
       req.flush({});
+      httpMock.expectOne(r => r.url.includes('/patients/search')).flush([]);
     });
 
     it('doit afficher saveSuccess=true après succès', () => {
       component.validate();
       const req = httpMock.expectOne(r => r.url.includes('/history'));
       req.flush({ medical_historuy: 'Visite enregistrée' });
+      httpMock.expectOne(r => r.url.includes('/patients/search')).flush([]);
       expect(component.saveSuccess).toBeTrue();
       expect(component.saving).toBeFalse();
     });
@@ -481,6 +484,7 @@ describe('PatientRecordsComponent', () => {
       component.validate();
       const req = httpMock.expectOne(r => r.url.includes('/history'));
       req.flush({ medical_historuy: historique });
+      httpMock.expectOne(r => r.url.includes('/patients/search')).flush([]);
       expect(component.sel!.medicalHistory).toBe(historique);
     });
 
@@ -489,6 +493,7 @@ describe('PatientRecordsComponent', () => {
       component.validate();
       const req = httpMock.expectOne(r => r.url.includes('/history'));
       req.flush({}); // pas de medical_historuy
+      httpMock.expectOne(r => r.url.includes('/patients/search')).flush([]);
       expect(component.sel!.medicalHistory).toContain('Consultation');
     });
 
@@ -496,6 +501,7 @@ describe('PatientRecordsComponent', () => {
       component.validate();
       const req = httpMock.expectOne(r => r.url.includes('/history'));
       req.flush({});
+      httpMock.expectOne(r => r.url.includes('/patients/search')).flush([]);
       expect(component.form.visitNote).toBe('');
       expect(component.form.vaccines).toEqual([]);
     });

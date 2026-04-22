@@ -75,14 +75,21 @@ public class SecurityConfig {
                         // Schedule routes
                         .requestMatchers("/api/doctor/schedules/**").permitAll()
 
+                        // Doctor exceptions routes
+                        .requestMatchers("/api/doctor/exceptions/**").permitAll()
+
                         // Chronic disease routes
                         .requestMatchers("/api/chronic/**").permitAll()
 
                         // Websocket chat
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/ws-chat/**").permitAll()
 
                         // Health goals routes
                         .requestMatchers("/api/health-goals", "/api/health-goals/**").permitAll()
+
+                        // AI Chat (Gemma/Groq)
+                        .requestMatchers("/api/ai-chat/**").permitAll()
 
                         // Notification routes
                         .requestMatchers("/notifications/**").permitAll()

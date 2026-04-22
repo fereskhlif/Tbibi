@@ -27,8 +27,13 @@ public class Medicine {
     float price;
     int stock;
     int minStockAlert;
+    @Builder.Default
     boolean available = true;
     String activeIngredient;
+
+    @Builder.Default
+    @Column(name = "quantity", columnDefinition = "integer default 0")
+    int quantity = 0;
 
 
     @ElementCollection

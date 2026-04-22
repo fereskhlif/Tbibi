@@ -1,0 +1,87 @@
+<div class="statistics-container">
+  <div class="header">
+    <h1>📊 Patient Laboratory Statistics</h1>
+    <p>Overview of test results by patient</p>
+  </div>
+
+  <div class="summary-cards">
+    <div class="card total">
+      <div class="card-icon">🧪</div>
+      <div class="card-content">
+        <h3>Total Tests</h3>
+        <p class="card-value">{{ getTotalTests() }}</p>
+      </div>
+    </div>
+    
+    <div class="card completed">
+      <div class="card-icon">✅</div>
+      <div class="card-content">
+        <h3>Completed</h3>
+        <p class="card-value">{{ getTotalCompleted() }}</p>
+      </div>
+    </div>
+    
+    <div class="card pending">
+      <div class="card-icon">⏳</div>
+      <div class="card-content">
+        <h3>Pending</h3>
+        <p class="card-value">{{ getTotalPending() }}</p>
+      </div>
+    </div>
+    
+    <div class="card urgent">
+      <div class="card-icon">🚨</div>
+      <div class="card-content">
+        <h3>Urgent</h3>
+        <p class="card-value">{{ getTotalUrgent() }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading statistics...</p>
+  </div>
+
+  <div *ngIf="!isLoading && statistics.length === 0" class="no-data">
+    <p>📭 No patient statistics available</p>
+  </div>
+
+  <div *ngIf="!isLoading && statistics.length > 0" class="statistics-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient Name</th>
+          <th>Email</th>
+          <th>Total Tests</th>
+          <th>Completed</th>
+          <th>Pending</th>
+          <th>Urgent</th>
+          <th>Completion Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let stat of statistics">
+          <td class="patient-name">{{ stat.patientName }}</td>
+          <td class="patient-email">{{ stat.patientEmail }}</td>
+          <td class="text-center">{{ stat.totalTests }}</td>
+          <td class="text-center completed-badge">{{ stat.completedTests }}</td>
+          <td class="text-center pending-badge">{{ stat.pendingTests }}</td>
+          <td class="text-center urgent-badge">{{ stat.urgentTests }}</td>
+          <td class="text-center">
+            <div class="completion-rate">
+              <div class="rate-bar">
+                <div 
+                  class="rate-fill" 
+                  [style.width.%]="stat.completionRate"
+                  [style.background-color]="getCompletionColor(stat.completionRate)">
+                </div>
+              </div>
+              <span class="rate-text">{{ stat.completionRate }}%</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

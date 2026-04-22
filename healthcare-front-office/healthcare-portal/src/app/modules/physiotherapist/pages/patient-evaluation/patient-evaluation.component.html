@@ -1,0 +1,233 @@
+<div class="evaluation-container">
+  <div class="header">
+    <div>
+      <h1>📋 Évaluation des Patients</h1>
+      <p class="subtitle">Fiches d'évaluation initiale et suivi</p>
+    </div>
+    <button (click)="openCreateModal()" class="btn btn-primary">
+      ➕ Nouvelle Évaluation
+    </button>
+  </div>
+
+  <!-- Recherche -->
+  <div class="search-section">
+    <div class="search-group">
+      <label>🔍 Rechercher</label>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (ngModelChange)="onFilterChange()"
+        placeholder="Nom du patient ou articulation..."
+        class="search-input">
+    </div>
+  </div>
+
+  <!-- Liste des évaluations -->
+  <div class="evaluations-grid">
+    <div *ngIf="filteredEvaluations.length === 0" class="no-evaluations">
+      <p>Aucune évaluation trouvée</p>
+    </div>
+
+    <div *ngFor="let evaluation of filteredEvaluations" class="evaluation-card">
+      <div class="evaluation-header">
+        <div>
+          <h3>{{ evaluation.patientName }}</h3>
+          <p class="evaluation-date">📅 {{ evaluation.evaluationDate | date: 'dd/MM/yyyy' }}</p>
+        </div>
+        <div [class]="'pain-badge ' + getPainLevelClass(evaluation.painScale)">
+          {{ evaluation.painScale }}/10
+        </div>
+      </div>
+
+      <div class="evaluation-info">
+        <div class="info-row">
+          <span class="info-label">🦴 Articulation:</span>
+          <span class="info-value">{{ evaluation.jointLocation }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">😖 Douleur:</span>
+          <span class="info-value">{{ getPainLevelText(evaluation.painScale) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">↗️ Flexion:</span>
+          <span class="info-value">{{ evaluation.flexionDegrees }}°</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">↘️ Extension:</span>
+          <span class="info-value">{{ evaluation.extensionDegrees }}°</span>
+        </div>
+      </div>
+
+      <div class="evaluation-description">
+        <strong>Description de la douleur:</strong>
+        <p>{{ evaluation.painDescription }}</p>
+      </div>
+
+      <div class="evaluation-actions">
+        <button (click)="openDetailModal(evaluation)" class="btn btn-info">
+          👁️ Détails
+        </button>
+        <button (click)="deleteEvaluation(evaluation.evaluationId!)" class="btn btn-danger">
+          🗑️ Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Créer -->
+  <div *ngIf="showCreateModal" class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>➕ Nouvelle Évaluation Patient</h2>
+        <button (click)="closeCreateModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Patient *</label>
+            <select [(ngModel)]="newEvaluation.patientId" class="form-control" required>
+              <option [value]="0">Sélectionner un patient</option>
+              <option *ngFor="let patient of patients" [value]="patient.userId">
+                {{ patient.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Date d'Évaluation *</label>
+            <input type="date" [(ngModel)]="newEvaluation.evaluationDate" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Articulation Concernée *</label>
+            <input type="text" [(ngModel)]="newEvaluation.jointLocation" class="form-control" 
+                   placeholder="Ex: Genou droit, Épaule gauche" required>
+          </div>
+
+          <div class="form-group">
+            <label>Échelle de Douleur (0-10) * : {{ newEvaluation.painScale }}</label>
+            <input type="range" [(ngModel)]="newEvaluation.painScale" 
+                   min="0" max="10" class="pain-slider" required>
+            <div class="pain-scale-labels">
+              <span>0 - Aucune</span>
+              <span>5 - Modérée</span>
+              <span>10 - Extrême</span>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Description de la Douleur *</label>
+            <textarea [(ngModel)]="newEvaluation.painDescription" class="form-control" rows="3"
+                      placeholder="Décrivez la nature, localisation et circonstances de la douleur..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Flexion (degrés) *</label>
+            <input type="number" [(ngModel)]="newEvaluation.flexionDegrees" class="form-control" 
+                   min="0" max="180" placeholder="0-180°" required>
+          </div>
+
+          <div class="form-group">
+            <label>Extension (degrés) *</label>
+            <input type="number" [(ngModel)]="newEvaluation.extensionDegrees" class="form-control" 
+                   min="0" max="180" placeholder="0-180°" required>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Limitations Fonctionnelles *</label>
+            <textarea [(ngModel)]="newEvaluation.functionalLimitations" class="form-control" rows="3"
+                      placeholder="Décrivez les activités limitées (marche, montée d'escaliers, etc.)..." required></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Observations Générales</label>
+            <textarea [(ngModel)]="newEvaluation.generalObservations" class="form-control" rows="2"
+                      placeholder="Observations cliniques additionnelles..."></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Objectifs de Traitement</label>
+            <textarea [(ngModel)]="newEvaluation.treatmentGoals" class="form-control" rows="2"
+                      placeholder="Objectifs thérapeutiques à court et long terme..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeCreateModal()" class="btn btn-secondary">
+          Annuler
+        </button>
+        <button (click)="createEvaluation()" class="btn btn-primary">
+          ✅ Créer l'Évaluation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Détails -->
+  <div *ngIf="showDetailModal && selectedEvaluation" class="modal-overlay" (click)="closeDetailModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📋 Détails de l'Évaluation</h2>
+        <button (click)="closeDetailModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-section">
+          <h3>{{ selectedEvaluation.patientName }}</h3>
+          <p class="text-sm">{{ selectedEvaluation.patientEmail }}</p>
+          <p class="text-sm">📅 {{ selectedEvaluation.evaluationDate | date: 'dd/MM/yyyy' }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>🦴 Articulation</h4>
+          <p>{{ selectedEvaluation.jointLocation }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>😖 Évaluation de la Douleur</h4>
+          <div [class]="'pain-badge large ' + getPainLevelClass(selectedEvaluation.painScale)">
+            {{ selectedEvaluation.painScale }}/10 - {{ getPainLevelText(selectedEvaluation.painScale) }}
+          </div>
+          <p class="mt-2">{{ selectedEvaluation.painDescription }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>📐 Amplitude Articulaire</h4>
+          <div class="amplitude-grid">
+            <div class="amplitude-item">
+              <span class="amplitude-label">Flexion</span>
+              <span class="amplitude-value">{{ selectedEvaluation.flexionDegrees }}°</span>
+            </div>
+            <div class="amplitude-item">
+              <span class="amplitude-label">Extension</span>
+              <span class="amplitude-value">{{ selectedEvaluation.extensionDegrees }}°</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>🚶 Limitations Fonctionnelles</h4>
+          <p class="whitespace-pre-line">{{ selectedEvaluation.functionalLimitations }}</p>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedEvaluation.generalObservations">
+          <h4>👁️ Observations Générales</h4>
+          <p class="whitespace-pre-line">{{ selectedEvaluation.generalObservations }}</p>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedEvaluation.treatmentGoals">
+          <h4>🎯 Objectifs de Traitement</h4>
+          <p class="whitespace-pre-line">{{ selectedEvaluation.treatmentGoals }}</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeDetailModal()" class="btn btn-secondary">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

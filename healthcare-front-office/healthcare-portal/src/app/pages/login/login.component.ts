@@ -270,6 +270,10 @@ export class LoginComponent {
           } else {
             localStorage.setItem('userId', "0");
           }
+          // Store user name
+          if (response.name) {
+            localStorage.setItem('UserName', response.name);
+          }
 
           // Redirection
           const routes: Record<string, string> = {

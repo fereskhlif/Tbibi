@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import tn.esprit.pi.tbibi.DTO.PatientReportDTO;
 import tn.esprit.pi.tbibi.DTO.PrescriptionRequest;
 import tn.esprit.pi.tbibi.DTO.PrescriptionResponse;
 import tn.esprit.pi.tbibi.entities.Acte;
@@ -17,7 +18,9 @@ import tn.esprit.pi.tbibi.repositories.UserRepo;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j  // ← AJOUTER CETTE ANNOTATION
@@ -29,6 +32,9 @@ public class PrescriptionService implements IPrescriptionService {
     private final Prescription_Mapper mapper;
     private final ActeRepo acteRepository;
     private final UserRepo userRepository;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
+
     @Override
     public PrescriptionResponse add(PrescriptionRequest request) {
         log.info("=== ADD PRESCRIPTION ===");
@@ -43,6 +49,9 @@ public class PrescriptionService implements IPrescriptionService {
 
             Prescription saved = repository.save(prescr);
             log.info("Prescription sauvegardée avec ID: {}", saved.getPrescriptionID());
+
+            // Send immediate email if expiration is within 7 days
+            checkAndSendImmediateAlert(saved);
 
             return mapper.toDto(saved);
         } catch (Exception e) {
@@ -61,6 +70,11 @@ public class PrescriptionService implements IPrescriptionService {
         Prescription updated = mapper.toEntity(prescription);
         updated.setPrescriptionID(existing.getPrescriptionID());
 
+        // Preserve relationships
+        updated.setActe(existing.getActe());
+        updated.setMedicines(existing.getMedicines());
+        updated.setTreatments(existing.getTreatments());
+
         // Preserve status unless explicitly provided
         updated.setStatus(
                 prescription.getStatus() != null ? prescription.getStatus() : existing.getStatus()
@@ -69,6 +83,8 @@ public class PrescriptionService implements IPrescriptionService {
 
         Prescription saved = repository.save(updated);
         log.info("Prescription mise à jour avec ID: {}", saved.getPrescriptionID());
+
+        checkAndSendImmediateAlert(saved);
 
         return mapper.toDto(saved);
     }
@@ -125,11 +141,33 @@ public class PrescriptionService implements IPrescriptionService {
     }
 
 
-    // AJOUTER cette méthode privée pour retrouver le patient via MedicalReccords
+    // ── Trouver le patient via l'acte ──────────────────────────────────────────
     private User findPatientByActe(Acte acte) {
-        if (acte == null || acte.getMedicalFile() == null) return null;
-        int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
-        return userRepository.findPatientByMedicalFileId(medicalFileId).orElse(null);
+        if (acte == null) {
+            log.warn("[findPatientByActe] acte is null");
+            return null;
+        }
+
+        // PRIMARY: direct SQL join (bypasses lazy loading — works for ALL patients)
+        User patient = userRepository.findPatientByActeId(acte.getActeId()).orElse(null);
+        if (patient != null) {
+            log.info("[findPatientByActe] Found patient '{}' ({}) via direct acte join",
+                    patient.getName(), patient.getEmail());
+            return patient;
+        }
+
+        // FALLBACK: via MedicalFile (may fail if lazy-loaded relationship is null)
+        if (acte.getMedicalFile() != null) {
+            int medicalFileId = acte.getMedicalFile().getMedicalfile_id();
+            patient = userRepository.findPatientByMedicalFileId(medicalFileId).orElse(null);
+            if (patient != null) {
+                log.info("[findPatientByActe] Found patient '{}' via medicalFile fallback", patient.getEmail());
+                return patient;
+            }
+        }
+
+        log.warn("[findPatientByActe] No patient found for acteId={}", acte.getActeId());
+        return null;
     }
 
     // AJOUTER cette méthode privée pour enrichir le DTO avec les infos patient
@@ -144,6 +182,7 @@ public class PrescriptionService implements IPrescriptionService {
     }
 
     @Override
+    @jakarta.transaction.Transactional
     public PrescriptionResponse assignActe(int prescriptionId, int acteId) {
         log.info("=== ASSIGN ACTE {} TO PRESCRIPTION {} ===", acteId, prescriptionId);
 
@@ -157,6 +196,8 @@ public class PrescriptionService implements IPrescriptionService {
         Prescription saved = repository.save(existing);
         log.info("Acte {} assigné à la prescription {}", acteId, prescriptionId);
 
+        checkAndSendImmediateAlert(saved);
+
         return enrichWithPatient(mapper.toDto(saved), saved);
     }
     @Override
@@ -165,6 +206,46 @@ public class PrescriptionService implements IPrescriptionService {
         Prescription prescr = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
         return enrichWithPatient(mapper.toDto(prescr), prescr);
+    }
+
+    private void checkAndSendImmediateAlert(Prescription prescription) {
+        if (prescription.getExpirationDate() == null) return;
+
+        java.time.LocalDate expDate = prescription.getExpirationDate().toInstant()
+                .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        long daysRemaining = java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), expDate);
+
+        // Send immediately for any expiration within 7 days
+        if (daysRemaining >= 0 && daysRemaining <= 7) {
+            User patient = findPatientByActe(prescription.getActe());
+            if (patient != null && patient.getEmail() != null) {
+                String email = patient.getEmail();
+                String name = patient.getName();
+                String medNames = prescription.getMedicines() != null && !prescription.getMedicines().isEmpty()
+                        ? prescription.getMedicines().stream().map(m -> m.getMedicineName()).collect(Collectors.joining(", "))
+                        : "votre traitement";
+                try {
+                    String msg;
+                    if (daysRemaining == 0) {
+                        msg = "🛑 Votre prescription (" + medNames + ") expire aujourd'hui. Contactez votre médecin pour la suite.";
+                    } else if (daysRemaining <= 3) {
+                        msg = "⚠️ Alerte J-" + daysRemaining + " : Votre prescription (" + medNames
+                                + ") expire dans " + daysRemaining + " jour(s). Vous pouvez demander un renouvellement directement sur l'application Tbibi.";
+                    } else {
+                        // 4–7 days
+                        msg = "📋 Votre nouvelle prescription (" + medNames
+                                + ") expire dans " + daysRemaining + " jour(s). Pensez à renouveler votre ordonnance à temps.";
+                    }
+                    emailService.sendPrescriptionAlertMessage(email, name, msg);
+                    log.info("[IMMEDIATE ALERT] J-{} email sent to {} for prescription #{}",
+                            daysRemaining, email, prescription.getPrescriptionID());
+                } catch (Exception e) {
+                    log.error("[IMMEDIATE ALERT] Failed to send email to {}: {}", email, e.getMessage(), e);
+                }
+            } else {
+                log.warn("[IMMEDIATE ALERT] No patient/email found for prescription #{}", prescription.getPrescriptionID());
+            }
+        }
     }
 
     // ── Enrichissement médecin ─────────────────────────────────────────────────
@@ -248,5 +329,198 @@ public class PrescriptionService implements IPrescriptionService {
 
         log.info("Prescriptions d'analyse trouvées: {}", result.size());
         return result;
+    }
+
+    @Override
+    @jakarta.transaction.Transactional
+    public PrescriptionResponse renewPrescription(int id) {
+        log.info("=== RENEW PRESCRIPTION ID: {} ===", id);
+
+        Prescription existing = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
+
+        Prescription renewal = new Prescription();
+        renewal.setActe(existing.getActe());
+        
+        // Copy medicines
+        if (existing.getMedicines() != null) {
+            renewal.setMedicines(new ArrayList<>(existing.getMedicines()));
+        }
+
+        renewal.setDate(new Date());
+        renewal.setStatus(PrescriptionStatus.PENDING);
+        renewal.setStatusUpdatedAt(new Date());
+        
+        // Let Doctor define new duration
+        renewal.setExpirationDate(null);
+        
+        String oldNote = existing.getNote() != null ? existing.getNote() : "";
+        renewal.setNote("🔄 RENEWAL REQUEST - " + oldNote);
+
+        Prescription saved = repository.save(renewal);
+        log.info("Renewal request created as Prescription ID: {}", saved.getPrescriptionID());
+
+        // EMIT NOTIFICATION TO THE DOCTOR
+        User patient = findPatientByActe(existing.getActe());
+        String patientName = patient != null ? patient.getName() : "Unknown Patient";
+        Integer doctorId = existing.getActe() != null ? existing.getActe().getDoctorId() : null;
+
+        log.info("[RENEWAL NOTIF] prescriptionId={}, acte={}, doctorId={}, patientName={}",
+                existing.getPrescriptionID(),
+                existing.getActe() != null ? existing.getActe().getActeId() : "NULL",
+                doctorId, patientName);
+
+        String medNames = existing.getMedicines() != null && !existing.getMedicines().isEmpty()
+                ? existing.getMedicines().stream().map(m -> m.getMedicineName()).collect(Collectors.joining(", "))
+                : "the prescription";
+        String title = patientName + "'s Renewal Request";
+        String content = "The patient wishes to renew: " + medNames + " (Prescription #" + existing.getPrescriptionID() + ")";
+
+        java.util.List<User> doctorsToNotify = new java.util.ArrayList<>();
+        if (doctorId != null) {
+            userRepository.findById(doctorId).ifPresent(doctorsToNotify::add);
+        }
+
+        // Fallback: if no doctorId on acte, notify ALL doctors in the system
+        if (doctorsToNotify.isEmpty()) {
+            log.warn("[RENEWAL NOTIF] No doctorId on acte — falling back to notifying all doctors");
+            doctorsToNotify.addAll(userRepository.findAllDoctors());
+        }
+
+        log.info("[RENEWAL NOTIF] Will notify {} doctor(s)", doctorsToNotify.size());
+
+        for (User doctor : doctorsToNotify) {
+            tn.esprit.pi.tbibi.entities.Notification notif = new tn.esprit.pi.tbibi.entities.Notification();
+            notif.setRecipient(doctor);
+            notif.setDoctor(doctor);
+            notif.setMessage(title + "||" + content);
+            notif.setType(tn.esprit.pi.tbibi.entities.NotificationType.PRESCRIPTION_RENEWAL);
+            notif.setRedirectUrl("/doctor/prescriptions/" + saved.getPrescriptionID());
+            notif.setRead(false);
+            notif.setCreatedDate(java.time.LocalDateTime.now());
+            notificationService.saveAndBroadcast(notif);
+            log.info("[RENEWAL NOTIF] Notification saved and broadcast to doctorId={} ({})", doctor.getUserId(), doctor.getName());
+        }
+        return enrichWithPatient(mapper.toDto(saved), saved);
+    }
+
+    /**
+     * Generates a complete medical report for a patient:
+     * prescription history enriched with medicines, stats, and monthly breakdown.
+     */
+    @jakarta.transaction.Transactional
+    public PatientReportDTO getPatientReport(Integer patientId) {
+        log.info("=== GENERATE PATIENT REPORT — patientId: {} ===", patientId);
+
+        User patient = userRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found: " + patientId));
+
+        // Collect all prescriptions via MedicalFiles → Actes → Prescriptions
+        List<Prescription> all = new ArrayList<>();
+        if (patient.getMedicalFiles() != null) {
+            for (MedicalReccords mf : patient.getMedicalFiles()) {
+                if (mf.getActes() == null) continue;
+                for (Acte acte : mf.getActes()) {
+                    if (acte.getPrescriptions() == null) continue;
+                    all.addAll(acte.getPrescriptions());
+                }
+            }
+        }
+
+        // Sort by date descending
+        all.sort((a, b) -> {
+            if (a.getDate() == null) return 1;
+            if (b.getDate() == null) return -1;
+            return b.getDate().compareTo(a.getDate());
+        });
+
+        // Build enriched DTO list
+        List<PrescriptionResponse> rxList = all.stream()
+            .map(p -> {
+                PrescriptionResponse dto = mapper.toDto(p);
+                dto.setPatientId(patient.getUserId());
+                dto.setPatientName(patient.getName());
+                dto.setPatientEmail(patient.getEmail());
+                enrichWithDoctor(dto, p);
+
+                // Map medicines manually for the dto
+                if (p.getMedicines() != null) {
+                    List<PrescriptionResponse.MedicineInfo> infos = p.getMedicines().stream()
+                        .map(m -> PrescriptionResponse.MedicineInfo.builder()
+                            .medicineId(m.getMedicineId())
+                            .medicineName(m.getMedicineName())
+                            .quantity(m.getQuantity())
+                            .dosage(m.getDosage())
+                            .activeIngredient(m.getActiveIngredient())
+                            .build())
+                        .collect(Collectors.toList());
+                    dto.setMedicines(infos);
+                } else {
+                    dto.setMedicines(java.util.Collections.emptyList());
+                }
+
+                return dto;
+            })
+            .collect(Collectors.toList());
+
+        // Statistics by status
+        long active     = all.stream().filter(p -> PrescriptionStatus.VALIDATED.equals(p.getStatus())).count();
+        long expired    = all.stream().filter(p -> PrescriptionStatus.COMPLETED.equals(p.getStatus())).count();
+        long cancelled  = all.stream().filter(p -> PrescriptionStatus.CANCELLED.equals(p.getStatus())).count();
+        long pending    = all.stream().filter(p -> PrescriptionStatus.PENDING.equals(p.getStatus())).count();
+        long dispensed  = all.stream().filter(p -> PrescriptionStatus.DISPENSED.equals(p.getStatus())).count();
+
+        // Medicine frequency count
+        Map<String, long[]> medMap = new java.util.HashMap<>();
+        for (Prescription p : all) {
+            if (p.getMedicines() == null) continue;
+            for (tn.esprit.pi.tbibi.entities.Medicine m : p.getMedicines()) {
+                String name = m.getMedicineName() != null ? m.getMedicineName() : "Unknown";
+                medMap.computeIfAbsent(name, k -> new long[]{0})[0]++;
+            }
+        }
+
+        List<PatientReportDTO.MedicineFrequency> topMeds = medMap.entrySet().stream()
+            .map(e -> PatientReportDTO.MedicineFrequency.builder()
+                .medicineName(e.getKey())
+                .count((int) e.getValue()[0])
+                .build())
+            .sorted((a, b) -> Long.compare(b.getCount(), a.getCount()))
+            .limit(10)
+            .collect(Collectors.toList());
+
+        long totalMeds = all.stream()
+            .mapToLong(p -> p.getMedicines() != null ? p.getMedicines().size() : 0L)
+            .sum();
+
+        // Monthly breakdown for timeline chart
+        Map<String, Long> perMonth = all.stream()
+            .filter(p -> p.getDate() != null)
+            .collect(Collectors.groupingBy(
+                p -> {
+                    java.time.LocalDate d = p.getDate().toInstant()
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                    return String.format("%04d-%02d", d.getYear(), d.getMonthValue());
+                },
+                LinkedHashMap::new,
+                Collectors.counting()
+            ));
+
+        return PatientReportDTO.builder()
+            .patientId(patient.getUserId())
+            .patientName(patient.getName())
+            .patientEmail(patient.getEmail())
+            .totalPrescriptions(all.size())
+            .activePrescriptions((int) active)
+            .expiredPrescriptions((int) expired)
+            .cancelledPrescriptions((int) cancelled)
+            .pendingPrescriptions((int) pending)
+            .dispensedPrescriptions((int) dispensed)
+            .totalMedicinesEverPrescribed((int) totalMeds)
+            .uniqueMedicinesCount(medMap.size())
+            .topMedicines(topMeds)
+            .prescriptions(rxList)
+            .prescriptionsPerMonth(perMonth)
+            .build();
     }
 }

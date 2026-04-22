@@ -5,10 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.DTO.ScheduleRequest;
 import tn.esprit.pi.tbibi.DTO.ScheduleResponse;
+import tn.esprit.pi.tbibi.DTO.WorkScheduleRequest;
 import tn.esprit.pi.tbibi.services.ScheduleService;
 
 import java.time.LocalDate;
@@ -21,7 +21,43 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    /** Create a schedule slot */
+    // ─── Generate year-round slots from work template ────────────────────────────
+
+    /**
+     * Generate slots for the rest of the current year based on a work template.
+     * Respects rest days, recurring daily blocks, and existing date-specific exceptions.
+     */
+    @PostMapping("/generate")
+    public ResponseEntity<List<ScheduleResponse>> generateSlots(
+            @RequestBody WorkScheduleRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(scheduleService.generateYearSlots(request));
+    }
+
+    /**
+     * Delete all unbooked (available) slots for a doctor.
+     * Used before re-generating the schedule.
+     */
+    @DeleteMapping("/doctor/{doctorId}/available")
+    public ResponseEntity<Void> clearAvailableSlots(@PathVariable Integer doctorId) {
+        scheduleService.clearAvailableSlots(doctorId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Delete all unbooked (available) slots for a doctor on a specific date.
+     */
+    @DeleteMapping("/doctor/{doctorId}/available/date/{date}")
+    public ResponseEntity<Void> clearAvailableSlotsByDate(
+            @PathVariable Integer doctorId,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        scheduleService.clearAvailableSlotsByDate(doctorId, date);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ─── Existing CRUD endpoints ─────────────────────────────────────────────────
+
+    /** Create a single schedule slot */
     @PostMapping
     public ResponseEntity<ScheduleResponse> create(@Valid @RequestBody ScheduleRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(scheduleService.create(request));
@@ -58,7 +94,6 @@ public class ScheduleController {
 
     /** Update a schedule slot (DOCTOR only) */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ScheduleResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody ScheduleRequest request) {
@@ -67,7 +102,6 @@ public class ScheduleController {
 
     /** Delete a schedule slot (DOCTOR only) */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         scheduleService.delete(id);
         return ResponseEntity.noContent().build();

@@ -29,6 +29,7 @@ public class Prescription {
     private List<Medicine> medicines;
 
     private Date date;
+    private Date expirationDate;
     private String note;
 
     @Enumerated(EnumType.STRING)

@@ -40,7 +40,7 @@
             <button (click)="router.navigate(['/patient/cart'])"
                 class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors relative h-[40px] w-[40px] flex items-center justify-center">
                 <lucide-icon name="shopping-cart" [size]="20"></lucide-icon>
-                
+
                 <!-- Bouncing Badge when items exist -->
                 <span *ngIf="(cartService.cartItems$ | async)?.length! > 0"
                       class="absolute top-1 right-1 w-4 h-4 bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full shadow-md border-2 border-white ring-2 ring-blue-500/30 transition-all select-none pointer-events-none">
@@ -52,14 +52,14 @@
           <div *ngIf="role === 'patient'" class="h-8 w-px bg-gray-200 mx-1"></div>
 
           <!-- Notification Bell -->
-          <div class="relative cursor-pointer hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center" 
-               style="width: 42px; height: 42px;" 
+          <div class="relative cursor-pointer hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
+               style="width: 42px; height: 42px;"
                [class.animate-pulse-glow]="(notificationService.unreadCount$ | async)! > 0"
                (click)="showNotifications = !showNotifications; $event.stopPropagation()">
-            
+
             <lucide-icon name="bell" class="w-6 h-6 text-gray-700"
               [class.animate-bell-bounce]="justReceivedNotification"></lucide-icon>
-            
+
             <!-- Unread Badge -->
             <span *ngIf="(notificationService.unreadCount$ | async)! > 0"
               class="bg-red-500 text-white font-bold flex items-center justify-center rounded-full shadow-sm"
@@ -69,9 +69,9 @@
             </span>
 
             <!-- Notification Dropdown -->
-            <div *ngIf="showNotifications" class="absolute bg-white rounded-xl shadow-xl border border-gray-100 z-50 animate-fade-in overflow-hidden" 
+            <div *ngIf="showNotifications" class="absolute bg-white rounded-xl shadow-xl border border-gray-100 z-50 animate-fade-in overflow-hidden"
                  style="width: 360px; max-width: 90vw; right: 0; top: 100%; margin-top: 8px;" (click)="$event.stopPropagation()">
-              
+
               <!-- Header -->
               <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 flex-shrink-0">
                 <h3 class="font-bold text-[15px] text-gray-900">Notifications</h3>
@@ -86,7 +86,7 @@
               <div class="overflow-y-auto" style="max-height: 320px; min-height: 100px;">
                 <div class="p-2">
                   <ng-container *ngIf="(notificationService.notifications$ | async) as notifications">
-                    
+
                     <!-- Empty State -->
                     <div *ngIf="notifications.length === 0" class="py-12 text-center">
                       <lucide-icon name="bell" [size]="32" class="text-gray-200 mx-auto mb-3"></lucide-icon>
@@ -94,11 +94,11 @@
                     </div>
 
                     <!-- Notification Items -->
-                    <div *ngFor="let n of notifications" 
+                    <div *ngFor="let n of notifications"
                       (click)="onNotificationClick(n)"
                       class="flex items-start gap-3 p-3 mb-1 cursor-pointer rounded-lg transition-colors"
                       [ngClass]="n.isRead ? 'hover:bg-gray-100 bg-white' : 'bg-blue-50/60 hover:bg-blue-100'">
-                      
+
                       <!-- Icon -->
                       <div class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
                         [ngClass]="n.type === 'FORUM' ? 'bg-purple-100 text-purple-600' : n.type === 'ORDER' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'">
@@ -133,7 +133,7 @@
                   <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                 </svg>
               </div>
-              <span class="text-sm font-medium text-gray-700">Dr. Karim Benali</span>
+              <span class="text-sm font-medium text-gray-700">{{ currentUserName }}</span>
               <svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
@@ -142,20 +142,20 @@
             <!-- Dropdown Menu -->
             <div *ngIf="showProfileDropdown" class="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in" (click)="$event.stopPropagation()">
               <div class="px-4 py-3 border-b border-gray-100 mb-1">
-                <p class="text-sm font-medium text-gray-900">Dr. Karim Benali</p>
+                <p class="text-sm font-medium text-gray-900">{{ currentUserName }}</p>
                 <p class="text-xs text-gray-500 truncate capitalize">{{role}} Account</p>
               </div>
-              
+
               <button (click)="navigateTo('profile'); showProfileDropdown = false" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
                 <lucide-icon name="user" [size]="16" class="text-gray-400"></lucide-icon> View Profile
               </button>
-              
+
               <button (click)="router.navigate(['/patient/forum/my-posts']); showProfileDropdown = false" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
                 <lucide-icon name="message-square" [size]="16" class="text-gray-400"></lucide-icon> My Posts
               </button>
-              
+
               <div class="h-px bg-gray-100 my-1"></div>
-              
+
               <button (click)="logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
                 <lucide-icon name="log-out" [size]="16" class="text-red-500"></lucide-icon> Logout
               </button>

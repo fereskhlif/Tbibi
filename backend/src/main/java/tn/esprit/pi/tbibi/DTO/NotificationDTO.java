@@ -26,4 +26,9 @@ public class NotificationDTO {
 
     // Doctor
     private int doctorId;
+
+    // Generic Notification properties
+    private String type;
+    private String title;
+    private Integer prescriptionId;
 }

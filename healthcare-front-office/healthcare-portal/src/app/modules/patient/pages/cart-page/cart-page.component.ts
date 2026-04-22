@@ -25,13 +25,7 @@ export class CartPageComponent implements OnInit {
   }
 
   continueShopping(): void {
-    // Use the first item's pharmacy ID to go back to the catalog if possible
-    const currentPharmacyId = this.cartService.getPharmacyId();
-    if (currentPharmacyId && currentPharmacyId !== 0) {
-      this.router.navigate(['/patient/pharmacy', currentPharmacyId, 'medicines']);
-    } else {
-      this.router.navigate(['/patient/pharmacy-list']);
-    }
+    this.router.navigate(['/patient/medicine-catalog']);
   }
 
   clearCart(): void {

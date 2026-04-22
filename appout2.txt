@@ -1,0 +1,6 @@
+﻿appointment_id	user_user_id	doctor	status_appointement	patient_name
+10	2	Dr. abdeljaouad abdeljaouad	PENDING	firas abdeljaouad
+9	3	Dr abdeljaouad abdeljaouad	PENDING	firas abdeljaouad
+8	3	Dr abdeljaouad abdeljaouad	PENDING	firas abdeljaouad
+7	3	Dr abdeljaouad abdeljaouad	PENDING	karim
+6	3	Dr abdeljaouad abdeljaouad	CONFIRMED	youssef

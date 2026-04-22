@@ -46,3 +46,10 @@ tsc_output_patient.txt
 *-out.txt
 test-*.txt
 build*.txt
+v e n v /  
+
+# AI Models & Data
+Modele_prescription/
+*.pkl
+*.json
+*.csv

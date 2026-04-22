@@ -55,7 +55,7 @@ public class VerificationService {
             pending.remove(verificationId);
             throw new IllegalArgumentException("Verification code expired");
         }
-        if (!pv.code.equals(code)) {
+        if (code == null || !pv.code.equals(code.trim())) {
             throw new IllegalArgumentException("Invalid verification code");
         }
         pending.remove(verificationId);

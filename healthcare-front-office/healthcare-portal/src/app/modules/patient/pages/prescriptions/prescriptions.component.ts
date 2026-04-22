@@ -23,6 +23,8 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
 
   showActeModal = false;
   acteForRx: ActeDTO | null = null;
+  
+  renewalsRequested = new Set<number>();
 
 
   // ── Filter / sort ─────────────────────────────────────────────────────────
@@ -144,6 +146,68 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
       return this.sortDesc ? timeB - timeA : timeA - timeB;
     });
     return list;
+  }
+
+  getTrackingCards(rx: PrescriptionResponse): any[] {
+    const cards: any[] = [];
+    if (!rx.expirationDate || rx.status === 'CANCELLED') return cards;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const expDate = new Date(rx.expirationDate);
+    expDate.setHours(0, 0, 0, 0);
+
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    let type = '';
+    let msg = '';
+    let color = '';
+    let bgLabel = '';
+
+    if (diffDays > 3) {
+      type = 'GREEN';
+      msg = `You have ${diffDays} days of treatment remaining.`;
+      color = 'border-green-200 bg-green-50 text-green-800';
+      bgLabel = 'bg-green-100 text-green-700';
+    } else if (diffDays <= 3 && diffDays > 0) {
+      type = 'ORANGE';
+      msg = `You have ${diffDays} days left. Remember to see the doctor.`;
+      color = 'border-orange-200 bg-orange-50 text-orange-800';
+      bgLabel = 'bg-orange-100 text-orange-700';
+    } else {
+      type = 'RED';
+      msg = 'Expired! Do not take this medication without consulting a doctor.';
+      color = 'border-red-200 bg-red-50 text-red-800';
+      bgLabel = 'bg-red-100 text-red-700';
+    }
+
+    cards.push({
+      rxId: rx.prescriptionID,
+      medicineName: 'Prescription Tracking',
+      daysLeft: diffDays,
+      type: type,
+      message: msg,
+      color: color,
+      bgLabel: bgLabel
+    });
+    
+    return cards;
+  }
+
+  requestRenewal(rxId: number, event: Event): void {
+    event.stopPropagation();
+    if (this.renewalsRequested.has(rxId)) return;
+
+    this.prescriptionService.renewPrescription(rxId).subscribe({
+      next: () => {
+        this.renewalsRequested.add(rxId);
+        // Refresh after a short delay
+        setTimeout(() => this.loadAll(), 2000);
+      },
+      error: () => alert('Erreur lors de la demande de renouvellement')
+    });
   }
 
   countByStatus(s: PrescriptionStatus): number {

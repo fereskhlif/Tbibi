@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { UserService, UserProfileDTO } from '../../../../services/user.service';
 
 @Component({
   selector: 'app-pharmacist-profile',
@@ -29,7 +30,7 @@ import { Component } from '@angular/core';
             </div>
 
             <div class="px-8 text-center flex-col flex flex-1">
-              <h2 class="text-2xl font-black text-gray-900 tracking-tight">Dr. Karim Benali</h2>
+              <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ profile?.name || currentUserName }}</h2>
 
               <div class="mt-2 mb-3 inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 rounded-full mx-auto">
                 <lucide-icon name="shield-check" [size]="14" class="text-blue-600"></lucide-icon>
@@ -40,16 +41,16 @@ import { Component } from '@angular/core';
 
               <div class="mt-5 space-y-3 mb-8">
                 <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
-                  <lucide-icon name="briefcase" [size]="16" class="text-gray-400"></lucide-icon>
-                  <span class="font-medium">10 years experience</span>
-                </div>
-                <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
                   <lucide-icon name="mail" [size]="16" class="text-gray-400"></lucide-icon>
-                  <span class="font-medium">karim.benali&#64;medipharm.tn</span>
+                  <span class="font-medium">{{ profile?.email || '...' }}</span>
                 </div>
-                <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
-                  <lucide-icon name="phone" [size]="16" class="text-gray-400"></lucide-icon>
-                  <span class="font-medium">+216 71 234 567</span>
+                <div class="flex items-center justify-center gap-2 text-sm text-gray-500" *ngIf="profile?.adresse">
+                  <lucide-icon name="map-pin" [size]="16" class="text-gray-400"></lucide-icon>
+                  <span class="font-medium">{{ profile?.adresse }}</span>
+                </div>
+                <div class="flex items-center justify-center gap-2 text-sm text-gray-500" *ngIf="profile?.gender">
+                  <lucide-icon name="user" [size]="16" class="text-gray-400"></lucide-icon>
+                  <span class="font-medium capitalize">{{ profile?.gender }}</span>
                 </div>
               </div>
 
@@ -275,4 +276,22 @@ import { Component } from '@angular/core';
     </div>
   `
 })
-export class PharmacistProfileComponent { }
+export class PharmacistProfileComponent implements OnInit {
+  currentUserName: string = '';
+  profile: UserProfileDTO | null = null;
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit(): void {
+    this.currentUserName = localStorage.getItem('UserName') || '';
+    this.userService.getProfile().subscribe({
+      next: (data) => {
+        this.profile = data;
+        this.currentUserName = data.name;
+      },
+      error: () => {
+        if (!this.currentUserName) this.currentUserName = 'User';
+      }
+    });
+  }
+}

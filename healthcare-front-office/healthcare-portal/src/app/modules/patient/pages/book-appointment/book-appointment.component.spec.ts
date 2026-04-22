@@ -33,10 +33,9 @@ describe('BookAppointmentComponent', () => {
     fixture = TestBed.createComponent(BookAppointmentComponent);
     component = fixture.componentInstance;
     
-    // Mock localStorage
     spyOn(localStorage, 'getItem').and.callFake((key: string) => {
-      if (key === 'name') return 'John Doe';
-      if (key === 'email') return 'john@example.com';
+      if (key === 'UserName') return 'John Doe';
+      if (key === 'EmailUserConnect') return 'john@example.com';
       if (key === 'userId') return '1';
       return null;
     });
@@ -78,8 +77,8 @@ describe('BookAppointmentComponent', () => {
 
       expect(component.currentStep).toBe(1);
       expect(component.patientName).toBe('John Doe');
-      expect(component.patientEmail).toBe('john@example.com');
-      expect(localStorage.getItem).toHaveBeenCalledWith('name');
+      expect(localStorage.getItem).toHaveBeenCalledWith('UserName');
+      expect(localStorage.getItem).toHaveBeenCalledWith('EmailUserConnect');
     });
   });
 
