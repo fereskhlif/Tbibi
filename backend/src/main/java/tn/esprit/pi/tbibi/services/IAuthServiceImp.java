@@ -135,6 +135,37 @@ public class IAuthServiceImp implements IAuthService {
             }
         }
 
+        // Sauvegarder le profil s'il existe
+        String profilePicturePath = null;
+        if (req.profilePictureBase64() != null && !req.profilePictureBase64().isBlank() &&
+                req.profilePictureName() != null && !req.profilePictureName().isBlank()) {
+            try {
+                java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/documents");
+                if (!java.nio.file.Files.exists(uploadDir)) {
+                    java.nio.file.Files.createDirectories(uploadDir);
+                }
+                String extension = "";
+                int extIndex = req.profilePictureName().lastIndexOf('.');
+                if (extIndex > 0) {
+                    extension = req.profilePictureName().substring(extIndex);
+                }
+                String uniqueFilename = "profile_" + java.util.UUID.randomUUID().toString() + extension;
+                java.nio.file.Path targetPath = uploadDir.resolve(uniqueFilename);
+
+                String base64Data = req.profilePictureBase64();
+                if (base64Data.contains(",")) {
+                    base64Data = base64Data.split(",")[1];
+                }
+                byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Data);
+                java.nio.file.Files.write(targetPath, decodedBytes);
+
+                profilePicturePath = "uploads/documents/" + uniqueFilename;
+                log.info("Profile picture saved successfully: {}", profilePicturePath);
+            } catch (Exception e) {
+                log.error("Failed to save profile picture for user {}", req.email(), e);
+            }
+        }
+
         // Créer l'utilisateur avec le builder
         User.UserBuilder userBuilder = User.builder()
                 .name(req.name() == null ? "Not Available" : req.name())
@@ -148,7 +179,8 @@ public class IAuthServiceImp implements IAuthService {
                 .accountStatus(status)
                 .enabled(true)
                 .phoneNumber(req.phone())
-                .profilePicture(documentPath);
+                .professionalDocument(documentPath)
+                .profilePicture(profilePicturePath);
 
         if (roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS")
                 || roleNameUpper.equals("PHARMACIST")) {

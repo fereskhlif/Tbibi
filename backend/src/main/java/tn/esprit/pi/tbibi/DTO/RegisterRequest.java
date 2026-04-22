@@ -22,5 +22,7 @@ public record RegisterRequest(
         @Size(max = 150, message = "Invalid pharmacy name") @Pattern(regexp = "^[a-zA-ZÀ-ÿ0-9\\s'\\-]{0,150}$", message = "Invalid pharmacy name") String pharmacyName,
 
         @Size(max = 200, message = "Invalid pharmacy address") @Pattern(regexp = "^[a-zA-ZÀ-ÿ0-9\\s,.'\\-]{0,200}$", message = "Invalid pharmacy address") String pharmacyAddress,
-        @NotBlank(message = "Invalid phone number") String phone) {
+        @NotBlank(message = "Invalid phone number") String phone,
+        String profilePictureBase64,
+        String profilePictureName) {
 }

@@ -37,6 +37,7 @@ export class RegisterComponent {
       email: this.email,
       password: this.password,
       roleName: this.selectedRole,
+      phone: '', // Added to fix TS2741 compilation error
       documentName: this.uploadedDocument || undefined
     };
 

@@ -40,22 +40,24 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
             </div>
           </div>
 
-          <!-- Bouton Changer photo via label -->
-          <label
+          <!-- Bouton Changer photo via button explicite -->
+          <button
+            type="button"
+            (click)="fileInput.click()"
             class="mt-2 inline-flex items-center justify-center px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+            [disabled]="uploadingPic"
             [class.opacity-50]="uploadingPic"
             [class.cursor-not-allowed]="uploadingPic"
           >
             {{ uploadingPic ? 'Envoi...' : 'Changer la photo' }}
-            <input
-              type="file"
-              accept="image/*"
-              class="hidden"
-              style="display: none;"
-              (change)="onFileSelected($event)"
-              [disabled]="uploadingPic"
-            />
-          </label>
+          </button>
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            class="hidden"
+            (change)="onFileSelected($event)"
+          />
 
           <h2 class="text-xl font-bold text-gray-900 mt-4">{{ userProfile?.name || 'Inconnu' }}</h2>
           <p class="text-gray-500 mt-1 uppercase text-sm font-semibold tracking-wide">{{ userProfile?.roleName }}</p>
@@ -127,9 +129,6 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
 })
 export class ProfileComponent implements OnInit {
 
-  // ✅ ViewChild pour accéder directement à l'input fichier
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-
   private readonly API_BASE = 'http://localhost:8088';
 
   userProfile: UserProfileDTO | null = null;
@@ -147,11 +146,6 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProfile();
-  }
-
-  // ✅ Méthode appelée par le bouton — ouvre l'explorateur de fichiers
-  triggerFileInput(): void {
-    this.fileInput.nativeElement.click();
   }
 
   loadProfile(): void {

@@ -25,12 +25,26 @@ export class LoginComponent {
   pharmacyAddress = '';
   
   countries = COUNTRIES;
-  selectedCountry = this.countries[0];
+  selectedCountry = this.countries.find(c => c.name === 'Tunisia') || this.countries[0];
   phoneNumber = '';
   isCountryDropdownOpen = false;
+  searchCountryQuery = '';
+
+  get filteredCountries(): Country[] {
+    if (!this.searchCountryQuery) {
+      return this.countries;
+    }
+    const query = this.searchCountryQuery.toLowerCase();
+    return this.countries.filter(c => 
+      c.name.toLowerCase().startsWith(query) || 
+      c.dialCode.includes(query)
+    );
+  }
 
   uploadedDocument: string | null = null;
   uploadedDocumentBase64: string | null = null;
+  uploadedProfilePhoto: string | null = null;
+  uploadedProfilePhotoBase64: string | null = null;
   isLoading = false;
   errorMessage = '';
   fieldErrors: { [key: string]: string } = {};
@@ -93,6 +107,9 @@ export class LoginComponent {
 
   toggleCountryDropdown(): void {
     this.isCountryDropdownOpen = !this.isCountryDropdownOpen;
+    if (this.isCountryDropdownOpen) {
+      this.searchCountryQuery = '';
+    }
   }
 
   isProfessionalRole(): boolean {
@@ -121,6 +138,19 @@ export class LoginComponent {
       const reader = new FileReader();
       reader.onload = () => {
         this.uploadedDocumentBase64 = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  handleProfilePhotoUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      this.uploadedProfilePhoto = file.name;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.uploadedProfilePhotoBase64 = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -231,6 +261,11 @@ export class LoginComponent {
       if (this.isProfessionalRole() && this.uploadedDocumentBase64) {
         registerData.documentBase64 = this.uploadedDocumentBase64;
         registerData.documentName = this.uploadedDocument;
+      }
+
+      if (this.uploadedProfilePhotoBase64) {
+        registerData.profilePictureBase64 = this.uploadedProfilePhotoBase64;
+        registerData.profilePictureName = this.uploadedProfilePhoto;
       }
 
       console.log('Sending registration data:', registerData);
@@ -387,6 +422,8 @@ export class LoginComponent {
     this.selectedRole = '';
     this.uploadedDocument = null;
     this.uploadedDocumentBase64 = null;
+    this.uploadedProfilePhoto = null;
+    this.uploadedProfilePhotoBase64 = null;
     this.errorMessage = '';
     this.fieldErrors = {};
   }
