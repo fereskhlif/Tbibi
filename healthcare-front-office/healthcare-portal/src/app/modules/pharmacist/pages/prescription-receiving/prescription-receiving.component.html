@@ -162,8 +162,8 @@
         <div style="display:flex;align-items:center;gap:.75rem;">
           <span class="px-3 py-1.5 rounded-full text-sm font-bold shadow-sm"
             style="background:white;"
-            [style.color]="STATUS_META[detailRx.status].color">
-            {{STATUS_META[detailRx.status].icon}} {{STATUS_META[detailRx.status].label}}
+            [style.color]="STATUS_META[detailRx.status]?.color">
+            {{STATUS_META[detailRx.status]?.icon}} {{STATUS_META[detailRx.status]?.label}}
           </span>
           <button (click)="closeDetail()"
             style="background:rgba(255,255,255,.2);border:none;cursor:pointer;padding:.4rem .55rem;border-radius:8px;color:white;font-size:1.1rem;">✕</button>

@@ -37,7 +37,7 @@ export class RegisterComponent {
       email: this.email,
       password: this.password,
       roleName: this.selectedRole,
-      medicalLicense: this.uploadedDocument || undefined  // 👈 Maintenant ça fonctionne
+      documentName: this.uploadedDocument || undefined
     };
 
     this.authService.register(registerData).subscribe({

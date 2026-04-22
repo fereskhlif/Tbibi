@@ -238,9 +238,6 @@ export class MedicationManagementComponent implements OnInit {
           activeIngredient: result.activeIngredient || '',
           category: result.category || ''
         });
-<<<<<<< Updated upstream
-        // Keep fields enabled so pharmacist can correct the scan result
-=======
 
         // Enable ALL scan fields first so user can fill any the OCR missed
         this.medicineForm.get('medicineName')?.enable();
@@ -265,7 +262,6 @@ export class MedicationManagementComponent implements OnInit {
         if (result.category) {
           this.medicineForm.get('category')?.disable();
         }
->>>>>>> Stashed changes
         this.scannedForm = result.form || '';
         this.scannedActiveIngredient = result.activeIngredient || '';
       },
@@ -391,17 +387,11 @@ export class MedicationManagementComponent implements OnInit {
     });
     this.medicineForm.markAsUntouched();
     this.medicineForm.markAsPristine();
-<<<<<<< Updated upstream
-
-    // In scan mode, disable name/dosage/form/activeIngredient until scan
-    this.lockScanFields();
-=======
     this.medicineForm.get('medicineName')?.disable();
     this.medicineForm.get('dosage')?.disable();
     this.medicineForm.get('form')?.disable();
     this.medicineForm.get('activeIngredient')?.disable();
     this.medicineForm.get('category')?.disable();
->>>>>>> Stashed changes
 
     setTimeout(() => {
       const modal = document.querySelector('.overflow-y-auto');

@@ -17,9 +17,9 @@ export interface UserProfileDTO {
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = 'http://localhost:8088/user';
+  private apiUrl = 'http://localhost:8088/api/user';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   private getHeaders(): HttpHeaders {
     let token = localStorage.getItem('TokenUserConnect');
