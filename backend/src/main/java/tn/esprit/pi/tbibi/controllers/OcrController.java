@@ -12,13 +12,10 @@ import tn.esprit.pi.tbibi.services.OcrService;
 
 @RestController
 @RequestMapping("/api/ocr")
-<<<<<<< Updated upstream
-@RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
-=======
+
 @AllArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
->>>>>>> Stashed changes
+
 public class OcrController {
 
     final OcrService ocrService;

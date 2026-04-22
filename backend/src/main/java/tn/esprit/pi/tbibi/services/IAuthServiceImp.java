@@ -50,31 +50,9 @@ public class IAuthServiceImp implements IAuthService {
         log.info("=== REGISTRATION ATTEMPT ===");
         log.info("Email: {}", req.email());
 
-        // Validation de l'email
-        if (req.email() == null || req.email().isBlank()) {
-            throw new IllegalArgumentException("Email required");
-        }
-
         // Vérifier si l'email existe déjà
         if (userRepository.findByEmail(req.email()).isPresent()) {
             throw new IllegalArgumentException("Email already used");
-        }
-
-        // Validation du mot de passe
-        if (req.password() == null || req.password().length() < 8) {
-            throw new IllegalArgumentException("Password must contain at least 8 characters");
-        }
-        if (!req.password().matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("Password must contain at least one uppercase letter");
-        }
-        if (!req.password().matches(".*[a-z].*")) {
-            throw new IllegalArgumentException("Password must contain at least one lowercase letter");
-        }
-        if (!req.password().matches(".*\\d.*")) {
-            throw new IllegalArgumentException("Password must contain at least one number");
-        }
-        if (!req.password().matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
-            throw new IllegalArgumentException("Password must contain at least one special character");
         }
 
         // Validation du rôle
@@ -102,26 +80,29 @@ public class IAuthServiceImp implements IAuthService {
 
         // Déterminer le statut selon le rôle et valider le document
         tn.esprit.pi.tbibi.entities.UserStatus status = tn.esprit.pi.tbibi.entities.UserStatus.ACTIVE;
-        boolean isProfessional = roleNameUpper.equals("MEDECIN") || roleNameUpper.equals("DOCTEUR") || roleNameUpper.equals("DOCTOR") ||
-            roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS") || roleNameUpper.equals("PHARMACIST") ||
-            roleNameUpper.equals("LABORATOIRE") || roleNameUpper.equals("LABORATORY") || 
-            roleNameUpper.equals("KINE") || roleNameUpper.equals("PHYSIOTHERAPIST");
+        boolean isProfessional = roleNameUpper.equals("MEDECIN") || roleNameUpper.equals("DOCTEUR")
+                || roleNameUpper.equals("DOCTOR") ||
+                roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS")
+                || roleNameUpper.equals("PHARMACIST") ||
+                roleNameUpper.equals("LABORATOIRE") || roleNameUpper.equals("LABORATORY") ||
+                roleNameUpper.equals("KINE") || roleNameUpper.equals("PHYSIOTHERAPIST");
 
         if (isProfessional) {
             status = tn.esprit.pi.tbibi.entities.UserStatus.PENDING;
-            
+
             // Validation stricte du document pour les professionnels
-            if (req.documentBase64() == null || req.documentBase64().isBlank() || 
-                req.documentName() == null || req.documentName().isBlank()) {
-                throw new IllegalArgumentException("Un diplôme ou certificat est obligatoire pour les professionnels de santé.");
+            if (req.documentBase64() == null || req.documentBase64().isBlank() ||
+                    req.documentName() == null || req.documentName().isBlank()) {
+                throw new IllegalArgumentException(
+                        "Un diplôme ou certificat est obligatoire pour les professionnels de santé.");
             }
         }
 
         // Sauvegarder le document s'il existe
         String documentPath = null;
-        if (req.documentBase64() != null && !req.documentBase64().isBlank() && 
-            req.documentName() != null && !req.documentName().isBlank()) {
-            
+        if (req.documentBase64() != null && !req.documentBase64().isBlank() &&
+                req.documentName() != null && !req.documentName().isBlank()) {
+
             try {
                 // S'assurer que le dossier existe
                 java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/documents");
@@ -143,10 +124,10 @@ public class IAuthServiceImp implements IAuthService {
                 if (base64Data.contains(",")) {
                     base64Data = base64Data.split(",")[1];
                 }
-                
+
                 byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Data);
                 java.nio.file.Files.write(targetPath, decodedBytes);
-                
+
                 documentPath = uniqueFilename;
                 log.info("Document saved successfully: {}", documentPath);
             } catch (Exception e) {
@@ -166,28 +147,30 @@ public class IAuthServiceImp implements IAuthService {
                 .role(role)
                 .accountStatus(status)
                 .enabled(true)
+                .phoneNumber(req.phone())
                 .profilePicture(documentPath);
 
-        if (roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS") || roleNameUpper.equals("PHARMACIST")) {
+        if (roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS")
+                || roleNameUpper.equals("PHARMACIST")) {
             if (req.pharmacyName() == null || req.pharmacyName().isBlank()) {
                 throw new IllegalArgumentException("Pharmacy name is required for pharmacists");
             }
             if (req.pharmacyAddress() == null || req.pharmacyAddress().isBlank()) {
                 throw new IllegalArgumentException("Pharmacy address is required for pharmacists");
             }
-            if (req.pharmacyPhone() == null || req.pharmacyPhone().isBlank()) {
-                throw new IllegalArgumentException("Pharmacy phone is required for pharmacists");
+            if (req.phone() == null || req.phone().isBlank()) {
+                throw new IllegalArgumentException("Phone number is required");
             }
-            if (!req.pharmacyPhone().trim().matches("\\d+")) {
-                throw new IllegalArgumentException("Pharmacy phone must contain only numbers");
+            if (!req.phone().trim().matches("^\\+\\d+$")) {
+                throw new IllegalArgumentException("Phone number must start with a '+' and contain only numbers");
             }
 
             Pharmacy pharmacy = new Pharmacy();
             pharmacy.setPharmacyName(req.pharmacyName());
             pharmacy.setPharmacyAddress(req.pharmacyAddress());
-            pharmacy.setPharmacyPhone(req.pharmacyPhone().trim());
+            pharmacy.setPharmacyPhone(req.phone().trim());
             Pharmacy savedPharmacy = pharmacyRepository.save(pharmacy);
-            
+
             userBuilder.pharmacy(savedPharmacy);
         }
 
@@ -265,13 +248,12 @@ public class IAuthServiceImp implements IAuthService {
     @Override
     public AuthResponse login(LoginRequest req) {
         log.info("=== LOGIN ATTEMPT ===");
-        log.info("Email: {}", req.email());
+        log.info("Email: {}", req.email().replaceAll("[\n\r]", "_"));
 
         try {
             // Authentifier l'utilisateur
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(req.email(), req.password())
-            );
+                    new UsernamePasswordAuthenticationToken(req.email(), req.password()));
 
             // Charger les détails de l'utilisateur
             UserDetails userDetails = userDetailsService.loadUserByUsername(req.email());
@@ -296,17 +278,15 @@ public class IAuthServiceImp implements IAuthService {
 
             log.info("Login successful for user: {}, role: {}", req.email(), role);
 
-<<<<<<< Updated upstream
-            return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId(), user.getName());
-=======
+            // FIXED - includes name
             Long pharmacyId = (user.getPharmacy() != null) ? user.getPharmacy().getPharmacyId() : null;
-
-            return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId(), pharmacyId);
->>>>>>> Stashed changes
+            return new AuthResponse(token, userDetails.getUsername(), role, user.getUserId(), user.getName(),
+                    pharmacyId);
 
         } catch (org.springframework.security.authentication.DisabledException e) {
             log.error("Login disabled for user {}: account not activated or approved yet.", req.email());
-            throw new IllegalStateException("Your account is not activated. Please check your email to confirm, or wait for admin approval.");
+            throw new IllegalStateException(
+                    "Your account is not activated. Please check your email to confirm, or wait for admin approval.");
         } catch (Exception e) {
             log.error("Login failed for user {}: {}", req.email(), e.getMessage());
             throw new RuntimeException("Bad credentials");
@@ -337,10 +317,11 @@ public class IAuthServiceImp implements IAuthService {
         tokenRepository.save(token);
 
         // Send reset email
-        // Note: The frontend route for resetting password might be different, 
-        // using the environment's base URL for frontend or hardcoding for now as it's typically localhost:4200
+        // Note: The frontend route for resetting password might be different,
+        // using the environment's base URL for frontend or hardcoding for now as it's
+        // typically localhost:4200
         String resetLink = "http://localhost:4200/reset-password?token=" + resetToken;
-        
+
         emailService.sendPasswordResetEmail(user.getEmail(), user.getName(), resetLink);
         log.info("Password reset email sent to {}", email);
     }

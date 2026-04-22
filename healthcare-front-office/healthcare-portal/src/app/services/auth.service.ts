@@ -3,23 +3,22 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// Interface pour l'inscription - correspond au backend
 export interface RegisterRequest {
   name: string;
   email: string;
   password?: string;
-  roleName: string;        // ⚠️ Changé de 'role' à 'roleName' pour correspondre au backend
-  medicalLicense?: string; // Optionnel pour les professionnels
+  roleName: string;
+  documentBase64?: string;
+  documentName?: string;
   dateOfBirth?: string;
   gender?: string;
   adresse?: string;
-  specialty?: string;      // Spécialité pour les médecins (DOCTEUR)
+  specialty?: string;
   pharmacyName?: string;
   pharmacyAddress?: string;
-  pharmacyPhone?: string;
+  phone: string;
 }
 
-// Interface pour la connexion
 export interface LoginRequest {
   email: string;
   password: string;
@@ -30,11 +29,8 @@ export interface AuthResponse {
   email: string;
   role: string;
   userId?: number;
-<<<<<<< Updated upstream
-  name?: string;
-=======
+  name: string;
   pharmacyId?: number;
->>>>>>> Stashed changes
 }
 
 @Injectable({
@@ -45,7 +41,7 @@ export class AuthService {
   constructor(private http: HttpClient) { }
 
   register(req: RegisterRequest): Observable<string> {
-    console.log('Register request:', req); // Pour debug
+    console.log('Register request:', req);
     return this.http.post<string>(
       `${environment.baseUrl}/auth/register`,
       req,
@@ -54,7 +50,7 @@ export class AuthService {
   }
 
   login(req: LoginRequest): Observable<AuthResponse> {
-    console.log('Login request:', req); // Pour debug
+    console.log('Login request:', req);
     return this.http.post<AuthResponse>(
       `${environment.baseUrl}/auth/login`,
       req

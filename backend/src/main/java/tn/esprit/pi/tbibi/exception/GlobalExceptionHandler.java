@@ -23,7 +23,8 @@ public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgu
     ex.getBindingResult().getAllErrors().forEach((error) -> {
         String fieldName = ((FieldError) error).getField();
         String errorMessage = error.getDefaultMessage();
-        errors.put(fieldName, errorMessage);
+        // Keep only the first error encountered for a cleaner UI
+        errors.putIfAbsent(fieldName, errorMessage);
     });
     return ResponseEntity.badRequest().body(errors);
 }

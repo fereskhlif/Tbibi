@@ -1,12 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthService, AuthResponse, RegisterRequest } from '../../services/auth.service'; // Ajoutez AuthResponse ici
+import { AuthService, AuthResponse, RegisterRequest } from '../../services/auth.service';
+import { COUNTRIES, Country } from '../../shared/utils/countries';
 
-// Mettez à jour le type UserRole pour correspondre aux nouvelles valeurs
 type UserRole = 'PATIENT' | 'DOCTEUR' | 'PHARMASIS' | 'KINE' | 'LABORATORY';
-
-//type UserRole = 'ROLE_PATIENT' | 'ROLE_DOCTOR' | 'ROLE_PHARMACIST' | 'ROLE_PHYSIOTHERAPIST' | 'ROLE_LABORATORY';
 
 @Component({
   selector: 'app-login',
@@ -25,11 +23,17 @@ export class LoginComponent {
   specialty = '';
   pharmacyName = '';
   pharmacyAddress = '';
-  pharmacyPhone = '';
+  
+  countries = COUNTRIES;
+  selectedCountry = this.countries[0];
+  phoneNumber = '';
+  isCountryDropdownOpen = false;
+
   uploadedDocument: string | null = null;
   uploadedDocumentBase64: string | null = null;
   isLoading = false;
   errorMessage = '';
+  fieldErrors: { [key: string]: string } = {};
 
   specialties = [
     'Cardiology',
@@ -55,13 +59,12 @@ export class LoginComponent {
   ];
 
   roles = [
-    { label: 'Patient', value: 'PATIENT', icon: '🧑‍⚕️' },  // Removed ROLE_ prefix
-    { label: 'Doctor', value: 'DOCTEUR', icon: '👨‍⚕️' },  // Changed to DOCTEUR
-    { label: 'Pharmacist', value: 'PHARMASIS', icon: '💊' },    // Changed to PHARMASIS
-    { label: 'Physiotherapist', value: 'KINE', icon: '🏃' },    // Changed to KINE
-    { label: 'Laboratory', value: 'LABORATORY', icon: '🔬' },    // LABORATORY matches
+    { label: 'Patient', value: 'PATIENT', icon: '🧑‍⚕️' },
+    { label: 'Doctor', value: 'DOCTEUR', icon: '👨‍⚕️' },
+    { label: 'Pharmacist', value: 'PHARMASIS', icon: '💊' },
+    { label: 'Physiotherapist', value: 'KINE', icon: '🏃' },
+    { label: 'Laboratory', value: 'LABORATORY', icon: '🔬' },
   ];
-
 
   constructor(
     private authService: AuthService,
@@ -74,10 +77,22 @@ export class LoginComponent {
   toggleMode(): void {
     this.isSignup = !this.isSignup;
     this.errorMessage = '';
+    this.fieldErrors = {};
+    this.isCountryDropdownOpen = false;
   }
 
   selectRole(role: string): void {
     this.selectedRole = role;
+    this.fieldErrors = {};
+  }
+
+  selectCountry(country: Country): void {
+    this.selectedCountry = country;
+    this.isCountryDropdownOpen = false;
+  }
+
+  toggleCountryDropdown(): void {
+    this.isCountryDropdownOpen = !this.isCountryDropdownOpen;
   }
 
   isProfessionalRole(): boolean {
@@ -113,79 +128,82 @@ export class LoginComponent {
 
   handleSubmit(): void {
     this.errorMessage = '';
+    this.fieldErrors = {};
 
     if (this.isSignup) {
-      // Validations
       if (!this.selectedRole) {
         this.errorMessage = 'Please select a role.';
         return;
       }
+
+      let hasFrontendErrors = false;
+
       if (!this.name || !this.name.trim()) {
-        this.errorMessage = 'Full name is required.';
-        return;
+        this.fieldErrors['name'] = 'Invalid name';
+        hasFrontendErrors = true;
       }
-      if (!this.email || !this.password) {
-        this.errorMessage = 'Email and password are required.';
-        return;
+      if (!this.email || !this.email.trim()) {
+        this.fieldErrors['email'] = 'Invalid email';
+        hasFrontendErrors = true;
       }
-      if (this.password.length < 8) {
-        this.errorMessage = 'Password must be at least 8 characters.';
-        return;
+      if (!this.password) {
+        this.fieldErrors['password'] = 'Invalid password';
+        hasFrontendErrors = true;
+      } else {
+        let pwdErrors = [];
+        if (this.password.length < 8) pwdErrors.push('at least 8 characters');
+        if (!/[A-Z]/.test(this.password)) pwdErrors.push('one uppercase');
+        if (!/[a-z]/.test(this.password)) pwdErrors.push('one lowercase');
+        if (!/\d/.test(this.password)) pwdErrors.push('one number');
+        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(this.password)) pwdErrors.push('one special char');
+
+        if (pwdErrors.length > 0) {
+          this.fieldErrors['password'] = 'Invalid password';
+          hasFrontendErrors = true;
+        }
       }
-      if (!/[A-Z]/.test(this.password)) {
-        this.errorMessage = 'Password must contain at least one uppercase letter.';
-        return;
-      }
-      if (!/[a-z]/.test(this.password)) {
-        this.errorMessage = 'Password must contain at least one lowercase letter.';
-        return;
-      }
-      if (!/\d/.test(this.password)) {
-        this.errorMessage = 'Password must contain at least one number.';
-        return;
-      }
-      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(this.password)) {
-        this.errorMessage = 'Password must contain at least one special character.';
-        return;
+
+      if (!this.phoneNumber || !this.phoneNumber.trim()) {
+        this.fieldErrors['phone'] = 'Invalid phone number';
+        hasFrontendErrors = true;
+      } else if (!/^\d+$/.test(this.phoneNumber)) {
+        this.fieldErrors['phone'] = 'Invalid phone number';
+        hasFrontendErrors = true;
       }
 
       if (this.selectedRole === 'PATIENT') {
         if (!this.dateOfBirth) {
-          this.errorMessage = 'Date of birth is required.';
-          return;
+          this.fieldErrors['dateOfBirth'] = 'Invalid date of birth';
+          hasFrontendErrors = true;
         }
         if (!this.gender) {
-          this.errorMessage = 'Gender is required.';
-          return;
+          this.fieldErrors['gender'] = 'Invalid gender';
+          hasFrontendErrors = true;
         }
         if (!this.adresse || !this.adresse.trim()) {
-          this.errorMessage = 'Address is required.';
-          return;
+          this.fieldErrors['adresse'] = 'Invalid address';
+          hasFrontendErrors = true;
         }
       }
 
       if (this.isProfessionalRole() && !this.uploadedDocumentBase64) {
         this.errorMessage = 'Vous devez obligatoirement télécharger votre diplôme ou certificat.';
-        return;
+        hasFrontendErrors = true;
       }
 
       if (this.selectedRole === 'PHARMASIS') {
         if (!this.pharmacyName || !this.pharmacyName.trim()) {
-          this.errorMessage = 'Pharmacy Name is required for pharmacists.';
-          return;
+          this.fieldErrors['pharmacyName'] = 'Invalid pharmacy name';
+          hasFrontendErrors = true;
         }
         if (!this.pharmacyAddress || !this.pharmacyAddress.trim()) {
-          this.errorMessage = 'Pharmacy Address is required for pharmacists.';
-          return;
+          this.fieldErrors['pharmacyAddress'] = 'Invalid pharmacy address';
+          hasFrontendErrors = true;
         }
-        if (!this.pharmacyPhone || !this.pharmacyPhone.trim()) {
-          this.errorMessage = 'Pharmacy Phone Number is required for pharmacists.';
-          return;
-        }
-        if (!/^\d+$/.test(this.pharmacyPhone)) {
-          this.errorMessage = 'Pharmacy Phone Number must contain only numbers.';
-          return;
-        }
+      }
+
+      if (hasFrontendErrors) {
+        return;
       }
 
       this.isLoading = true;
@@ -194,6 +212,7 @@ export class LoginComponent {
         name: this.name,
         email: this.email,
         password: this.password,
+        phone: this.selectedCountry.dialCode + this.phoneNumber,
         roleName: this.selectedRole as string,
         ...(this.selectedRole === 'PATIENT' && {
           dateOfBirth: this.dateOfBirth,
@@ -205,8 +224,7 @@ export class LoginComponent {
         }),
         ...(this.selectedRole === 'PHARMASIS' && {
           pharmacyName: this.pharmacyName,
-          pharmacyAddress: this.pharmacyAddress,
-          pharmacyPhone: this.pharmacyPhone
+          pharmacyAddress: this.pharmacyAddress
         })
       };
 
@@ -221,35 +239,45 @@ export class LoginComponent {
         next: (response: any) => {
           this.isLoading = false;
           console.log('Registration successful:', response);
-
           alert('Registration successful! Please log in.');
-
-          // Reset form and switch to login mode
           this.isSignup = false;
           this.selectedRole = '';
           this.password = '';
           this.name = '';
           this.uploadedDocument = null;
-          // Email is preserved for convenience
+          this.fieldErrors = {};
         },
         error: (error: HttpErrorResponse) => {
           this.isLoading = false;
+          this.fieldErrors = {};
           console.error('Registration error:', error);
 
           if (error.status === 409) {
-            // Email already exists - offer to login
             const wantsToLogin = confirm(
               `The email "${this.email}" is already registered.\n\nWould you like to login instead?`
             );
-
             if (wantsToLogin) {
-              // Switch to login mode with email preserved
               this.isSignup = false;
               this.errorMessage = '';
             } else {
-              // Clear email for new registration
               this.email = '';
               this.errorMessage = 'Please use a different email address.';
+            }
+          } else if (error.status === 400) {
+            let parsedError = error.error;
+            if (typeof error.error === 'string') {
+              try {
+                parsedError = JSON.parse(error.error);
+              } catch (e) {
+                // Not JSON string, keep as is
+              }
+            }
+
+            if (parsedError && typeof parsedError === 'object') {
+              // field-level validation errors from backend e.g. {"email": "...", "name": "..."}
+              this.fieldErrors = parsedError;
+            } else {
+              this.errorMessage = typeof error.error === 'string' ? error.error : 'Registration failed. Please try again.';
             }
           } else {
             const errorMsg = typeof error.error === 'string' ? error.error : error.error?.message;
@@ -259,7 +287,6 @@ export class LoginComponent {
       });
 
     } else {
-      // LOGIN MODE
       if (!this.email || !this.password) {
         this.errorMessage = 'Email and password are required.';
         return;
@@ -275,12 +302,10 @@ export class LoginComponent {
           this.isLoading = false;
           console.log('✅ Login successful:', response);
 
-          // Décoder le token pour vérifier l'email
           try {
             const parts = response.token.split('.');
             const payload = JSON.parse(atob(parts[1]));
             console.log('📦 Token payload:', payload);
-
             if (!payload.sub || !payload.sub.includes('@')) {
               console.error('❌ Email invalide dans le token!');
             }
@@ -288,26 +313,18 @@ export class LoginComponent {
             console.error('❌ Erreur décodage token');
           }
 
-          // Stocker
           localStorage.setItem('TokenUserConnect', response.token);
           localStorage.setItem('EmailUserConnect', response.email);
           localStorage.setItem('RoleUserConnect', response.role);
-          if (response.userId) {
-            localStorage.setItem('userId', response.userId.toString());
-          } else {
-            localStorage.setItem('userId', "0");
-          }
-<<<<<<< Updated upstream
-          // Store user name
+          localStorage.setItem('userId', response.userId ? response.userId.toString() : '0');
+
           if (response.name) {
             localStorage.setItem('UserName', response.name);
-=======
+          }
           if (response.pharmacyId) {
             localStorage.setItem('pharmacyId', response.pharmacyId.toString());
->>>>>>> Stashed changes
           }
 
-          // Redirection
           const routes: Record<string, string> = {
             'PATIENT': '/patient',
             'ROLE_PATIENT': '/patient',
@@ -327,7 +344,6 @@ export class LoginComponent {
             'ROLE_ADMIN': '/admin/dashboard'
           };
 
-          // Clean up the role name
           const roleKey = response.role ? response.role.toUpperCase().trim() : '';
           const destination = routes[roleKey] || '/';
           console.log(`Routing role '${roleKey}' to -> ${destination}`);
@@ -348,7 +364,6 @@ export class LoginComponent {
     }
   }
 
-  // Utility method to check token expiration
   private isTokenExpired(token: string): boolean {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -357,7 +372,7 @@ export class LoginComponent {
       return true;
     }
   }
-  // Méthode pour réinitialiser le formulaire
+
   resetForm(): void {
     this.email = '';
     this.password = '';
@@ -368,10 +383,11 @@ export class LoginComponent {
     this.specialty = '';
     this.pharmacyName = '';
     this.pharmacyAddress = '';
-    this.pharmacyPhone = '';
+    this.phoneNumber = '';
     this.selectedRole = '';
     this.uploadedDocument = null;
     this.uploadedDocumentBase64 = null;
     this.errorMessage = '';
+    this.fieldErrors = {};
   }
 }
