@@ -43,6 +43,13 @@ public class ChronicConditionController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Delete ALL readings for a patient (called from patient's "Clear History") */
+    @DeleteMapping("/patient/{patientId}")
+    public ResponseEntity<Void> deleteByPatient(@PathVariable Integer patientId) {
+        service.deleteByPatient(patientId);
+        return ResponseEntity.noContent().build();
+    }
+
     /** All readings for a specific patient */
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<ChronicConditionResponse>> byPatient(@PathVariable Integer patientId) {
@@ -117,5 +124,25 @@ public class ChronicConditionController {
             return ResponseEntity.status(500).body("Error sending email: " + e.getMessage());
         }
         return ResponseEntity.ok("Email sent successfully");
+    }
+
+    // ── JPQL Endpoint ─────────────────────────────────────────────────────────────
+    /**
+     * Patient health summary per doctor (JPQL JOIN grouping)
+     */
+    @GetMapping("/doctor/{doctorId}/health-summary")
+    public ResponseEntity<List<Map<String, Object>>> getHealthSummary(@PathVariable Integer doctorId) {
+        return ResponseEntity.ok(service.getPatientHealthSummary(doctorId));
+    }
+
+    // ── Keyword Query Endpoint ────────────────────────────────────────────────────
+    /**
+     * Recent critical alerts for a specific doctor (Keyword query logic)
+     */
+    @GetMapping("/doctor/{doctorId}/recent-critical")
+    public ResponseEntity<List<ChronicConditionResponse>> getRecentCritical(
+            @PathVariable Integer doctorId,
+            @RequestParam(defaultValue = "24") int hours) {
+        return ResponseEntity.ok(service.getRecentCritical(doctorId, hours));
     }
 }

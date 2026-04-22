@@ -18,6 +18,7 @@ import { DoctorAllAppointmentsComponent } from './pages/all-appointments/all-app
 import { ManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
 import { SharedModule } from '../../shared/shared.module';
 import { DoctorChatComponent } from './pages/doctor-chat/doctor-chat.component';
+import { RiskSegmentationComponent } from './pages/risk-segmentation/risk-segmentation.component';
 
 @NgModule({
     declarations: [
@@ -26,7 +27,8 @@ import { DoctorChatComponent } from './pages/doctor-chat/doctor-chat.component';
         AiImageAnalysisComponent, ChronicDiseaseComponent, CriticalAlertsComponent,
         DoctorLabResultsComponent, DoctorNotificationsComponent,
         DoctorAllAppointmentsComponent, ManageSchedulesComponent,
-        DoctorChatComponent
+        DoctorChatComponent,
+        RiskSegmentationComponent
     ],
     imports: [CommonModule, FormsModule, HttpClientModule, DoctorRoutingModule, SharedModule]
 })

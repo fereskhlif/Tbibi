@@ -9,8 +9,11 @@ import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
+import { DoctorAnalyticsComponent } from './pages/doctor-analytics/doctor-analytics.component';
+
 const routes: Routes = [
   { path: '', component: HomepageComponent },
+  { path: 'doctor-analytics', component: DoctorAnalyticsComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: LoginComponent, data: { signupMode: true } },
   { path: 'forgot-password', component: ForgotPasswordComponent },

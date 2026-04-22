@@ -57,7 +57,33 @@ import {
         </div>
         <div class="divide-y divide-gray-100">
           <div *ngFor="let apt of myAppointments"
-            class="p-6 hover:bg-gray-50 transition-all hover:shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+            class="p-6 hover:bg-gray-50 transition-all hover:shadow-md flex flex-col gap-4">
+
+            <!-- Reschedule Alert -->
+            <div *ngIf="apt.statusAppointement === 'RESCHEDULED_PENDING'"
+              class="bg-amber-50 border border-amber-200 rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-pulse">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">⚠️</span>
+                <div>
+                  <h4 class="font-bold text-amber-900">Dr. {{apt.doctor}} a proposé un nouvel horaire</h4>
+                  <p class="text-sm text-amber-800">Veuillez accepter cet horaire ou choisir un autre créneau.</p>
+                </div>
+              </div>
+              <div class="flex gap-2 w-full md:w-auto">
+                <button (click)="acceptReschedule(apt)"
+                  [disabled]="actionLoading === apt.appointmentId"
+                  class="flex-1 md:flex-none px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50">
+                  ✅ Accepter
+                </button>
+                <button (click)="startChooseNewSlot(apt)"
+                  [disabled]="actionLoading === apt.appointmentId"
+                  class="flex-1 md:flex-none px-4 py-2 bg-amber-600 text-black rounded-lg text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-50">
+                  🔄 Autre créneau
+                </button>
+              </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
             <!-- Date block -->
             <div class="flex items-start gap-4">
@@ -102,6 +128,7 @@ import {
                 class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors disabled:opacity-50">
                 {{actionLoading === apt.appointmentId ? '...' : '🗑️ Delete'}}
               </button>
+            </div>
             </div>
           </div>
 
@@ -253,7 +280,7 @@ import {
                 </button>
               </div>
 
-              <div *ngIf="!loadingSchedules && scheduleSlots.length > 0" class="space-y-6">
+              <div *ngIf="!loadingSchedules && scheduleSlots.length > 0" class="space-y-6 ">
                 <!-- Date Header -->
                 <div class="flex items-center justify-between px-2">
                   <span class="font-bold text-gray-700 text-base">{{getCurrentMonthYear()}}</span>
@@ -261,37 +288,41 @@ import {
                     <button
                       (click)="prevDatePage()"
                       [disabled]="datePageStartIndex === 0"
-                      class="p-1 rounded-full text-gray-400 transition-colors"
-                      [class.hover:bg-gray-100]="datePageStartIndex > 0"
-                      [class.opacity-30]="datePageStartIndex === 0">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                      class="px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors"
+                      [class.bg-white]="datePageStartIndex > 0"
+                      [class.text-gray-700]="datePageStartIndex > 0"
+                      [class.hover:bg-gray-50]="datePageStartIndex > 0"
+                      [class.bg-gray-100]="datePageStartIndex === 0"
+                      [class.text-gray-400]="datePageStartIndex === 0"
+                      [class.opacity-50]="datePageStartIndex === 0">
+                      &larr; Précédent
                     </button>
                     <button
                       (click)="nextDatePage()"
-                      [disabled]="datePageStartIndex + 7 >= groupedSlots.length"
-                      class="p-1 rounded-full text-gray-400 transition-colors"
-                      [class.hover:bg-gray-100]="datePageStartIndex + 7 < groupedSlots.length"
-                      [class.opacity-30]="datePageStartIndex + 7 >= groupedSlots.length">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                      class="px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors bg-white text-gray-700 hover:bg-gray-50">
+                      Suivant &rarr;
                     </button>
                   </div>
                 </div>
 
                 <!-- Horizontal Date Picker -->
-                <div class="flex gap-2.5 overflow-x-auto pb-4 px-1 scrollbar-hide">
-                  <button *ngFor="let group of paginatedGroupedSlots"
-                    (click)="selectDate(group.date)"
-                    [class.bg-blue-600]="selectedDate === group.date"
-                    [class.text-white]="selectedDate === group.date"
-                    [class.border-blue-600]="selectedDate === group.date"
-                    [class.shadow-md]="selectedDate === group.date"
-                    [class.bg-gray-50]="selectedDate !== group.date"
-                    [class.text-gray-700]="selectedDate !== group.date"
-                    [class.border-transparent]="selectedDate !== group.date"
-                    class="flex-shrink-0 w-20 py-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center hover:border-blue-300">
-                    <span class="text-[11px] font-medium uppercase opacity-80 mb-0.5">{{getDayName(group.date)}}</span>
-                    <span class="text-xl font-bold">{{getDay(group.date)}}</span>
-                    <span class="text-[11px] font-medium uppercase opacity-80 mt-0.5">{{getMonth(group.date)}}</span>
+                <div class="flex gap-1.5 w-full">
+                  <button *ngFor="let day of visibleDays"
+                    (click)="day.hasSlots ? selectDate(day.date) : null"
+                    [disabled]="!day.hasSlots"
+                    [class.bg-blue-600]="selectedDate === day.date && day.hasSlots"
+                    [class.text-white]="selectedDate === day.date && day.hasSlots"
+                    [class.border-blue-600]="selectedDate === day.date && day.hasSlots"
+                    [class.shadow-md]="selectedDate === day.date && day.hasSlots"
+                    [class.bg-white]="selectedDate !== day.date || !day.hasSlots"
+                    [class.text-gray-800]="selectedDate !== day.date && day.hasSlots"
+                    [class.text-gray-300]="!day.hasSlots"
+                    [class.border-gray-200]="selectedDate !== day.date"
+                    [class.cursor-not-allowed]="!day.hasSlots"
+                    class="flex-1 py-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center hover:border-blue-300 min-w-0">
+                    <span class="text-[10px] font-medium uppercase mb-0.5">{{getDayName(day.date)}}</span>
+                    <span class="text-lg font-bold">{{getDay(day.date)}}</span>
+                    <span class="text-[10px] font-medium uppercase mt-0.5">{{getMonth(day.date)}}</span>
                   </button>
                 </div>
 
@@ -301,24 +332,24 @@ import {
                 </h4>
 
                 <!-- Time Grid -->
-                <div *ngFor="let group of groupedSlots">
-                  <div *ngIf="selectedDate === group.date">
-                    <div class="grid grid-cols-4 gap-3">
-                      <button *ngFor="let slot of getVisibleSlots(group.slots)"
+                <div *ngFor="let day of visibleDays">
+                  <div *ngIf="selectedDate === day.date && day.hasSlots">
+                    <div class="grid grid-cols-1 gap-3">
+                      <button *ngFor="let slot of getVisibleSlots(day.slots)"
                         (click)="selectSlot(slot)"
                         [class.bg-blue-600]="selectedSlot?.scheduleId === slot.scheduleId"
                         [class.text-white]="selectedSlot?.scheduleId === slot.scheduleId"
-                        [class.ring-2]="selectedSlot?.scheduleId === slot.scheduleId"
-                        [class.ring-blue-200]="selectedSlot?.scheduleId === slot.scheduleId"
-                        [class.bg-gray-100]="selectedSlot?.scheduleId !== slot.scheduleId"
+                        [class.border-blue-600]="selectedSlot?.scheduleId === slot.scheduleId"
+                        [class.bg-white]="selectedSlot?.scheduleId !== slot.scheduleId"
                         [class.text-gray-900]="selectedSlot?.scheduleId !== slot.scheduleId"
-                        class="py-3 px-1 rounded-lg text-sm font-semibold transition-all hover:bg-gray-200 hover:shadow-sm border border-transparent flex items-center justify-center">
+                        [class.border-gray-200]="selectedSlot?.scheduleId !== slot.scheduleId"
+                        class="py-3 px-1 rounded-lg text-sm font-semibold transition-all hover:bg-gray-50 hover:shadow-sm border flex items-center justify-center">
                         {{formatTime(slot.startTime)}}
                       </button>
                     </div>
 
-                    <div *ngIf="group.slots.length > 4" class="text-center mt-4">
-                      <button (click)="showAllSlotsForDate = !showAllSlotsForDate" class="text-blue-500 font-semibold text-sm hover:underline">
+                    <div *ngIf="day.slots.length > 4" class="text-center mt-4">
+                      <button (click)="showAllSlotsForDate = !showAllSlotsForDate" class="text-blue-600 font-medium text-sm hover:underline">
                         {{showAllSlotsForDate ? "Voir moins d'horaires" : "Voir plus d'horaires"}}
                       </button>
                     </div>
@@ -455,6 +486,7 @@ export class AppointmentsComponent implements OnInit {
 
   // ─── Action loading state ─────────────────────────────────────────────────
   actionLoading: number | null = null;
+  reschedulingAptId: number | null = null; // ID of the appointment being rescheduled via new picker
 
   // ─── Edit modal state ─────────────────────────────────────────────────────
   showEditModal = false;
@@ -579,6 +611,67 @@ export class AppointmentsComponent implements OnInit {
     }
   }
 
+  // ─── Reschedule Patient Response ─────────────────────────────────────────────
+  acceptReschedule(apt: AppointmentResponse) {
+    this.actionLoading = apt.appointmentId;
+    this.svc.acceptReschedule(apt.appointmentId).subscribe({
+      next: () => {
+        this.actionLoading = null;
+        this.loadMyAppointments();
+        this.showSuccess = true;
+        setTimeout(() => this.showSuccess = false, 3500);
+      },
+      error: () => {
+        this.actionLoading = null;
+        alert('Échec de la confirmation. Veuillez réessayer.');
+      }
+    });
+  }
+
+  startChooseNewSlot(apt: AppointmentResponse) {
+    this.reschedulingAptId = apt.appointmentId;
+    // Set up the modal to jump straight to step 4 for this doctor
+    this.step = 4;
+    this.selectedSpecialty = apt.specialty;
+
+    // We need the doctorId to load schedules...
+    // The appointment response gives doctor Name, we need to load doctors or use an ad-hoc pass
+    // Wait, the appointment response gives doctor Name, but `scheduleSlots` needs doctorId.
+    // Let's load the schedules... we don't have doctorId in the generic response unless we fetch the doctor.
+    // But since `apt` might have `doctorId`, wait, AppointmentResponse doesn't have doctorId.
+    // Let me fetch the doctors for this specialty first.
+    this.loadingSchedules = true; // Show loading
+    this.showNewModal = true;
+
+    // Remove 'Dr. ' or 'Dr ' prefix if present since the DB just stores the name
+    let searchName = apt.doctor || '';
+    if (searchName.startsWith('Dr. ')) {
+      searchName = searchName.substring(4).trim();
+    } else if (searchName.startsWith('Dr ')) {
+      searchName = searchName.substring(3).trim();
+    }
+
+    this.svc.getDoctorsByName(searchName).subscribe({
+      next: (docs) => {
+        if (docs.length > 0) {
+          const doc = docs[0];
+          this.selectedDoctorId = doc.userId;
+          this.reasonForVisit = apt.reasonForVisit;
+          this.loadSchedules();
+        } else {
+          this.loadingSchedules = false;
+          this.scheduleError = 'Médecin introuvable pour ce nom : ' + searchName;
+        }
+      },
+      error: () => {
+        this.loadingSchedules = false;
+        this.scheduleError = 'Erreur lors de la récupération du médecin.';
+      }
+    });
+  }
+
+
+
   prevStep() {
     if (this.step > 1) this.step--;
   }
@@ -615,12 +708,11 @@ export class AppointmentsComponent implements OnInit {
         this.loadingSchedules = false;
         this.scheduleError = '';
         if (data.length > 0) {
-          // Default to the first date's slots
-          const grouped = this.groupedSlots;
-          if (grouped.length > 0) {
-            this.selectedDate = grouped[0].date;
+          // Find the first date that has slots
+          const firstAvailableSlot = this.visibleDays.find(d => d.hasSlots);
+          if (firstAvailableSlot) {
+            this.selectedDate = firstAvailableSlot.date;
             this.showAllSlotsForDate = false;
-            this.datePageStartIndex = 0;
           }
         }
       },
@@ -674,19 +766,64 @@ export class AppointmentsComponent implements OnInit {
     };
 
     console.log('Sending booking request:', req);
-    this.svc.createAppointment(req).subscribe({
-      next: () => {
-        this.booking = false;
-        this.showNewModal = false;
-        this.showSuccess = true;
-        this.loadMyAppointments();
-        setTimeout(() => this.showSuccess = false, 3500);
-      },
-      error: (err: any) => {
-        this.booking = false;
-        this.bookingError = err?.error?.message ?? 'Booking failed. Please try again.';
-      }
-    });
+
+    // If this is a "choose another slot" reschedule flow:
+    // 1) First cancel the old pending appointment, THEN create the new one.
+    if (this.reschedulingAptId) {
+      const oldAptId = this.reschedulingAptId;
+      this.svc.rejectReschedule(oldAptId).subscribe({
+        next: () => {
+          // Old appointment is now CANCELLED — safe to create the new one
+          this.svc.createAppointment(req).subscribe({
+            next: () => {
+              this.booking = false;
+              this.showNewModal = false;
+              this.showSuccess = true;
+              this.reschedulingAptId = null;
+              this.loadMyAppointments();
+              setTimeout(() => this.showSuccess = false, 3500);
+            },
+            error: (err: any) => {
+              this.booking = false;
+              this.bookingError = err?.error?.message ?? 'Booking failed. Please try again.';
+            }
+          });
+        },
+        error: () => {
+          // Even if rejection fails, still create the new appointment
+          this.svc.createAppointment(req).subscribe({
+            next: () => {
+              this.booking = false;
+              this.showNewModal = false;
+              this.showSuccess = true;
+              this.reschedulingAptId = null;
+              this.loadMyAppointments();
+              setTimeout(() => this.showSuccess = false, 3500);
+            },
+            error: (err: any) => {
+              this.booking = false;
+              this.bookingError = err?.error?.message ?? 'Booking failed. Please try again.';
+            }
+          });
+        }
+      });
+    } else {
+      // Normal booking (not a reschedule)
+      this.svc.createAppointment(req).subscribe({
+        next: () => {
+          this.booking = false;
+          this.showNewModal = false;
+          this.showSuccess = true;
+          this.reschedulingAptId = null;
+          this.loadMyAppointments();
+          setTimeout(() => this.showSuccess = false, 3500);
+        },
+        error: (err: any) => {
+          this.booking = false;
+          this.bookingError = err?.error?.message ?? 'Booking failed. Please try again.';
+        }
+      });
+    }
   }
 
   // ─── Cancel appointment ───────────────────────────────────────────────────
@@ -756,19 +893,51 @@ export class AppointmentsComponent implements OnInit {
   }
 
   // ─── Pagination & Limits ───────────────────────────────────────────────────
-  get paginatedGroupedSlots() {
-    return this.groupedSlots.slice(this.datePageStartIndex, this.datePageStartIndex + 7);
+  // ─── Pagination & Limits ───────────────────────────────────────────────────
+  get visibleDays(): { date: string; dateObj: Date; hasSlots: boolean; slots: ScheduleSlot[] }[] {
+    const today = new Date();
+    // Use local timezone midnight to avoid shifting
+    today.setHours(0, 0, 0, 0);
+
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() + this.datePageStartIndex);
+
+    const days = [];
+
+    // Create a map for quick lookup
+    const groups: { [date: string]: ScheduleSlot[] } = {};
+    for (const group of this.groupedSlots) {
+      groups[group.date] = group.slots;
+    }
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+
+      days.push({
+        date: dateStr,
+        dateObj: d,
+        hasSlots: !!groups[dateStr] && groups[dateStr].length > 0,
+        slots: groups[dateStr] || []
+      });
+    }
+    return days;
   }
 
   nextDatePage() {
-    if (this.datePageStartIndex + 7 < this.groupedSlots.length) {
-      this.datePageStartIndex += 7;
-    }
+    this.datePageStartIndex += 7;
   }
 
   prevDatePage() {
-    if (this.datePageStartIndex > 0) {
+    if (this.datePageStartIndex >= 7) {
       this.datePageStartIndex -= 7;
+    } else {
+      this.datePageStartIndex = 0;
     }
   }
 
@@ -835,6 +1004,7 @@ export class AppointmentsComponent implements OnInit {
       case 'CONFIRMED': return 'bg-green-100 text-green-800';
       case 'PENDING': return 'bg-yellow-100 text-yellow-800';
       case 'CANCELLED': return 'bg-red-100 text-red-800';
+      case 'RESCHEDULED_PENDING': return 'bg-amber-200 text-amber-900 border border-amber-300 shadow-sm';
       default: return 'bg-gray-100 text-gray-700';
     }
   }

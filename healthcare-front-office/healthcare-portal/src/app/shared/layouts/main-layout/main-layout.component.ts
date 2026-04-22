@@ -52,9 +52,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'reminders', icon: 'clock', label: 'Reminders' },
     { path: 'payment', icon: 'credit-card', label: 'Payment' },
     { path: 'interaction-history', icon: 'history', label: 'History' },
-    { path: 'chronic-monitor', icon: 'activity', label: 'Health Monitor' },
-    { path: 'health-goals', icon: 'target', label: 'Health Goals' },
-    { path: 'forum', icon: 'users', label: 'Community Forum' }
+    { path: 'chronic-monitor', icon: 'activity',    label: 'Health Monitor' },
+    { path: 'disease-risk',    icon: 'shield-alert', label: '🔬 Disease Risk AI' },
+    { path: 'health-goals',    icon: 'target',        label: 'Health Goals' },
+    { path: 'forum',           icon: 'users',         label: 'Community Forum' }
   ];
 
   private doctorNav: NavItem[] = [
@@ -70,6 +71,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'prescriptions', icon: 'pill', label: 'Prescriptions' },
     { path: 'ai-analysis', icon: 'activity', label: 'AI Image Analysis' },
     { path: 'chronic-disease', icon: 'activity', label: 'Chronic Disease' },
+    { path: 'risk-segmentation', icon: 'brain', label: '🧠 Risk Segmentation' },
     { path: 'alerts', icon: 'bell', label: 'Critical Alerts' },
     { path: 'lab-results', icon: 'microscope', label: 'Lab Results' },
     { path: 'forum', icon: 'users', label: 'Community Forum' }

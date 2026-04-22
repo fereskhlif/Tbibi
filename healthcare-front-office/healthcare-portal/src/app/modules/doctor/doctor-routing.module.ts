@@ -14,6 +14,7 @@ import { DoctorNotificationsComponent } from './pages/notifications/notification
 import { DoctorAllAppointmentsComponent } from './pages/all-appointments/all-appointments.component';
 import { ManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
 import { DoctorChatComponent } from './pages/doctor-chat/doctor-chat.component';
+import { RiskSegmentationComponent } from './pages/risk-segmentation/risk-segmentation.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -31,6 +32,7 @@ const routes: Routes = [
     { path: 'all-appointments', component: DoctorAllAppointmentsComponent },
     { path: 'manage-schedules', component: ManageSchedulesComponent },
     { path: 'messages', component: DoctorChatComponent },
+    { path: 'risk-segmentation', component: RiskSegmentationComponent },
     {
         path: 'forum',
         loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),

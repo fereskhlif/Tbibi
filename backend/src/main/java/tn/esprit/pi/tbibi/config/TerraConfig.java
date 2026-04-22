@@ -4,26 +4,35 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Provides shared HTTP client and JSON mapper beans for Terra API integration.
+ * Provides shared HTTP client and JSON mapper beans.
  */
 @Configuration
 public class TerraConfig {
 
     /**
-     * RestTemplate used by TerraService to call the Terra REST API.
-     * A shared singleton is sufficient for our polling frequency.
+     * Primary RestTemplate used by TerraService, GemmaService, etc.
      */
     @Bean
+    @Primary
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
 
     /**
-     * ObjectMapper configured to ignore unknown JSON fields —  
-     * Terra may add new fields to their payloads at any time.
+     * Dedicated RestTemplate for the Python AI segmentation service.
+     * Qualified as "segmentRestTemplate" to avoid ambiguity.
+     */
+    @Bean("segmentRestTemplate")
+    public RestTemplate segmentRestTemplate() {
+        return new RestTemplate();
+    }
+
+    /**
+     * ObjectMapper configured to ignore unknown JSON fields.
      */
     @Bean
     public ObjectMapper objectMapper() {
@@ -33,3 +42,4 @@ public class TerraConfig {
         return mapper;
     }
 }
+

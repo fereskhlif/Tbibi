@@ -7,10 +7,10 @@ echo.
 REM ── Check .env file ─────────────────────────────────────────────────────────
 if not exist .env (
     echo [ERROR] .env file not found!
-    echo Please copy .env.example to .env and fill in your Kaggle credentials.
+    echo Please copy .env.example to .env and fill in your HuggingFace credentials.
     echo.
     echo    copy .env.example .env
-    echo    then edit .env with your KAGGLE_USERNAME and KAGGLE_KEY
+    echo    then edit .env with your HF_TOKEN
     echo.
     pause
     exit /b 1

@@ -27,6 +27,7 @@ public class Appointment {
 
     private String reasonForVisit;
     private String meetingLink;
+    private String patientEmail;
 
     @Enumerated(EnumType.STRING)
     private StatusAppointement statusAppointement;

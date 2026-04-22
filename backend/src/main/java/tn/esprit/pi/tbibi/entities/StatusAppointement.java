@@ -4,4 +4,5 @@ public enum StatusAppointement {
     PENDING,
     CONFIRMED,
     CANCELLED,
+    RESCHEDULED_PENDING,
 }
