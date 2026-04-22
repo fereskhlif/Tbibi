@@ -63,4 +63,19 @@ public class ActeController {
     public ResponseEntity<List<ActeDTO>> getMyActes() {
         return ResponseEntity.ok(acteService.getMyActes());
     }
+
+    @GetMapping("/active-prescriptions/{medicalFileId}")
+    public ResponseEntity<List<ActeDTO>> getActesWithActivePrescriptions(@PathVariable Integer medicalFileId) {
+        return ResponseEntity.ok(acteService.getActesWithActivePrescriptions(medicalFileId));
+    }
+
+    @GetMapping("/active-prescriptions-for-patient/{patientId}")
+    public ResponseEntity<List<ActeDTO>> getActesWithActivePrescriptionsForPatient(@PathVariable Integer patientId) {
+        return ResponseEntity.ok(acteService.getActesWithActivePrescriptionsForPatient(patientId));
+    }
+
+    @GetMapping("/recent-active-prescriptions-for-doctor")
+    public ResponseEntity<List<ActeDTO>> getDoctorRecentActesWithActivePrescriptions() {
+        return ResponseEntity.ok(acteService.getDoctorRecentActesWithActivePrescriptions());
+    }
 }

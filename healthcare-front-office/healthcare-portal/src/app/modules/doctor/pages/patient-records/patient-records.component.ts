@@ -78,6 +78,8 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
   loadingFullRecord = false;
 
   showMedicalRecordSum = true;
+  actesWithActivePrescriptions: any[] = [];
+  loadingActes = false;
 
   // ── Formulaire de visite ───────────────────────────────────────────────────
   form: HistoryRequest = {
@@ -223,6 +225,12 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
       this.http.get(`${this.api}/${this.sel.medicalFileId}`).subscribe({
         next: (res) => { this.fullRecord = res; this.loadingFullRecord = false; },
         error: (err) => { console.error('Error loading full record:', err); this.loadingFullRecord = false; }
+      });
+
+      this.loadingActes = true;
+      this.http.get<any[]>(`${environment.baseUrl}/actes/active-prescriptions/${this.sel.medicalFileId}`).subscribe({
+        next: (res) => { this.actesWithActivePrescriptions = res; this.loadingActes = false; },
+        error: (err) => { console.error('Error loading actes:', err); this.loadingActes = false; }
       });
     }
   }

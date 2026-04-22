@@ -29,6 +29,7 @@ ehthumbs.db
 build*.txt
 test*.txt
 *_output.txt
+backend/uploads/
 
 # ======================
 # Java / Spring Boot

@@ -10,8 +10,11 @@ import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.repositories.*;
 import tn.esprit.pi.tbibi.repositories.ActeRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
+import tn.esprit.pi.tbibi.entities.PrescriptionStatus;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -143,5 +146,44 @@ public class ActeService {
             }
         }
         return result;
+    }
+
+    public List<ActeDTO> getActesWithActivePrescriptions(Integer medicalFileId) {
+        List<Acte> actes = acteRepository.findActesWithActivePrescriptionByMedicalFile(medicalFileId);
+        return actes.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    public List<ActeDTO> getActesWithActivePrescriptionsForPatient(int patientId) {
+        User patient = userRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found: " + patientId));
+        List<MedicalReccords> files = patient.getMedicalFiles();
+        if (files == null || files.isEmpty()) {
+            return new ArrayList<>();
+        }
+        MedicalReccords medicalFile = files.get(0);
+        List<Acte> actes = acteRepository.findActesWithActivePrescriptionByMedicalFile(medicalFile.getMedicalfile_id());
+        return actes.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @jakarta.transaction.Transactional
+    public List<ActeDTO> getDoctorRecentActesWithActivePrescriptions() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User doctor = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Doctor not found: " + email));
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, -30);
+        Date thirtyDaysAgo = cal.getTime();
+
+        List<Acte> actes = acteRepository.findByTypeOfActeAndPrescriptions_StatusAndDateAfter(
+                "PRESCRIPTION",
+                PrescriptionStatus.VALIDATED,
+                thirtyDaysAgo
+        );
+
+        return actes.stream()
+                .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctor.getUserId()))
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 }
