@@ -59,7 +59,8 @@ public class MedicineService implements IMedicineService {
         return medicineMapper.toDto(saved);
     }
 
-    private void triggerAiSync() {
+    @Override
+    public void triggerAiSync() {
         CompletableFuture.runAsync(() -> {
             try {
                 System.out.println("Triggering AI Sync with MySQL Database...");

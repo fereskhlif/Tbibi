@@ -121,4 +121,9 @@ public class MedicineController {
             @RequestParam("imageUrl") String imageUrl) {
         return medicineService.removeImage(id, imageUrl);
     }
+
+    @PostMapping("/sync-ai")
+    public void syncAi() {
+        medicineService.triggerAiSync();
+    }
 }

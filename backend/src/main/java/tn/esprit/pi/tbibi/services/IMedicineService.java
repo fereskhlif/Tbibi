@@ -25,6 +25,9 @@ public interface IMedicineService {
     Page<MedicineResponse> getAllMedicinesPaginated(Pageable pageable);
     Page<MedicineResponse> getMedicinesByPharmacyPaginated(Long pharmacyId, Pageable pageable);
     Page<MedicineResponse> searchMedicinesPaginated(String name, Long pharmacyId, Pageable pageable);
+    
+    void triggerAiSync();
+    
     List<String> getAvailableMedicineNames();
     List<String> getAvailableMoleculesInStock();
 }

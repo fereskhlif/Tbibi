@@ -545,7 +545,13 @@
 
         <!-- Medication Logic with AI Substitution -->
         <div class="mt-4 border-t border-gray-100 pt-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Medications & AI Substitutes</label>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-semibold text-gray-700">Medications & AI Substitutes</label>
+            <button (click)="triggerManualAiSync()" [disabled]="syncingAI"
+                    style="background: #0d9488; color: white; border: none; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+              {{ syncingAI ? '⌛ Sync en cours...' : '🔄 Synchroniser IA' }}
+            </button>
+          </div>
           
           <!-- Add Medication Form -->
           <div class="flex flex-col gap-3 mb-3">

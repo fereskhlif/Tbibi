@@ -78,6 +78,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   predictedClassResponse: any = null;
   predictedClassError: string = '';
   outOfStockWarning = false;
+  syncingAI = false;
 
   constructor(private prescriptionService: PrescriptionService, private http: HttpClient) {}
 
@@ -449,6 +450,23 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.indicationInput = '';
     this.familleInput = '';
     this.medicineCheckStatus = `✅ Substitut IA sélectionné : ${displayName}${subClass ? ' (' + subClass + ')' : ''}`;
+  }
+
+  triggerManualAiSync(): void {
+    this.syncingAI = true;
+    this.medicineCheckStatus = '🔄 Synchronisation IA en cours...';
+    this.prescriptionService.syncAi().subscribe({
+      next: () => {
+        this.syncingAI = false;
+        this.medicineCheckStatus = '✅ IA synchronisée avec le stock !';
+        setTimeout(() => this.medicineCheckStatus = '', 3000);
+      },
+      error: (err) => {
+        this.syncingAI = false;
+        this.medicineCheckStatus = '⚠️ Échec de la synchronisation IA.';
+        console.error('AI Sync failed', err);
+      }
+    });
   }
 
   openEditModal(rx: PrescriptionResponse, event?: Event): void {
