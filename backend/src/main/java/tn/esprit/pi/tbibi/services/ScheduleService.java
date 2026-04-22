@@ -79,7 +79,10 @@ public class ScheduleService implements IScheduleService {
 
     @Override
     public List<ScheduleResponse> getByDoctorId(Integer doctorId) {
-        return mapper.toScheduleResponseList(scheduleRepo.findByDoctorUserId(doctorId));
+        // Only return today and future slots — past slots are not actionable for the doctor
+        return mapper.toScheduleResponseList(
+            scheduleRepo.findByDoctorUserIdAndDateGreaterThanEqualOrderByDateAscStartTimeAsc(
+                doctorId, LocalDate.now()));
     }
 
     @Override
@@ -123,18 +126,19 @@ public class ScheduleService implements IScheduleService {
             }
         }
 
-        // Date range: today → Dec 31 of current year
+        // Load only FUTURE/TODAY slots to detect duplicates — past slots are irrelevant
         LocalDate today   = LocalDate.now();
         LocalDate yearEnd = LocalDate.of(today.getYear(), 12, 31);
 
-        // Load date-specific exceptions for this doctor once
-        List<DoctorException> exceptions = exceptionRepo.findByDoctorUserId(request.getDoctorId());
-
-        // Load all EXISTING slots for this doctor to detect duplicates efficiently
-        Set<String> existingKeys = scheduleRepo.findByDoctorUserId(request.getDoctorId())
+        Set<String> existingKeys = scheduleRepo
+                .findByDoctorUserIdAndDateGreaterThanEqualOrderByDateAscStartTimeAsc(
+                        request.getDoctorId(), today)
                 .stream()
                 .map(s -> s.getDate() + "|" + s.getStartTime())
                 .collect(Collectors.toSet());
+
+        // Load date-specific exceptions for this doctor
+        List<DoctorException> exceptions = exceptionRepo.findByDoctorUserId(request.getDoctorId());
 
         List<Schedule> slotsToSave = new ArrayList<>();
 
@@ -195,13 +199,15 @@ public class ScheduleService implements IScheduleService {
     @Override
     @Transactional
     public void clearAvailableSlots(Integer doctorId) {
-        scheduleRepo.deleteByDoctorUserIdAndIsAvailableTrue(doctorId);
+        // Only delete free slots that are NOT linked to any appointment
+        scheduleRepo.deleteAvailableUnbookedByDoctorId(doctorId);
     }
 
     @Override
     @Transactional
     public void clearAvailableSlotsByDate(Integer doctorId, LocalDate date) {
-        scheduleRepo.deleteByDoctorUserIdAndDateAndIsAvailableTrue(doctorId, date);
+        // Only delete free slots on that date that are NOT linked to any appointment
+        scheduleRepo.deleteAvailableUnbookedByDoctorIdAndDate(doctorId, date);
     }
 
     // ─── Private helpers ─────────────────────────────────────────────────────────

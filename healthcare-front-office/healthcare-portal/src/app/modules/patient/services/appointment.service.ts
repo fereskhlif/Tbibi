@@ -84,7 +84,7 @@ export class AppointmentService {
     /** Returns available (unbooked) schedule slots for a doctor */
     getAvailableSchedules(doctorId: number): Observable<ScheduleSlot[]> {
         return this.http.get<ScheduleSlot[]>(
-            `${this.base}/api/doctor/schedules/doctor/${doctorId}/available`
+            `${this.base}/api/doctor/schedules/doctor/${doctorId}/available?t=${new Date().getTime()}`
         );
     }
 
@@ -114,6 +114,22 @@ export class AppointmentService {
     cancelAppointment(appointmentId: number): Observable<AppointmentResponse> {
         return this.http.patch<AppointmentResponse>(
             `${this.base}/appointement/${appointmentId}/status?status=CANCELLED`,
+            {}
+        );
+    }
+
+    /** Patient accepts the doctor's proposed new time */
+    acceptReschedule(appointmentId: number): Observable<AppointmentResponse> {
+        return this.http.patch<AppointmentResponse>(
+            `${this.base}/appointement/${appointmentId}/accept-reschedule`,
+            {}
+        );
+    }
+
+    /** Patient rejects the doctor's proposed new time */
+    rejectReschedule(appointmentId: number): Observable<AppointmentResponse> {
+        return this.http.patch<AppointmentResponse>(
+            `${this.base}/appointement/${appointmentId}/reject-reschedule`,
             {}
         );
     }

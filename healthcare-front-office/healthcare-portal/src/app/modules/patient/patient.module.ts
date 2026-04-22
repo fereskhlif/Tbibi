@@ -28,6 +28,7 @@ import { PharmacyListComponent } from './pages/pharmacy-list/pharmacy-list.compo
 import { CartPageComponent } from './pages/cart-page/cart-page.component';
 import { CheckoutPageComponent } from './pages/checkout-page/checkout-page.component';
 import { OrderSuccessComponent } from './pages/order-success/order-success.component';
+import { DiseaseRiskComponent } from './pages/disease-risk/disease-risk.component';
 
 import {
   LucideAngularModule,
@@ -97,6 +98,7 @@ import {
     CartPageComponent,
     CheckoutPageComponent,
     OrderSuccessComponent,
+    DiseaseRiskComponent,
   ],
   imports: [
     CommonModule,

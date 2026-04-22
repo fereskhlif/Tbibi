@@ -1,17 +1,17 @@
-git # ==========================================
+# ==========================================
 # Global Project GitIgnore
 # ==========================================
 
-# OS generated files
+# OS files
 .DS_Store
 .DS_Store?
-._*
+Thumbs.db
+ehthumbs.db
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
+._*
 
-# IDEs (VS Code, IntelliJ, Eclipse)
+# IDEs
 .idea/
 .vscode/
 *.iml
@@ -23,33 +23,55 @@ Thumbs.db
 .apt_generated/
 .factorypath/
 
-# Custom execution logs, test outputs and debug traces
+# Logs & debug files
 *.log
-build_error.txt
-build_log.txt
-build_output.log
-dev_build_error.log
-final_build_error.log
-karma_output.txt
-test-out.txt
-test-output.txt
-test_out.txt
-test_out_doctor.txt
-test_out_patient.txt
-test_output_doc.txt
-tsc_output.txt
-tsc_output_patient.txt
-
-# Broad fallbacks for log/txt outputs generated manually
-*_output.txt
-*_out*.txt
-*-out.txt
-test-*.txt
+*.txt
 build*.txt
-v e n v /  
+test*.txt
+*_output.txt
+backend/uploads/
 
-# AI Models & Data
-Modele_prescription/
+# ======================
+# Java / Spring Boot
+# ======================
+target/
+*.jar
+*.war
+*.class
+
+# ======================
+# Angular / Node
+# ======================
+node_modules/
+dist/
+.angular/
+coverage/
+
+# ======================
+# Python
+# ======================
+venv/
+__pycache__/
+*.pyc
+
+# ======================
+# Environment variables
+# ======================
+.env
+.env.*
+!.env.example
+
+# ======================
+# Machine Learning
+# ======================
+*.joblib
 *.pkl
-*.json
-*.csv
+
+# (optional) datasets → only ignore if large
+# *.csv
+
+# ======================
+# Misc
+# ======================
+*.bak
+*.tmp

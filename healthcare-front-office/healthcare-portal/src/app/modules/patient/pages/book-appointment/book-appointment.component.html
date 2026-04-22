@@ -95,7 +95,7 @@
           <div class="flex items-center justify-between mb-4">
             <span class="font-semibold text-gray-700">{{ getCurrentMonthYear() }}</span>
             <div class="flex gap-2">
-              <button (click)="prevDatePage()" [disabled]="!currentDateStart"
+              <button (click)="prevDatePage()" [disabled]="!canGoPrev"
                 class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 shadow-sm">
                 <span>←</span> Précédent
               </button>

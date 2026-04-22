@@ -114,8 +114,13 @@ public class NotificationController {
             Appointment freshApt = appointmentRepo.findById(apt.getAppointmentId())
                     .orElse(apt);
 
-            String patientEmail = freshApt.getUser() != null ? freshApt.getUser().getEmail() : null;
-            System.out.println("[ACCEPT] patientEmail=" + patientEmail);
+            // Primary: use the stored patientEmail field (set at booking time for both guests & users)
+            // Fallback: read from the linked User entity
+            String patientEmail = freshApt.getPatientEmail();
+            if (patientEmail == null || patientEmail.isBlank()) {
+                patientEmail = freshApt.getUser() != null ? freshApt.getUser().getEmail() : null;
+            }
+            System.out.println("[ACCEPT] patientEmail (resolved)=" + patientEmail);
 
             if (patientEmail != null && !patientEmail.isBlank()) {
                 try {

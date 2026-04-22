@@ -24,17 +24,10 @@ public class ChronicConditionService {
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
     public ChronicConditionResponse create(ChronicConditionRequest req) {
-        if (req.getDoctorId() == null) {
-            throw new IllegalArgumentException("Doctor ID is required");
-        }
-        User doctor = userRepo.findById(req.getDoctorId())
-                .orElseThrow(() -> new EntityNotFoundException("Doctor not found: " + req.getDoctorId()));
-
         String severity = computeSeverity(req.getConditionType(), req.getValue(), req.getValue2());
-        String unit = unitFor(req.getConditionType());
+        String unit     = unitFor(req.getConditionType());
 
         ChronicCondition cc = ChronicCondition.builder()
-                .doctor(doctor)
                 .conditionType(req.getConditionType())
                 .value(req.getValue())
                 .value2(req.getValue2())
@@ -45,11 +38,15 @@ public class ChronicConditionService {
                 .recordedAt(parseDateTime(req.getRecordedAt()))
                 .build();
 
-        // Optionally link to a patient account if the ID is known
+        // Link to doctor only when provided
+        if (req.getDoctorId() != null) {
+            userRepo.findById(req.getDoctorId()).ifPresent(cc::setDoctor);
+        }
+
+        // Link to patient account when ID is provided
         if (req.getPatientId() != null) {
             userRepo.findById(req.getPatientId()).ifPresent(p -> {
                 cc.setPatient(p);
-                // Use account name if no free-text name was provided
                 if (cc.getPatientName() == null || cc.getPatientName().isBlank()) {
                     cc.setPatientName(p.getName());
                 }
@@ -74,6 +71,12 @@ public class ChronicConditionService {
     public void delete(Long id) {
         if (!repo.existsById(id)) throw new EntityNotFoundException("Record not found: " + id);
         repo.deleteById(id);
+    }
+
+    /** Delete ALL readings for a patient — used by the patient's "Clear History" button */
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteByPatient(Integer patientId) {
+        repo.deleteByPatientUserId(patientId);
     }
 
     public List<ChronicConditionResponse> getByPatient(Integer patientId) {
@@ -174,5 +177,36 @@ public class ChronicConditionService {
         } catch (Exception e) {
             return LocalDateTime.now();
         }
+    }
+
+    // ── JPQL query ──────────────────────────────────────────────────────────────────
+    /**
+     * Patient health summary per doctor — backed by a JPQL JOIN query.
+     * Maps raw Object[] to a list of { patientName, conditionType, averageValue, lastReadingDate, severity }.
+     */
+    public List<java.util.Map<String, Object>> getPatientHealthSummary(Integer doctorId) {
+        List<Object[]> rows = repo.findPatientHealthSummaryByDoctor(doctorId);
+        List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+        for (Object[] row : rows) {
+            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("patientName",     row[0] != null ? row[0].toString() : "");
+            map.put("conditionType",   row[1] != null ? row[1].toString() : "");
+            map.put("averageValue",    row[2]);
+            map.put("lastReadingDate", row[3]);
+            map.put("severity",        row[4] != null ? row[4].toString() : "");
+            result.add(map);
+        }
+        return result;
+    }
+
+    // ── Keyword query ───────────────────────────────────────────────────────────────
+    /**
+     * Get recent critical readings — backed by a multi-table Keyword query.
+     */
+    public List<ChronicConditionResponse> getRecentCritical(Integer doctorId, int hours) {
+        LocalDateTime since = LocalDateTime.now().minusHours(hours);
+        List<ChronicCondition> readings = repo.findByDoctorUserIdAndSeverityAndRecordedAtAfterOrderByRecordedAtDesc(
+                doctorId, "CRITICAL", since);
+        return readings.stream().map(this::toResponse).collect(Collectors.toList());
     }
 }

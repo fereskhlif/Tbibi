@@ -67,19 +67,11 @@ public class GroqService {
       "dosage": "",
       "description": "",
       "form": "",
-      "activeIngredient": "",
-      "category": ""
+      "activeIngredient": ""
     }
     
     For form use ONLY: TABLET, CAPSULE, SYRUP, INJECTION, CREAM,
     OINTMENT, SUPPOSITORY, EYE_DROPS, SPRAY, PATCH, SACHET, POWDER, OTHER
-    
-    For category use ONLY: COUGH_AND_COLD, RESPIRATORY, FEVER_AND_PAIN,
-    MUSCLE_AND_JOINT, ANTIBIOTIC, ANTIVIRAL, ANTIFUNGAL, DIGESTIVE,
-    SKIN, WOUND_CARE, ALLERGY, EYE_AND_EAR, DIABETES, HYPERTENSION,
-    CARDIAC, THYROID, ANXIETY_AND_SLEEP, URINARY,
-    VITAMINS_AND_SUPPLEMENTS, ORAL_AND_DENTAL, OTHER
-                    
     
     Rules:
     - medicineName: the main medicine name (e.g. ASPÉGIC)
@@ -90,9 +82,6 @@ public class GroqService {
       * Read from image if visible
       * If not visible but you recognize the medicine, use your medical knowledge
       * If medicine is unknown, leave empty string
-    - category: the therapeutic category of the medicine from the list above
-      * Use your medical knowledge to determine this based on the medicine.
-      * If unknown, leave empty string.
     - Return ONLY JSON, no markdown, no code blocks
     """;
 
@@ -107,114 +96,6 @@ public class GroqService {
                 "max_tokens", 500,
                 "messages", List.of(
                         Map.of("role", "user", "content", List.of(textContent, imageContent))
-                )
-        );
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                "https://api.groq.com/openai/v1/chat/completions",
-                HttpMethod.POST,
-                entity,
-                String.class
-        );
-
-        JsonNode root = objectMapper.readTree(response.getBody());
-        String content = root.path("choices").get(0)
-                .path("message").path("content").asText();
-
-        content = content.trim();
-        if (content.startsWith("```")) {
-            content = content.replaceAll("```json", "").replaceAll("```", "").trim();
-        }
-
-        MedicineOcrResult result = objectMapper.readValue(content, MedicineOcrResult.class);
-
-        // ── Auto-research fallback ──────────────────────────────────────
-        // If the AI detected the medicine name but missed critical fields,
-        // make a second lightweight text-only call to research them.
-        if (result.getMedicineName() != null && !result.getMedicineName().isBlank()) {
-            boolean missingIngredient = result.getActiveIngredient() == null || result.getActiveIngredient().isBlank();
-            boolean missingCategory   = result.getCategory() == null || result.getCategory().isBlank();
-            boolean missingDescription = result.getDescription() == null || result.getDescription().isBlank();
-
-            if (missingIngredient || missingCategory || missingDescription) {
-                System.out.println("=== AI RESEARCH: Filling missing fields for " + result.getMedicineName() + " ===");
-                try {
-                    MedicineOcrResult researched = researchMedicineByName(
-                            result.getMedicineName(),
-                            result.getDosage()
-                    );
-                    if (missingIngredient && researched.getActiveIngredient() != null && !researched.getActiveIngredient().isBlank()) {
-                        result.setActiveIngredient(researched.getActiveIngredient());
-                        System.out.println("  → Filled activeIngredient: " + researched.getActiveIngredient());
-                    }
-                    if (missingCategory && researched.getCategory() != null && !researched.getCategory().isBlank()) {
-                        result.setCategory(researched.getCategory());
-                        System.out.println("  → Filled category: " + researched.getCategory());
-                    }
-                    if (missingDescription && researched.getDescription() != null && !researched.getDescription().isBlank()) {
-                        result.setDescription(researched.getDescription());
-                        System.out.println("  → Filled description: " + researched.getDescription());
-                    }
-                } catch (Exception e) {
-                    System.out.println("  → Research fallback failed: " + e.getMessage());
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Text-only AI call that researches a medicine by its commercial name.
-     * Used as a fallback when the image scan could not detect all fields.
-     */
-    public MedicineOcrResult researchMedicineByName(String medicineName, String dosage) throws Exception {
-
-        String doseHint = (dosage != null && !dosage.isBlank()) ? " " + dosage : "";
-
-        String prompt = """
-    You are a pharmacist with expert medical knowledge.
-    I need information about this medicine: %s%s
-
-    Using your pharmaceutical knowledge, return ONLY a valid JSON:
-    {
-      "medicineName": "%s",
-      "dosage": "%s",
-      "description": "",
-      "form": "",
-      "activeIngredient": "",
-      "category": ""
-    }
-
-    For form use ONLY: TABLET, CAPSULE, SYRUP, INJECTION, CREAM,
-    OINTMENT, SUPPOSITORY, EYE_DROPS, SPRAY, PATCH, SACHET, POWDER, OTHER
-
-    For category use ONLY: COUGH_AND_COLD, RESPIRATORY, FEVER_AND_PAIN,
-    MUSCLE_AND_JOINT, ANTIBIOTIC, ANTIVIRAL, ANTIFUNGAL, DIGESTIVE,
-    SKIN, WOUND_CARE, ALLERGY, EYE_AND_EAR, DIABETES, HYPERTENSION,
-    CARDIAC, THYROID, ANXIETY_AND_SLEEP, URINARY,
-    VITAMINS_AND_SUPPLEMENTS, ORAL_AND_DENTAL, OTHER
-
-    Rules:
-    - activeIngredient: the main active pharmaceutical substance (e.g. Paracetamol for Doliprane, Acetylsalicylic acid for Aspirin). This is REQUIRED.
-    - description: a brief 1–2 sentence explanation of what this medicine treats
-    - category: the best matching therapeutic category from the list
-    - form: the most common pharmaceutical form of this medicine
-    - Return ONLY JSON, no markdown, no code blocks, no explanations
-    """.formatted(medicineName, doseHint, medicineName, dosage != null ? dosage : "");
-
-        Map<String, Object> requestBody = Map.of(
-                "model", "llama-3.3-70b-versatile",
-                "max_tokens", 300,
-                "temperature", 0.1,
-                "messages", List.of(
-                        Map.of("role", "user", "content", prompt)
                 )
         );
 

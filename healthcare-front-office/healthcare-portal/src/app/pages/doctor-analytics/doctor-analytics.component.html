@@ -1,0 +1,173 @@
+<div class="analytics-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1><i class="fas fa-chart-pie"></i> Clinical Analytics Dashboard</h1>
+      <p>Real-time insights across appointments and patient vitals.</p>
+    </div>
+    <div class="doctor-badge">
+      <span class="badge-icon"><i class="fas fa-user-md"></i></span>
+      Doc ID: {{ doctorId }}
+    </div>
+  </header>
+
+  <div class="grid-layout">
+    
+    <!-- UPPER LEFT: Appointment Specialty Stats (JPQL Query) -->
+    <section class="card glass-panel chart-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-calendar-check"></i> Specialty Engagement</h2>
+        <span class="badge jpql-badge">JPQL JOIN</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="specialtyChart"></canvas>
+      </div>
+      <div class="table-wrapper mt-3">
+        <table class="premium-table">
+          <thead>
+            <tr>
+              <th>Doctor</th>
+              <th>Specialty</th>
+              <th>Appointments</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let stat of specialtyStats">
+              <td>{{ stat.doctorName }}</td>
+              <td><span class="specialty-tag">{{ stat.specialty }}</span></td>
+              <td class="text-bold">{{ stat.count }}</td>
+            </tr>
+            <tr *ngIf="specialtyStats.length === 0">
+              <td colspan="3" class="empty-state">No specialty stats available.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- UPPER RIGHT: Filtered Appointments (Keyword Query) -->
+    <section class="card solid-panel filter-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-filter"></i> Appointment Explorer</h2>
+        <span class="badge keyword-badge">Keyword Query</span>
+      </div>
+      
+      <div class="filter-controls">
+        <div class="input-group">
+          <label>From Date</label>
+          <input type="date" [(ngModel)]="filterFrom" (change)="loadFilteredAppointments()">
+        </div>
+        <div class="input-group">
+          <label>To Date</label>
+          <input type="date" [(ngModel)]="filterTo" (change)="loadFilteredAppointments()">
+        </div>
+        <div class="input-group">
+          <label>Status</label>
+          <select [(ngModel)]="filterStatus" (change)="loadFilteredAppointments()">
+            <option value="PENDING">PENDING</option>
+            <option value="ACCEPTED">ACCEPTED</option>
+            <option value="CANCELLED">CANCELLED</option>
+            <option value="REJECTED">REJECTED</option>
+            <option value="COMPLETED">COMPLETED</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="premium-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Patient</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let appt of filteredAppointments" class="hover-row">
+              <td class="text-muted">#{{ appt.appointmentId }}</td>
+              <td class="text-bold">{{ appt.patientName }}</td>
+              <td>{{ appt.scheduleDate }}</td>
+              <td>{{ appt.scheduleTime }}</td>
+              <td><span [class]="'status-pill status-' + appt.statusAppointement.toLowerCase()">{{ appt.statusAppointement }}</span></td>
+            </tr>
+            <tr *ngIf="filteredAppointments.length === 0">
+              <td colspan="5" class="empty-state">No appointments match these filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- LOWER LEFT: Patient Health Summary (JPQL Query) -->
+    <section class="card solid-panel summary-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-heartbeat"></i> Patient Health Summary</h2>
+        <span class="badge jpql-badge">JPQL JOIN</span>
+      </div>
+      <p class="subtitle">Aggregated vital signs across all active patients.</p>
+
+      <div class="table-wrapper">
+        <table class="premium-table">
+          <thead>
+            <tr>
+              <th>Patient Name</th>
+              <th>Condition</th>
+              <th>Avg Reading</th>
+              <th>Last Recorded</th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of healthSummary" class="hover-row">
+              <td class="text-bold">{{ s.patientName }}</td>
+              <td>{{ s.conditionType }}</td>
+              <td class="text-bold">{{ s.averageValue | number:'1.0-2' }}</td>
+              <td class="text-muted">{{ s.lastReadingDate | date:'medium' }}</td>
+              <td><span [class]="'trend-pill trend-' + s.severity.toLowerCase()">{{ s.severity }}</span></td>
+            </tr>
+            <tr *ngIf="healthSummary.length === 0">
+              <td colspan="5" class="empty-state">No health summaries found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- LOWER RIGHT: Recent Critical Readings (Keyword Query) -->
+    <section class="card glass-panel critical-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-exclamation-triangle"></i> Critical Vitals Alert</h2>
+        <span class="badge keyword-badge">Keyword Query</span>
+      </div>
+
+      <div class="critical-controls">
+        <label>Time Window (Hours):</label>
+        <input type="number" [(ngModel)]="criticalHours" (change)="loadRecentCritical()" min="1" max="168" class="hours-input">
+      </div>
+
+      <div class="critical-list">
+        <div class="critical-card" *ngFor="let crit of recentCritical">
+          <div class="crit-icon">
+            <i class="fas fa-biohazard"></i>
+          </div>
+          <div class="crit-content">
+            <h4>{{ crit.patientName }} <span class="time-ago">{{ crit.recordedAt | date:'shortTime' }}</span></h4>
+            <div class="crit-details">
+              <span class="vital-type">{{ crit.conditionType }}</span>
+              <span class="vital-value">{{ crit.value }}{{ crit.value2 ? '/' + crit.value2 : '' }} {{ crit.unit }}</span>
+            </div>
+            <p class="crit-notes" *ngIf="crit.notes"><i class="fas fa-comment-medical"></i> {{ crit.notes }}</p>
+          </div>
+        </div>
+        
+        <div *ngIf="recentCritical.length === 0" class="all-clear">
+          <i class="fas fa-check-circle"></i>
+          <p>No critical readings in the last {{ criticalHours }} hours.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>

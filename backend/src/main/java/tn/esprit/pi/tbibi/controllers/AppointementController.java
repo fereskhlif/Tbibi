@@ -80,6 +80,18 @@ public class AppointementController {
         return ResponseEntity.ok(appointementService.reschedule(id, newScheduleId));
     }
 
+    /** Patient accepts the rescheduled time proposed by the doctor */
+    @PatchMapping("/{id}/accept-reschedule")
+    public ResponseEntity<AppointmentResponse> acceptReschedule(@PathVariable Long id) {
+        return ResponseEntity.ok(appointementService.acceptReschedule(id));
+    }
+
+    /** Patient rejects the rescheduled time (will choose a new slot or cancel) */
+    @PatchMapping("/{id}/reject-reschedule")
+    public ResponseEntity<AppointmentResponse> rejectReschedule(@PathVariable Long id) {
+        return ResponseEntity.ok(appointementService.rejectReschedule(id));
+    }
+
     /** Full update of an appointment */
     @PutMapping("/{id}")
     public ResponseEntity<AppointmentResponse> update(
@@ -100,5 +112,27 @@ public class AppointementController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         appointementService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── JPQL Endpoint ─────────────────────────────────────────────────────────────
+    /**
+     * Get specialty breakdown for a doctor using the JPQL JOIN query
+     */
+    @GetMapping("/doctor/{doctorId}/specialty-stats")
+    public ResponseEntity<List<Map<String, Object>>> getSpecialtyStats(@PathVariable Integer doctorId) {
+        return ResponseEntity.ok(appointementService.getSpecialtyStats(doctorId));
+    }
+
+    // ── Keyword Query Endpoint ────────────────────────────────────────────────────
+    /**
+     * Get filtered appointments for a doctor by date range and status using complex keyword query
+     */
+    @GetMapping("/doctor/{doctorId}/filtered")
+    public ResponseEntity<List<AppointmentResponse>> getFilteredAppointments(
+            @PathVariable Integer doctorId,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to,
+            @RequestParam StatusAppointement status) {
+        return ResponseEntity.ok(appointementService.getFilteredAppointments(doctorId, from, to, status));
     }
 }
