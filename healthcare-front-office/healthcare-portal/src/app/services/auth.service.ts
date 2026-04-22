@@ -17,6 +17,8 @@ export interface RegisterRequest {
   pharmacyName?: string;
   pharmacyAddress?: string;
   phone: string;
+  profilePictureBase64?: string;
+  profilePictureName?: string;
 }
 
 export interface LoginRequest {

@@ -25,6 +25,7 @@ public class User {
     private String adresse;
     private String specialty;
     private String profilePicture;
+    private String professionalDocument;
     private String phoneNumber;
 
     private java.time.LocalDate dateOfBirth;
