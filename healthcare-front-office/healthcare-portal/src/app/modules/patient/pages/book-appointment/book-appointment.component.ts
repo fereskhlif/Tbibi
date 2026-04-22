@@ -114,13 +114,20 @@ export class BookAppointmentComponent implements OnInit {
 
   prevDatePage() {
     if (this.currentDateStart) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const d = new Date(this.currentDateStart);
       d.setDate(d.getDate() - 7);
-      
-      // Optional: limit moving to past before today? 
-      // For now we allow it, but mostly doctors have future availability.
-      this.currentDateStart = d;
+      // Don't go to a week that starts before today
+      this.currentDateStart = d < today ? today : d;
     }
+  }
+
+  get canGoPrev(): boolean {
+    if (!this.currentDateStart) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return this.currentDateStart > today;
   }
 
   getVisibleSlots(slots: ScheduleSlot[]): ScheduleSlot[] {
@@ -207,12 +214,15 @@ export class BookAppointmentComponent implements OnInit {
           const g = this.groupedSlots;
           if (g.length > 0) {
              this.selectedDate = g[0].date;
-             // Calculate the Monday (or start of week) of the first available date
+             // Calculate the Monday of the first available date's week
              const firstDate = new Date(g[0].date + 'T00:00:00');
-             const day = firstDate.getDay(); 
-             // Adjust to make Monday the start of the week (0 = Mon, 6 = Sun)
+             const day = firstDate.getDay();
              const diff = firstDate.getDate() - day + (day === 0 ? -6 : 1);
-             this.currentDateStart = new Date(firstDate.getFullYear(), firstDate.getMonth(), diff);
+             const weekStart = new Date(firstDate.getFullYear(), firstDate.getMonth(), diff);
+             // Never show a week that has already fully passed — clamp to today
+             const today = new Date();
+             today.setHours(0, 0, 0, 0);
+             this.currentDateStart = weekStart < today ? today : weekStart;
              this.showAllSlotsForDate = false;
           }
         }

@@ -17,6 +17,7 @@ import { ResetPasswordComponent } from './pages/reset-password/reset-password.co
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';          // ← AJOUTER
 import { WebcamModule } from 'ngx-webcam';
+import { DoctorAnalyticsComponent } from './pages/doctor-analytics/doctor-analytics.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -27,6 +28,7 @@ import { WebcamModule } from 'ngx-webcam';
     ActivateAccountComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,
+    DoctorAnalyticsComponent,
   ],
   imports: [
     BrowserModule,

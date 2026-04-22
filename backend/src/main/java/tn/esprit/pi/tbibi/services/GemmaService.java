@@ -38,7 +38,7 @@ public class GemmaService {
         org.springframework.http.client.SimpleClientHttpRequestFactory factory =
                 new org.springframework.http.client.SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10_000);      // 10s to connect
-        factory.setReadTimeout(120_000);        // 2 min to read (local GPU generation)
+        factory.setReadTimeout(300_000);        // 5 min to read (CPU inference can be slow)
         this.restTemplate = new RestTemplate(factory);
     }
 
@@ -81,11 +81,36 @@ public class GemmaService {
             return answer;
 
         } catch (ResourceAccessException e) {
-            // Python service is not running
+            // Python service is not running or timed out
+            String msg = e.getMessage() != null ? e.getMessage() : "";
+            if (msg.contains("Read timed out")) {
+                log.error("[GemmaService] Python service timed out (CPU inference too slow): {}", msg);
+                return "⏳ The AI model is taking longer than expected to respond (running on CPU). " +
+                       "Please try again with a shorter question, or wait a moment and retry.\n\n" +
+                       "For urgent health concerns, please contact your doctor directly.";
+            } else if (msg.contains("Connection reset")) {
+                log.error("[GemmaService] Python service connection reset (possible OOM/crash): {}", msg);
+                return "⚠️ The AI service crashed, likely due to insufficient memory. " +
+                       "Please restart the Gemma Python service (tbibi-gemma-service/start.bat) and try again.";
+            }
             log.error("[GemmaService] Python Gemma service not reachable at {}: {}", endpoint, e.getMessage());
             return "⚠️ The local AI service is currently unavailable. " +
                    "Please start the Gemma Python service (tbibi-gemma-service/start.bat) and try again.\n\n" +
                    "For urgent health concerns, please contact your doctor directly or call emergency services.";
+
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            // Python service returned an HTTP error (like 503 Service Unavailable)
+            log.warn("[GemmaService] Python service returned HTTP {}", e.getStatusCode());
+            try {
+                // Try to parse the detail message from FastAPI {"detail": "..."}
+                JsonNode errorNode = objectMapper.readTree(e.getResponseBodyAsString());
+                if (errorNode.has("detail")) {
+                    return "⏳ " + errorNode.path("detail").asText();
+                }
+            } catch (Exception parseEx) {
+                log.warn("[GemmaService] Could not parse error body: {}", e.getResponseBodyAsString());
+            }
+            return "⚠️ The AI service is currently busy or loading. Please wait a moment and try again.";
 
         } catch (Exception e) {
             log.error("[GemmaService] Unexpected error: {}", e.getMessage(), e);

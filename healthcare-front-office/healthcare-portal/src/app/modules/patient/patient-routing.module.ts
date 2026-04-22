@@ -22,6 +22,7 @@ import { CheckoutPageComponent } from './pages/checkout-page/checkout-page.compo
 import { OrderSuccessComponent } from './pages/order-success/order-success.component';
 import { MedicineDetailsComponent } from './pages/medicine-details/medicine-details.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { DiseaseRiskComponent } from './pages/disease-risk/disease-risk.component';
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 
@@ -52,6 +53,7 @@ const routes: Routes = [
   { path: 'checkout', component: CheckoutPageComponent },
   { path: 'order-success/:orderId', component: OrderSuccessComponent },
   { path: 'my-orders', component: MyOrdersComponent },
+  { path: 'disease-risk', component: DiseaseRiskComponent },
   {
     path: 'forum',
     loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
