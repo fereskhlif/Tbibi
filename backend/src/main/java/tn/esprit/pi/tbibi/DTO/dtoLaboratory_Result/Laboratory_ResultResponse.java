@@ -2,7 +2,6 @@ package tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result;
 
 import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -17,7 +16,7 @@ public class Laboratory_ResultResponse {
     private String nameLabo;
     private String resultValue;
     private String status;
-    private LocalDate testDate;
+    private String testDate; // ✅ String pour éviter les problèmes de sérialisation
 
     // Infos laborantin
     private Integer laboratoryUserId;
@@ -34,14 +33,14 @@ public class Laboratory_ResultResponse {
     // Notification
     private String notificationMessage;
     private boolean notificationSent;
-    private LocalDate notificationDate;
+    private String notificationDate; // ✅ String pour éviter les problèmes de sérialisation
 
-    // ✅ NOUVEAU — Scheduled
-    private LocalDateTime createdAt;
+    // ✅ NOUVEAU — Scheduled (String pour éviter les problèmes de sérialisation)
+    private String createdAt;
     private boolean scheduledNotifSent;
     
     // ✅ Gestion des priorités pour les demandes de tests
     private String priority; // Normal, Urgent, Critical
-    private LocalDateTime requestedAt; // Date/heure de la demande
+    private String requestedAt; // Date/heure de la demande (String ISO format)
     private String requestNotes; // Notes du médecin sur la demande
 }

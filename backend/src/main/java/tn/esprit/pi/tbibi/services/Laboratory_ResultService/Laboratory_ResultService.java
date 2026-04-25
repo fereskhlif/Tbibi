@@ -72,10 +72,8 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
             lab.setPriority("Normal");
         }
         
-        // ✅ Définir la date de demande si non fournie
-        if (request.getRequestedAt() == null) {
-            lab.setRequestedAt(LocalDateTime.now());
-        }
+        // ✅ Définir la date de demande automatiquement
+        lab.setRequestedAt(LocalDateTime.now());
 
         lab.setNotificationMessage(
                 "📋 New laboratory results available — Test: '" + request.getTestName() +
