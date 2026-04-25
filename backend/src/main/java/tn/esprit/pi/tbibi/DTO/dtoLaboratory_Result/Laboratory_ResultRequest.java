@@ -3,7 +3,6 @@ package tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -28,12 +27,11 @@ public class Laboratory_ResultRequest {
     @Size(max = 1000, message = "La valeur du résultat ne peut pas dépasser 1000 caractères")
     private String resultValue;
 
-    @Pattern(regexp = "^(PENDING|IN_PROGRESS|COMPLETED|CANCELLED)$", 
-             message = "Le statut doit être: PENDING, IN_PROGRESS, COMPLETED ou CANCELLED")
+    @Pattern(regexp = "^(Draft|Pending|In Progress|Completed|Validated)$", 
+             message = "Le statut doit être: Draft, Pending, In Progress, Completed ou Validated")
     private String status;
 
     @NotNull(message = "La date du test est obligatoire")
-    @PastOrPresent(message = "La date du test ne peut pas être dans le futur")
     private LocalDate testDate;
 
     // ID du laborantin
@@ -48,17 +46,11 @@ public class Laboratory_ResultRequest {
     // ID du médecin qui a prescrit l'analyse
     @Positive(message = "L'ID du médecin doit être un nombre positif")
     private Integer prescribedByDoctorId;
-
-    // ✅ NOUVEAU — Scheduled (optionnel, géré automatiquement dans le service)
-    private LocalDateTime createdAt;
     
     // ✅ Gestion des priorités pour les demandes de tests
     @Pattern(regexp = "^(Normal|Urgent|Critical)$", 
              message = "La priorité doit être: Normal, Urgent ou Critical")
     private String priority; // Normal, Urgent, Critical
-
-    @PastOrPresent(message = "La date de demande ne peut pas être dans le futur")
-    private LocalDateTime requestedAt; // Date/heure de la demande
 
     @Size(max = 2000, message = "Les notes de demande ne peuvent pas dépasser 2000 caractères")
     private String requestNotes; // Notes du médecin sur la demande
