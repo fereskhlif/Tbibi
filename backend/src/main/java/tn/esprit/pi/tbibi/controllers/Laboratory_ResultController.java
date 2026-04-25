@@ -1,14 +1,19 @@
 package tn.esprit.pi.tbibi.controllers;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultRequest;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultResponse;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.PatientLabStatisticsDTO;
 import tn.esprit.pi.tbibi.services.Laboratory_ResultService.ILaboratory_ResultService;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/laboratory-results")
@@ -30,7 +35,22 @@ public class Laboratory_ResultController {
 
     @PostMapping
     public ResponseEntity<?> create(
-            @RequestBody Laboratory_ResultRequest request) {
+            @Valid @RequestBody Laboratory_ResultRequest request,
+            BindingResult bindingResult) {
+        
+        // ✅ Vérifier les erreurs de validation
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(error -> 
+                errors.put(error.getField(), error.getDefaultMessage())
+            );
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Erreurs de validation",
+                "validationErrors", errors,
+                "timestamp", java.time.LocalDateTime.now().toString()
+            ));
+        }
+        
         try {
             // ✅ Log the incoming request for debugging
             System.out.println("=".repeat(80));
@@ -66,9 +86,24 @@ public class Laboratory_ResultController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Laboratory_ResultResponse> update(
+    public ResponseEntity<?> update(
             @PathVariable Integer id,
-            @RequestBody Laboratory_ResultRequest request) {
+            @Valid @RequestBody Laboratory_ResultRequest request,
+            BindingResult bindingResult) {
+        
+        // ✅ Vérifier les erreurs de validation
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(error -> 
+                errors.put(error.getField(), error.getDefaultMessage())
+            );
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Erreurs de validation",
+                "validationErrors", errors,
+                "timestamp", java.time.LocalDateTime.now().toString()
+            ));
+        }
+        
         return ResponseEntity.ok(service.update(id, request));
     }
 
