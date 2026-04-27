@@ -21,12 +21,11 @@ const routes: Routes = [
     { path: 'dashboard', component: DoctorDashboardComponent },
     { path: 'profile', component: DoctorProfileComponent },
     { path: 'patient-records', component: PatientRecordsComponent },
-    { path: 'teleconsultation', component: TeleconsultationComponent },
+
     { path: 'disease-detection', component: DiseaseDetectionComponent },
     { path: 'prescriptions', component: DoctorPrescriptionsComponent },
     { path: 'ai-analysis', component: AiImageAnalysisComponent },
     { path: 'chronic-disease', component: ChronicDiseaseComponent },
-    { path: 'alerts', component: CriticalAlertsComponent },
     { path: 'lab-results', component: DoctorLabResultsComponent },
     { path: 'notifications', component: DoctorNotificationsComponent },
     { path: 'all-appointments', component: DoctorAllAppointmentsComponent },
