@@ -316,8 +316,13 @@
           <h3>Basic Information</h3>
           <div class="form-row">
             <div class="form-group">
-              <label>Lab Result ID *</label>
-              <input type="number" [(ngModel)]="formData.laboratoryResultId" name="labId" placeholder="Enter ID" />
+              <label>Lab Result *</label>
+              <select [(ngModel)]="formData.laboratoryResultId" name="labId" required>
+                <option [value]="null">Select a lab result</option>
+                <option *ngFor="let lab of labResults" [value]="lab.labId">
+                  {{ lab.testName }} - {{ lab.nameLabo }} ({{ lab.status }})
+                </option>
+              </select>
             </div>
             <div class="form-group">
               <label>Category</label>

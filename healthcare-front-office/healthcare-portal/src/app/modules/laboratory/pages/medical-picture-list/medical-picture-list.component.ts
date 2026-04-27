@@ -1,9 +1,16 @@
-// No changes needed to TypeScript - all existing functionality preserved
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { MedicalPictureAnalysisResponse, MedicalPictureAnalysisRequest } from '../../models/medical-picture-analysis.model';
 import { MedicalPictureAnalysisService } from '../../services/medical-picture-analysis.service';
 
 type StatusFilter = 'All' | 'Pending' | 'In Progress' | 'Completed' | 'Validated';
+
+interface LabResult {
+  labId: number;
+  testName: string;
+  nameLabo: string;
+  status: string;
+}
 
 @Component({
   selector: 'app-medical-picture-list',
@@ -12,6 +19,7 @@ type StatusFilter = 'All' | 'Pending' | 'In Progress' | 'Completed' | 'Validated
 })
 export class MedicalPictureListComponent implements OnInit {
   analyses: MedicalPictureAnalysisResponse[] = [];
+  labResults: LabResult[] = []; // ✅ NOUVEAU - Liste des résultats de laboratoire
   isLoading = false;
   errorMessage = '';
   successMessage = '';
@@ -27,6 +35,7 @@ export class MedicalPictureListComponent implements OnInit {
   selectedFile: File | null = null;
 
   private readonly IMAGE_BASE_URL = 'http://localhost:8088/uploads/medical-pictures/';
+  private readonly API_URL = 'http://localhost:8088/api';
 
   categoryOptions = ['Radio', 'Scanner', 'IRM', 'Echographie'];
   statusOptions = ['Pending', 'In Progress', 'Completed', 'Validated', 'Rejected'];
@@ -47,9 +56,34 @@ export class MedicalPictureListComponent implements OnInit {
     validationDate: ''
   };
 
-  constructor(private service: MedicalPictureAnalysisService) {}
+  constructor(
+    private service: MedicalPictureAnalysisService,
+    private http: HttpClient
+  ) {}
 
-  ngOnInit(): void { this.loadAll(); }
+  ngOnInit(): void { 
+    this.loadAll();
+    this.loadLabResults(); // ✅ NOUVEAU - Charger les résultats de laboratoire
+  }
+
+  // ✅ NOUVEAU - Charger les résultats de laboratoire
+  loadLabResults(): void {
+    this.http.get<LabResult[]>(`${this.API_URL}/laboratory-results`)
+      .subscribe({
+        next: (data) => {
+          this.labResults = data;
+          console.log('Lab results loaded:', this.labResults);
+        },
+        error: (err) => console.error('Error loading lab results:', err)
+      });
+  }
+
+  // ✅ NOUVEAU - Obtenir le nom du test de laboratoire par ID
+  getLabResultName(labId: number | null): string {
+    if (!labId) return 'No lab result';
+    const labResult = this.labResults.find(lr => lr.labId === labId);
+    return labResult ? `${labResult.testName} (${labResult.nameLabo})` : `Lab ID: ${labId}`;
+  }
 
   loadAll(): void {
     this.isLoading = true;
