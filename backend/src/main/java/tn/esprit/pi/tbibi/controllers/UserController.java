@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -57,6 +58,41 @@ public class UserController {
                 user.getRole() != null ? user.getRole().getRoleName() : null);
 
         return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map<String, String> body) {
+        log.info("=== UPDATE PROFILE ===");
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).build();
+        }
+
+        if (body.containsKey("name") && body.get("name") != null && !body.get("name").isBlank()) {
+            user.setName(body.get("name"));
+        }
+        if (body.containsKey("email") && body.get("email") != null && !body.get("email").isBlank()) {
+            user.setEmail(body.get("email"));
+        }
+        userRepository.save(user);
+
+        UserProfileDTO dto2 = new UserProfileDTO(
+                user.getUserId(),
+                user.getName(),
+                user.getEmail(),
+                user.getAdresse(),
+                user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null,
+                user.getGender(),
+                user.getProfilePicture(),
+                user.getRole() != null ? user.getRole().getRoleName() : null);
+
+        return ResponseEntity.ok(dto2);
     }
 
     @PostMapping(value = "/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -51,6 +51,10 @@ export class UserService {
     return this.http.post<UserProfileDTO>(`${this.apiUrl}/profile-picture`, formData, { headers: headers });
   }
 
+  updateProfile(data: { name?: string; email?: string }): Observable<UserProfileDTO> {
+    return this.http.put<UserProfileDTO>(`${this.apiUrl}/profile`, data, { headers: this.getHeaders() });
+  }
+
   changePassword(oldPw: string, newPw: string): Observable<any> {
     const payload = { oldPassword: oldPw, newPassword: newPw };
     return this.http.post(`${this.apiUrl}/change-password`, payload, { headers: this.getHeaders() });
