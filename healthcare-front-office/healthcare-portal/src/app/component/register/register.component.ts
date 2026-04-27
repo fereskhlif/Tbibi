@@ -6,7 +6,7 @@ import { AuthService, RegisterRequest } from '../../services/auth.service';
   templateUrl: './register.component.html'
 })
 export class RegisterComponent {
-  
+
   email = '';
   password = '';
   selectedRole = '';
@@ -14,7 +14,7 @@ export class RegisterComponent {
   isLoading = false;
   errorMessage = '';
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   // Méthode pour gérer l'upload de document
   onFileSelected(event: any): void {
@@ -31,7 +31,7 @@ export class RegisterComponent {
     }
 
     this.isLoading = true;
-    
+
     const registerData: RegisterRequest = {
       name: "User",
       email: this.email,
