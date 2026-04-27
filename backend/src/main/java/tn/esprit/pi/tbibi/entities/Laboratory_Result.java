@@ -38,8 +38,8 @@ public class Laboratory_Result {
     @Column(length = 1000)
     private String resultValue;
 
-    @Pattern(regexp = "^(PENDING|IN_PROGRESS|COMPLETED|CANCELLED)$", 
-             message = "Le statut doit être: PENDING, IN_PROGRESS, COMPLETED ou CANCELLED")
+    @Pattern(regexp = "^(Draft|Pending|In Progress|Completed|Validated)$", 
+             message = "Le statut doit être: Draft, Pending, In Progress, Completed ou Validated")
     @Column(length = 50)
     private String status;
 
