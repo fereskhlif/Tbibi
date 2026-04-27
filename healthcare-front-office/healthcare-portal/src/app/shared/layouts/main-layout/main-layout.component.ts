@@ -44,34 +44,34 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'messages', icon: 'user', label: 'My Doctor Chat' },
     { path: 'book-appointment', icon: 'calendar', label: 'Book Appointment' },
     { path: 'appointments', icon: 'calendar', label: 'Appointments' },
-    { path: 'doctor-schedules', icon: 'users', label: 'Doctor Schedules' },
+    //{ path: 'doctor-schedules', icon: 'users', label: 'Doctor Schedules' },
     { path: 'prescriptions', icon: 'pill', label: 'Prescriptions' },
     { path: 'pharmacy-list', icon: 'shopping-bag', label: 'Pharmacy Stores' },
     { path: 'my-orders', icon: 'package', label: 'My Orders' },
     { path: 'lab-results', icon: 'microscope', label: 'Lab Results' },
     { path: 'reminders', icon: 'clock', label: 'Reminders' },
-    { path: 'interaction-history', icon: 'history', label: 'History' },
-    { path: 'chronic-monitor', icon: 'activity',    label: 'Health Monitor' },
-    { path: 'disease-risk',    icon: 'shield-alert', label: '🔬 Disease Risk AI' },
-    { path: 'health-goals',    icon: 'target',        label: 'Health Goals' },
-    { path: 'forum',           icon: 'users',         label: 'Community Forum' }
+    //{ path: 'interaction-history', icon: 'history', label: 'History' },
+    { path: 'chronic-monitor', icon: 'activity', label: 'Health Monitor' },
+    { path: 'disease-risk', icon: 'shield-alert', label: '🔬 Disease Risk AI' },
+    { path: 'health-goals', icon: 'target', label: 'Health Goals' },
+    { path: 'forum', icon: 'users', label: 'Community Forum' }
   ];
 
   private doctorNav: NavItem[] = [
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'Professional Profile' },
     { path: 'all-appointments', icon: 'calendar', label: 'All Appointments' },
-    { path: 'manage-schedules', icon: 'clock', label: 'Manage Schedules' },
+    //{ path: 'manage-schedules', icon: 'clock', label: 'Manage Schedules' },
     { path: 'notifications', icon: 'bell', label: 'Notifications' },
     { path: 'messages', icon: 'message-square', label: 'Patient Chat' },
     { path: 'patient-records', icon: 'users', label: 'Patient Records' },
-    { path: 'teleconsultation', icon: 'video', label: 'Teleconsultation' },
-    { path: 'disease-detection', icon: 'search', label: 'Disease Detection' },
+    // { path: 'teleconsultation', icon: 'video', label: 'Teleconsultation' },
+    //{ path: 'disease-detection', icon: 'search', label: 'Disease Detection' },
     { path: 'prescriptions', icon: 'pill', label: 'Prescriptions' },
     { path: 'ai-analysis', icon: 'activity', label: 'AI Image Analysis' },
     { path: 'chronic-disease', icon: 'activity', label: 'Chronic Disease' },
     { path: 'risk-segmentation', icon: 'brain', label: '🧠 Risk Segmentation' },
-    { path: 'alerts', icon: 'bell', label: 'Critical Alerts' },
+    // { path: 'alerts', icon: 'bell', label: 'Critical Alerts' },
     { path: 'lab-results', icon: 'microscope', label: 'Lab Results' },
     { path: 'forum', icon: 'users', label: 'Community Forum' }
   ];
@@ -115,7 +115,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'users', icon: 'users', label: 'Utilisateurs' },
     { path: 'approvals', icon: 'check-circle', label: 'Approbations' },
     { path: 'monitoring', icon: 'activity', label: 'Monitoring' },
-    { path: 'settings', icon: 'settings', label: 'Configuration' }
+    //{ path: 'settings', icon: 'settings', label: 'Configuration' }
   ];
 
   constructor(
@@ -300,9 +300,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     container.innerHTML = '';
 
     const toast = document.createElement('div');
-    toast.className = `px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 transform transition-all duration-300 translate-x-full border-l-4 ${
-      type === 'success' ? 'bg-white border-green-500 text-gray-800' : 'bg-white border-red-500 text-gray-800'
-    }`;
+    toast.className = `px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 transform transition-all duration-300 translate-x-full border-l-4 ${type === 'success' ? 'bg-white border-green-500 text-gray-800' : 'bg-white border-red-500 text-gray-800'
+      }`;
     toast.style.maxWidth = '280px';
     toast.style.pointerEvents = 'auto';
     toast.innerHTML = `
