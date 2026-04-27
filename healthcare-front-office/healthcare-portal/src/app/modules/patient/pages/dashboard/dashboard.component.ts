@@ -1,12 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
+import { AppointmentService } from '../../services/appointment.service';
+import { LaboratoryResultService } from '../../services/laboratory-result.service';
+import { PrescriptionService } from '../../../../services/prescription-service.service';
 
 @Component({
   selector: 'app-patient-dashboard',
   template: `
     <div class="p-8">
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">Welcome back, John!</h1>
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">Welcome back{{userName ? ', ' + userName : ''}}!</h1>
         <p class="text-gray-600">Here's an overview of your health dashboard</p>
       </div>
 
@@ -17,8 +22,8 @@ import { Router } from '@angular/router';
             <span class="text-2xl">{{stat.icon}}</span>
             <span class="text-sm font-medium text-gray-500">{{stat.title}}</span>
           </div>
-          <p class="text-xl font-bold text-gray-900">{{stat.value}}</p>
-          <p class="text-sm text-gray-500 mt-1">{{stat.subtitle}}</p>
+          <p class="text-xl font-bold text-gray-900 truncate" [title]="stat.value">{{stat.value}}</p>
+          <p class="text-sm text-gray-500 mt-1 truncate" [title]="stat.subtitle">{{stat.subtitle}}</p>
         </div>
       </div>
 
@@ -56,32 +61,209 @@ import { Router } from '@angular/router';
     </div>
   `
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
+  userName = '';
+
   stats = [
-    { icon: '📅', title: 'Next Appointment', value: 'Tomorrow, 10:00 AM', subtitle: 'Dr. Sarah Johnson' },
-    { icon: '💊', title: 'Pending Medications', value: '3 medications', subtitle: '1 refill needed' },
-    { icon: '🔬', title: 'Lab Results', value: '2 new results', subtitle: 'Blood work completed' },
-    { icon: '📋', title: 'Health Score', value: '85/100', subtitle: 'Good condition' }
+    { id: 'appointment', icon: '📅', title: 'Next Appointment', value: 'Loading...', subtitle: 'Please wait' },
+    { id: 'medication', icon: '💊', title: 'Pending Medications', value: 'Loading...', subtitle: 'Please wait' },
+    { id: 'lab', icon: '🔬', title: 'Lab Results', value: 'Loading...', subtitle: 'Please wait' },
+    { id: 'health', icon: '📋', title: 'Health Score', value: 'Loading...', subtitle: 'Please wait' }
   ];
 
   actions = [
-    { icon: '📅', title: 'Book Appointment', description: 'Schedule a teleconsultation', route: '/patient/appointments' },
-    { icon: '💬', title: 'AI Health Assistant', description: 'Chat with our AI assistant', route: '/patient/chat' },
-    { icon: '📋', title: 'Medical Records', description: 'View your health records', route: '/patient/records' },
+    { icon: '📅', title: 'Book Appointment', description: 'Schedule a teleconsultation', route: '/patient/book-appointment' },
+    { icon: '💬', title: 'AI Health Assistant', description: 'Chat with our AI assistant', route: '/patient/ai-chat' },
+    { icon: '📋', title: 'Medical Records', description: 'View your health records', route: '/patient/medical-records' },
     { icon: '💊', title: 'Prescriptions', description: 'View your prescriptions', route: '/patient/prescriptions' },
     { icon: '🛍️', title: 'Pharmacy Shop', description: 'Order medications online', route: '/patient/pharmacy-shop' },
     { icon: '🔬', title: 'Lab Results', description: 'Check your lab results', route: '/patient/lab-results' }
   ];
 
   recentActivity = [
-    { icon: '📅', title: 'Appointment Confirmed', description: 'Video consultation with Dr. Sarah Johnson', time: '2 hours ago' },
-    { icon: '💊', title: 'Prescription Updated', description: 'Medication dosage adjusted by Dr. Ahmed', time: '5 hours ago' },
-    { icon: '🔬', title: 'Lab Results Available', description: 'Complete blood count results ready', time: '1 day ago' },
-    { icon: '💬', title: 'AI Consultation', description: 'Symptom analysis completed', time: '2 days ago' },
-    { icon: '💳', title: 'Payment Confirmed', description: 'Consultation fee processed', time: '3 days ago' }
+    { icon: '🚀', title: 'Welcome to your Dashboard', description: 'Explore our new features.', time: 'Just now' }
   ];
 
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private http: HttpClient,
+    private authService: AuthService,
+    private appointmentService: AppointmentService,
+    private prescriptionService: PrescriptionService,
+    private labResultService: LaboratoryResultService
+  ) { }
+
+  ngOnInit() {
+    this.loadNextAppointment();
+    this.loadPendingMedications();
+    this.loadLabResults();
+    this.loadHealthScore();
+
+    // Set username if stored
+    const email = localStorage.getItem('email');
+    if (email) {
+      this.userName = email.split('@')[0];
+    }
+  }
+
+  getStat(id: string) {
+    return this.stats.find(s => s.id === id);
+  }
+
+  loadNextAppointment() {
+    const userId = this.authService.getCurrentUserId();
+    if (!userId) {
+      const stat = this.getStat('appointment');
+      if (stat) { stat.value = 'Not logged in'; stat.subtitle = ''; }
+      return;
+    }
+
+    this.appointmentService.getPatientAppointments(userId).subscribe({
+      next: (appointments) => {
+        const now = new Date();
+        const upcoming = appointments
+          .filter(a => {
+            const dateStr = a.scheduleDate + 'T' + a.scheduleTime;
+            return new Date(dateStr) > now && a.statusAppointement !== 'CANCELLED';
+          })
+          .sort((a, b) => new Date(a.scheduleDate + 'T' + a.scheduleTime).getTime() - new Date(b.scheduleDate + 'T' + b.scheduleTime).getTime());
+
+        const stat = this.getStat('appointment');
+        if (stat) {
+          if (upcoming.length > 0) {
+            const next = upcoming[0];
+            const dateObj = new Date(next.scheduleDate + 'T' + next.scheduleTime);
+
+            // Format as "Tomorrow, 10:00 AM" or "Apr 28, 10:00 AM"
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            let dateStr = '';
+            if (dateObj.toDateString() === today.toDateString()) {
+              dateStr = 'Today';
+            } else if (dateObj.toDateString() === tomorrow.toDateString()) {
+              dateStr = 'Tomorrow';
+            } else {
+              dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+
+            const timeStr = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+            stat.value = `${dateStr}, ${timeStr}`;
+            // If the user meant patient name, we can include it, but Dr. name makes more sense on a patient dashboard
+            stat.subtitle = ` ${next.doctor} `;
+          } else {
+            stat.value = 'No upcoming';
+            stat.subtitle = 'Book one now!';
+          }
+        }
+      },
+      error: () => {
+        const stat = this.getStat('appointment');
+        if (stat) { stat.value = 'Error'; stat.subtitle = 'Could not load'; }
+      }
+    });
+  }
+
+  loadPendingMedications() {
+    this.prescriptionService.getMyPrescriptions().subscribe({
+      next: (prescriptions: any[]) => {
+        const pending = prescriptions.filter((p: any) => p.status === 'PENDING' || p.status === 'VALIDATED');
+        const stat = this.getStat('medication');
+        if (stat) {
+          stat.value = `${pending.length} prescriptions`;
+          stat.subtitle = pending.length > 0 ? 'Action required' : 'All caught up';
+        }
+      },
+      error: () => {
+        const stat = this.getStat('medication');
+        if (stat) { stat.value = 'Error'; stat.subtitle = 'Could not load'; }
+      }
+    });
+  }
+
+  loadLabResults() {
+    const userId = this.authService.getCurrentUserId();
+    if (!userId) return;
+
+    this.labResultService.getByPatient(userId).subscribe({
+      next: (results) => {
+        const stat = this.getStat('lab');
+        if (stat) {
+          stat.value = `${results.length} results`;
+          stat.subtitle = results.length > 0 ? 'Check them out' : 'No recent results';
+        }
+      },
+      error: () => {
+        const stat = this.getStat('lab');
+        if (stat) { stat.value = 'Error'; stat.subtitle = 'Could not load'; }
+      }
+    });
+  }
+
+  loadHealthScore() {
+    const patientId = this.authService.getCurrentUserId();
+    if (!patientId) {
+      const stat = this.getStat('health');
+      if (stat) { stat.value = 'N/A'; stat.subtitle = 'Not logged in'; }
+      return;
+    }
+
+    this.http.get<any[]>(`http://localhost:8088/api/chronic/patient/${patientId}`).subscribe({
+      next: (records) => {
+        records = records || [];
+        if (records.length === 0) {
+          const stat = this.getStat('health');
+          if (stat) { stat.value = 'N/A'; stat.subtitle = 'No smartwatch data'; }
+          return;
+        }
+
+        const avg = (type: string) => {
+          const vals = records
+            .filter(r => r.conditionType === type && r.value != null)
+            .map(r => parseFloat(r.value));
+          return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        };
+
+        const avgBloodPressure = avg('BLOOD_PRESSURE') || 120;
+        const avgBloodSugar = avg('BLOOD_SUGAR') || 95;
+
+        const body = {
+          age: 40,
+          bmi: 25.0,
+          systolic_bp: Math.round(avgBloodPressure),
+          fasting_glucose: Math.round(avgBloodSugar),
+          smoking: 0,
+          physical_activity: 3,
+          family_history: 0,
+          cholesterol: 190,
+        };
+
+        this.http.post<any>('http://localhost:8088/api/disease-risk/predict', body).subscribe({
+          next: (r) => {
+            const stat = this.getStat('health');
+            if (stat) {
+              stat.value = r.overallRisk + ' RISK';
+              stat.subtitle = r.summary || 'Based on your vitals';
+
+              if (r.overallRisk === 'HIGH') stat.icon = '🚨';
+              else if (r.overallRisk === 'MEDIUM') stat.icon = '⚠️';
+              else stat.icon = '✅';
+            }
+          },
+          error: () => {
+            const stat = this.getStat('health');
+            if (stat) { stat.value = 'Error'; stat.subtitle = 'Prediction failed'; }
+          }
+        });
+      },
+      error: () => {
+        const stat = this.getStat('health');
+        if (stat) { stat.value = 'Error'; stat.subtitle = 'Could not load vitals'; }
+      }
+    });
+  }
 
   navigate(route: string) {
     this.router.navigate([route]);
