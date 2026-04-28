@@ -15,7 +15,10 @@ interface LabResult {
 @Component({
   selector: 'app-medical-picture-list',
   templateUrl: './medical-picture-list.component.html',
-  styleUrls: ['./medical-picture-list.component.css']
+  styleUrls: [
+    './medical-picture-list.component.css',
+    './ai-result-modal.css'
+  ]
 })
 export class MedicalPictureListComponent implements OnInit {
   analyses: MedicalPictureAnalysisResponse[] = [];
@@ -31,6 +34,11 @@ export class MedicalPictureListComponent implements OnInit {
   isEditMode = false;
   isSaving = false;
   editingId: number | null = null;
+
+  // ✅ NOUVEAU - Modal de résultats IA
+  showAiResultModal = false;
+  aiResult: any = null;
+  isAnalyzing = false;
 
   selectedFile: File | null = null;
 
@@ -265,5 +273,55 @@ export class MedicalPictureListComponent implements OnInit {
     if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ✅ NOUVEAU - Analyser avec l'IA
+  onAnalyzeWithAI(picId: number): void {
+    if (confirm('Lancer l\'analyse IA pour détecter les fractures?')) {
+      this.isAnalyzing = true;
+      const analysis = this.analyses.find(a => a.picId === picId);
+      if (analysis) {
+        analysis.status = 'In Progress';
+      }
+
+      this.service.analyzeWithAI(picId).subscribe({
+        next: (result) => {
+          console.log('AI Analysis Result:', result);
+          this.aiResult = result;
+          this.showAiResultModal = true;
+          this.isAnalyzing = false;
+          
+          // Recharger les données
+          this.loadAll();
+        },
+        error: (err) => {
+          console.error('Error during AI analysis:', err);
+          this.errorMessage = 'Erreur lors de l\'analyse IA. Vérifiez que le service Python est démarré.';
+          this.isAnalyzing = false;
+          
+          if (analysis) {
+            this.loadAll();
+          }
+        }
+      });
+    }
+  }
+
+  closeAiResultModal(): void {
+    this.showAiResultModal = false;
+    this.aiResult = null;
+  }
+
+  getConfidenceClass(level: string): string {
+    switch (level) {
+      case 'high': return 'confidence-high';
+      case 'medium': return 'confidence-medium';
+      case 'low': return 'confidence-low';
+      default: return '';
+    }
+  }
+
+  getPredictionClass(prediction: string): string {
+    return prediction === 'fracture' ? 'prediction-fracture' : 'prediction-normal';
   }
 }
