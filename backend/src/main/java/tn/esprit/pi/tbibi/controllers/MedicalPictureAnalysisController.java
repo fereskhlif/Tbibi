@@ -7,8 +7,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.FractureAnalysisResponse;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.MedicalPictureAnalysisRequest;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.MedicalPictureAnalysisResponse;
+import tn.esprit.pi.tbibi.services.FractureAnalysisService.IFractureAnalysisService;
 import tn.esprit.pi.tbibi.services.MedicalPictureAnalysisService.IMedicalPictureAnalysisService;
 
 import java.io.IOException;
@@ -21,6 +23,7 @@ import java.util.List;
 public class MedicalPictureAnalysisController {
 
     private final IMedicalPictureAnalysisService service;
+    private final IFractureAnalysisService fractureService;
 
     // ==================== CRUD DE BASE ====================
 
@@ -82,5 +85,35 @@ public class MedicalPictureAnalysisController {
     @GetMapping("/category/{category}")
     public List<MedicalPictureAnalysisResponse> getByCategory(@PathVariable String category) {
         return service.getByCategory(category);
+    }
+
+    // ==================== ANALYSE IA ====================
+
+    // ✅ Analyser une image avec l'IA : POST /api/medical-picture-analysis/1/analyze
+    @PostMapping("/{id}/analyze")
+    public ResponseEntity<FractureAnalysisResponse> analyzeWithAI(@PathVariable Integer id) {
+        try {
+            FractureAnalysisResponse response = fractureService.analyzeImage(id);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(
+                    FractureAnalysisResponse.builder()
+                            .picId(id)
+                            .message("Erreur: " + e.getMessage())
+                            .analysisUpdated(false)
+                            .build()
+            );
+        }
+    }
+
+    // ✅ Vérifier la santé du service IA : GET /api/medical-picture-analysis/ai-health
+    @GetMapping("/ai-health")
+    public ResponseEntity<String> checkAiHealth() {
+        boolean healthy = fractureService.checkAiServiceHealth();
+        if (healthy) {
+            return ResponseEntity.ok("Service IA opérationnel ✅");
+        } else {
+            return ResponseEntity.status(503).body("Service IA non disponible ❌");
+        }
     }
 }

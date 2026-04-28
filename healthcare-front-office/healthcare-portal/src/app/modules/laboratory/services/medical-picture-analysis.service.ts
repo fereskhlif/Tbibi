@@ -59,4 +59,16 @@ export class MedicalPictureAnalysisService {
   getByCategory(category: string): Observable<MedicalPictureAnalysisResponse[]> {
     return this.http.get<MedicalPictureAnalysisResponse[]>(`${this.apiUrl}/category/${category}`);
   }
+
+  // ==================== ANALYSE IA ====================
+
+  // ✅ Analyser une image avec l'IA
+  analyzeWithAI(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/analyze`, {});
+  }
+
+  // ✅ Vérifier la santé du service IA
+  checkAiHealth(): Observable<string> {
+    return this.http.get(`${this.apiUrl}/ai-health`, { responseType: 'text' });
+  }
 }
