@@ -35,7 +35,7 @@ public class MedicalPictureAnalysisService implements IMedicalPictureAnalysisSer
     private final MedicalPictureAnalysisMapper mapper;
     private final RestTemplate restTemplate;
 
-    private static final String AI_SERVICE_URL = "http://localhost:5000/analyze";
+    private static final String AI_SERVICE_URL = "http://localhost:5000/predict";
     private static final String UPLOAD_DIR = "uploads/medical-pictures/";
 
     // ==================== CRUD DE BASE ====================
@@ -94,11 +94,13 @@ public class MedicalPictureAnalysisService implements IMedicalPictureAnalysisSer
         // ✅ Appel au service IA Python
         try {
             Map<String, Object> aiResult = callAiService(imageFile, request.getCategory());
-            pic.setAnalysisResult((String) aiResult.get("analysisResult"));
-            pic.setConfidenceScore(((Number) aiResult.get("confidenceScore")).doubleValue());
+            pic.setAnalysisResult((String) aiResult.get("message"));
+            pic.setConfidenceScore(((Number) aiResult.get("confidence")).doubleValue());
+            pic.setStatus("Completed");
         } catch (Exception e) {
             pic.setAnalysisResult("AI analysis pending — service unavailable");
             pic.setConfidenceScore(0.0);
+            pic.setStatus("Pending");
         }
 
         return mapper.toResponse(picRepo.save(pic));
@@ -116,7 +118,6 @@ public class MedicalPictureAnalysisService implements IMedicalPictureAnalysisSer
                 return imageFile.getOriginalFilename();
             }
         });
-        body.add("category", category != null ? category : "General");
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         ResponseEntity<Map> response = restTemplate.exchange(AI_SERVICE_URL, HttpMethod.POST, requestEntity, Map.class);

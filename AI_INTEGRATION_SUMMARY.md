@@ -29,7 +29,7 @@ Intégration d'un modèle EfficientNet-B0 pour la détection automatique de frac
 - ✅ `INSTALLATION.md` - Guide d'installation
 - ✅ `test_api.py` - Script de test
 - ✅ `start.bat` - Script de démarrage Windows
-- ✅ `fracture_model.pt` - Modèle PyTorch (déjà présent)
+- ✅ `fracture_model_v2.pt` - Modèle PyTorch amélioré (déjà présent)
 
 ### Backend Spring Boot
 - ✅ `FractureAnalysisService.java` - Service d'analyse

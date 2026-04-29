@@ -20,10 +20,10 @@ pip install -r requirements.txt
 
 ### Étape 2: Vérifier le modèle
 
-Assurez-vous que le fichier `fracture_model.pt` est présent dans le dossier `ai_service/`.
+Assurez-vous que le fichier `fracture_model_v2.pt` est présent dans le dossier `ai_service/`.
 
 ```bash
-dir fracture_model.pt
+dir fracture_model_v2.pt
 ```
 
 Si le fichier est absent, copiez-le depuis votre environnement d'entraînement.
@@ -116,9 +116,9 @@ pip install torch torchvision
 
 ### Erreur: "Modèle non chargé"
 
-Vérifier que `fracture_model.pt` existe:
+Vérifier que `fracture_model_v2.pt` existe:
 ```bash
-dir fracture_model.pt
+dir fracture_model_v2.pt
 ```
 
 ### Erreur: "Port 5000 already in use"
@@ -175,7 +175,7 @@ python app.py > service.log 2>&1
 
 - [ ] Python 3.12+ installé
 - [ ] Dépendances installées (`pip install -r requirements.txt`)
-- [ ] Modèle `fracture_model.pt` présent
+- [ ] Modèle `fracture_model_v2.pt` présent
 - [ ] Service Python démarré (`python app.py`)
 - [ ] Health check OK (`http://localhost:5000/health`)
 - [ ] Backend Spring Boot démarré
