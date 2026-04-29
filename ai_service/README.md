@@ -12,7 +12,7 @@ pip install -r requirements.txt
 
 2. **Vérifier que le modèle est présent:**
 ```bash
-ls fracture_model.pt
+ls fracture_model_v2.pt
 ```
 
 ## ▶️ Démarrage
@@ -85,7 +85,7 @@ curl -X POST http://localhost:5000/predict \
 ## 🐛 Dépannage
 
 **Erreur "Modèle non chargé":**
-- Vérifier que `fracture_model.pt` existe dans le dossier
+- Vérifier que `fracture_model_v2.pt` existe dans le dossier
 - Vérifier la version de PyTorch (2.1.0)
 
 **Erreur CUDA:**

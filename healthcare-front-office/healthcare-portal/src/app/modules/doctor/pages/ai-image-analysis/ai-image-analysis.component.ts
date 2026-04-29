@@ -1,37 +1,194 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+interface Patient {
+  userId: number;
+  name: string;
+  email: string;
+}
+
+interface MedicalPictureAnalysis {
+  picId: number;
+  imageName: string;
+  category: string;
+  analysisResult: string;
+  confidenceScore: number;
+  status: string;
+  uploadDate: string;
+  laboratoryResultId: number;
+  testName?: string;
+  nameLabo?: string;
+}
+
 @Component({
-    selector: 'app-ai-image-analysis', template: `
-  <div class="p-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">AI Image Analysis</h1><p class="text-gray-600 mb-6">Upload and analyze medical images with AI assistance</p>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 class="font-semibold text-gray-900 mb-4">Upload Medical Image</h3>
-        <label class="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-500 transition-colors">
-          <span class="text-5xl mb-3">🖼️</span><p class="text-gray-600 text-center">Drop your medical image here<br><span class="text-sm text-gray-400">X-Ray, MRI, CT Scan, Dermoscopy</span></p>
-          <input type="file" accept="image/*" class="hidden" />
-        </label>
-        <div class="mt-4 grid grid-cols-2 gap-2">
-          <button *ngFor="let type of imageTypes" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-100">{{type}}</button>
-        </div>
-      </div>
-      <div class="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 class="font-semibold text-gray-900 mb-4">Analysis Results</h3>
-        <div class="space-y-4">
-          <div *ngFor="let result of analysisResults" class="p-4 rounded-lg border border-gray-200">
-            <div class="flex items-center justify-between mb-2"><h4 class="font-medium text-gray-900">{{result.finding}}</h4><span [class]="'px-2 py-1 text-xs rounded-full ' + result.severityClass">{{result.severity}}</span></div>
-            <p class="text-sm text-gray-600 mb-2">{{result.description}}</p>
-            <div class="flex items-center gap-2"><span class="text-xs text-gray-500">Confidence:</span><div class="flex-1 bg-gray-200 rounded-full h-2"><div [class]="'h-2 rounded-full ' + result.barClass" [style.width.%]="result.confidence"></div></div><span class="text-xs font-medium">{{result.confidence}}%</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-` })
-export class AiImageAnalysisComponent {
-    imageTypes = ['X-Ray', 'MRI', 'CT Scan', 'Ultrasound', 'Dermoscopy', 'Retinal'];
-    analysisResults = [
-        { finding: 'Normal Cardiac Silhouette', confidence: 92, description: 'Heart size and shape appear within normal limits', severity: 'Normal', severityClass: 'bg-green-100 text-green-700', barClass: 'bg-green-500' },
-        { finding: 'Minor Calcification', confidence: 78, description: 'Small calcification noted in the aortic arch region', severity: 'Low Risk', severityClass: 'bg-yellow-100 text-yellow-700', barClass: 'bg-yellow-500' },
-        { finding: 'Clear Lung Fields', confidence: 95, description: 'No infiltrates, masses, or pleural effusions detected', severity: 'Normal', severityClass: 'bg-green-100 text-green-700', barClass: 'bg-green-500' }
-    ];
+  selector: 'app-ai-image-analysis',
+  templateUrl: './ai-image-analysis.component.html',
+  styleUrls: ['./ai-image-analysis.component.css']
+})
+export class AiImageAnalysisComponent implements OnInit {
+  patients: Patient[] = [];
+  selectedPatient: Patient | null = null;
+  analyses: MedicalPictureAnalysis[] = [];
+  filteredAnalyses: MedicalPictureAnalysis[] = [];
+  
+  isLoading = false;
+  searchTerm = '';
+  selectedCategory = 'All';
+  
+  private apiUrl = 'http://localhost:8088/api';
+  private imageBaseUrl = 'http://localhost:8088/uploads/medical-pictures/';
+
+  categoryOptions = ['All', 'Radio', 'Scanner', 'IRM', 'Echographie'];
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.loadPatientsWithAnalyses();
+  }
+
+  loadPatientsWithAnalyses(): void {
+    this.isLoading = true;
+    
+    // Charger toutes les analyses médicales
+    this.http.get<MedicalPictureAnalysis[]>(`${this.apiUrl}/medical-picture-analysis`)
+      .subscribe({
+        next: (analyses) => {
+          // Filtrer uniquement les analyses qui ont été traitées par l'IA
+          this.analyses = analyses.filter(a => 
+            a.analysisResult && 
+            a.confidenceScore && 
+            a.status === 'Completed'
+          );
+          
+          // Extraire les patients uniques
+          this.extractUniquePatients();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error loading analyses:', err);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  extractUniquePatients(): void {
+    // Récupérer les IDs de patients uniques depuis les analyses
+    const patientIds = [...new Set(
+      this.analyses
+        .map(a => a.laboratoryResultId)
+        .filter(id => id != null)
+    )];
+
+    // Charger les infos des patients
+    if (patientIds.length > 0) {
+      this.http.get<any[]>(`${this.apiUrl}/laboratory-results`)
+        .subscribe({
+          next: (labResults) => {
+            const uniquePatients = new Map<number, Patient>();
+            
+            labResults.forEach(lr => {
+              if (lr.patientId && lr.patientName) {
+                uniquePatients.set(lr.patientId, {
+                  userId: lr.patientId,
+                  name: lr.patientName,
+                  email: '' // Pas disponible dans lab results
+                });
+              }
+            });
+            
+            this.patients = Array.from(uniquePatients.values());
+          },
+          error: (err) => console.error('Error loading patients:', err)
+        });
+    }
+  }
+
+  selectPatient(patient: Patient): void {
+    this.selectedPatient = patient;
+    this.filterAnalysesByPatient();
+  }
+
+  filterAnalysesByPatient(): void {
+    if (!this.selectedPatient) {
+      this.filteredAnalyses = [];
+      return;
+    }
+
+    // Filtrer les analyses pour ce patient
+    this.http.get<any[]>(`${this.apiUrl}/laboratory-results`)
+      .subscribe({
+        next: (labResults) => {
+          const patientLabIds = labResults
+            .filter(lr => lr.patientId === this.selectedPatient!.userId)
+            .map(lr => lr.labId);
+          
+          this.filteredAnalyses = this.analyses.filter(a => 
+            patientLabIds.includes(a.laboratoryResultId)
+          );
+          
+          this.applyFilters();
+        },
+        error: (err) => console.error('Error filtering analyses:', err)
+      });
+  }
+
+  applyFilters(): void {
+    let filtered = [...this.filteredAnalyses];
+
+    // Filtre par catégorie
+    if (this.selectedCategory !== 'All') {
+      filtered = filtered.filter(a => a.category === this.selectedCategory);
+    }
+
+    // Filtre par recherche
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(a =>
+        a.analysisResult?.toLowerCase().includes(term) ||
+        a.category?.toLowerCase().includes(term)
+      );
+    }
+
+    this.filteredAnalyses = filtered;
+  }
+
+  getImageUrl(imageName: string): string {
+    return `${this.imageBaseUrl}${imageName}`;
+  }
+
+  getConfidenceClass(score: number): string {
+    if (score >= 0.8) return 'confidence-high';
+    if (score >= 0.6) return 'confidence-medium';
+    return 'confidence-low';
+  }
+
+  getConfidenceLabel(score: number): string {
+    if (score >= 0.8) return 'Haute confiance';
+    if (score >= 0.6) return 'Confiance moyenne';
+    return 'Confiance faible';
+  }
+
+  getPredictionClass(result: string): string {
+    if (result.toLowerCase().includes('fracture')) {
+      return 'prediction-fracture';
+    }
+    return 'prediction-normal';
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  }
+
+  clearSelection(): void {
+    this.selectedPatient = null;
+    this.filteredAnalyses = [];
+    this.searchTerm = '';
+    this.selectedCategory = 'All';
+  }
 }

@@ -16,7 +16,7 @@ app = Flask(__name__)
 CORS(app)  # Permettre les requêtes depuis Spring Boot
 
 # Configuration
-MODEL_PATH = 'fracture_model.pt'
+MODEL_PATH = 'fracture_model_v2.pt'
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 CLASS_NAMES = ['fracture', 'no_fracture']
 
