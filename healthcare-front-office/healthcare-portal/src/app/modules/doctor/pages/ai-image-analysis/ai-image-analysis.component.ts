@@ -20,6 +20,22 @@ interface MedicalPictureAnalysis {
   nameLabo?: string;
 }
 
+interface Statistics {
+  totalAnalyses: number;
+  completedAnalyses: number;
+  pendingAnalyses: number;
+  fractureDetected: number;
+  noFractureDetected: number;
+  fractureRate: number;
+  analysesByCategory: { [key: string]: number };
+  analysesByStatus: { [key: string]: number };
+  averageConfidence: number;
+  highConfidenceCount: number;
+  mediumConfidenceCount: number;
+  lowConfidenceCount: number;
+  analysesLast7Days: { [key: string]: number };
+}
+
 @Component({
   selector: 'app-ai-image-analysis',
   templateUrl: './ai-image-analysis.component.html',
@@ -30,10 +46,12 @@ export class AiImageAnalysisComponent implements OnInit {
   selectedPatient: Patient | null = null;
   analyses: MedicalPictureAnalysis[] = [];
   filteredAnalyses: MedicalPictureAnalysis[] = [];
+  statistics: Statistics | null = null;
   
   isLoading = false;
   searchTerm = '';
   selectedCategory = 'All';
+  activeTab: 'analyses' | 'statistics' = 'analyses';
   
   private apiUrl = 'http://localhost:8088/api';
   private imageBaseUrl = 'http://localhost:8088/uploads/medical-pictures/';
@@ -44,23 +62,21 @@ export class AiImageAnalysisComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPatientsWithAnalyses();
+    this.loadStatistics();
   }
 
   loadPatientsWithAnalyses(): void {
     this.isLoading = true;
     
-    // Charger toutes les analyses médicales
     this.http.get<MedicalPictureAnalysis[]>(`${this.apiUrl}/medical-picture-analysis`)
       .subscribe({
         next: (analyses) => {
-          // Filtrer uniquement les analyses qui ont été traitées par l'IA
           this.analyses = analyses.filter(a => 
             a.analysisResult && 
             a.confidenceScore && 
             a.status === 'Completed'
           );
           
-          // Extraire les patients uniques
           this.extractUniquePatients();
           this.isLoading = false;
         },
@@ -72,14 +88,12 @@ export class AiImageAnalysisComponent implements OnInit {
   }
 
   extractUniquePatients(): void {
-    // Récupérer les IDs de patients uniques depuis les analyses
     const patientIds = [...new Set(
       this.analyses
         .map(a => a.laboratoryResultId)
         .filter(id => id != null)
     )];
 
-    // Charger les infos des patients
     if (patientIds.length > 0) {
       this.http.get<any[]>(`${this.apiUrl}/laboratory-results`)
         .subscribe({
@@ -91,7 +105,7 @@ export class AiImageAnalysisComponent implements OnInit {
                 uniquePatients.set(lr.patientId, {
                   userId: lr.patientId,
                   name: lr.patientName,
-                  email: '' // Pas disponible dans lab results
+                  email: ''
                 });
               }
             });
@@ -114,7 +128,6 @@ export class AiImageAnalysisComponent implements OnInit {
       return;
     }
 
-    // Filtrer les analyses pour ce patient
     this.http.get<any[]>(`${this.apiUrl}/laboratory-results`)
       .subscribe({
         next: (labResults) => {
@@ -135,12 +148,10 @@ export class AiImageAnalysisComponent implements OnInit {
   applyFilters(): void {
     let filtered = [...this.filteredAnalyses];
 
-    // Filtre par catégorie
     if (this.selectedCategory !== 'All') {
       filtered = filtered.filter(a => a.category === this.selectedCategory);
     }
 
-    // Filtre par recherche
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(a =>
@@ -175,6 +186,11 @@ export class AiImageAnalysisComponent implements OnInit {
     return 'prediction-normal';
   }
 
+  downloadPdf(analysisId: number): void {
+    const url = `${this.apiUrl}/medical-picture-analysis/${analysisId}/report/pdf`;
+    window.open(url, '_blank');
+  }
+
   formatDate(dateString: string): string {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -185,10 +201,37 @@ export class AiImageAnalysisComponent implements OnInit {
     });
   }
 
+  formatDateShort(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  }
+
   clearSelection(): void {
     this.selectedPatient = null;
     this.filteredAnalyses = [];
     this.searchTerm = '';
     this.selectedCategory = 'All';
+  }
+
+  loadStatistics(): void {
+    this.http.get<Statistics>(`${this.apiUrl}/medical-picture-analysis/statistics`)
+      .subscribe({
+        next: (stats) => {
+          this.statistics = stats;
+        },
+        error: (err) => console.error('Error loading statistics:', err)
+      });
+  }
+
+  getCategoryKeys(): string[] {
+    return this.statistics ? Object.keys(this.statistics.analysesByCategory) : [];
+  }
+
+  getStatusKeys(): string[] {
+    return this.statistics ? Object.keys(this.statistics.analysesByStatus) : [];
+  }
+
+  getLast7DaysKeys(): string[] {
+    return this.statistics ? Object.keys(this.statistics.analysesLast7Days) : [];
   }
 }

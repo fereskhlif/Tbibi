@@ -1,6 +1,7 @@
 package tn.esprit.pi.tbibi.services.Laboratory_ResultService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultRequest;
@@ -11,7 +12,11 @@ import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.mappers.Laboratory_ResultMapper;
 import tn.esprit.pi.tbibi.repositories.Laboratory_ResultRepository;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
+import tn.esprit.pi.tbibi.services.LabResultPdfService.LabResultPdfService;
+import tn.esprit.pi.tbibi.services.NotificationService;
+import tn.esprit.pi.tbibi.entities.NotificationType;
 
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,11 +25,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class Laboratory_ResultService implements ILaboratory_ResultService {
 
     private final Laboratory_ResultRepository labRepo;
     private final UserRepo userRepo;
     private final Laboratory_ResultMapper mapper;
+    private final LabResultPdfService labResultPdfService;
+    private final NotificationService notificationService;
 
     @Override
     public Laboratory_ResultResponse create(Laboratory_ResultRequest request) {
@@ -42,8 +50,9 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
         lab.setLaboratoryUser(labUser);
 
         // Lier le patient si fourni
+        User patient = null;
         if (request.getPatientId() != null && request.getPatientId() > 0) {
-            User patient = userRepo.findById(request.getPatientId())
+            patient = userRepo.findById(request.getPatientId())
                     .orElse(null);  // ✅ Don't throw error, just set to null if not found
             if (patient != null) {
                 lab.setPatient(patient);
@@ -87,7 +96,17 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
         lab.setCreatedAt(LocalDateTime.now());
         lab.setScheduledNotifSent(false);
 
-        return mapper.toResponse(labRepo.save(lab));
+        Laboratory_Result savedLab = labRepo.save(lab);
+        
+        // ✅ Envoyer une notification au patient en temps réel
+        if (patient != null) {
+            String message = "🔬 Nouveau résultat de laboratoire disponible: " + request.getTestName();
+            String redirectUrl = "/patient/lab-results";
+            notificationService.createAndSend(patient, message, NotificationType.LAB_RESULT, redirectUrl);
+            log.info("Notification sent to patient {} for lab result {}", patient.getUserId(), savedLab.getLabId());
+        }
+
+        return mapper.toResponse(savedLab);
     }
 
     @Override
@@ -334,7 +353,13 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
 
     @Override
     public byte[] generateReport(Integer id) {
-        throw new UnsupportedOperationException("PDF report generation will be implemented in next sprint");
+        try {
+            ByteArrayOutputStream pdfStream = labResultPdfService.generateLabResultReport(id);
+            return pdfStream.toByteArray();
+        } catch (Exception e) {
+            log.error("Error generating report for lab result ID: {}", id, e);
+            throw new RuntimeException("Failed to generate PDF report", e);
+        }
     }
 
     // ✅ JPQL COMPLEXE - Statistiques par patient pour un laboratoire
@@ -387,5 +412,53 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
             System.err.println("Error parsing dates: " + e.getMessage());
             return List.of();
         }
+    }
+
+    @Override
+    public byte[] generateLabResultPdf(Integer id) {
+        return generateReport(id);
+    }
+
+    @Override
+    public Laboratory_ResultResponse prescribeTestByEmail(tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.LabTestPrescriptionRequest request) {
+        // Trouver le patient par email
+        User patient = userRepo.findByEmail(request.getPatientEmail())
+                .orElseThrow(() -> new RuntimeException("Patient not found with email: " + request.getPatientEmail()));
+        
+        // Trouver le docteur
+        User doctor = userRepo.findById(request.getPrescribedByDoctorId())
+                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + request.getPrescribedByDoctorId()));
+        
+        // Trouver un utilisateur laboratoire par défaut (le premier disponible)
+        List<User> labUsers = userRepo.findAllUsersByRoleName("LABORATORY");
+        if (labUsers.isEmpty()) {
+            throw new RuntimeException("No laboratory user found in the system");
+        }
+        User labUser = labUsers.get(0);
+        
+        // Créer le résultat de laboratoire
+        Laboratory_Result labResult = new Laboratory_Result();
+        labResult.setTestName(request.getTestName());
+        labResult.setLocation(request.getLocation());
+        labResult.setNameLabo("En attente d'attribution");
+        labResult.setStatus("Draft");
+        labResult.setPriority(request.getPriority() != null ? request.getPriority() : "Normal");
+        labResult.setRequestNotes(request.getRequestNotes());
+        labResult.setTestDate(LocalDate.now());
+        labResult.setRequestedAt(LocalDateTime.now());
+        labResult.setCreatedAt(LocalDateTime.now());
+        labResult.setScheduledNotifSent(false);
+        
+        // Lier les utilisateurs
+        labResult.setPatient(patient);
+        labResult.setPrescribedByDoctor(doctor);
+        labResult.setLaboratoryUser(labUser);
+        
+        Laboratory_Result saved = labRepo.save(labResult);
+        
+        log.info("Test prescribed by doctor {} for patient {}: {}", 
+                doctor.getUserId(), patient.getUserId(), request.getTestName());
+        
+        return mapper.toResponse(saved);
     }
 }

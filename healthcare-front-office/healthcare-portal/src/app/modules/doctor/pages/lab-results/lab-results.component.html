@@ -1,112 +1,229 @@
 <div class="p-8">
-  <div class="flex justify-between items-center mb-6">
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 mb-2">Lab Results</h1>
-      <p class="text-gray-600">Review and manage patient laboratory results</p>
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">Résultats de Laboratoire</h1>
+      <p class="text-gray-600">Consultez et gérez les résultats de laboratoire de vos patients</p>
     </div>
-    <button (click)="openRequestForm()" class="btn-request-test">
-      🧪 Request Lab Test
+    <button 
+      (click)="openPrescribeModal()"
+      class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Prescrire un test
     </button>
   </div>
 
-  <!-- Request Test Form Modal -->
-  <div class="modal-overlay" *ngIf="showRequestForm" (click)="closeRequestForm()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <h2 class="modal-title">Request Laboratory Test</h2>
-      
-      <div class="form-group">
-        <label>Patient ID *</label>
-        <input type="number" [(ngModel)]="requestForm.patientId" placeholder="Enter patient ID" />
+  <!-- Filters -->
+  <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+    <div class="flex gap-4">
+      <!-- Search -->
+      <div class="flex-1">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm"
+          (input)="filterResults()"
+          placeholder="Rechercher par test ou patient..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
       </div>
 
-      <div class="form-group">
-        <label>Test Name *</label>
-        <input type="text" [(ngModel)]="requestForm.testName" placeholder="e.g., Complete Blood Count" />
-      </div>
-
-      <div class="form-group">
-        <label>Priority *</label>
-        <select [(ngModel)]="requestForm.priority">
-          <option value="Normal">Normal</option>
-          <option value="Urgent">Urgent</option>
-          <option value="Critical">Critical</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Request Notes</label>
-        <textarea [(ngModel)]="requestForm.requestNotes" 
-                  placeholder="Additional instructions or clinical information..." 
-                  rows="3"></textarea>
-      </div>
-
-      <div class="modal-footer">
-        <button (click)="closeRequestForm()" class="btn-cancel">Cancel</button>
-        <button (click)="submitTestRequest()" class="btn-submit">Send Request</button>
-      </div>
+      <!-- Status Filter -->
+      <select 
+        [(ngModel)]="selectedStatus"
+        (change)="filterResults()"
+        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <option value="all">Tous les statuts</option>
+        <option value="Validated">Validé</option>
+        <option value="Completed">Complété</option>
+        <option value="Pending">En attente</option>
+        <option value="Draft">Brouillon</option>
+      </select>
     </div>
   </div>
 
-  <!-- Notifications Section -->
-  <div class="notifications-section" *ngIf="notifications.length > 0">
-    <div class="notifications-header">
-      <h2>
-        🔔 Recent Notifications
-        <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
-      </h2>
-      <button (click)="markAllAsRead()" class="btn-mark-read" *ngIf="unreadCount > 0">
-        Mark all as read
-      </button>
-    </div>
-    
-    <div class="notifications-list">
-      <div
-        *ngFor="let notification of notifications"
-        class="notification-card"
-        [class.unread]="!notification.read"
-        (click)="markNotificationAsRead(notification)">
-        <div class="notification-icon-wrapper">
-          🧪
-        </div>
-        <div class="notification-content">
-          <p class="notification-message">{{ notification.message }}</p>
-          <small class="notification-date">{{ notification.createdDate | date: 'MMM dd, yyyy HH:mm' }}</small>
-        </div>
-        <div class="notification-status">
-          <span class="unread-dot" *ngIf="!notification.read"></span>
-        </div>
-      </div>
-    </div>
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-12">
+    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <p class="mt-4 text-gray-600">Chargement des résultats...</p>
   </div>
 
   <!-- Results List -->
-  <div class="space-y-4">
-    <div *ngFor="let result of results" class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl">🔬</span>
-          <div>
-            <h3 class="font-semibold text-gray-900">{{result.testName}}</h3>
-            <p class="text-sm text-gray-500">Patient: {{result.patient?.name || 'N/A'}} • {{result.testDate | date: 'MMM dd, yyyy'}}</p>
+  <div *ngIf="!loading && filteredResults.length > 0" class="space-y-4">
+    <div *ngFor="let result of filteredResults" 
+         class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      
+      <div class="flex items-start justify-between">
+        <!-- Left: Test Info -->
+        <div class="flex items-start gap-4 flex-1">
+          <span class="text-3xl">🔬</span>
+          <div class="flex-1">
+            <h3 class="font-semibold text-gray-900 text-lg">{{ result.testName }}</h3>
+            <div class="flex items-center gap-4 mt-2 text-sm text-gray-600">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                {{ result.patientName }}
+              </span>
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                {{ formatDate(result.testDate) }}
+              </span>
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+                {{ result.nameLabo }}
+              </span>
+            </div>
+
+            <!-- Result Value -->
+            <div *ngIf="result.resultValue" class="mt-3 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">{{ result.resultValue }}</p>
+            </div>
+
+            <!-- Medical Picture Badge -->
+            <div *ngIf="result.hasMedicalPicture" class="mt-3">
+              <span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                Analyse d'image IA disponible
+              </span>
+            </div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <span [class]="'px-3 py-1 text-xs rounded-full ' + getStatusClass(result.status)">{{result.status}}</span>
-          <button class="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg" (click)="reviewResult(result)">Review</button>
+
+        <!-- Right: Status & Actions -->
+        <div class="flex flex-col items-end gap-3">
+          <span [class]="'px-3 py-1 text-xs font-medium rounded-full ' + getStatusClass(result.status)">
+            {{ result.status }}
+          </span>
+
+          <!-- Download PDF Button -->
+          <button 
+            *ngIf="result.status === 'Validated'"
+            (click)="downloadPdf(result)"
+            class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Télécharger PDF
+          </button>
         </div>
       </div>
-      <div *ngIf="result.resultValue" class="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 mt-2">
-        <strong>Result:</strong> {{result.resultValue}}
-      </div>
-      <div *ngIf="result.notificationMessage" class="text-sm text-blue-600 bg-blue-50 rounded-lg p-3 mt-2">
-        <strong>📬 Notification:</strong> {{result.notificationMessage}}
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredResults.length === 0" class="text-center py-12">
+    <span class="text-6xl">🔬</span>
+    <h3 class="mt-4 text-lg font-semibold text-gray-900">Aucun résultat trouvé</h3>
+    <p class="mt-2 text-gray-600" *ngIf="searchTerm || selectedStatus !== 'all'">
+      Aucun résultat ne correspond à vos critères de recherche.
+    </p>
+    <p class="mt-2 text-gray-600" *ngIf="!searchTerm && selectedStatus === 'all'">
+      Aucun résultat de laboratoire disponible pour le moment.
+    </p>
+    <p class="mt-4 text-sm text-gray-500">
+      Total de résultats chargés: {{ results.length }}
+    </p>
+  </div>
+</div>
+
+<!-- Modal de prescription -->
+<div *ngIf="showPrescribeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closePrescribeModal()">
+  <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-gray-900">Prescrire un test de laboratoire</h2>
+        <button (click)="closePrescribeModal()" class="text-gray-400 hover:text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div *ngIf="results.length === 0" class="text-center py-12">
-      <span class="text-6xl">🧪</span>
-      <p class="text-gray-500 mt-4">No lab results found</p>
+    <div class="p-6 space-y-4">
+      <!-- Email du patient -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Email du patient *</label>
+        <input 
+          type="email" 
+          [(ngModel)]="prescriptionForm.patientEmail"
+          placeholder="patient@example.com"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+      </div>
+
+      <!-- Type de test -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Type de test *</label>
+        <input 
+          type="text" 
+          [(ngModel)]="prescriptionForm.testName"
+          placeholder="Ex: Analyse de sang complète, Radio du genou..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+      </div>
+
+      <!-- Localisation -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Localisation</label>
+        <input 
+          type="text" 
+          [(ngModel)]="prescriptionForm.location"
+          placeholder="Ex: Genou gauche, Bras droit..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+      </div>
+
+      <!-- Priorité -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Priorité *</label>
+        <select 
+          [(ngModel)]="prescriptionForm.priority"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <option value="Normal">Normal</option>
+          <option value="Urgent">Urgent</option>
+          <option value="Critical">Critique</option>
+        </select>
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Notes / Instructions</label>
+        <textarea 
+          [(ngModel)]="prescriptionForm.requestNotes"
+          rows="4"
+          placeholder="Ajoutez des notes ou instructions pour le laboratoire..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+      </div>
+    </div>
+
+    <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
+      <button 
+        (click)="closePrescribeModal()"
+        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+        Annuler
+      </button>
+      <button 
+        (click)="submitPrescription()"
+        [disabled]="submitting"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ submitting ? 'Envoi en cours...' : 'Prescrire le test' }}
+      </button>
     </div>
   </div>
 </div>

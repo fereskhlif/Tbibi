@@ -3,6 +3,22 @@
   <div class="page-header">
     <h2>🤖 Analyse d'Images par IA</h2>
     <p class="subtitle">Consultez les résultats d'analyses radiologiques assistées par intelligence artificielle</p>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'analyses'"
+        (click)="activeTab = 'analyses'">
+        📋 Analyses
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'statistics'"
+        (click)="activeTab = 'statistics'">
+        📊 Statistiques
+      </button>
+    </div>
   </div>
 
   <!-- Loading State -->
@@ -12,7 +28,10 @@
   </div>
 
   <!-- Main Content -->
-  <div *ngIf="!isLoading" class="content-grid">
+  <div *ngIf="!isLoading">
+    
+    <!-- Tab: Analyses -->
+    <div *ngIf="activeTab === 'analyses'" class="content-grid">
     
     <!-- Left Panel: Patient List -->
     <div class="patients-panel">
@@ -176,10 +195,147 @@
               <div class="status-badge" [class.completed]="analysis.status === 'Completed'">
                 {{ analysis.status }}
               </div>
+
+              <!-- Download PDF Button -->
+              <button class="download-pdf-btn" (click)="downloadPdf(analysis.picId)" title="Télécharger le rapport PDF">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Télécharger PDF
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </div>
+    
+    <!-- Tab: Statistics -->
+    <div *ngIf="activeTab === 'statistics'" class="statistics-container">
+      
+      <div *ngIf="!statistics" class="loading-state">
+        <p>Chargement des statistiques...</p>
+      </div>
+
+      <div *ngIf="statistics" class="stats-grid">
+        
+        <!-- Row 1: Overview Cards -->
+        <div class="stat-card primary">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <h3>{{ statistics.totalAnalyses }}</h3>
+            <p>Analyses Totales</p>
+          </div>
+        </div>
+
+        <div class="stat-card success">
+          <div class="stat-icon">✅</div>
+          <div class="stat-content">
+            <h3>{{ statistics.completedAnalyses }}</h3>
+            <p>Complétées</p>
+          </div>
+        </div>
+
+        <div class="stat-card warning">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-content">
+            <h3>{{ statistics.pendingAnalyses }}</h3>
+            <p>En Attente</p>
+          </div>
+        </div>
+
+        <div class="stat-card danger">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-content">
+            <h3>{{ statistics.fractureDetected }}</h3>
+            <p>Fractures Détectées</p>
+          </div>
+        </div>
+
+        <!-- Row 2: Fracture Rate -->
+        <div class="chart-card full-width">
+          <h4>📈 Taux de Détection de Fractures</h4>
+          <div class="fracture-stats">
+            <div class="fracture-item fracture">
+              <div class="fracture-bar" [style.width.%]="(statistics.fractureDetected / statistics.completedAnalyses * 100)"></div>
+              <span class="fracture-label">Fractures: {{ statistics.fractureDetected }} ({{ statistics.fractureRate }}%)</span>
+            </div>
+            <div class="fracture-item normal">
+              <div class="fracture-bar" [style.width.%]="(statistics.noFractureDetected / statistics.completedAnalyses * 100)"></div>
+              <span class="fracture-label">Normal: {{ statistics.noFractureDetected }} ({{ 100 - statistics.fractureRate }}%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Category Distribution -->
+        <div class="chart-card">
+          <h4>🏥 Distribution par Catégorie</h4>
+          <div class="category-list">
+            <div *ngFor="let cat of getCategoryKeys()" class="category-item">
+              <span class="cat-name">{{ cat }}</span>
+              <div class="cat-bar-container">
+                <div class="cat-bar" [style.width.%]="(statistics.analysesByCategory[cat] / statistics.totalAnalyses * 100)"></div>
+              </div>
+              <span class="cat-value">{{ statistics.analysesByCategory[cat] }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Status Distribution -->
+        <div class="chart-card">
+          <h4>📋 Distribution par Statut</h4>
+          <div class="status-list">
+            <div *ngFor="let status of getStatusKeys()" class="status-item">
+              <span class="status-badge" [class]="status.toLowerCase()">{{ status }}</span>
+              <span class="status-count">{{ statistics.analysesByStatus[status] }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Confidence Levels -->
+        <div class="chart-card full-width">
+          <h4>🎯 Niveaux de Confiance</h4>
+          <div class="confidence-grid">
+            <div class="confidence-card high">
+              <div class="conf-icon">🟢</div>
+              <h5>{{ statistics.highConfidenceCount }}</h5>
+              <p>Haute (≥80%)</p>
+            </div>
+            <div class="confidence-card medium">
+              <div class="conf-icon">🟡</div>
+              <h5>{{ statistics.mediumConfidenceCount }}</h5>
+              <p>Moyenne (60-80%)</p>
+            </div>
+            <div class="confidence-card low">
+              <div class="conf-icon">🔴</div>
+              <h5>{{ statistics.lowConfidenceCount }}</h5>
+              <p>Faible (<60%)</p>
+            </div>
+            <div class="confidence-card avg">
+              <div class="conf-icon">📊</div>
+              <h5>{{ (statistics.averageConfidence * 100).toFixed(1) }}%</h5>
+              <p>Confiance Moyenne</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Last 7 Days -->
+        <div class="chart-card full-width">
+          <h4>📅 Évolution (7 derniers jours)</h4>
+          <div class="timeline-chart">
+            <div *ngFor="let day of getLast7DaysKeys()" class="timeline-item">
+              <div class="timeline-bar" [style.height.%]="(statistics.analysesLast7Days[day] / 10 * 100)">
+                <span class="timeline-value">{{ statistics.analysesLast7Days[day] }}</span>
+              </div>
+              <span class="timeline-date">{{ formatDateShort(day) }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    
   </div>
 </div>
