@@ -92,10 +92,16 @@ export class PrescriptionReceivingComponent implements OnInit {
       next: (updatedRx) => {
         const index = this.allPrescriptions.findIndex(p => p.prescriptionID === updatedRx.prescriptionID);
         if (index !== -1) {
-          updatedRx.patientName = this.allPrescriptions[index].patientName;
-          updatedRx.patientId = this.allPrescriptions[index].patientId;
-          updatedRx.doctorName = this.allPrescriptions[index].doctorName;
-          updatedRx.doctorId = this.allPrescriptions[index].doctorId;
+          const existing = this.allPrescriptions[index];
+          // Preserve enriched fields not returned by status update
+          updatedRx.patientName = existing.patientName;
+          updatedRx.patientId = existing.patientId;
+          updatedRx.doctorName = existing.doctorName;
+          updatedRx.doctorId = existing.doctorId;
+          // Preserve medicines if backend didn't return them
+          if (!updatedRx.medicines || updatedRx.medicines.length === 0) {
+            updatedRx.medicines = existing.medicines;
+          }
           this.allPrescriptions[index] = updatedRx;
           this.filterPrescriptions();
         }

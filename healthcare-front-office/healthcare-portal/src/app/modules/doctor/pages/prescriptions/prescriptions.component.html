@@ -170,9 +170,9 @@
           </td>
           <td class="text-xs text-gray-500">{{rx.statusUpdatedAt | date: 'dd/MM/yyyy HH:mm'}}</td>
           <td style="display:flex; gap:0.5rem; align-items:center;">
-            <button *ngIf="rx.status === 'PENDING'"
+            <button *ngIf="rx.status === 'PENDING' && rx.note?.includes('RENEWAL REQUEST')"
               style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;"
-              (click)="validateRenewal(rx.prescriptionID, $event); $event.stopPropagation()">✅ Validate</button>
+              (click)="validateRenewal(rx.prescriptionID, $event); $event.stopPropagation()">✅ Validate Renewal</button>
             <button
               style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;"
               (click)="openEditModal(rx, $event); $event.stopPropagation()">✏️ Edit</button>

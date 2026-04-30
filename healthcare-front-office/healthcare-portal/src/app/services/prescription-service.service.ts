@@ -55,6 +55,8 @@ export interface PrescriptionRequest {
   date: string;
   expirationDate?: string;
   status?: PrescriptionStatus;
+  /** IDs of medicines selected by the doctor */
+  medicineIds?: number[];
 }
 
 export interface PatientReportDTO {
