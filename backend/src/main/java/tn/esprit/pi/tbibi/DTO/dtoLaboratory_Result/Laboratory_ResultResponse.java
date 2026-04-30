@@ -43,4 +43,8 @@ public class Laboratory_ResultResponse {
     private String priority; // Normal, Urgent, Critical
     private String requestedAt; // Date/heure de la demande (String ISO format)
     private String requestNotes; // Notes du médecin sur la demande
+    
+    // ✅ Analyse d'image médicale associée
+    private boolean hasMedicalPicture;
+    private Integer medicalPictureId;
 }

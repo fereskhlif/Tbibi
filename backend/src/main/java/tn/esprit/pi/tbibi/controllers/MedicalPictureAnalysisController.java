@@ -7,12 +7,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.AnalysisStatisticsResponse;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.FractureAnalysisResponse;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.MedicalPictureAnalysisRequest;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.MedicalPictureAnalysisResponse;
 import tn.esprit.pi.tbibi.services.FractureAnalysisService.IFractureAnalysisService;
 import tn.esprit.pi.tbibi.services.MedicalPictureAnalysisService.IMedicalPictureAnalysisService;
+import tn.esprit.pi.tbibi.services.PdfReportService.IPdfReportService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +27,7 @@ public class MedicalPictureAnalysisController {
 
     private final IMedicalPictureAnalysisService service;
     private final IFractureAnalysisService fractureService;
+    private final IPdfReportService pdfReportService;
 
     // ==================== CRUD DE BASE ====================
 
@@ -114,6 +118,27 @@ public class MedicalPictureAnalysisController {
             return ResponseEntity.ok("Service IA opérationnel ✅");
         } else {
             return ResponseEntity.status(503).body("Service IA non disponible ❌");
+        }
+    }
+
+    // ✅ Statistiques : GET /api/medical-picture-analysis/statistics
+    @GetMapping("/statistics")
+    public ResponseEntity<AnalysisStatisticsResponse> getStatistics() {
+        return ResponseEntity.ok(service.getStatistics());
+    }
+
+    // ✅ Générer rapport PDF : GET /api/medical-picture-analysis/1/report/pdf
+    @GetMapping("/{id}/report/pdf")
+    public ResponseEntity<byte[]> generatePdfReport(@PathVariable Integer id) {
+        try {
+            ByteArrayOutputStream pdfStream = pdfReportService.generateAnalysisReport(id);
+            
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/pdf")
+                    .header("Content-Disposition", "attachment; filename=rapport_analyse_" + id + ".pdf")
+                    .body(pdfStream.toByteArray());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
         }
     }
 }

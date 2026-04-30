@@ -30,6 +30,8 @@ public interface Laboratory_ResultMapper {
     @Mapping(source = "priority", target = "priority")
     @Mapping(source = "requestedAt", target = "requestedAt", qualifiedByName = "formatDateTime")
     @Mapping(source = "requestNotes", target = "requestNotes")
+    @Mapping(source = "medicalPictureAnalysis", target = "hasMedicalPicture", qualifiedByName = "hasMedicalPicture")
+    @Mapping(source = "medicalPictureAnalysis.picId", target = "medicalPictureId")
     Laboratory_ResultResponse toResponse(Laboratory_Result lab);
 
     // ✅ Request → Entity
@@ -55,5 +57,11 @@ public interface Laboratory_ResultMapper {
     @Named("formatDate")
     default String formatDate(LocalDate date) {
         return date != null ? date.format(DATE_FORMATTER) : null;
+    }
+    
+    // ✅ Vérifier si une analyse d'image médicale existe
+    @Named("hasMedicalPicture")
+    default boolean hasMedicalPicture(tn.esprit.pi.tbibi.entities.MedicalPictureAnalysis analysis) {
+        return analysis != null;
     }
 }

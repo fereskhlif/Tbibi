@@ -185,4 +185,36 @@ public class Laboratory_ResultController {
             @RequestParam String endDate) {
         return ResponseEntity.ok(service.getDetailedResultsByDateRange(status, startDate, endDate));
     }
+
+    // ✅ Télécharger le rapport PDF pour un résultat de laboratoire
+    @GetMapping("/{id}/report/pdf")
+    public ResponseEntity<byte[]> downloadLabResultPdf(@PathVariable Integer id) {
+        try {
+            System.out.println("=== Generating PDF for lab result ID: " + id + " ===");
+            byte[] pdfBytes = service.generateLabResultPdf(id);
+            System.out.println("=== PDF generated successfully, size: " + pdfBytes.length + " bytes ===");
+            
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/pdf")
+                    .header("Content-Disposition", "attachment; filename=lab_result_" + id + ".pdf")
+                    .body(pdfBytes);
+        } catch (Exception e) {
+            System.err.println("=== ERROR generating PDF for lab result ID: " + id + " ===");
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    // ✅ Prescrire un test de laboratoire par email du patient
+    @PostMapping("/prescribe")
+    public ResponseEntity<?> prescribeTest(@RequestBody tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.LabTestPrescriptionRequest request) {
+        try {
+            Laboratory_ResultResponse response = service.prescribeTestByEmail(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(
+                Map.of("error", e.getMessage())
+            );
+        }
+    }
 }
