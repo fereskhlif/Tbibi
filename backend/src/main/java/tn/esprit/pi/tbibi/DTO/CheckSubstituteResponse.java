@@ -13,4 +13,8 @@ public class CheckSubstituteResponse {
     private boolean available;
     private String statusMessage;
     private AiAlternativeResponse aiAlternatives;
+    /** ID of the matched medicine in stock (set when available = true). */
+    private Long medicineId;
+    /** Name of the matched medicine in stock (set when available = true). */
+    private String medicineName;
 }

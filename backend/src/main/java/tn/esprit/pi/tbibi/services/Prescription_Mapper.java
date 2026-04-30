@@ -1,8 +1,6 @@
 package tn.esprit.pi.tbibi.services;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.springframework.stereotype.Component;
 import tn.esprit.pi.tbibi.DTO.PrescriptionRequest;
 import tn.esprit.pi.tbibi.DTO.PrescriptionResponse;
 import tn.esprit.pi.tbibi.entities.Medicine;
@@ -17,41 +15,58 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
-public interface Prescription_Mapper {
+@Component
+public class Prescription_Mapper {
 
-    @Mapping(target = "acte",            ignore = true)
-    @Mapping(target = "medicines",       ignore = true)
-    @Mapping(target = "treatments",      ignore = true)
-    @Mapping(target = "status",          ignore = true)
-    @Mapping(target = "statusUpdatedAt", ignore = true)
+    public Prescription toEntity(PrescriptionRequest request) {
+        if (request == null) return null;
+        Prescription p = new Prescription();
+        p.setNote(request.getNote());
+        p.setDate(request.getDate());
+        p.setExpirationDate(request.getExpirationDate());
+        // medicines, status, statusUpdatedAt, acte, treatments are handled by the service
+        return p;
+    }
 
-    Prescription toEntity(PrescriptionRequest request);
+    public PrescriptionResponse toDto(Prescription entity) {
+        if (entity == null) return null;
 
-    @Mapping(target = "date",            source = "date",            qualifiedByName = "dateToIso")
-    @Mapping(target = "expirationDate",  source = "expirationDate",  qualifiedByName = "dateToIso")
-    @Mapping(target = "statusUpdatedAt", source = "statusUpdatedAt", qualifiedByName = "dateToIso")
-    @Mapping(target = "status",          source = "status",          qualifiedByName = "safeStatus")
-    @Mapping(target = "acteId",          source = "acte.acteId")
-    @Mapping(target = "acteType",        source = "acte.typeOfActe")
-    @Mapping(target = "patientId",       ignore = true)
-    @Mapping(target = "patientName",     ignore = true)
-    @Mapping(target = "patientEmail",    ignore = true)
-    @Mapping(target = "doctorId",        ignore = true)
-    @Mapping(target = "doctorName",      ignore = true)
-    @Mapping(target = "medicines",       ignore = true)
-    PrescriptionResponse toDto(Prescription entity);
+        PrescriptionResponse dto = new PrescriptionResponse();
+        dto.setPrescriptionID(entity.getPrescriptionID());
+        dto.setNote(entity.getNote());
+        dto.setDate(dateToIso(entity.getDate()));
+        dto.setExpirationDate(dateToIso(entity.getExpirationDate()));
+        dto.setStatusUpdatedAt(dateToIso(entity.getStatusUpdatedAt()));
+        dto.setStatus(entity.getStatus() != null ? entity.getStatus() : PrescriptionStatus.PENDING);
 
-    @Named("dateToIso")
-    default String dateToIso(Date date) {
+        if (entity.getActe() != null) {
+            dto.setActeId(entity.getActe().getActeId());
+            dto.setActeType(entity.getActe().getTypeOfActe());
+        }
+
+        // Map medicines list
+        if (entity.getMedicines() != null && !entity.getMedicines().isEmpty()) {
+            List<PrescriptionResponse.MedicineInfo> infos = entity.getMedicines().stream()
+                .map(m -> PrescriptionResponse.MedicineInfo.builder()
+                    .medicineId(m.getMedicineId())
+                    .medicineName(m.getMedicineName())
+                    .quantity(m.getQuantity())
+                    .dosage(m.getDosage())
+                    .activeIngredient(m.getActiveIngredient())
+                    .build())
+                .collect(Collectors.toList());
+            dto.setMedicines(infos);
+        } else {
+            dto.setMedicines(Collections.emptyList());
+        }
+
+        // patientId, patientName, patientEmail, doctorId, doctorName are enriched by the service
+        return dto;
+    }
+
+    private String dateToIso(Date date) {
         if (date == null) return null;
         return DateTimeFormatter.ISO_INSTANT
                 .format(Instant.ofEpochMilli(date.getTime()).atOffset(ZoneOffset.UTC));
     }
-
-    // Protège contre les status NULL en base (anciennes lignes sans status)
-    @Named("safeStatus")
-    default PrescriptionStatus safeStatus(PrescriptionStatus status) {
-        return status != null ? status : PrescriptionStatus.PENDING;
-    }
-}
+}

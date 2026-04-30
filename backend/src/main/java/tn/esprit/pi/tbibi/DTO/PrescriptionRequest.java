@@ -5,6 +5,7 @@ import lombok.*;
 import tn.esprit.pi.tbibi.entities.PrescriptionStatus;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,4 +28,7 @@ public class PrescriptionRequest {
     private Date expirationDate;
 
     private PrescriptionStatus status;
+
+    /** IDs of medicines selected by the doctor to include in this prescription. */
+    private List<Long> medicineIds;
 }
