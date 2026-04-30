@@ -388,7 +388,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
           plugins: {
             legend: { display: false }, tooltip: {
               callbacks: {
-                label: (ctx) => ` ${ctx.parsed.y} ${v.unit}`
+                label: (ctx: any) => ` ${ctx.parsed.y} ${v.unit}`
               }
             }
           },
@@ -725,12 +725,12 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
           animation: { duration: 300 },
           plugins: {
             legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ` ${ctx.parsed.y} ${v.unit}`,
-                title: (items) => labels[items[0].dataIndex]
+              tooltip: {
+                callbacks: {
+                  label: (ctx: any) => ` ${ctx.parsed.y} ${v.unit}`,
+                  title: (items: any) => labels[items[0].dataIndex]
+                }
               }
-            }
           },
           scales: {
             x: {

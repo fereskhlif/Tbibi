@@ -12,6 +12,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 public class PrescriptionRequest {
+    // Model for prescription creation and update requests
     private String note;
 
     // Jackson deserializes ISO 8601 string from Angular into java.util.Date

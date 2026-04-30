@@ -27,7 +27,7 @@ public class MedicineController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public MedicineResponse create(
             @RequestPart("medicine") @Valid MedicineRequest request,
-            @RequestPart(value = "images", required = true) List<MultipartFile> images) {
+            @RequestPart("images") List<MultipartFile> images) {
         return medicineService.createMedicine(request, images);
     }
 
@@ -128,5 +128,10 @@ public class MedicineController {
             @PathVariable("id") Long id,
             @RequestParam("imageUrl") String imageUrl) {
         return medicineService.removeImage(id, imageUrl);
+    }
+
+    @PostMapping("/sync-ai")
+    public void syncAi() {
+        medicineService.triggerAiSync();
     }
 }
