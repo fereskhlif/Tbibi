@@ -18,8 +18,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 @AllArgsConstructor
 public class MedicineService implements IMedicineService {
 
@@ -96,7 +98,9 @@ public class MedicineService implements IMedicineService {
     @Override
     public Page<MedicineResponse> searchMedicinesPaginated(String name, Long pharmacyId, Pageable pageable) {
         if (pharmacyId != null) {
-            return medicineRepo.findByMedicineNameContainingIgnoreCaseAndPharmacy_PharmacyIdAndAvailableTrue(name, pharmacyId, pageable)
+            return medicineRepo
+                    .findByMedicineNameContainingIgnoreCaseAndPharmacy_PharmacyIdAndAvailableTrue(name, pharmacyId,
+                            pageable)
                     .map(medicineMapper::toDto);
         }
         return medicineRepo.findByMedicineNameContainingIgnoreCaseAndAvailableTrue(name, pageable)
@@ -120,8 +124,6 @@ public class MedicineService implements IMedicineService {
         medicine.getImageUrls().remove(imageUrl);
         return medicineMapper.toDto(medicineRepo.save(medicine));
     }
-
-
 
     @Override
     public MedicineResponse getMedicineById(Long id) {
@@ -183,18 +185,16 @@ public class MedicineService implements IMedicineService {
 
     @Override
     public List<String> getAvailableMedicineNames() {
-        return medicineRepo.findByStockGreaterThanAndAvailableTrue(0)
+        return medicineRepo.findAvailableMedicineNames(0)
                 .stream()
-                .map(Medicine::getMedicineName)
                 .filter(name -> name != null && !name.trim().isEmpty())
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<String> getAvailableMoleculesInStock() {
-        return medicineRepo.findByStockGreaterThanAndAvailableTrue(0)
+        return medicineRepo.findAvailableMolecules(0)
                 .stream()
-                .map(Medicine::getActiveIngredient)
                 .filter(mol -> mol != null && !mol.trim().isEmpty())
                 .distinct()
                 .collect(Collectors.toList());
