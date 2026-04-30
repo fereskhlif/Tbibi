@@ -5,9 +5,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.pi.tbibi.DTO.medicine.MedicineRequest;
 import tn.esprit.pi.tbibi.DTO.medicine.MedicineResponse;
+import tn.esprit.pi.tbibi.entities.MedicineCategory;
 
 import java.util.List;
-import tn.esprit.pi.tbibi.entities.MedicineCategory;
 
 public interface IMedicineService {
     MedicineResponse createMedicine(MedicineRequest request , List<MultipartFile> images);
@@ -21,10 +21,15 @@ public interface IMedicineService {
     MedicineResponse addImage(Long id, MultipartFile image); // ✅ added
     MedicineResponse removeImage(Long id, String imageUrl);
     List<MedicineResponse> getMedicinesByPharmacy(Long pharmacyId);
-    List<Object[]> getTopSellingMedicinesForPharmacy(Long pharmacyId);
 
     // ─── PAGINATED ───
     Page<MedicineResponse> getAllMedicinesPaginated(Pageable pageable);
     Page<MedicineResponse> getMedicinesByPharmacyPaginated(Long pharmacyId, Pageable pageable);
     Page<MedicineResponse> searchMedicinesPaginated(String name, Long pharmacyId, MedicineCategory category, boolean inStockOnly, Pageable pageable);
+    List<Object[]> getTopSellingMedicinesForPharmacy(Long pharmacyId);
+    
+    void triggerAiSync();
+    
+    List<String> getAvailableMedicineNames();
+    List<String> getAvailableMoleculesInStock();
 }

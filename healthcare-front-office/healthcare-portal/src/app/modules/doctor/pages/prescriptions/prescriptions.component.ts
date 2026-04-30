@@ -77,6 +77,8 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   predictingClass = false;
   predictedClassResponse: any = null;
   predictedClassError: string = '';
+  outOfStockWarning = false;
+  syncingAI = false;
 
   constructor(private prescriptionService: PrescriptionService, private http: HttpClient) {}
 
@@ -369,7 +371,9 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
           this.indicationInput = '';
           this.familleInput = '';
           this.medicineCheckStatus = 'Médicament disponible en stock. Ajouté. ' + (res.statusMessage || '');
+          this.outOfStockWarning = false;
         } else {
+          this.outOfStockWarning = true;
           this.medicineCheckStatus = res.statusMessage || 'Médicament indisponible.';
           const alts = res.aiAlternatives?.alternatives ?? [];
           if (alts.length === 0) {
@@ -378,7 +382,12 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
               this.medicineCheckStatus = 'Aucun substitut cliniquement valide trouvé par l\'IA.';
             }
           }
-          this.aiSuggestions = alts;
+          // Sort: in-stock first, then by clinical score descending
+          this.aiSuggestions = alts.sort((a: any, b: any) => {
+            if (a.inStock && !b.inStock) return -1;
+            if (!a.inStock && b.inStock) return 1;
+            return (b.score ?? 0) - (a.score ?? 0);
+          });
         }
       },
       error: () => {
@@ -420,16 +429,9 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
 
   searchSpecific(type: string): void {
     this.currentSearch = type;
-    if (type === 'medicine') {
-      this.indicationInput = '';
-      this.familleInput = '';
-    } else if (type === 'indication') {
-      this.medicineInput = '';
-      // We keep famille if they want to filter
-    } else if (type === 'famille') {
-      this.medicineInput = '';
-      // We keep indication if they want to filter
-    }
+    // We do NOT clear the fields anymore, so we keep context.
+    // However, if the user explicitly typed in only one and we want to know what they clicked...
+    // For now we just trigger the check. The backend will receive everything.
     this.addMedicine();
   }
 
@@ -448,6 +450,23 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.indicationInput = '';
     this.familleInput = '';
     this.medicineCheckStatus = `✅ Substitut IA sélectionné : ${displayName}${subClass ? ' (' + subClass + ')' : ''}`;
+  }
+
+  triggerManualAiSync(): void {
+    this.syncingAI = true;
+    this.medicineCheckStatus = '🔄 Synchronisation IA en cours...';
+    this.prescriptionService.syncAi().subscribe({
+      next: () => {
+        this.syncingAI = false;
+        this.medicineCheckStatus = '✅ IA synchronisée avec le stock !';
+        setTimeout(() => this.medicineCheckStatus = '', 3000);
+      },
+      error: (err) => {
+        this.syncingAI = false;
+        this.medicineCheckStatus = '⚠️ Échec de la synchronisation IA.';
+        console.error('AI Sync failed', err);
+      }
+    });
   }
 
   openEditModal(rx: PrescriptionResponse, event?: Event): void {

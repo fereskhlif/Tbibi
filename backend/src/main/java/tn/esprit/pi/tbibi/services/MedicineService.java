@@ -1,6 +1,5 @@
 package tn.esprit.pi.tbibi.services;
 
-import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,14 +10,19 @@ import tn.esprit.pi.tbibi.DTO.medicine.MedicineResponse;
 import tn.esprit.pi.tbibi.entities.Pharmacy;
 import tn.esprit.pi.tbibi.mappers.MedicineMapper;
 import tn.esprit.pi.tbibi.entities.Medicine;
-import tn.esprit.pi.tbibi.entities.MedicineCategory;
 import tn.esprit.pi.tbibi.repositories.MedicineRepository;
 import tn.esprit.pi.tbibi.repositories.PharmacyRepository;
+import tn.esprit.pi.tbibi.entities.MedicineCategory;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 @AllArgsConstructor
 public class MedicineService implements IMedicineService {
 
@@ -53,7 +57,23 @@ public class MedicineService implements IMedicineService {
             medicine.setImageUrls(imageUrls);
         }
 
-        return medicineMapper.toDto(medicineRepo.save(medicine));
+        Medicine saved = medicineRepo.save(medicine);
+        triggerAiSync();
+        return medicineMapper.toDto(saved);
+    }
+
+    @Override
+    public void triggerAiSync() {
+        CompletableFuture.runAsync(() -> {
+            try {
+                System.out.println("Triggering AI Sync with MySQL Database...");
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.postForEntity("http://localhost:5001/api/sync-database", null, String.class);
+                System.out.println("AI Sync completed.");
+            } catch (Exception e) {
+                System.err.println("Failed to trigger AI sync: " + e.getMessage());
+            }
+        });
     }
 
     @Override
@@ -78,9 +98,13 @@ public class MedicineService implements IMedicineService {
 
     @Override
     public Page<MedicineResponse> searchMedicinesPaginated(String name, Long pharmacyId, MedicineCategory category, boolean inStockOnly, Pageable pageable) {
-        String searchName = (name != null && !name.trim().isEmpty()) ? name : null;
-        return medicineRepo.searchAndFilter(searchName, pharmacyId, category, inStockOnly, pageable)
+        return medicineRepo.searchAndFilter(name, pharmacyId, category, inStockOnly, pageable)
                 .map(medicineMapper::toDto);
+    }
+
+    @Override
+    public List<Object[]> getTopSellingMedicinesForPharmacy(Long pharmacyId) {
+        return medicineRepo.findTopSellingMedicinesForPharmacy(pharmacyId);
     }
 
     // add image to existing medicine
@@ -100,8 +124,6 @@ public class MedicineService implements IMedicineService {
         medicine.getImageUrls().remove(imageUrl);
         return medicineMapper.toDto(medicineRepo.save(medicine));
     }
-
-
 
     @Override
     public MedicineResponse getMedicineById(Long id) {
@@ -124,7 +146,9 @@ public class MedicineService implements IMedicineService {
         medicine.setPrice(request.getPrice());
         medicine.setStock(request.getStock());
         medicine.setMinStockAlert(request.getMinStockAlert());
-        return medicineMapper.toDto(medicineRepo.save(medicine));
+        Medicine saved = medicineRepo.save(medicine);
+        triggerAiSync();
+        return medicineMapper.toDto(saved);
     }
 
     @Override
@@ -159,9 +183,20 @@ public class MedicineService implements IMedicineService {
         medicineRepo.save(medicine);
     }
 
+    @Override
+    public List<String> getAvailableMedicineNames() {
+        return medicineRepo.findAvailableMedicineNames(0)
+                .stream()
+                .filter(name -> name != null && !name.trim().isEmpty())
+                .collect(Collectors.toList());
+    }
 
     @Override
-    public List<Object[]> getTopSellingMedicinesForPharmacy(Long pharmacyId) {
-        return medicineRepo.findTopSellingMedicinesForPharmacy(pharmacyId);
+    public List<String> getAvailableMoleculesInStock() {
+        return medicineRepo.findAvailableMolecules(0)
+                .stream()
+                .filter(mol -> mol != null && !mol.trim().isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
     }
 }
