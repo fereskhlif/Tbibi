@@ -13,6 +13,7 @@ import tn.esprit.pi.tbibi.entities.Prescription;
 import tn.esprit.pi.tbibi.entities.PrescriptionStatus;
 import tn.esprit.pi.tbibi.entities.User;
 import tn.esprit.pi.tbibi.repositories.ActeRepo;
+import tn.esprit.pi.tbibi.repositories.MedicineRepository;
 import tn.esprit.pi.tbibi.repositories.PrescriptionRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
 
@@ -32,10 +33,12 @@ public class PrescriptionService implements IPrescriptionService {
     private final Prescription_Mapper mapper;
     private final ActeRepo acteRepository;
     private final UserRepo userRepository;
+    private final MedicineRepository medicineRepository;
     private final EmailService emailService;
     private final NotificationService notificationService;
 
     @Override
+    @jakarta.transaction.Transactional
     public PrescriptionResponse add(PrescriptionRequest request) {
         log.info("=== ADD PRESCRIPTION ===");
         log.info("Request reçue: note={}, date={}", request.getNote(), request.getDate());
@@ -46,6 +49,14 @@ public class PrescriptionService implements IPrescriptionService {
 
             prescr.setStatus(PrescriptionStatus.PENDING);
             prescr.setStatusUpdatedAt(new Date());
+
+            // Link medicines if provided
+            if (request.getMedicineIds() != null && !request.getMedicineIds().isEmpty()) {
+                List<tn.esprit.pi.tbibi.entities.Medicine> meds =
+                    medicineRepository.findAllById(request.getMedicineIds());
+                prescr.setMedicines(meds);
+                log.info("Linked {} medicine(s) to new prescription", meds.size());
+            }
 
             Prescription saved = repository.save(prescr);
             log.info("Prescription sauvegardée avec ID: {}", saved.getPrescriptionID());
@@ -61,6 +72,7 @@ public class PrescriptionService implements IPrescriptionService {
     }
 
     @Override
+    @jakarta.transaction.Transactional
     public PrescriptionResponse update(int id, PrescriptionRequest prescription) {
         log.info("=== UPDATE PRESCRIPTION ID: {} ===", id);
 
@@ -72,8 +84,17 @@ public class PrescriptionService implements IPrescriptionService {
 
         // Preserve relationships
         updated.setActe(existing.getActe());
-        updated.setMedicines(existing.getMedicines());
         updated.setTreatments(existing.getTreatments());
+
+        // Update medicines if new list is provided; otherwise keep existing
+        if (prescription.getMedicineIds() != null && !prescription.getMedicineIds().isEmpty()) {
+            List<tn.esprit.pi.tbibi.entities.Medicine> meds =
+                medicineRepository.findAllById(prescription.getMedicineIds());
+            updated.setMedicines(meds);
+            log.info("Updated {} medicine(s) on prescription {}", meds.size(), id);
+        } else {
+            updated.setMedicines(existing.getMedicines());
+        }
 
         // Preserve status unless explicitly provided
         updated.setStatus(
@@ -90,6 +111,7 @@ public class PrescriptionService implements IPrescriptionService {
     }
 
     @Override
+    @jakarta.transaction.Transactional
     public PrescriptionResponse updateStatus(int id, PrescriptionStatus status) {
         log.info("=== UPDATE STATUS ID: {}, status: {} ===", id, status);
 
@@ -129,6 +151,7 @@ public class PrescriptionService implements IPrescriptionService {
 //    }
 
     @Override
+    @jakarta.transaction.Transactional
     public List<PrescriptionResponse> getAll() {
         log.info("=== GET ALL PRESCRIPTIONS ===");
 
@@ -201,6 +224,7 @@ public class PrescriptionService implements IPrescriptionService {
         return enrichWithPatient(mapper.toDto(saved), saved);
     }
     @Override
+    @jakarta.transaction.Transactional
     public PrescriptionResponse getById(int id) {
         log.info("=== GET BY ID: {} ===", id);
         Prescription prescr = repository.findById(id)

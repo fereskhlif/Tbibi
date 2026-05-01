@@ -5,6 +5,7 @@ import lombok.*;
 import tn.esprit.pi.tbibi.entities.PrescriptionStatus;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -12,6 +13,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 public class PrescriptionRequest {
+    // Model for prescription creation and update requests
     private String note;
 
     // Jackson deserializes ISO 8601 string from Angular into java.util.Date
@@ -26,4 +28,7 @@ public class PrescriptionRequest {
     private Date expirationDate;
 
     private PrescriptionStatus status;
+
+    /** IDs of medicines selected by the doctor to include in this prescription. */
+    private List<Long> medicineIds;
 }

@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MedicalRecordsServiceService } from '../../../../services/medical-records-service.service';
+import { PrescriptionService, PrescriptionResponse, MedicineDTO } from '../../../../services/prescription-service.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
@@ -18,11 +19,26 @@ export class MedicalRecordsComponent implements OnInit {
   acteForm = { description: '', typeOfActe: '', date: '' };
   records: any[] = [];
   errorMessage = '';
-  selectedRecord: any = null;
+  selectedCloudItem: any = null;
   showForm = false;
   isEditing = false;
   editIndex: number | null = null;
   editId: number | null = null;
+
+  // ── New Dashboard Properties ──────────────────────────────────────────────
+  viewMode: 'timeline' | 'table' = 'timeline';
+  averageHealthScore: number = 0;
+  allChronicDiseases: string[] = [];
+  unifiedMedicalHistory: string = '';
+
+  // ── Prescription Data ───────────────────────────────────────────────────
+  prescriptions: PrescriptionResponse[] = [];
+  allMedicines: MedicineDTO[] = [];
+
+  // ── Cloud File Manager Properties ─────────────────────────────────────────
+  cloudItems: any[] = [];
+  folders: string[] = ['All', 'Prescriptions', 'Lab Results', 'Imaging', 'Consultations'];
+  activeFolder: string = 'All';
 
   selectedFile: File | null = null;       // PDF (local display only for now)
   selectedImageFile: File | null = null;  // Medical image
@@ -33,10 +49,15 @@ export class MedicalRecordsComponent implements OnInit {
     chronic_diseas:   new FormControl(''),
   });
 
-  constructor(private service: MedicalRecordsServiceService , private http: HttpClient) {}
+  constructor(
+    private service: MedicalRecordsServiceService,
+    private prescriptionService: PrescriptionService,
+    private http: HttpClient
+  ) {}
 
   ngOnInit(): void {
     this.loadRecords();
+    this.loadPrescriptions();
   }
 
   // ── Records ──────────────────────────────────────────────────────────────
@@ -56,13 +77,130 @@ export class MedicalRecordsComponent implements OnInit {
           type:        r.type        ?? r.category ?? 'Unknown',
           healthScore: r.healthScore ?? this.computeHealthScore(r),
         }));
+        
+        // Sort newest first
+        this.records.sort((a, b) => (b.medicalfile_id || 0) - (a.medicalfile_id || 0));
+        
+        this.calculateMetrics();
+        this.buildCloudItems();
       },
       error: (err: HttpErrorResponse) => {
         console.error('Loading error:', err);
         this.errorMessage = 'Unable to load your medical records.';
         this.records = [];
+        this.calculateMetrics();
+        this.buildCloudItems();
       }
     });
+  }
+
+  calculateMetrics(): void {
+    if (this.records.length === 0) {
+      this.averageHealthScore = 0;
+      this.allChronicDiseases = [];
+      this.unifiedMedicalHistory = '';
+      return;
+    }
+    
+    let totalScore = 0;
+    const diseasesSet = new Set<string>();
+    let histories: string[] = [];
+
+    this.records.forEach(r => {
+      totalScore += (r.healthScore || 100);
+      if (r.chronic_diseas) {
+        r.chronic_diseas.split(',').forEach((d: string) => {
+          const trimmed = d.trim();
+          if (trimmed) diseasesSet.add(trimmed);
+        });
+      }
+      if (r.medical_historuy && r.medical_historuy.trim() && !histories.includes(r.medical_historuy.trim())) {
+        histories.push(r.medical_historuy.trim());
+      }
+    });
+
+    this.averageHealthScore = Math.round(totalScore / this.records.length);
+    this.allChronicDiseases = Array.from(diseasesSet);
+    this.unifiedMedicalHistory = histories.join(' | ');
+  }
+
+  loadPrescriptions(): void {
+    this.prescriptionService.getMyPrescriptions().subscribe({
+      next: (data) => {
+        // Sort newest first based on date
+        this.prescriptions = data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        this.extractMedicines();
+        this.buildCloudItems();
+      },
+      error: (err) => console.error('Error loading prescriptions:', err)
+    });
+  }
+
+  extractMedicines(): void {
+    const medsMap = new Map<number, MedicineDTO>();
+    this.prescriptions.forEach(p => {
+      if (p.medicines) {
+        p.medicines.forEach(m => {
+          if (!medsMap.has(m.medicineId)) {
+            medsMap.set(m.medicineId, m);
+          }
+        });
+      }
+    });
+    this.allMedicines = Array.from(medsMap.values());
+  }
+
+  buildCloudItems(): void {
+    const items: any[] = [];
+    
+    // Map Prescriptions
+    this.prescriptions.forEach(rx => {
+      items.push({
+        id: 'rx_' + rx.prescriptionID,
+        title: `Prescription of ${new Date(rx.date).toLocaleDateString()}`,
+        folder: 'Prescriptions',
+        date: rx.date,
+        icon: '💊',
+        iconBg: '#fef3c7',
+        iconColor: '#d97706',
+        previewType: 'prescription',
+        previewData: rx,
+        originalRef: rx
+      });
+    });
+
+    // Map Records
+    this.records.forEach(rec => {
+      let folder = 'Consultations';
+      const typeStr = (rec.type || rec.category || '').toLowerCase();
+      
+      if (typeStr.includes('lab') || (rec.imageLabo && rec.imageLabo.toLowerCase().includes('lab'))) {
+         folder = 'Lab Results';
+      } else if (typeStr.includes('imag') || rec.imageUrl) {
+         folder = 'Imaging';
+      }
+
+      items.push({
+        id: 'rec_' + rec.medicalfile_id,
+        title: rec.imageLabo || 'Medical Document',
+        folder: folder,
+        date: rec.createdAt || new Date().toISOString(), // fallback
+        icon: rec.icon || '📄',
+        iconBg: '#dbeafe',
+        iconColor: '#2563eb',
+        previewType: rec.imageUrl ? 'image' : 'text',
+        previewData: rec,
+        originalRef: rec
+      });
+    });
+
+    // Sort by date descending
+    this.cloudItems = items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  get filteredCloudItems(): any[] {
+    if (this.activeFolder === 'All') return this.cloudItems;
+    return this.cloudItems.filter(item => item.folder === this.activeFolder);
   }
 
   computeHealthScore(record: any): number {
@@ -91,7 +229,11 @@ export class MedicalRecordsComponent implements OnInit {
   }
 
   viewRecord(record: any): void {
-    this.selectedRecord = record;
+    // Legacy viewRecord, keep it for acts if needed, but we rely on viewCloudItem now.
+  }
+
+  viewCloudItem(item: any): void {
+    this.selectedCloudItem = item;
   }
 
   openAddForm(): void {
@@ -167,7 +309,14 @@ export class MedicalRecordsComponent implements OnInit {
         next: (updated: any) => {
           const rec = this.buildRecord(updated, payload);
           this.records = this.records.map(r => r.medicalfile_id === this.editId ? rec : r);
-          if (this.selectedRecord)     this.selectedRecord = rec;
+          this.records.sort((a, b) => (b.medicalfile_id || 0) - (a.medicalfile_id || 0));
+          this.calculateMetrics();
+          this.buildCloudItems();
+          // Update selected item if we were viewing it
+          if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && this.selectedCloudItem.originalRef.medicalfile_id === this.editId) {
+             const updatedItem = this.cloudItems.find(i => i.originalRef.medicalfile_id === this.editId);
+             if (updatedItem) this.selectedCloudItem = updatedItem;
+          }
           this.cancelForm();
         },
         error: (err) => console.error('Update error:', err)
@@ -176,6 +325,9 @@ export class MedicalRecordsComponent implements OnInit {
       this.service.add(payload).subscribe({
         next: (created: any) => {
           this.records = [this.buildRecord(created, payload), ...this.records];
+          this.records.sort((a, b) => (b.medicalfile_id || 0) - (a.medicalfile_id || 0));
+          this.calculateMetrics();
+          this.buildCloudItems();
           this.cancelForm();
         },
         error: (err) => console.error('Add error:', err)
@@ -285,8 +437,8 @@ uploadPatientImage(file: File): void {
     next: (data: any) => {
       this.isUploadingPatientImage = false;
       // If we're currently viewing the record, update it immediately
-      if (this.selectedRecord && data.medicalfile_id === this.selectedRecord.medicalfile_id) {
-        this.selectedRecord.patientImages = data.patientImages;
+      if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && data.medicalfile_id === this.selectedCloudItem.originalRef.medicalfile_id) {
+        this.selectedCloudItem.originalRef.patientImages = data.patientImages;
       }
       alert('Image added successfully!');
     },
@@ -304,8 +456,8 @@ deletePatientImage(imagePath: string, event: Event): void {
 
   this.service.deletePatientImage(imagePath).subscribe({
     next: () => {
-      if (this.selectedRecord && this.selectedRecord.patientImages) {
-        this.selectedRecord.patientImages = this.selectedRecord.patientImages.filter((p: string) => p !== imagePath);
+      if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && this.selectedCloudItem.originalRef.patientImages) {
+        this.selectedCloudItem.originalRef.patientImages = this.selectedCloudItem.originalRef.patientImages.filter((p: string) => p !== imagePath);
       }
       alert('Document deleted successfully.');
     },
@@ -341,7 +493,9 @@ getImageUrl(path: string): string {
     this.service.delete(record.medicalfile_id).subscribe({
       next: () => {
         this.loadRecords(); // Re-fetch from the database to see the updated list
-        if (this.selectedRecord?.medicalfile_id === record.medicalfile_id) this.selectedRecord = null;
+        if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && this.selectedCloudItem.originalRef.medicalfile_id === record.medicalfile_id) {
+          this.selectedCloudItem = null;
+        }
         if (this.isEditing && this.editId === record.medicalfile_id) this.cancelForm();
       },
       error: (err: HttpErrorResponse) => console.error('Deletion error:', err)

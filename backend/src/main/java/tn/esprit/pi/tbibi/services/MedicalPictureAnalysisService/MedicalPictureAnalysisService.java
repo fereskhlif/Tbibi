@@ -9,6 +9,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.AnalysisStatisticsResponse;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.MedicalPictureAnalysisRequest;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.MedicalPictureAnalysisResponse;
 import tn.esprit.pi.tbibi.entities.Laboratory_Result;
@@ -16,6 +17,9 @@ import tn.esprit.pi.tbibi.entities.MedicalPictureAnalysis;
 import tn.esprit.pi.tbibi.mappers.MedicalPictureAnalysisMapper;
 import tn.esprit.pi.tbibi.repositories.Laboratory_ResultRepository;
 import tn.esprit.pi.tbibi.repositories.MedicalPictureAnalysisRepository;
+import tn.esprit.pi.tbibi.services.NotificationService;
+import tn.esprit.pi.tbibi.entities.NotificationType;
+import tn.esprit.pi.tbibi.entities.User;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -34,8 +38,9 @@ public class MedicalPictureAnalysisService implements IMedicalPictureAnalysisSer
     private final Laboratory_ResultRepository labRepo;
     private final MedicalPictureAnalysisMapper mapper;
     private final RestTemplate restTemplate;
+    private final NotificationService notificationService;
 
-    private static final String AI_SERVICE_URL = "http://localhost:5000/analyze";
+    private static final String AI_SERVICE_URL = "http://localhost:5000/predict";
     private static final String UPLOAD_DIR = "uploads/medical-pictures/";
 
     // ==================== CRUD DE BASE ====================
@@ -94,14 +99,28 @@ public class MedicalPictureAnalysisService implements IMedicalPictureAnalysisSer
         // ✅ Appel au service IA Python
         try {
             Map<String, Object> aiResult = callAiService(imageFile, request.getCategory());
-            pic.setAnalysisResult((String) aiResult.get("analysisResult"));
-            pic.setConfidenceScore(((Number) aiResult.get("confidenceScore")).doubleValue());
+            pic.setAnalysisResult((String) aiResult.get("message"));
+            pic.setConfidenceScore(((Number) aiResult.get("confidence")).doubleValue());
+            pic.setStatus("Completed");
         } catch (Exception e) {
             pic.setAnalysisResult("AI analysis pending — service unavailable");
             pic.setConfidenceScore(0.0);
+            pic.setStatus("Pending");
         }
 
-        return mapper.toResponse(picRepo.save(pic));
+        MedicalPictureAnalysis savedPic = picRepo.save(pic);
+        
+        // ✅ Envoyer une notification au patient en temps réel
+        User patient = lab.getPatient();
+        if (patient != null) {
+            String message = "🔬 Nouvelle analyse d'image médicale disponible: " + 
+                           (request.getCategory() != null ? request.getCategory() : "Radiologie");
+            String redirectUrl = "/patient/lab-results";
+            notificationService.createAndSend(patient, message, NotificationType.MEDICAL_PICTURE_ANALYSIS, redirectUrl);
+            System.out.println("✅ Notification sent to patient " + patient.getUserId() + " for medical picture analysis " + savedPic.getPicId());
+        }
+
+        return mapper.toResponse(savedPic);
     }
 
     // ✅ Appel HTTP vers le service Python Flask
@@ -116,7 +135,6 @@ public class MedicalPictureAnalysisService implements IMedicalPictureAnalysisSer
                 return imageFile.getOriginalFilename();
             }
         });
-        body.add("category", category != null ? category : "General");
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         ResponseEntity<Map> response = restTemplate.exchange(AI_SERVICE_URL, HttpMethod.POST, requestEntity, Map.class);
@@ -194,5 +212,95 @@ public class MedicalPictureAnalysisService implements IMedicalPictureAnalysisSer
                 .stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    // ==================== STATISTIQUES ====================
+
+    @Override
+    public AnalysisStatisticsResponse getStatistics() {
+        List<MedicalPictureAnalysis> allAnalyses = picRepo.findAll();
+        
+        // Statistiques globales
+        long total = allAnalyses.size();
+        long completed = allAnalyses.stream().filter(a -> "Completed".equals(a.getStatus())).count();
+        long pending = allAnalyses.stream().filter(a -> "Pending".equals(a.getStatus())).count();
+        
+        // Détection de fractures (seulement les analyses complétées)
+        List<MedicalPictureAnalysis> completedAnalyses = allAnalyses.stream()
+                .filter(a -> "Completed".equals(a.getStatus()) && a.getAnalysisResult() != null)
+                .collect(Collectors.toList());
+        
+        long fractureDetected = completedAnalyses.stream()
+                .filter(a -> a.getAnalysisResult().toLowerCase().contains("fracture"))
+                .count();
+        
+        long noFracture = completedAnalyses.size() - fractureDetected;
+        
+        double fractureRate = completedAnalyses.isEmpty() ? 0.0 : 
+                (fractureDetected * 100.0) / completedAnalyses.size();
+        
+        // Distribution par catégorie
+        Map<String, Long> byCategory = allAnalyses.stream()
+                .filter(a -> a.getCategory() != null)
+                .collect(Collectors.groupingBy(
+                        MedicalPictureAnalysis::getCategory,
+                        Collectors.counting()
+                ));
+        
+        // Distribution par statut
+        Map<String, Long> byStatus = allAnalyses.stream()
+                .filter(a -> a.getStatus() != null)
+                .collect(Collectors.groupingBy(
+                        MedicalPictureAnalysis::getStatus,
+                        Collectors.counting()
+                ));
+        
+        // Confiance moyenne
+        double avgConfidence = completedAnalyses.stream()
+                .filter(a -> a.getConfidenceScore() != null)
+                .mapToDouble(MedicalPictureAnalysis::getConfidenceScore)
+                .average()
+                .orElse(0.0);
+        
+        long highConf = completedAnalyses.stream()
+                .filter(a -> a.getConfidenceScore() != null && a.getConfidenceScore() >= 0.8)
+                .count();
+        
+        long mediumConf = completedAnalyses.stream()
+                .filter(a -> a.getConfidenceScore() != null && 
+                        a.getConfidenceScore() >= 0.6 && a.getConfidenceScore() < 0.8)
+                .count();
+        
+        long lowConf = completedAnalyses.stream()
+                .filter(a -> a.getConfidenceScore() != null && a.getConfidenceScore() < 0.6)
+                .count();
+        
+        // Évolution temporelle (7 derniers jours)
+        LocalDate today = LocalDate.now();
+        Map<String, Long> last7Days = new java.util.LinkedHashMap<>();
+        
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            long count = allAnalyses.stream()
+                    .filter(a -> a.getUploadDate() != null && a.getUploadDate().equals(date))
+                    .count();
+            last7Days.put(date.toString(), count);
+        }
+        
+        return AnalysisStatisticsResponse.builder()
+                .totalAnalyses(total)
+                .completedAnalyses(completed)
+                .pendingAnalyses(pending)
+                .fractureDetected(fractureDetected)
+                .noFractureDetected(noFracture)
+                .fractureRate(Math.round(fractureRate * 10.0) / 10.0)
+                .analysesByCategory(byCategory)
+                .analysesByStatus(byStatus)
+                .averageConfidence(Math.round(avgConfidence * 1000.0) / 1000.0)
+                .highConfidenceCount(highConf)
+                .mediumConfidenceCount(mediumConf)
+                .lowConfidenceCount(lowConf)
+                .analysesLast7Days(last7Days)
+                .build();
     }
 }

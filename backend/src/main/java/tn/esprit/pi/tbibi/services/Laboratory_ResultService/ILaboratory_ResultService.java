@@ -25,6 +25,8 @@ public interface ILaboratory_ResultService {
     List<Laboratory_ResultResponse> getUrgentRequests();
 
     byte[] generateReport(Integer id);
+    byte[] generateLabResultPdf(Integer id);
+    Laboratory_ResultResponse prescribeTestByEmail(tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.LabTestPrescriptionRequest request);
     
     List<PatientLabStatisticsDTO> getPatientStatistics(Integer labUserId);
     List<Laboratory_ResultResponse> getDetailedResultsByDateRange(String status, String startDate, String endDate);

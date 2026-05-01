@@ -55,6 +55,8 @@ export interface PrescriptionRequest {
   date: string;
   expirationDate?: string;
   status?: PrescriptionStatus;
+  /** IDs of medicines selected by the doctor */
+  medicineIds?: number[];
 }
 
 export interface PatientReportDTO {
@@ -182,5 +184,9 @@ getAllActes(): Observable<ActeDTO[]> {
 
   getPatientReport(patientId: number): Observable<PatientReportDTO> {
     return this.http.get<PatientReportDTO>(`${this.apiUrl}/patient/${patientId}/report`);
+  }
+
+  syncAi(): Observable<any> {
+    return this.http.post<any>(`${environment.baseUrl}/api/medicines/sync-ai`, {});
   }
 }

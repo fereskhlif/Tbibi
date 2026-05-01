@@ -107,7 +107,13 @@
             </div>
           </td>
           <td>
-            <span *ngIf="getMedicineCount(rx) > 0" class="med-count">💊 {{getMedicineCount(rx)}} medicine(s)</span>
+            <div *ngIf="getMedicineCount(rx) > 0" style="display:flex; flex-direction:column; gap:4px;">
+              <span class="med-count">💊 {{getMedicineCount(rx)}} medicine(s)</span>
+              <span *ngFor="let m of rx.medicines"
+                style="display:inline-block; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:6px; padding:2px 8px; font-size:0.7rem; font-weight:600;">
+                {{m.medicineName}}
+              </span>
+            </div>
             <span *ngIf="getMedicineCount(rx) === 0" class="em">No medicines</span>
           </td>
           <td>

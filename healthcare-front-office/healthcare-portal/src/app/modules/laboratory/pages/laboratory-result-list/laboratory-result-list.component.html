@@ -194,10 +194,11 @@
           </select>
         </div>
 
+        <!-- ✅ MODIFIÉ - Afficher le nom du technicien au lieu de l'ID -->
         <div class="form-group">
-          <label>Technician ID *</label>
-          <input type="number" [(ngModel)]="formData.laboratoryUserId" placeholder="Technician user ID" readonly />
-          <small class="form-hint">Automatically set to your user ID</small>
+          <label>Technician *</label>
+          <input type="text" [value]="currentTechnicianName" readonly style="background-color: #f0f0f0; cursor: not-allowed;" />
+          <small class="form-hint">Automatically set to your account</small>
         </div>
 
         <div class="form-group">
@@ -210,9 +211,15 @@
           </select>
         </div>
 
+        <!-- ✅ MODIFIÉ - Dropdown avec noms des médecins -->
         <div class="form-group">
-          <label>Prescribing Doctor ID</label>
-          <input type="number" [(ngModel)]="formData.prescribedByDoctorId" placeholder="Doctor ID (optional)" />
+          <label>Prescribing Doctor</label>
+          <select [(ngModel)]="formData.prescribedByDoctorId">
+            <option [value]="null">No doctor (optional)</option>
+            <option *ngFor="let doctor of doctors" [value]="doctor.userId">
+              {{ doctor.name }}{{ doctor.specialty ? ' - ' + doctor.specialty : '' }}
+            </option>
+          </select>
         </div>
 
         <!-- ✅ NOUVEAU - Champs de priorité -->
