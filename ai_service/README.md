@@ -1,99 +1,127 @@
-# 🏥 Service d'Analyse de Fractures - API Flask
+# AI Service
 
-Service Python Flask pour la détection automatique de fractures osseuses sur des radiographies médicales.
+FastAPI service for hosting multiple AI models.
 
-## 🚀 Installation
+## Structure
 
-1. **Installer les dépendances:**
+```
+ai_service/
+├── app.py                      # Main FastAPI app
+├── models/
+│   ├── base.py                 # Base model class
+│   ├── fracture_detector.py    # Fracture detection model
+│   └── example_template.py     # Template for new models
+├── weights/
+│   ├── fracture_model_v2.pt    # Fracture model weights
+│   └── your_model.pt           # Put your model files here
+└── requirements.txt
+```
+
+## Setup & Run
+
 ```bash
 cd ai_service
 pip install -r requirements.txt
-```
-
-2. **Vérifier que le modèle est présent:**
-```bash
-ls fracture_model_v2.pt
-```
-
-## ▶️ Démarrage
-
-```bash
 python app.py
 ```
 
-Le service démarre sur `http://localhost:5000`
+Service runs on `http://localhost:5000`
+- Interactive docs: `http://localhost:5000/docs`
+- Health check: `http://localhost:5000/health`
 
-## 📡 Endpoints
+## Adding Your Model
 
-### 1. Health Check
+### 1. Add model weights
+Put your model file in `weights/` directory:
 ```bash
-GET http://localhost:5000/health
+cp /path/to/your_model.pt weights/
 ```
 
-**Réponse:**
+### 2. Create model module
+Copy the template:
+```bash
+cp models/example_template.py models/your_model.py
+```
+
+Edit `models/your_model.py`:
+```python
+from fastapi import APIRouter, File, UploadFile, HTTPException
+from .base import BaseModel
+
+router = APIRouter()
+
+class YourModel(BaseModel):
+    def __init__(self):
+        self.device = "cpu"  # or "cuda"
+        super().__init__('weights/your_model.pt')
+    
+    def load_model(self):
+        try:
+            self.model = load_your_model(self.model_path)
+            print("Model loaded")
+        except Exception as e:
+            print(f"Error: {e}")
+            self.model = None
+    
+    async def predict(self, image: UploadFile):
+        if not self.is_loaded():
+            raise HTTPException(status_code=500, detail="Model not loaded")
+        
+        img_bytes = await image.read()
+        # Your inference logic
+        result = self.model.predict(img_bytes)
+        return {"prediction": result}
+
+model = YourModel()
+
+@router.post("/predict")
+async def predict(image: UploadFile = File(...)):
+    return await model.predict(image)
+
+@router.get("/health")
+def health():
+    return {"status": "ok" if model.is_loaded() else "error"}
+```
+
+### 3. Register in main app
+Edit `app.py`:
+```python
+from models.your_model import router as your_router
+
+app.include_router(your_router, prefix="/your-endpoint", tags=["your-model"])
+```
+
+Done! Your endpoint is now available at `/your-endpoint/predict`
+
+## Current Models
+
+### Fracture Detection
+**Endpoint**: `/fracture/predict`
+
+**Request**:
+```bash
+curl -X POST "http://localhost:5000/fracture/predict" \
+  -F "image=@xray.jpg"
+```
+
+**Response**:
 ```json
 {
-  "status": "healthy",
-  "model_loaded": true,
-  "device": "cuda"
-}
-```
-
-### 2. Prédiction
-```bash
-POST http://localhost:5000/predict
-Content-Type: multipart/form-data
-Body: image=@radio.jpg
-```
-
-**Réponse:**
-```json
-{
-  "prediction": "no_fracture",
-  "confidence": 0.633,
-  "confidence_level": "medium",
+  "prediction": "fracture",
+  "confidence": 0.95,
+  "confidence_level": "high",
   "probabilities": {
-    "fracture": 0.367,
-    "no_fracture": 0.633
+    "fracture": 0.95,
+    "no_fracture": 0.05
   },
-  "message": "PROBABLEMENT PAS DE FRACTURE (63.3%) - Vérification recommandée",
+  "message": "FRACTURE DÉTECTÉE avec haute confiance (95.0%)",
   "warning": null
 }
 ```
 
-## 🧪 Test avec curl
+## Tips
 
-```bash
-curl -X POST http://localhost:5000/predict \
-  -F "image=@test_image.jpg"
-```
-
-## 📊 Niveaux de confiance
-
-- **High (>80%)**: Résultat fiable
-- **Medium (60-80%)**: Vérification recommandée
-- **Low (<60%)**: Résultat incertain, examen complémentaire nécessaire
-
-## 🔧 Configuration
-
-- **Port**: 5000 (modifiable dans `app.py`)
-- **Device**: Auto-détection GPU/CPU
-- **Modèle**: EfficientNet-B0 (TorchScript)
-- **Input**: Images RGB 224x224
-- **Classes**: fracture, no_fracture
-
-## 🐛 Dépannage
-
-**Erreur "Modèle non chargé":**
-- Vérifier que `fracture_model_v2.pt` existe dans le dossier
-- Vérifier la version de PyTorch (2.1.0)
-
-**Erreur CUDA:**
-- Le service fonctionne aussi sur CPU
-- Vérifier l'installation de PyTorch avec support CUDA si GPU disponible
-
-## 📝 Notes
-
-- Le service utilise CORS pour permettre les requêtes depuis Spring Boot
-- Les images sont automatiquement redimensionnées à 224x224
-- La normalisation ImageNet est appliquée automatiquement
+- Keep model weights in `weights/` directory
+- Each model is independent with its own router
+- Use the base class for common functionality
+- Test your endpoint at `/docs` before integrating
