@@ -68,4 +68,23 @@ public class DiseaseRiskController {
             ));
         }
     }
+
+    /**
+     * Returns evaluation metrics (accuracy, precision, recall, F1, ROC-AUC)
+     * computed during the last model training run.
+     */
+    @GetMapping("/metrics")
+    public ResponseEntity<?> metrics() {
+        String url = pythonBaseUrl + "/predict-risk/metrics";
+        log.info("📊 Forwarding metrics request to Python: {}", url);
+        try {
+            return ResponseEntity.ok(restTemplate.getForObject(url, Map.class));
+        } catch (Exception ex) {
+            log.error("Metrics request failed: {}", ex.getMessage());
+            return ResponseEntity.status(503).body(Map.of(
+                "error", "AI service unavailable or metrics not generated yet.",
+                "hint",  "Run: python train_disease_model.py"
+            ));
+        }
+    }
 }
