@@ -1,6 +1,7 @@
 package tn.esprit.pi.tbibi.services.MedicalPictureAnalysisService;
 
 import org.springframework.web.multipart.MultipartFile;
+import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.AnalysisStatisticsResponse;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.MedicalPictureAnalysisRequest;
 import tn.esprit.pi.tbibi.DTO.dtoMedicalPictureAnalysis.MedicalPictureAnalysisResponse;
 
@@ -25,4 +26,7 @@ public interface IMedicalPictureAnalysisService {
     MedicalPictureAnalysisResponse validateAnalysis(Integer id, String doctorNote);
     List<MedicalPictureAnalysisResponse> getByStatus(String status);
     List<MedicalPictureAnalysisResponse> getByCategory(String category);
+    
+    // Statistiques
+    AnalysisStatisticsResponse getStatistics();
 }

@@ -1,14 +1,19 @@
 package tn.esprit.pi.tbibi.controllers;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultRequest;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultResponse;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.PatientLabStatisticsDTO;
 import tn.esprit.pi.tbibi.services.Laboratory_ResultService.ILaboratory_ResultService;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/laboratory-results")
@@ -30,7 +35,22 @@ public class Laboratory_ResultController {
 
     @PostMapping
     public ResponseEntity<?> create(
-            @RequestBody Laboratory_ResultRequest request) {
+            @Valid @RequestBody Laboratory_ResultRequest request,
+            BindingResult bindingResult) {
+        
+        // ✅ Vérifier les erreurs de validation
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(error -> 
+                errors.put(error.getField(), error.getDefaultMessage())
+            );
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Erreurs de validation",
+                "validationErrors", errors,
+                "timestamp", java.time.LocalDateTime.now().toString()
+            ));
+        }
+        
         try {
             // ✅ Log the incoming request for debugging
             System.out.println("=".repeat(80));
@@ -66,9 +86,24 @@ public class Laboratory_ResultController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Laboratory_ResultResponse> update(
+    public ResponseEntity<?> update(
             @PathVariable Integer id,
-            @RequestBody Laboratory_ResultRequest request) {
+            @Valid @RequestBody Laboratory_ResultRequest request,
+            BindingResult bindingResult) {
+        
+        // ✅ Vérifier les erreurs de validation
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(error -> 
+                errors.put(error.getField(), error.getDefaultMessage())
+            );
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Erreurs de validation",
+                "validationErrors", errors,
+                "timestamp", java.time.LocalDateTime.now().toString()
+            ));
+        }
+        
         return ResponseEntity.ok(service.update(id, request));
     }
 
@@ -149,5 +184,37 @@ public class Laboratory_ResultController {
             @RequestParam String startDate,
             @RequestParam String endDate) {
         return ResponseEntity.ok(service.getDetailedResultsByDateRange(status, startDate, endDate));
+    }
+
+    // ✅ Télécharger le rapport PDF pour un résultat de laboratoire
+    @GetMapping("/{id}/report/pdf")
+    public ResponseEntity<byte[]> downloadLabResultPdf(@PathVariable Integer id) {
+        try {
+            System.out.println("=== Generating PDF for lab result ID: " + id + " ===");
+            byte[] pdfBytes = service.generateLabResultPdf(id);
+            System.out.println("=== PDF generated successfully, size: " + pdfBytes.length + " bytes ===");
+            
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/pdf")
+                    .header("Content-Disposition", "attachment; filename=lab_result_" + id + ".pdf")
+                    .body(pdfBytes);
+        } catch (Exception e) {
+            System.err.println("=== ERROR generating PDF for lab result ID: " + id + " ===");
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    // ✅ Prescrire un test de laboratoire par email du patient
+    @PostMapping("/prescribe")
+    public ResponseEntity<?> prescribeTest(@RequestBody tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.LabTestPrescriptionRequest request) {
+        try {
+            Laboratory_ResultResponse response = service.prescribeTestByEmail(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(
+                Map.of("error", e.getMessage())
+            );
+        }
     }
 }

@@ -82,7 +82,6 @@ class Laboratory_ResultServiceTest {
             .patientId(2)
             .prescribedByDoctorId(3)
             .priority("Normal")
-            .requestedAt(LocalDateTime.now())
             .requestNotes("Routine checkup")
             .build();
 

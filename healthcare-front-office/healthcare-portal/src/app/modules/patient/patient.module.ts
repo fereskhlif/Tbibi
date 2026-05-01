@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 import { PatientRoutingModule } from './patient-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 
@@ -104,6 +105,7 @@ import {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    HttpClientModule,
     PatientRoutingModule,
     SharedModule,
     LucideAngularModule.pick({

@@ -1,17 +1,28 @@
-// No changes needed to TypeScript - all existing functionality preserved
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { MedicalPictureAnalysisResponse, MedicalPictureAnalysisRequest } from '../../models/medical-picture-analysis.model';
 import { MedicalPictureAnalysisService } from '../../services/medical-picture-analysis.service';
 
 type StatusFilter = 'All' | 'Pending' | 'In Progress' | 'Completed' | 'Validated';
 
+interface LabResult {
+  labId: number;
+  testName: string;
+  nameLabo: string;
+  status: string;
+}
+
 @Component({
   selector: 'app-medical-picture-list',
   templateUrl: './medical-picture-list.component.html',
-  styleUrls: ['./medical-picture-list.component.css']
+  styleUrls: [
+    './medical-picture-list.component.css',
+    './ai-result-modal.css'
+  ]
 })
 export class MedicalPictureListComponent implements OnInit {
   analyses: MedicalPictureAnalysisResponse[] = [];
+  labResults: LabResult[] = []; // ✅ NOUVEAU - Liste des résultats de laboratoire
   isLoading = false;
   errorMessage = '';
   successMessage = '';
@@ -24,9 +35,15 @@ export class MedicalPictureListComponent implements OnInit {
   isSaving = false;
   editingId: number | null = null;
 
+  // ✅ NOUVEAU - Modal de résultats IA
+  showAiResultModal = false;
+  aiResult: any = null;
+  isAnalyzing = false;
+
   selectedFile: File | null = null;
 
   private readonly IMAGE_BASE_URL = 'http://localhost:8088/uploads/medical-pictures/';
+  private readonly API_URL = 'http://localhost:8088/api';
 
   categoryOptions = ['Radio', 'Scanner', 'IRM', 'Echographie'];
   statusOptions = ['Pending', 'In Progress', 'Completed', 'Validated', 'Rejected'];
@@ -47,9 +64,34 @@ export class MedicalPictureListComponent implements OnInit {
     validationDate: ''
   };
 
-  constructor(private service: MedicalPictureAnalysisService) {}
+  constructor(
+    private service: MedicalPictureAnalysisService,
+    private http: HttpClient
+  ) {}
 
-  ngOnInit(): void { this.loadAll(); }
+  ngOnInit(): void { 
+    this.loadAll();
+    this.loadLabResults(); // ✅ NOUVEAU - Charger les résultats de laboratoire
+  }
+
+  // ✅ NOUVEAU - Charger les résultats de laboratoire
+  loadLabResults(): void {
+    this.http.get<LabResult[]>(`${this.API_URL}/laboratory-results`)
+      .subscribe({
+        next: (data) => {
+          this.labResults = data;
+          console.log('Lab results loaded:', this.labResults);
+        },
+        error: (err) => console.error('Error loading lab results:', err)
+      });
+  }
+
+  // ✅ NOUVEAU - Obtenir le nom du test de laboratoire par ID
+  getLabResultName(labId: number | null): string {
+    if (!labId) return 'No lab result';
+    const labResult = this.labResults.find(lr => lr.labId === labId);
+    return labResult ? `${labResult.testName} (${labResult.nameLabo})` : `Lab ID: ${labId}`;
+  }
 
   loadAll(): void {
     this.isLoading = true;
@@ -231,5 +273,55 @@ export class MedicalPictureListComponent implements OnInit {
     if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ✅ NOUVEAU - Analyser avec l'IA
+  onAnalyzeWithAI(picId: number): void {
+    if (confirm('Lancer l\'analyse IA pour détecter les fractures?')) {
+      this.isAnalyzing = true;
+      const analysis = this.analyses.find(a => a.picId === picId);
+      if (analysis) {
+        analysis.status = 'In Progress';
+      }
+
+      this.service.analyzeWithAI(picId).subscribe({
+        next: (result) => {
+          console.log('AI Analysis Result:', result);
+          this.aiResult = result;
+          this.showAiResultModal = true;
+          this.isAnalyzing = false;
+          
+          // Recharger les données
+          this.loadAll();
+        },
+        error: (err) => {
+          console.error('Error during AI analysis:', err);
+          this.errorMessage = 'Erreur lors de l\'analyse IA. Vérifiez que le service Python est démarré.';
+          this.isAnalyzing = false;
+          
+          if (analysis) {
+            this.loadAll();
+          }
+        }
+      });
+    }
+  }
+
+  closeAiResultModal(): void {
+    this.showAiResultModal = false;
+    this.aiResult = null;
+  }
+
+  getConfidenceClass(level: string): string {
+    switch (level) {
+      case 'high': return 'confidence-high';
+      case 'medium': return 'confidence-medium';
+      case 'low': return 'confidence-low';
+      default: return '';
+    }
+  }
+
+  getPredictionClass(prediction: string): string {
+    return prediction === 'fracture' ? 'prediction-fracture' : 'prediction-normal';
   }
 }
