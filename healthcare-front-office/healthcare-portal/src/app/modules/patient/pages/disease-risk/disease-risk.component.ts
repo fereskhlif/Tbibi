@@ -15,6 +15,8 @@ interface PredictionResponse {
   summary: string;
 }
 
+
+
 @Component({
   selector: 'app-disease-risk',
   standalone: false,
@@ -34,6 +36,8 @@ interface PredictionResponse {
     <div *ngIf="error" class="bg-red-900/40 border border-red-500/40 rounded-xl p-4 text-red-300 text-sm">
       ⚠️ {{error}}
     </div>
+
+
 
     <!-- Loading vitals -->
     <div *ngIf="loadingVitals" class="flex flex-col items-center justify-center py-16 text-slate-400 space-y-4">
@@ -89,75 +93,109 @@ interface PredictionResponse {
 
       <!-- Extra health fields (not from smartwatch) -->
       <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-5 space-y-5">
-        <p class="text-black font-bold text-sm border-b border-slate-700 pb-3">
-          📋 Additional Health Info
-        </p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-          <!-- Age -->
-          <div class="space-y-1">
-            <label class="text-slate-300 text-xs font-medium">Age (years)</label>
-            <input type="number" [(ngModel)]="extra.age" min="18" max="90"
-              class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-black text-sm focus:outline-none focus:border-indigo-500 transition"/>
-          </div>
+        <!-- Section header -->
+        <div class="flex items-center gap-3 border-b border-slate-700 pb-3">
+          <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-sm shadow">📋</div>
+          <p class="text-black font-bold text-sm">Additional Health Info</p>
+        </div>
+
+        <!-- Numeric inputs row -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
           <!-- BMI -->
-          <div class="space-y-1">
-            <label class="text-slate-300 text-xs font-medium">BMI (kg/m²)</label>
+          <div class="bg-slate-900/70 border border-slate-700/80 rounded-2xl p-4 space-y-2 hover:border-indigo-600/50 transition">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">⚖️</span>
+              <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">BMI</span>
+            </div>
             <input type="number" [(ngModel)]="extra.bmi" min="10" max="60" step="0.1"
-              class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-black text-sm focus:outline-none focus:border-indigo-500 transition"/>
+              class="w-full bg-transparent text-2xl font-bold text-black border-none outline-none focus:outline-none placeholder-slate-600"
+              placeholder="22.5"/>
+            <p class="text-slate-600 text-[11px]">kg/m² · Normal: 18.5–24.9</p>
           </div>
 
           <!-- Cholesterol -->
-          <div class="space-y-1">
-            <label class="text-slate-300 text-xs font-medium">Cholesterol (mg/dL)</label>
+          <div class="bg-slate-900/70 border border-slate-700/80 rounded-2xl p-4 space-y-2 hover:border-yellow-600/50 transition">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🩺</span>
+              <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Cholesterol</span>
+            </div>
             <input type="number" [(ngModel)]="extra.cholesterol" min="80" max="400"
-              class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-black text-sm focus:outline-none focus:border-indigo-500 transition"/>
+              class="w-full bg-transparent text-2xl font-bold text-black border-none outline-none focus:outline-none placeholder-slate-600"
+              placeholder="180"/>
+            <p class="text-slate-600 text-[11px]">mg/dL · Optimal: &lt;200</p>
           </div>
 
           <!-- Physical Activity -->
-          <div class="space-y-1">
-            <label class="text-slate-300 text-xs font-medium">Physical Activity (days/week)</label>
+          <div class="bg-slate-900/70 border border-slate-700/80 rounded-2xl p-4 space-y-2 hover:border-green-600/50 transition">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🏃</span>
+              <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Activity</span>
+            </div>
             <input type="number" [(ngModel)]="extra.physical_activity" min="0" max="7"
-              class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-black text-sm focus:outline-none focus:border-indigo-500 transition"/>
+              class="w-full bg-transparent text-2xl font-bold text-black border-none outline-none focus:outline-none placeholder-slate-600"
+              placeholder="3"/>
+            <p class="text-slate-600 text-[11px]">days/week · Recommended: ≥5</p>
           </div>
 
+        </div>
+
+        <!-- Toggle questions row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
           <!-- Smoking -->
-          <div class="space-y-2">
-            <label class="text-slate-300 text-xs font-medium">Do you smoke?</label>
+          <div class="bg-slate-900/70 border border-slate-700/80 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🚬</span>
+              <span class="text-black font-semibold text-sm">Do you smoke?</span>
+            </div>
             <div class="flex gap-3">
               <button (click)="extra.smoking = 0"
-                [class]="'flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ' +
-                  (extra.smoking === 0 ? 'bg-green-700 border-green-500 text-black' : 'bg-slate-900 border-slate-600 text-slate-400')">
-                ✅ No
+                [class]="'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all duration-200 ' +
+                  (extra.smoking === 0
+                    ? 'bg-green-500/20 border-green-400 text-green-300 shadow-lg shadow-green-900/30'
+                    : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500')">
+                ✅ Non-smoker
               </button>
               <button (click)="extra.smoking = 1"
-                [class]="'flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ' +
-                  (extra.smoking === 1 ? 'bg-red-700 border-red-500 text-black' : 'bg-slate-900 border-slate-600 text-slate-400')">
-                🚬 Yes
+                [class]="'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all duration-200 ' +
+                  (extra.smoking === 1
+                    ? 'bg-red-500/20 border-red-400 text-red-300 shadow-lg shadow-red-900/30'
+                    : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500')">
+                🚬 Smoker
               </button>
             </div>
           </div>
 
           <!-- Family History -->
-          <div class="space-y-2">
-            <label class="text-slate-300 text-xs font-medium">Family history of chronic disease?</label>
+          <div class="bg-slate-900/70 border border-slate-700/80 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🧬</span>
+              <span class="text-black font-semibold text-sm">Family history of chronic disease?</span>
+            </div>
             <div class="flex gap-3">
               <button (click)="extra.family_history = 0"
-                [class]="'flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ' +
-                  (extra.family_history === 0 ? 'bg-green-700 border-green-500 text-black' : 'bg-slate-900 border-slate-600 text-slate-400')">
-                ✅ No
+                [class]="'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all duration-200 ' +
+                  (extra.family_history === 0
+                    ? 'bg-green-500/20 border-green-400 text-green-300 shadow-lg shadow-green-900/30'
+                    : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500')">
+                ✅ No history
               </button>
               <button (click)="extra.family_history = 1"
-                [class]="'flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ' +
-                  (extra.family_history === 1 ? 'bg-orange-700 border-orange-500 text-black' : 'bg-slate-900 border-slate-600 text-slate-400')">
-                ⚠️ Yes
+                [class]="'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all duration-200 ' +
+                  (extra.family_history === 1
+                    ? 'bg-orange-500/20 border-orange-400 text-orange-300 shadow-lg shadow-orange-900/30'
+                    : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500')">
+                ⚠️ Has history
               </button>
             </div>
           </div>
 
         </div>
       </div>
+
+
 
       <!-- Predict button -->
       <button (click)="predict()" [disabled]="predicting"
@@ -190,7 +228,7 @@ interface PredictionResponse {
           <span>💓 Systolic BP: <strong>{{avgBloodPressure | number:'1.0-0'}} mmHg</strong></span>
           <span>🫁 SpO₂: <strong>{{avgOxygen | number:'1.1-1'}}%</strong></span>
           <span>❤️ Heart Rate: <strong>{{avgHeartRate | number:'1.0-0'}} bpm</strong></span>
-          <span>Age: <strong>{{extra.age}} yr</strong></span>
+
           <span>BMI: <strong>{{extra.bmi}}</strong></span>
         </div>
       </div>
@@ -198,23 +236,22 @@ interface PredictionResponse {
       <!-- 4 disease cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div *ngFor="let p of result.predictions"
-          [class]="'rounded-2xl border p-5 space-y-3 ' + cardClass(p.atRisk)">
+          [class]="'rounded-2xl border p-5 space-y-3 ' + cardClass(p.probability)">
           <div class="flex items-center justify-between">
             <span class="text-black font-bold text-sm">{{p.label}}</span>
-            <span [class]="'text-xs font-bold px-2 py-0.5 rounded-full ' +
-              (p.atRisk ? 'bg-red-900/60 border border-red-500/60 text-red-300' : 'bg-green-900/50 border border-green-600/50 text-green-300')">
-              {{p.atRisk ? '⚠️ At Risk' : '✅ Low Risk'}}
+            <span [class]="'text-xs font-bold px-2 py-0.5 rounded-full ' + riskBadgeClass(p.probability)">
+              {{riskLabel(p.probability)}}
             </span>
           </div>
           <div>
             <div class="flex justify-between text-xs mb-1">
               <span class="text-slate-400">Risk Probability</span>
-              <span class="font-bold text-black">{{pct(p.probability)}}</span>
+              <span class="font-bold" [class]="riskTextColor(p.probability)">{{pct(p.probability)}}</span>
             </div>
             <div class="w-full bg-slate-900 rounded-full h-2">
               <div class="h-2 rounded-full transition-all duration-700"
                 [style.width]="pct(p.probability)"
-                [style.background]="p.color">
+                [style.background]="riskBarColor(p.probability)">
               </div>
             </div>
           </div>
@@ -258,6 +295,7 @@ export class DiseaseRiskComponent implements OnInit {
     smoking: 0,
     family_history: 0,
   };
+  ageAutoFilled = false;  // true when age was loaded from the user's profile
 
   // ── Result state ─────────────────────────────────────────────────────────────
   result: PredictionResponse | null = null;
@@ -268,6 +306,34 @@ export class DiseaseRiskComponent implements OnInit {
 
   ngOnInit() {
     this.loadSmartWatchAverages();
+    this.loadUserAge();
+  }
+
+  // ── Load age from user profile (dateOfBirth) ─────────────────────────────────
+  private loadUserAge() {
+    const token = localStorage.getItem('TokenUserConnect') || localStorage.getItem('token');
+    if (!token) return;
+
+    this.http.get<any>('http://localhost:8088/api/users/profile', {
+      headers: { Authorization: `Bearer ${token}` }
+    }).subscribe({
+      next: (profile) => {
+        if (profile?.dateOfBirth) {
+          const birth = new Date(profile.dateOfBirth);
+          const today = new Date();
+          let age = today.getFullYear() - birth.getFullYear();
+          const monthDiff = today.getMonth() - birth.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--;
+          }
+          if (age > 0 && age < 130) {
+            this.extra.age = age;
+            this.ageAutoFilled = true;
+          }
+        }
+      },
+      error: () => { /* silently ignore — user can fill in manually */ }
+    });
   }
 
   // ── Load vitals from the chronic condition history in the DB ─────────────────
@@ -349,7 +415,7 @@ export class DiseaseRiskComponent implements OnInit {
 
   reset() { this.result = null; this.error = ''; }
 
-  // ── UI helpers ────────────────────────────────────────────────────────────────
+  // ── UI helpers ────────────────────────────────────────────────────────────
   pct(v: number): string { return Math.round(v * 100) + '%'; }
 
   overallIcon(): string {
@@ -359,13 +425,49 @@ export class DiseaseRiskComponent implements OnInit {
   overallBannerClass(): string {
     const base = 'rounded-2xl border p-5 ';
     return base + ({
-      HIGH: 'bg-red-950/60 border-red-500/60 text-red-200',
+      HIGH:   'bg-red-950/60 border-red-500/60 text-red-200',
       MEDIUM: 'bg-yellow-950/50 border-yellow-500/50 text-yellow-200',
-      LOW: 'bg-green-950/50 border-green-600/50 text-green-200',
+      LOW:    'bg-green-950/50 border-green-600/50 text-green-200',
     } as any)[this.result?.overallRisk ?? 'LOW'];
   }
 
-  cardClass(atRisk: boolean): string {
-    return atRisk ? 'bg-red-950/30 border-red-700/40' : 'bg-slate-800/60 border-slate-700';
+  /**
+   * Three-tier risk classification by probability:
+   *   LOW      0–19%    green
+   *   WARNING  20–59%   amber
+   *   CRITICAL 60–100%  red
+   */
+  private _tier(prob: number): 'LOW' | 'WARNING' | 'CRITICAL' {
+    if (prob >= 0.60) return 'CRITICAL';
+    if (prob >= 0.20) return 'WARNING';
+    return 'LOW';
+  }
+
+  riskLabel(prob: number): string {
+    return ({ LOW: '✅ Low Risk', WARNING: '⚠️ Warning', CRITICAL: '🚨 Critical' })[this._tier(prob)];
+  }
+
+  riskBadgeClass(prob: number): string {
+    return ({
+      LOW:      'bg-green-900/50 border border-green-600/50 text-green-300',
+      WARNING:  'bg-yellow-900/60 border border-yellow-500/60 text-yellow-300',
+      CRITICAL: 'bg-red-900/60 border border-red-500/60 text-red-300',
+    })[this._tier(prob)];
+  }
+
+  riskTextColor(prob: number): string {
+    return ({ LOW: 'text-green-400', WARNING: 'text-yellow-400', CRITICAL: 'text-red-400' })[this._tier(prob)];
+  }
+
+  riskBarColor(prob: number): string {
+    return ({ LOW: '#22c55e', WARNING: '#f59e0b', CRITICAL: '#ef4444' })[this._tier(prob)];
+  }
+
+  cardClass(prob: number): string {
+    return ({
+      LOW:      'bg-slate-800/60 border-slate-700',
+      WARNING:  'bg-yellow-950/30 border-yellow-700/40',
+      CRITICAL: 'bg-red-950/30 border-red-700/40',
+    })[this._tier(prob)];
   }
 }

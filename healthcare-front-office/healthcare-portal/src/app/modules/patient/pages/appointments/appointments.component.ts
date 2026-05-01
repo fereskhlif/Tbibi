@@ -17,10 +17,7 @@ import {
           <h1 class="text-2xl font-bold text-gray-900">Appointments</h1>
           <p class="text-gray-600">Manage your upcoming and past appointments</p>
         </div>
-        <button (click)="openNewModal()"
-          class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          + New Appointment
-        </button>
+        
       </div>
 
       <!-- Summary Cards -->
@@ -154,7 +151,6 @@ import {
             <select [(ngModel)]="editStatus"
               class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
               <option value="PENDING">PENDING</option>
-              <option value="CONFIRMED">CONFIRMED</option>
               <option value="CANCELLED">CANCELLED</option>
             </select>
           </label>
@@ -383,7 +379,7 @@ import {
             <button *ngIf="step > 1"
               (click)="prevStep()"
               class="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors">
-              ← Back
+              
             </button>
             <span *ngIf="step === 1"></span>
 
@@ -486,7 +482,8 @@ export class AppointmentsComponent implements OnInit {
 
   // ─── Action loading state ─────────────────────────────────────────────────
   actionLoading: number | null = null;
-  reschedulingAptId: number | null = null; // ID of the appointment being rescheduled via new picker
+  reschedulingAptId: number | null = null;       // ID of the appointment being rescheduled via new picker
+  reschedulingDoctorName: string = '';           // Doctor name to use when booking in reschedule flow
 
   // ─── Edit modal state ─────────────────────────────────────────────────────
   showEditModal = false;
@@ -630,33 +627,30 @@ export class AppointmentsComponent implements OnInit {
 
   startChooseNewSlot(apt: AppointmentResponse) {
     this.reschedulingAptId = apt.appointmentId;
-    // Set up the modal to jump straight to step 4 for this doctor
+    this.reschedulingDoctorName = apt.doctor || '';  // ← store name for use in bookAppointment
     this.step = 4;
     this.selectedSpecialty = apt.specialty;
-
-    // We need the doctorId to load schedules...
-    // The appointment response gives doctor Name, we need to load doctors or use an ad-hoc pass
-    // Wait, the appointment response gives doctor Name, but `scheduleSlots` needs doctorId.
-    // Let's load the schedules... we don't have doctorId in the generic response unless we fetch the doctor.
-    // But since `apt` might have `doctorId`, wait, AppointmentResponse doesn't have doctorId.
-    // Let me fetch the doctors for this specialty first.
-    this.loadingSchedules = true; // Show loading
+    this.reasonForVisit = apt.reasonForVisit;
+    this.scheduleError = '';
     this.showNewModal = true;
 
-    // Remove 'Dr. ' or 'Dr ' prefix if present since the DB just stores the name
-    let searchName = apt.doctor || '';
-    if (searchName.startsWith('Dr. ')) {
-      searchName = searchName.substring(4).trim();
-    } else if (searchName.startsWith('Dr ')) {
-      searchName = searchName.substring(3).trim();
+    // If the backend already gave us the doctorId, use it directly (fast path).
+    if (apt.doctorId) {
+      this.selectedDoctorId = apt.doctorId;
+      this.loadSchedules();
+      return;
     }
+
+    // Fallback: resolve doctorId by searching the doctor's name.
+    this.loadingSchedules = true;
+    let searchName = apt.doctor || '';
+    if (searchName.startsWith('Dr. ')) searchName = searchName.substring(4).trim();
+    else if (searchName.startsWith('Dr ')) searchName = searchName.substring(3).trim();
 
     this.svc.getDoctorsByName(searchName).subscribe({
       next: (docs) => {
         if (docs.length > 0) {
-          const doc = docs[0];
-          this.selectedDoctorId = doc.userId;
-          this.reasonForVisit = apt.reasonForVisit;
+          this.selectedDoctorId = docs[0].userId;
           this.loadSchedules();
         } else {
           this.loadingSchedules = false;
@@ -742,6 +736,15 @@ export class AppointmentsComponent implements OnInit {
     return d ? `Dr. ${d.name}` : '';
   }
 
+  /** Returns the correct doctor name regardless of the booking flow (new vs reschedule). */
+  get effectiveDoctorName(): string {
+    // In reschedule flow the doctors[] list is empty — use the stored name from the original apt.
+    if (this.reschedulingAptId && this.reschedulingDoctorName) {
+      return this.reschedulingDoctorName;
+    }
+    return this.selectedDoctorName;
+  }
+
   bookAppointment() {
     if (!this.selectedSlot) return;
     this.booking = true;
@@ -757,7 +760,7 @@ export class AppointmentsComponent implements OnInit {
 
     const req = {
       userId: currentUserId,
-      doctor: this.selectedDoctorName,
+      doctor: this.effectiveDoctorName,   // uses reschedule name or normal lookup
       service: this.selectedSpecialty,
       specialty: this.selectedSpecialty,
       reasonForVisit: this.reasonForVisit,
@@ -780,6 +783,7 @@ export class AppointmentsComponent implements OnInit {
               this.showNewModal = false;
               this.showSuccess = true;
               this.reschedulingAptId = null;
+              this.reschedulingDoctorName = '';
               this.loadMyAppointments();
               setTimeout(() => this.showSuccess = false, 3500);
             },

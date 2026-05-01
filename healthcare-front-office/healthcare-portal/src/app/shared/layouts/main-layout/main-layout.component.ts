@@ -79,6 +79,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private physioNav: NavItem[] = [
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'Professional Profile' },
+    { path: 'my-schedule', icon: 'clock', label: 'Manage Schedules' },
     { path: 'schedule', icon: 'calendar', label: 'Therapy Schedule' },
     { path: 'progress', icon: 'activity', label: 'Patient Progress' },
     { path: 'treatment-plan', icon: 'file-text', label: 'Treatment Plans' },
@@ -100,6 +101,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private laboratoryNav: NavItem[] = [
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'Professional Profile' },
+    { path: 'my-schedule', icon: 'clock', label: 'Manage Schedules' },
     { path: 'prescriptions', icon: 'file-text', label: 'Prescriptions' },
     { path: 'lab-results', icon: 'flask-conical', label: 'Laboratory Results' },
     { path: 'medical-pictures', icon: 'image', label: 'Medical Picture Analysis' },
@@ -107,6 +109,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'results', icon: 'file-text', label: 'Test Results' },
     { path: 'equipment', icon: 'settings', label: 'Equipment Management' },
     { path: 'quality', icon: 'shield-check', label: 'Quality Control' },
+    { path: 'statistics', icon: 'bar-chart', label: 'Statistics' },
     { path: 'forum', icon: 'users', label: 'Community Forum' }
   ];
 

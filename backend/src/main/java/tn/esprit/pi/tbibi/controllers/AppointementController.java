@@ -135,4 +135,34 @@ public class AppointementController {
             @RequestParam StatusAppointement status) {
         return ResponseEntity.ok(appointementService.getFilteredAppointments(doctorId, from, to, status));
     }
+
+    // ── Physiotherapist & Laboratory Public Endpoints ─────────────────────────────
+
+    /** Returns all physiotherapist users */
+    @GetMapping("/api/public/physiotherapists")
+    public ResponseEntity<List<tn.esprit.pi.tbibi.DTO.DoctorDTO>> getPhysiotherapists() {
+        return ResponseEntity.ok(appointementService.getAllPhysiotherapists());
+    }
+
+    /** Returns all laboratory users */
+    @GetMapping("/api/public/laboratories")
+    public ResponseEntity<List<tn.esprit.pi.tbibi.DTO.DoctorDTO>> getLaboratories() {
+        return ResponseEntity.ok(appointementService.getAllLaboratories());
+    }
+
+    /** Book a physiotherapy session (no schedule slot) */
+    @PostMapping("/physio-booking")
+    public ResponseEntity<AppointmentResponse> bookPhysio(
+            @RequestBody tn.esprit.pi.tbibi.DTO.PhysioBookingRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(appointementService.createPhysioBooking(request));
+    }
+
+    /** Book a laboratory analysis (no schedule slot) */
+    @PostMapping("/lab-booking")
+    public ResponseEntity<AppointmentResponse> bookLab(
+            @RequestBody tn.esprit.pi.tbibi.DTO.LabBookingRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(appointementService.createLabBooking(request));
+    }
 }

@@ -25,12 +25,14 @@ public class VerificationService {
     private final Map<String, PendingVerification> pending = new ConcurrentHashMap<>();
     private final SecureRandom random = new SecureRandom();
     private final EmailService emailService;
+    private final TwilioSmsService twilioSmsService;
 
     public String createVerification(VerificationRequest request) {
         String code = generateCode();
         String id = java.util.UUID.randomUUID().toString();
         pending.put(id, new PendingVerification(request, code, System.currentTimeMillis()));
 
+        // 1. Send via Email
         String email = request.getPatientEmail();
         if (email != null && !email.isBlank()) {
             try {
@@ -43,6 +45,19 @@ public class VerificationService {
             // Fallback: log the code so it's visible in dev/testing
             log.warn("No email provided for patient {}. Verification code: {}", request.getPatientName(), code);
         }
+
+        // 2. Send via SMS (Twilio)
+        String phone = request.getPatientPhone();
+        if (phone != null && !phone.isBlank()) {
+            try {
+                String smsMessage = "Tbibi — Votre code de vérification est : " + code + ". Valable 10 minutes.";
+                twilioSmsService.sendSms(phone, smsMessage);
+                log.info("Verification code sent by SMS to phone {}", phone);
+            } catch (Exception e) {
+                log.error("Failed to send verification SMS to {}: {}", phone, e.getMessage());
+            }
+        }
+
         return id;
     }
 

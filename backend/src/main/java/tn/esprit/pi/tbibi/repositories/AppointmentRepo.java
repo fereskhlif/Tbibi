@@ -1,6 +1,7 @@
 package tn.esprit.pi.tbibi.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import tn.esprit.pi.tbibi.entities.Appointment;
@@ -45,4 +46,12 @@ public interface AppointmentRepo extends JpaRepository<Appointment, Long> {
                      LocalDate to,
                      StatusAppointement status,
                      Integer doctorId);
+
+       /**
+        * Bulk-deletes all appointments whose linked schedule date is strictly before {@code before}.
+        * Used by the nightly cleanup scheduler to remove past appointments.
+        */
+       @Modifying
+       @Query("DELETE FROM Appointment a WHERE a.schedule IS NOT NULL AND a.schedule.date < :before")
+       int deleteByScheduleDateBefore(@Param("before") LocalDate before);
 }

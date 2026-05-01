@@ -10,19 +10,6 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend, CategoryScale);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface CarePlanSection {
-  title: string;
-  subtitle: string;
-  tips: string[];
-  warningSigns: string[];
-}
-
-interface CarePlan {
-  headline: string;
-  callDoctorNow: boolean;
-  sections: CarePlanSection[];
-}
-
 interface PatientFeature {
   patientId: number;
   patientName: string;
@@ -35,7 +22,6 @@ interface PatientFeature {
   totalReadings: number;
   riskScore: number;
   riskCluster: string;
-  carePlan: CarePlan | null;
 }
 
 interface ClusterGroup {
@@ -67,7 +53,6 @@ interface SegmentationResponse {
   <div class="flex items-center justify-between flex-wrap gap-4">
     <div>
       <h1 class="text-3xl font-extrabold text-black tracking-tight">🧠 Patient Risk Segmentation</h1>
-      <p class="text-slate-400 text-sm mt-1">AI-powered K-Means clustering · Groups patients into LOW / MEDIUM / HIGH risk with personalised care plans</p>
     </div>
     <button (click)="runAnalysis()"
       [disabled]="loading"
@@ -101,13 +86,6 @@ interface SegmentationResponse {
       </span>
       <span class="text-slate-400">
         👥 <span class="text-black font-semibold">{{result.totalPatients}}</span> patients analysed
-      </span>
-      <span class="text-slate-400">
-        🔁
-        <span class="text-black font-semibold">
-          <ng-container *ngIf="result.iterations === 0">Single-patient mode · absolute scoring</ng-container>
-          <ng-container *ngIf="result.iterations > 0">K-Means converged in {{result.iterations}} iteration{{result.iterations !== 1 ? 's' : ''}}</ng-container>
-        </span>
       </span>
     </div>
 
@@ -143,23 +121,6 @@ interface SegmentationResponse {
               <p class="text-slate-400 text-xs">{{c.count}} patient{{c.count !== 1 ? 's' : ''}}</p>
             </div>
           </div>
-          <div class="space-y-2 text-xs">
-            <div class="flex justify-between">
-              <span class="text-slate-400">Avg Risk Score</span>
-              <span class="font-bold text-black">{{pct(c.avgRiskScore)}}</span>
-            </div>
-            <div class="w-full bg-slate-900/60 rounded-full h-1.5">
-              <div class="h-1.5 rounded-full" [style.width]="pct(c.avgRiskScore)" [style.background]="c.color"></div>
-            </div>
-            <div class="flex justify-between mt-2">
-              <span class="text-slate-400">🔴 Critical avg</span>
-              <span class="font-bold text-black">{{pct(c.avgCriticalPct)}}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-400">🟡 Warning avg</span>
-              <span class="font-bold text-black">{{pct(c.avgWarningPct)}}</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -188,8 +149,7 @@ interface SegmentationResponse {
           <div *ngFor="let p of c.patients">
 
             <!-- Row summary -->
-            <div class="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-700/20 transition cursor-pointer"
-                 (click)="togglePlan(p.patientId)">
+            <div class="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-700/20 transition">
               <!-- Avatar -->
               <div [class]="'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ' + avatarClass(c.label)">
                 {{initials(p.patientName)}}
@@ -221,61 +181,9 @@ interface SegmentationResponse {
               </div>
               <!-- Critical badge -->
               <span *ngIf="p.criticalPct > 0"
-                class="text-xs bg-red-900/50 border border-red-500/50 text-red-300 px-2 py-0.5 rounded-full blackspace-nowrap">
+                class="text-xs bg-red-900/50 border border-red-500/50 text-red-300 px-2 py-0.5 rounded-full whitespace-nowrap">
                 🔴 {{pct(p.criticalPct)}} critical
               </span>
-              <!-- Expand toggle -->
-              <span class="text-slate-400 text-xs ml-auto flex-shrink-0">
-                {{expandedPlan === p.patientId ? '▲ Hide Plan' : '▼ Care Plan'}}
-              </span>
-            </div>
-
-            <!-- ── Care Plan Panel ───────────────────────────────────────── -->
-            <div *ngIf="expandedPlan === p.patientId && p.carePlan"
-              class="px-6 pb-6 pt-4 bg-slate-900/50 border-t border-slate-700/60 space-y-5">
-
-              <!-- Headline / urgency banner -->
-              <div [class]="headlineBannerClass(p.riskCluster)">
-                <span class="text-xl">{{p.riskCluster === 'HIGH' ? '🚨' : p.riskCluster === 'MEDIUM' ? '⚠️' : '✅'}}</span>
-                <div>
-                  <p class="font-bold text-sm">{{p.carePlan.headline}}</p>
-                  <p *ngIf="p.carePlan.callDoctorNow"
-                    class="text-xs mt-1 font-semibold text-red-300">
-                    👨‍⚕️ Please contact a doctor as soon as possible.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Sections grid -->
-              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <div *ngFor="let sec of p.carePlan.sections"
-                  class="bg-slate-800/80 border border-slate-700 rounded-xl p-4 space-y-3">
-                  <!-- Section title -->
-                  <div>
-                    <p class="text-black font-bold text-sm">{{sec.title}}</p>
-                    <p class="text-slate-500 text-xs">{{sec.subtitle}}</p>
-                  </div>
-                  <!-- Tips -->
-                  <ul class="space-y-1.5">
-                    <li *ngFor="let tip of sec.tips"
-                      class="flex items-start gap-2 text-xs text-slate-300">
-                      <span class="text-green-400 mt-0.5 flex-shrink-0">✓</span>
-                      {{tip}}
-                    </li>
-                  </ul>
-                  <!-- Warning signs -->
-                  <div *ngIf="sec.warningSigns.length > 0"
-                    class="bg-red-950/40 border border-red-700/40 rounded-lg p-3">
-                    <p class="text-red-400 font-semibold text-xs mb-1.5">⚠️ Warning Signs</p>
-                    <ul class="space-y-1">
-                      <li *ngFor="let w of sec.warningSigns"
-                        class="text-xs text-red-300 flex items-start gap-1.5">
-                        <span class="flex-shrink-0">•</span>{{w}}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
             </div>
 
           </div><!-- end patient row -->
@@ -294,7 +202,6 @@ export class RiskSegmentationComponent implements OnInit, AfterViewInit, OnDestr
   result: SegmentationResponse | null = null;
   loading = false;
   error = '';
-  expandedPlan: number | null = null;
   private doughnut: Chart | null = null;
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) { }
@@ -306,7 +213,6 @@ export class RiskSegmentationComponent implements OnInit, AfterViewInit, OnDestr
   runAnalysis() {
     this.loading = true;
     this.error = '';
-    this.expandedPlan = null;
     this.http.get<SegmentationResponse>('http://localhost:8088/api/risk-segmentation')
       .subscribe({
         next: (data) => {
@@ -322,9 +228,7 @@ export class RiskSegmentationComponent implements OnInit, AfterViewInit, OnDestr
       });
   }
 
-  togglePlan(patientId: number) {
-    this.expandedPlan = this.expandedPlan === patientId ? null : patientId;
-  }
+
 
   // ── Doughnut chart ─────────────────────────────────────────────────────────
 
@@ -355,14 +259,6 @@ export class RiskSegmentationComponent implements OnInit, AfterViewInit, OnDestr
 
   // ── Template helpers ───────────────────────────────────────────────────────
 
-  headlineBannerClass(cluster: string): string {
-    const base = 'flex items-start gap-3 rounded-xl px-4 py-3 border text-sm ';
-    return base + ({
-      HIGH: 'bg-red-950/60 border-red-500/60 text-red-200',
-      MEDIUM: 'bg-yellow-950/50 border-yellow-600/50 text-yellow-200',
-      LOW: 'bg-green-950/50 border-green-600/50 text-green-200',
-    } as any)[cluster] ?? base + 'bg-slate-800 border-slate-700 text-slate-200';
-  }
 
   clusterCardClass(label: string): string {
     return ({
