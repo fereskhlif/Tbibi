@@ -16,6 +16,10 @@ import tn.esprit.pi.tbibi.repositories.ActeRepo;
 import tn.esprit.pi.tbibi.repositories.MedicineRepository;
 import tn.esprit.pi.tbibi.repositories.PrescriptionRepo;
 import tn.esprit.pi.tbibi.repositories.UserRepo;
+import tn.esprit.pi.tbibi.repositories.MedicalReccordsRepo;
+import tn.esprit.pi.tbibi.entities.Notification;
+import tn.esprit.pi.tbibi.entities.NotificationType;
+import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,6 +40,7 @@ public class PrescriptionService implements IPrescriptionService {
     private final MedicineRepository medicineRepository;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final MedicalReccordsRepo medicalReccordsRepo;
 
     @Override
     @jakarta.transaction.Transactional
@@ -125,6 +130,89 @@ public class PrescriptionService implements IPrescriptionService {
         log.info("Status mis à jour pour ID: {}", saved.getPrescriptionID());
 
         return mapper.toDto(saved);
+    }
+
+    @Override
+    @jakarta.transaction.Transactional
+    public PrescriptionResponse dispensePrescription(int id) {
+        log.info("=== DISPENSE PRESCRIPTION ID: {} ===", id);
+
+        // Eagerly load the prescription WITH its medicines to avoid LazyInitializationException
+        Prescription existing = repository.findByIdWithMedicines(id)
+                .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
+
+        // 1. Expiration check
+        if (existing.getExpirationDate() != null && existing.getExpirationDate().before(new Date())) {
+            throw new RuntimeException("Prescription expired, dispensation is not permitted.");
+        }
+
+        // 2. Status update
+        existing.setStatus(PrescriptionStatus.DISPENSED);
+        existing.setStatusUpdatedAt(new Date());
+        Prescription saved = repository.save(existing);
+
+        // 3. Notification + Medical Record update
+        User patient = findPatientByActe(existing.getActe());
+        if (patient != null) {
+
+            // --- Notification to patient ---
+            String notifMessage = "Your prescription has been successfully validated and dispensed by the pharmacy. "
+                    + "Please check your medical record for the full treatment details.";
+            Notification notif = new Notification();
+            notif.setRecipient(patient);
+            notif.setMessage(notifMessage);
+            notif.setType(NotificationType.PRESCRIPTION_DISPENSED);
+            notif.setCreatedDate(LocalDateTime.now());
+            notif.setRead(false);
+            notificationService.saveAndBroadcast(notif);
+            log.info("[DISPENSE] Notification sent to patient: {}", patient.getEmail());
+
+            // --- Build detailed treatment note for Medical Record ---
+            if (existing.getActe() != null && existing.getActe().getMedicalFile() != null) {
+                MedicalReccords mr = existing.getActe().getMedicalFile();
+
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy");
+                String dispensedOn  = sdf.format(new Date());
+                String validUntil   = existing.getExpirationDate() != null
+                        ? sdf.format(existing.getExpirationDate()) : "N/A";
+
+                // Build per-medicine detail lines
+                StringBuilder medDetails = new StringBuilder();
+                if (existing.getMedicines() != null && !existing.getMedicines().isEmpty()) {
+                    for (tn.esprit.pi.tbibi.entities.Medicine m : existing.getMedicines()) {
+                        medDetails.append("\n    \u2022 ").append(m.getMedicineName() != null ? m.getMedicineName() : "Unknown");
+                        if (m.getDosage() != null && !m.getDosage().isBlank())
+                            medDetails.append(" | Dosage: ").append(m.getDosage());
+                        if (m.getActiveIngredient() != null && !m.getActiveIngredient().isBlank())
+                            medDetails.append(" | Active Ingredient: ").append(m.getActiveIngredient());
+                        if (m.getQuantity() > 0)
+                            medDetails.append(" | Qty: ").append(m.getQuantity());
+                        if (m.getDateOfExpiration() != null)
+                            medDetails.append(" | Expires: ").append(sdf.format(m.getDateOfExpiration()));
+                    }
+                } else {
+                    medDetails.append("\n    \u2022 No medicines recorded.");
+                }
+
+                String newNote = "\n"
+                        + "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n"
+                        + "[PHARMACY DISPENSATION \u2014 " + dispensedOn + "]\n"
+                        + "Prescription valid until: " + validUntil + "\n"
+                        + "Prescribed treatment:" + medDetails + "\n"
+                        + "Doctor's note: " + (existing.getNote() != null ? existing.getNote() : "None") + "\n"
+                        + "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500";
+
+                if (mr.getMedical_historuy() == null) {
+                    mr.setMedical_historuy(newNote);
+                } else {
+                    mr.setMedical_historuy(mr.getMedical_historuy() + newNote);
+                }
+                medicalReccordsRepo.save(mr);
+                log.info("[DISPENSE] Medical record updated for prescription #{}", id);
+            }
+        }
+
+        return enrichWithPatient(mapper.toDto(saved), saved);
     }
 
     @Override

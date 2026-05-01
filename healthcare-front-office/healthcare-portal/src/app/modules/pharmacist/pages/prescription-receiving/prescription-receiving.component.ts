@@ -113,4 +113,42 @@ export class PrescriptionReceivingComponent implements OnInit {
   getMedicineCount(rx: PrescriptionResponse): number {
     return rx.medicines ? rx.medicines.length : 0;
   }
+
+  isExpired(rx: PrescriptionResponse): boolean {
+    if (!rx.expirationDate) return false;
+    const expDate = new Date(rx.expirationDate);
+    const now = new Date();
+    // Reset time to start of day for accurate comparison if needed, or direct
+    return expDate < now;
+  }
+
+  dispense(rx: PrescriptionResponse): void {
+    if (this.isExpired(rx)) {
+      alert("Prescription expirée, dispensation impossible.");
+      return;
+    }
+    
+    this.prescriptionService.dispensePrescription(rx.prescriptionID).subscribe({
+      next: (updatedRx) => {
+        const index = this.allPrescriptions.findIndex(p => p.prescriptionID === updatedRx.prescriptionID);
+        if (index !== -1) {
+          const existing = this.allPrescriptions[index];
+          updatedRx.patientName = existing.patientName;
+          updatedRx.patientId = existing.patientId;
+          updatedRx.doctorName = existing.doctorName;
+          updatedRx.doctorId = existing.doctorId;
+          if (!updatedRx.medicines || updatedRx.medicines.length === 0) {
+            updatedRx.medicines = existing.medicines;
+          }
+          this.allPrescriptions[index] = updatedRx;
+          this.filterPrescriptions();
+          alert("Prescription validée et délivrée avec succès !");
+        }
+      },
+      error: (err) => {
+        console.error('Error dispensing', err);
+        alert("Erreur lors de la dispensation : " + (err.error?.message || "Prescription expirée."));
+      }
+    });
+  }
 }

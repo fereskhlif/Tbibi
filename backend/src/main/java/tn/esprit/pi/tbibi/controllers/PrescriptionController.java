@@ -109,6 +109,18 @@ public class PrescriptionController {
         }
     }
 
+    @PostMapping("/{id}/dispense")
+    public ResponseEntity<PrescriptionResponse> dispensePrescription(@PathVariable int id) {
+        try {
+            return ResponseEntity.ok(service.dispensePrescription(id));
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("expirée")) {
+                return ResponseEntity.badRequest().body(null);
+            }
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> delete(@PathVariable int id) {
         try {

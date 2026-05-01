@@ -186,10 +186,21 @@
         <!-- ── MEDICAL RECORD VIEW (Image / Text) ── -->
         <ng-container *ngIf="selectedCloudItem.previewType !== 'prescription'">
           <div class="info-grid">
-            <div class="ii"><label>AI Result</label><div class="iv">{{selectedCloudItem.originalRef.result_ia || '—'}}</div></div>
-            <div class="ii"><label>Chronic diseases</label><div class="iv">{{selectedCloudItem.originalRef.chronic_diseas || '—'}}</div></div>
-            <div class="ii"><label>Type / Category</label><div class="iv">{{selectedCloudItem.originalRef.type || selectedCloudItem.originalRef.category || '—'}}</div></div>
-            <div class="ii"><label>Overall health score</label><div class="iv last-v" [class]="getScoreColor(selectedCloudItem.originalRef.healthScore)">{{selectedCloudItem.originalRef.healthScore}}<span style="font-size:0.75rem; color:#94a3b8">/100</span> ({{getScoreLabel(selectedCloudItem.originalRef.healthScore)}})</div></div>
+            <div class="ii">
+              <label>Chronic Conditions</label>
+              <div class="iv">
+                <!-- Live data from the Chronic Disease monitoring module -->
+                <ng-container *ngIf="chronicConditions.length > 0">
+                  <span *ngFor="let condition of chronicConditions"
+                    style="display:inline-block; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; border-radius:6px; padding:2px 8px; font-size:0.72rem; font-weight:600; margin:2px 4px 2px 0;">
+                    ⚠️ {{condition}}
+                  </span>
+                </ng-container>
+                <span *ngIf="chronicConditions.length === 0" style="color:#94a3b8; font-style:italic;">No abnormal chronic conditions detected.</span>
+              </div>
+            </div>
+            <div class="ii"><label>Document Type / Category</label><div class="iv">{{selectedCloudItem.originalRef.type || selectedCloudItem.originalRef.category || 'Unknown'}}</div></div>
+            <div class="ii"><label>Overall Health Score</label><div class="iv last-v" [class]="getScoreColor(selectedCloudItem.originalRef.healthScore)">{{selectedCloudItem.originalRef.healthScore}}<span style="font-size:0.75rem; color:#94a3b8">/100</span> ({{getScoreLabel(selectedCloudItem.originalRef.healthScore)}})</div></div>
           </div>
 
           <div class="section-divider"><div class="sd-label">Medical History</div></div>

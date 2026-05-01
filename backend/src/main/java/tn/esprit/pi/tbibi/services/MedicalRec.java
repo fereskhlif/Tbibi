@@ -132,13 +132,13 @@ public class MedicalRec implements IMedicalReccordsService {
                 String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
                 
                 StringBuilder sb = new StringBuilder();
-                sb.append("─── Visite du ").append(timestamp).append(" (Note Patient) ───");
+                sb.append("─── Visit on ").append(timestamp).append(" (Patient Note) ───");
                 
                 if (request.getMedical_historuy() != null && !request.getMedical_historuy().isBlank()) {
                     sb.append("\nNotes         : ").append(request.getMedical_historuy());
                 }
                 if (request.getChronic_diseas() != null && !request.getChronic_diseas().isBlank()) {
-                    sb.append("\nMaladies ch.  : ").append(request.getChronic_diseas());
+                    sb.append("\nChronic dis.  : ").append(request.getChronic_diseas());
                 }
 
                 String existing = master.getMedical_historuy();
@@ -288,18 +288,18 @@ public class MedicalRec implements IMedicalReccordsService {
 
         // Build a structured history entry
         StringBuilder entry = new StringBuilder();
-        entry.append("─── Visite du ").append(timestamp).append(" ───");
+        entry.append("─── Visit on ").append(timestamp).append(" ───");
         if (doctorName != null && !doctorName.isBlank()) {
-            entry.append("\nMédecin       : Dr. ").append(doctorName);
+            entry.append("\nDoctor        : Dr. ").append(doctorName);
         }
         if (request.getFiliere() != null && !request.getFiliere().isBlank()) {
-            entry.append("\nFilière       : ").append(request.getFiliere());
+            entry.append("\nCategory      : ").append(request.getFiliere());
         }
         if (request.getVisitNote() != null && !request.getVisitNote().isBlank()) {
             entry.append("\nNotes         : ").append(request.getVisitNote());
         }
         if (request.getAnalyseSanguine() != null && !request.getAnalyseSanguine().isBlank()) {
-            entry.append("\nAnalyse sang. : ").append(request.getAnalyseSanguine());
+            entry.append("\nBlood Test    : ").append(request.getAnalyseSanguine());
         }
         if (request.getVaccination() != null && !request.getVaccination().isBlank()) {
             entry.append("\nVaccination   : ").append(request.getVaccination());
@@ -310,27 +310,27 @@ public class MedicalRec implements IMedicalReccordsService {
             entry.append("\nPrescriptions : ").append(String.join(" | ", request.getPrescriptions()));
         }
         if (request.getAutre() != null && !request.getAutre().isBlank()) {
-            entry.append("\nAutre signaler: ").append(request.getAutre());
+            entry.append("\nTo Report     : ").append(request.getAutre());
         }
         if (request.getVaccines() != null && !request.getVaccines().isEmpty()) {
             for (tn.esprit.pi.tbibi.DTO.VaccineRequest v : request.getVaccines()) {
-                entry.append("\nVaccin        : ").append(v.getNom() != null ? v.getNom() : "")
+                entry.append("\nVaccine       : ").append(v.getNom() != null ? v.getNom() : "")
                         .append(" | Type: ").append(v.getType() != null ? v.getType() : "")
                         .append(" | Obs: ").append(v.getObservation() != null ? v.getObservation() : "");
             }
         }
         if (request.getAppareilUrinaire() != null && !request.getAppareilUrinaire().isBlank()) {
-            entry.append("\nApp. Urinaire : ").append(request.getAppareilUrinaire());
+            entry.append("\nUrinary Syst. : ").append(request.getAppareilUrinaire());
         }
         if (request.getUrinaryExams() != null && !request.getUrinaryExams().isEmpty()) {
-            entry.append("\nExams. Urin.  :");
+            entry.append("\nUrinary Exams :");
             for (tn.esprit.pi.tbibi.DTO.UrinaryExamRequest u : request.getUrinaryExams()) {
                 entry.append("\n  - ").append(u.getLibelle() != null ? u.getLibelle() : "")
                         .append(" | Date: ").append(u.getDate() != null ? u.getDate() : "")
-                        .append(" | Mal Ant.: ").append(u.getMalAnt() != null ? u.getMalAnt() : "")
-                        .append(" | Catégorie: ").append(u.getCategorie() != null ? u.getCategorie() : "")
-                        .append(" | N° Tab MP: ").append(u.getNTabMp() != null ? u.getNTabMp() : "")
-                        .append(" | D.Déc: ").append(u.getDDec() != null ? u.getDDec() : "")
+                        .append(" | Prev. Dis.: ").append(u.getMalAnt() != null ? u.getMalAnt() : "")
+                        .append(" | Category: ").append(u.getCategorie() != null ? u.getCategorie() : "")
+                        .append(" | Tab No.: ").append(u.getNTabMp() != null ? u.getNTabMp() : "")
+                        .append(" | D.Dec: ").append(u.getDDec() != null ? u.getDDec() : "")
                         .append(" | A.Causal: ").append(u.getACausal() != null ? u.getACausal() : "");
             }
         }
@@ -338,8 +338,8 @@ public class MedicalRec implements IMedicalReccordsService {
         // Créer l'Acte correspondant à la visite
         Acte newVisitActe = new Acte();
         newVisitActe.setDate(new java.util.Date());
-        newVisitActe.setTypeOfActe(request.getFiliere() != null && !request.getFiliere().isBlank() ? request.getFiliere() : "Visite Médicale");
-        newVisitActe.setDescription(request.getVisitNote() != null ? request.getVisitNote() : "Nouvelle visite");
+        newVisitActe.setTypeOfActe(request.getFiliere() != null && !request.getFiliere().isBlank() ? request.getFiliere() : "Medical Visit");
+        newVisitActe.setDescription(request.getVisitNote() != null ? request.getVisitNote() : "New visit");
         newVisitActe.setMedicalFile(record);
         if (doctorEmail != null) {
             User doc = userRepo.findByEmail(doctorEmail).orElse(null);
@@ -459,8 +459,8 @@ public class MedicalRec implements IMedicalReccordsService {
         if (request.getMedical_historuy() != null) {
             String existing = record.getMedical_historuy();
             // Append instead of overwrite to protect any doctor notes if this is the master record
-            if (existing != null && existing.contains("─── Visite du")) {
-                record.setMedical_historuy(existing + "\n\n─── Modification Patient ───\n" + request.getMedical_historuy());
+            if (existing != null && existing.contains("─── Visit on")) {
+                record.setMedical_historuy(existing + "\n\n─── Patient Modification ───\n" + request.getMedical_historuy());
             } else {
                 record.setMedical_historuy(request.getMedical_historuy());
             }

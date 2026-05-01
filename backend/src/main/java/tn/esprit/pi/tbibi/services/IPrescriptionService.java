@@ -22,4 +22,7 @@ public interface IPrescriptionService {
 
     /** Patient requests a renewal of an existing prescription */
     PrescriptionResponse renewPrescription(int id);
+
+    /** Pharmacist dispenses the prescription */
+    PrescriptionResponse dispensePrescription(int id);
 }

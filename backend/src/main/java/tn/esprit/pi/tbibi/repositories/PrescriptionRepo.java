@@ -21,6 +21,10 @@ public interface PrescriptionRepo extends JpaRepository<Prescription, Integer> {
            "  SELECT mf2.medicalfile_id FROM User u JOIN u.medicalFiles mf2 WHERE u.userId = :patientId" +
            ") ORDER BY p.date DESC")
     java.util.List<Prescription> findByPatientId(@Param("patientId") Integer patientId);
+
+    /** Eagerly loads medicines via JOIN FETCH to avoid LazyInitializationException */
+    @Query("SELECT p FROM Prescription p LEFT JOIN FETCH p.medicines WHERE p.prescriptionID = :id")
+    java.util.Optional<Prescription> findByIdWithMedicines(@Param("id") Integer id);
 }
 
 

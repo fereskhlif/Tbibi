@@ -399,7 +399,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
     if (!this.fullRecord) return 0;
     
     const disease = this.fullRecord.chronic_diseas || '';
-    if (!disease || ['none', 'none.', 'pas de maladies chroniques', '—', 'nothing'].includes(disease.toLowerCase().trim())) {
+    if (!disease || ['none', 'none.', 'pas de maladies chroniques', 'no chronic diseases', '—', 'nothing'].includes(disease.toLowerCase().trim())) {
       return 100;
     }
 

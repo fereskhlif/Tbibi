@@ -31,6 +31,10 @@ export class MedicalRecordsComponent implements OnInit {
   allChronicDiseases: string[] = [];
   unifiedMedicalHistory: string = '';
 
+  // ── Chronic Conditions (from Chronic Disease Module) ─────────────────────
+  /** Conditions fetched live from the chronic-disease tracking module */
+  chronicConditions: string[] = [];
+
   // ── Prescription Data ───────────────────────────────────────────────────
   prescriptions: PrescriptionResponse[] = [];
   allMedicines: MedicineDTO[] = [];
@@ -40,9 +44,9 @@ export class MedicalRecordsComponent implements OnInit {
   folders: string[] = ['All', 'Prescriptions', 'Lab Results', 'Imaging', 'Consultations'];
   activeFolder: string = 'All';
 
-  selectedFile: File | null = null;       // PDF (local display only for now)
-  selectedImageFile: File | null = null;  // Medical image
-  imagePreviewUrl: string | null = null;  // base64 preview + sent as JSON field
+  selectedFile: File | null = null;
+  selectedImageFile: File | null = null;
+  imagePreviewUrl: string | null = null;
 
   formMedicalRecord = new FormGroup({
     medical_historuy: new FormControl('', [Validators.required, Validators.minLength(4)]),
@@ -58,6 +62,40 @@ export class MedicalRecordsComponent implements OnInit {
   ngOnInit(): void {
     this.loadRecords();
     this.loadPrescriptions();
+    this.loadChronicConditions();
+  }
+
+  // ── Chronic Conditions — read from Chronic Disease module, without modifying it ──
+
+  /** A human-readable label map for condition types coming from the chronic module */
+  private readonly CONDITION_LABELS: Record<string, string> = {
+    BLOOD_SUGAR:         'Diabetes / Blood Sugar Disorder',
+    BLOOD_PRESSURE:      'Hypertension / Blood Pressure Disorder',
+    OXYGEN_SATURATION:   'Respiratory / Oxygen Deficiency',
+    HEART_RATE:          'Cardiac / Heart Rate Disorder',
+  };
+
+  loadChronicConditions(): void {
+    const patientId = Number(localStorage.getItem('userId') ?? 0);
+    if (!patientId) return;
+
+    this.http.get<any[]>(`http://localhost:8088/api/chronic/patient/${patientId}`).subscribe({
+      next: (records) => {
+        // Keep only readings flagged as WARNING or CRITICAL (abnormal conditions)
+        const abnormal = (records || []).filter(
+          (r: any) => r.severity === 'WARNING' || r.severity === 'CRITICAL'
+        );
+        // Extract unique condition types and map to human-readable labels
+        const uniqueTypes = [...new Set(abnormal.map((r: any) => r.conditionType as string))];
+        this.chronicConditions = uniqueTypes.map(
+          (t) => this.CONDITION_LABELS[t] ?? t
+        );
+      },
+      error: () => {
+        // Fail silently — the module may not be available yet
+        this.chronicConditions = [];
+      }
+    });
   }
 
   // ── Records ──────────────────────────────────────────────────────────────

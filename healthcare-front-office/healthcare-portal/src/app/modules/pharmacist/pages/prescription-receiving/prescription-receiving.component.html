@@ -127,11 +127,14 @@
             {{rx.statusUpdatedAt ? (rx.statusUpdatedAt | date: 'dd MMM, HH:mm') : '—'}}
           </td>
           <td style="display:flex;gap:.5rem;align-items:center;">
-            <button *ngIf="rx.status !== 'VALIDATED' && rx.status !== 'COMPLETED' && rx.status !== 'DISPENSED'"
-              (click)="updateStatus(rx, 'VALIDATED'); $event.stopPropagation()"
+            <button *ngIf="rx.status !== 'VALIDATED' && rx.status !== 'COMPLETED' && rx.status !== 'DISPENSED' && !isExpired(rx)"
+              (click)="dispense(rx); $event.stopPropagation()"
               style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;">
-              ✅ Validate
+              💊 Dispense
             </button>
+            <span *ngIf="isExpired(rx) && rx.status !== 'COMPLETED' && rx.status !== 'DISPENSED'" class="text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded">
+              Expired
+            </span>
             <button *ngIf="rx.status !== 'PENDING'"
               (click)="updateStatus(rx, 'PENDING'); $event.stopPropagation()"
               style="display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;">
@@ -277,12 +280,15 @@
       <!-- Modal Footer -->
       <div class="p-5 bg-gray-50 border-t border-gray-200 flex items-center justify-between rounded-b-2xl">
         <div class="flex gap-3">
-          <button *ngIf="detailRx.status !== 'VALIDATED' && detailRx.status !== 'COMPLETED' && detailRx.status !== 'DISPENSED'"
-            (click)="updateStatus(detailRx, 'VALIDATED'); closeDetail()"
+          <button *ngIf="detailRx.status !== 'VALIDATED' && detailRx.status !== 'COMPLETED' && detailRx.status !== 'DISPENSED' && !isExpired(detailRx)"
+            (click)="dispense(detailRx); closeDetail()"
             class="px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-sm"
             style="background:linear-gradient(135deg,#10b981,#059669);">
-            ✅ Validate
+            💊 Dispense
           </button>
+          <span *ngIf="isExpired(detailRx) && detailRx.status !== 'COMPLETED' && detailRx.status !== 'DISPENSED'" class="px-5 py-2.5 text-sm font-bold text-red-600 bg-red-50 rounded-xl">
+            ❌ Expired
+          </span>
           <button *ngIf="detailRx.status !== 'PENDING'"
             (click)="updateStatus(detailRx, 'PENDING'); closeDetail()"
             class="px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors">

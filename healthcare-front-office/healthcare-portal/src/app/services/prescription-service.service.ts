@@ -127,6 +127,10 @@ export class PrescriptionService {
     return this.http.patch<PrescriptionResponse>(`${this.apiUrl}/${id}/status`, { status });
   }
 
+  dispensePrescription(id: number): Observable<PrescriptionResponse> {
+    return this.http.post<PrescriptionResponse>(`${this.apiUrl}/${id}/dispense`, {});
+  }
+
   renewPrescription(id: number): Observable<PrescriptionResponse> {
     return this.http.post<PrescriptionResponse>(`${this.apiUrl}/${id}/renew`, {});
   }
