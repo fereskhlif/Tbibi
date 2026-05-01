@@ -77,6 +77,8 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   predictingClass = false;
   predictedClassResponse: any = null;
   predictedClassError: string = '';
+  outOfStockWarning = false;
+  syncingAI = false;
 
   constructor(private prescriptionService: PrescriptionService, private http: HttpClient) {}
 
@@ -364,21 +366,32 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
         this.checkingSubstitute = false;
         this.currentSearch = '';
         if (res.available) {
-          this.addedMedicines.push({ name: this.medicineInput });
+          // Store the medicine with its ID so it can be sent to the backend on save
+          this.addedMedicines.push({
+            name: res.medicineName || this.medicineInput,
+            id: res.medicineId || null
+          });
           this.medicineInput = '';
           this.indicationInput = '';
           this.familleInput = '';
           this.medicineCheckStatus = 'Médicament disponible en stock. Ajouté. ' + (res.statusMessage || '');
+          this.outOfStockWarning = false;
         } else {
+          this.outOfStockWarning = true;
           this.medicineCheckStatus = res.statusMessage || 'Médicament indisponible.';
           const alts = res.aiAlternatives?.alternatives ?? [];
           if (alts.length === 0) {
             // AI returned no valid substitute: message is already set above
             if (!this.medicineCheckStatus.includes('Aucun')) {
-              this.medicineCheckStatus = 'Aucun substitut cliniquement valide trouvé par l\'IA.';
+              this.medicineCheckStatus = "Aucun substitut cliniquement valide trouvé par l'IA.";
             }
           }
-          this.aiSuggestions = alts;
+          // Sort: in-stock first, then by clinical score descending
+          this.aiSuggestions = alts.sort((a: any, b: any) => {
+            if (a.inStock && !b.inStock) return -1;
+            if (!a.inStock && b.inStock) return 1;
+            return (b.score ?? 0) - (a.score ?? 0);
+          });
         }
       },
       error: () => {
@@ -420,16 +433,9 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
 
   searchSpecific(type: string): void {
     this.currentSearch = type;
-    if (type === 'medicine') {
-      this.indicationInput = '';
-      this.familleInput = '';
-    } else if (type === 'indication') {
-      this.medicineInput = '';
-      // We keep famille if they want to filter
-    } else if (type === 'famille') {
-      this.medicineInput = '';
-      // We keep indication if they want to filter
-    }
+    // We do NOT clear the fields anymore, so we keep context.
+    // However, if the user explicitly typed in only one and we want to know what they clicked...
+    // For now we just trigger the check. The backend will receive everything.
     this.addMedicine();
   }
 
@@ -437,8 +443,11 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     // Handles both snake_case (sous_classe) from Flask via Jackson and camelCase (sousClasse) from Angular serialization
     const displayName = sub.nom || sub.name || 'Médicament AI';
     const subClass = sub.sous_classe || sub.sousClasse || '';
+    // The substitute may carry a medicine ID if it was matched to a stock item
+    const medId = sub.medicineId || sub.medicine_id || null;
     this.addedMedicines.push({
       name: displayName,
+      id: medId,
       source: 'AI',
       sousClasse: subClass,
       score: sub.score || 0
@@ -448,6 +457,23 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.indicationInput = '';
     this.familleInput = '';
     this.medicineCheckStatus = `✅ Substitut IA sélectionné : ${displayName}${subClass ? ' (' + subClass + ')' : ''}`;
+  }
+
+  triggerManualAiSync(): void {
+    this.syncingAI = true;
+    this.medicineCheckStatus = '🔄 Synchronisation IA en cours...';
+    this.prescriptionService.syncAi().subscribe({
+      next: () => {
+        this.syncingAI = false;
+        this.medicineCheckStatus = '✅ IA synchronisée avec le stock !';
+        setTimeout(() => this.medicineCheckStatus = '', 3000);
+      },
+      error: (err) => {
+        this.syncingAI = false;
+        this.medicineCheckStatus = '⚠️ Échec de la synchronisation IA.';
+        console.error('AI Sync failed', err);
+      }
+    });
   }
 
   openEditModal(rx: PrescriptionResponse, event?: Event): void {
@@ -465,7 +491,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     
     // Reset AI state & populate if needed
     // Assuming UI display only, we map the medicines back if editing
-    this.addedMedicines = rx.medicines ? rx.medicines.map((m: any) => ({ name: m.medicineName })) : [];
+    this.addedMedicines = rx.medicines ? rx.medicines.map((m: any) => ({ name: m.medicineName, id: m.medicineId ?? null })) : [];
     this.medicineInput = '';
     this.indicationInput = '';
     this.familleInput = '';
@@ -515,7 +541,17 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
                          ? this.form.rxOriginalDate 
                          : new Date().toISOString();
 
-    const rxDataToSend = { note: this.form.note, date: rxDateToSend, expirationDate: this.form.expirationDate };
+    // Collect only medicine IDs that were resolved (have an id)
+    const medicineIds: number[] = this.addedMedicines
+      .filter((m: any) => m.id != null)
+      .map((m: any) => m.id as number);
+
+    const rxDataToSend = {
+      note: this.form.note,
+      date: rxDateToSend,
+      expirationDate: this.form.expirationDate,
+      medicineIds: medicineIds.length > 0 ? medicineIds : undefined
+    };
 
     this.saving = true;
 

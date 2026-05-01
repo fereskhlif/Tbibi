@@ -5,8 +5,16 @@ import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultRequest;
 import tn.esprit.pi.tbibi.DTO.dtoLaboratory_Result.Laboratory_ResultResponse;
 import tn.esprit.pi.tbibi.entities.Laboratory_Result;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Mapper(componentModel = "spring")
 public interface Laboratory_ResultMapper {
+
+    // ✅ Formatters pour les dates
+    DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     // ✅ Entity → Response
     @Mapping(source = "laboratoryUser.userId", target = "laboratoryUserId")
@@ -15,11 +23,15 @@ public interface Laboratory_ResultMapper {
     @Mapping(source = "patient.name", target = "patientName")
     @Mapping(source = "prescribedByDoctor.userId", target = "prescribedByDoctorId")
     @Mapping(source = "prescribedByDoctor.name", target = "prescribedByDoctorName")
-    @Mapping(source = "createdAt", target = "createdAt")
+    @Mapping(source = "testDate", target = "testDate", qualifiedByName = "formatDate")
+    @Mapping(source = "notificationDate", target = "notificationDate", qualifiedByName = "formatDate")
+    @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "formatDateTime")
     @Mapping(source = "scheduledNotifSent", target = "scheduledNotifSent")
     @Mapping(source = "priority", target = "priority")
-    @Mapping(source = "requestedAt", target = "requestedAt")
+    @Mapping(source = "requestedAt", target = "requestedAt", qualifiedByName = "formatDateTime")
     @Mapping(source = "requestNotes", target = "requestNotes")
+    @Mapping(source = "medicalPictureAnalysis", target = "hasMedicalPicture", qualifiedByName = "hasMedicalPicture")
+    @Mapping(source = "medicalPictureAnalysis.picId", target = "medicalPictureId")
     Laboratory_ResultResponse toResponse(Laboratory_Result lab);
 
     // ✅ Request → Entity
@@ -34,4 +46,22 @@ public interface Laboratory_ResultMapper {
     @Mapping(target = "scheduledNotifSent", ignore = true)      // ✅ NOUVEAU — géré dans le service
     @Mapping(target = "medicalPictureAnalysis", ignore = true)
     Laboratory_Result toEntity(Laboratory_ResultRequest request);
+
+    // ✅ Méthode de conversion LocalDateTime → String
+    @Named("formatDateTime")
+    default String formatDateTime(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.format(DATE_TIME_FORMATTER) : null;
+    }
+
+    // ✅ Méthode de conversion LocalDate → String
+    @Named("formatDate")
+    default String formatDate(LocalDate date) {
+        return date != null ? date.format(DATE_FORMATTER) : null;
+    }
+    
+    // ✅ Vérifier si une analyse d'image médicale existe
+    @Named("hasMedicalPicture")
+    default boolean hasMedicalPicture(tn.esprit.pi.tbibi.entities.MedicalPictureAnalysis analysis) {
+        return analysis != null;
+    }
 }

@@ -251,7 +251,7 @@ export class RiskSegmentationComponent implements OnInit, AfterViewInit, OnDestr
         cutout: '72%',
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.parsed} patients` } }
+          tooltip: { callbacks: { label: (ctx: any) => ` ${ctx.label}: ${ctx.parsed} patients` } }
         }
       }
     });

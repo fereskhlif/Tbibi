@@ -1,17 +1,17 @@
-# ==========================================
+git # ==========================================
 # Global Project GitIgnore
 # ==========================================
 
-# OS files
+# OS generated files
 .DS_Store
 .DS_Store?
-Thumbs.db
-ehthumbs.db
+._*
 .Spotlight-V100
 .Trashes
-._*
+ehthumbs.db
+Thumbs.db
 
-# IDEs
+# IDEs (VS Code, IntelliJ, Eclipse)
 .idea/
 .vscode/
 *.iml
@@ -23,55 +23,41 @@ ehthumbs.db
 .apt_generated/
 .factorypath/
 
-# Logs & debug files
+# Custom execution logs, test outputs and debug traces
 *.log
-*.txt
-build*.txt
-test*.txt
-*_output.txt
-backend/uploads/
+build_error.txt
+build_log.txt
+build_output.log
+dev_build_error.log
+final_build_error.log
+karma_output.txt
+test-out.txt
+test-output.txt
+test_out.txt
+test_out_doctor.txt
+test_out_patient.txt
+test_output_doc.txt
+tsc_output.txt
+tsc_output_patient.txt
 
-# ======================
-# Java / Spring Boot
-# ======================
-target/
-*.jar
-*.war
-*.class
-
-# ======================
-# Angular / Node
-# ======================
-node_modules/
-dist/
-.angular/
-coverage/
-
-# ======================
 # Python
-# ======================
-venv/
 __pycache__/
-*.pyc
+venv/
 
-# ======================
-# Environment variables
-# ======================
-.env
-.env.*
-!.env.example
 
-# ======================
-# Machine Learning
-# ======================
-*.joblib
-*.pkl
+# Broad fallbacks for log/txt outputs generated manually
+*_output.txt
+*_out*.txt
+*-out.txt
+test-*.txt
+build*.txt
+v e n v / 
+Modele_prescription/.venv/
+backend/uploads/
+*.png
+*.jpg
+*.JPG
+*.jpeg
 
-# (optional) datasets → only ignore if large
-# *.csv
-
-# ======================
-# Misc
-# ======================
-*.bak
-*.tmp
+ 
+ 

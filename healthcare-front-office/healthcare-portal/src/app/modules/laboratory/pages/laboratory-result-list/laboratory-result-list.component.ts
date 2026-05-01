@@ -10,6 +10,20 @@ interface Patient {
   email: string;
 }
 
+interface Doctor {
+  userId: number;
+  name: string;
+  email: string;
+  specialty?: string;
+}
+
+interface CurrentUser {
+  userId: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
 @Component({
   selector: 'app-laboratory-result-list',
   templateUrl: './laboratory-result-list.component.html',
@@ -18,6 +32,8 @@ interface Patient {
 export class LaboratoryResultListComponent implements OnInit {
   results: LaboratoryResultResponse[] = [];
   patients: Patient[] = [];
+  doctors: Doctor[] = []; // ✅ NOUVEAU - Liste des médecins
+  currentUser: CurrentUser | null = null; // ✅ NOUVEAU - Utilisateur connecté
   isLoading = false;
   errorMessage = '';
   successMessage = '';
@@ -63,6 +79,35 @@ export class LaboratoryResultListComponent implements OnInit {
   ngOnInit(): void {
     this.loadAll();
     this.loadPatients();
+    this.loadDoctors(); // ✅ NOUVEAU
+    this.loadCurrentUser(); // ✅ NOUVEAU
+  }
+
+  // ✅ NOUVEAU - Charger les médecins
+  loadDoctors(): void {
+    this.http.get<Doctor[]>(`${this.apiUrl}/users/doctors`)
+      .subscribe({
+        next: (data) => {
+          this.doctors = data;
+          console.log('Doctors loaded:', this.doctors);
+        },
+        error: (err) => console.error('Error loading doctors:', err)
+      });
+  }
+
+  // ✅ NOUVEAU - Charger l'utilisateur connecté
+  loadCurrentUser(): void {
+    const userId = this.authService.getCurrentUserId();
+    if (userId) {
+      this.http.get<CurrentUser>(`${this.apiUrl}/users/${userId}`)
+        .subscribe({
+          next: (user) => {
+            this.currentUser = user;
+            console.log('Current user loaded:', this.currentUser);
+          },
+          error: (err) => console.error('Error loading current user:', err)
+        });
+    }
   }
 
   loadPatients(): void {
@@ -159,6 +204,25 @@ export class LaboratoryResultListComponent implements OnInit {
       
       return 0;
     });
+  }
+
+  // ✅ NOUVEAU - Obtenir le nom du technicien connecté
+  get currentTechnicianName(): string {
+    return this.currentUser?.name || 'Loading...';
+  }
+
+  // ✅ NOUVEAU - Obtenir le nom d'un patient par ID
+  getPatientName(patientId: number | null): string {
+    if (!patientId) return 'No patient (optional)';
+    const patient = this.patients.find(p => p.userId === patientId);
+    return patient?.name || `Patient ID: ${patientId}`;
+  }
+
+  // ✅ NOUVEAU - Obtenir le nom d'un médecin par ID
+  getDoctorName(doctorId: number | null): string {
+    if (!doctorId) return 'Doctor ID (optional)';
+    const doctor = this.doctors.find(d => d.userId === doctorId);
+    return doctor?.name || `Doctor ID: ${doctorId}`;
   }
 
   openCreateForm(): void {

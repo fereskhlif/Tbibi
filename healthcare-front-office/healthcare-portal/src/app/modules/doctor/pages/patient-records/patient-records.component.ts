@@ -184,20 +184,6 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
     this.sel = null;
   }
 
-  // ── Prescriptions Multi-select ─────────────────────────────────────────────
-  isPrescriptionSelected(pr: PrescriptionMinimalDTO): boolean {
-    return this.form.prescriptions.includes(pr.prescriptionId.toString());
-  }
-
-  togglePrescription(pr: PrescriptionMinimalDTO): void {
-    const id = pr.prescriptionId.toString();
-    const idx = this.form.prescriptions.indexOf(id);
-    if (idx > -1) {
-      this.form.prescriptions.splice(idx, 1);
-    } else {
-      this.form.prescriptions.push(id);
-    }
-  }
 
   openPrescription(id: number): void {
     this.loadingPrescription = true;
@@ -407,5 +393,34 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
     return p.length >= 2
       ? (p[0][0] + p[1][0]).toUpperCase()
       : name.trim().slice(0, 2).toUpperCase();
+  }
+
+  getHealthScore(): number {
+    if (!this.fullRecord) return 0;
+    
+    const disease = this.fullRecord.chronic_diseas || '';
+    if (!disease || ['none', 'none.', 'pas de maladies chroniques', '—', 'nothing'].includes(disease.toLowerCase().trim())) {
+      return 100;
+    }
+
+    let score = 100;
+    // Split by common separators
+    const list = disease.split(/[,;|\n]+/).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 2);
+    
+    if (list.length === 0) return 100;
+
+    // Penalty per disease
+    score -= (list.length * 15);
+
+    // Specific severity bonuses/penalties
+    for (const d of list) {
+      if (d.includes('diabète') || d.includes('diabetes')) score -= 10;
+      if (d.includes('tension') || d.includes('hypertension') || d.includes('hTA')) score -= 10;
+      if (d.includes('cancer')) score -= 30;
+      if (d.includes('insuffisance') || d.includes('failure')) score -= 20;
+      if (d.includes('asthme') || d.includes('asthma')) score -= 5;
+    }
+
+    return Math.max(5, score);
   }
 }

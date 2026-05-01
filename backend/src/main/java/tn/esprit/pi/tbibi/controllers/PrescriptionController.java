@@ -163,13 +163,19 @@ public class PrescriptionController {
     public ResponseEntity<CheckSubstituteResponse> checkSubstitutes(@RequestBody CheckSubstituteRequest req) {
         try {
             boolean isAvailable = false;
-            
+            Long foundMedicineId = null;
+            String foundMedicineName = null;
+
             boolean hasMedicineName = req.getMedicineName() != null && !req.getMedicineName().trim().isEmpty();
-            
+
             if (req.getMedicineId() != null) {
                 try {
                     MedicineResponse med = medicineService.getMedicineById(req.getMedicineId());
                     isAvailable = med.isAvailable() && med.getStock() > 0;
+                    if (isAvailable) {
+                        foundMedicineId = med.getMedicineId();
+                        foundMedicineName = med.getMedicineName();
+                    }
                 } catch (Exception e) {
                     log.warn("Medicine ID {} not found", req.getMedicineId());
                 }
@@ -178,12 +184,18 @@ public class PrescriptionController {
                 List<MedicineResponse> meds = medicineService.searchByName(req.getMedicineName());
                 if (!meds.isEmpty()) {
                     isAvailable = meds.get(0).isAvailable() && meds.get(0).getStock() > 0;
+                    if (isAvailable) {
+                        foundMedicineId = meds.get(0).getMedicineId();
+                        foundMedicineName = meds.get(0).getMedicineName();
+                    }
                 }
             }
-            
+
             CheckSubstituteResponse response = new CheckSubstituteResponse();
             response.setAvailable(isAvailable);
-            
+            response.setMedicineId(foundMedicineId);
+            response.setMedicineName(foundMedicineName);
+
             if (!isAvailable) {
                 if (!hasMedicineName) {
                     response.setStatusMessage("Recherche basée sur l'indication via l'IA...");
@@ -200,7 +212,7 @@ public class PrescriptionController {
                 response.setStatusMessage("Médicament disponible en stock.");
             }
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la vérification de disponibilité: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();

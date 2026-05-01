@@ -92,3 +92,73 @@
 
 @keyframes fadeIn   { from{opacity:0}  to{opacity:1} }
 @keyframes slideUp  { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Onboarding Wizard ── */
+.onboarding-wizard { display:flex; align-items:center; justify-content:center; min-height:60vh; animation: fadeIn 0.4s ease; }
+.ob-card { background:#fff; border-radius:24px; padding:3rem; text-align:center; max-width:500px; box-shadow:0 20px 40px rgba(0,0,0,0.08); border:1px solid #e2e8f0; }
+.ob-icon { width:80px; height:80px; background:linear-gradient(135deg,#6366f1,#8b5cf6); border-radius:24px; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem; color:#fff; box-shadow:0 10px 25px rgba(99,102,241,0.4); }
+.ob-icon svg { width:40px; height:40px; }
+.ob-card h2 { font-size:1.75rem; font-weight:800; color:#1e293b; margin-bottom:1rem; }
+.ob-card p { font-size:1rem; color:#64748b; line-height:1.6; margin-bottom:2rem; }
+.btn-primary-large { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; font-size:1.1rem; font-weight:700; padding:1rem 2.5rem; border-radius:16px; border:none; cursor:pointer; box-shadow:0 8px 20px rgba(99,102,241,0.3); transition:all 0.2s; }
+.btn-primary-large:hover { transform:translateY(-2px); box-shadow:0 12px 25px rgba(99,102,241,0.45); }
+
+/* ── Professional Clinical Vault UI ── */
+.medical-vault-container { animation: slideUp 0.4s ease; background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; }
+.cloud-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+.ch-left h2 { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
+
+/* Category Tabs (Clinical Style) */
+.cloud-folders-section { margin-bottom: 2rem; border-bottom: 2px solid #f1f5f9; }
+.category-tabs { display:flex; gap:2rem; overflow-x:auto; }
+.category-tabs::-webkit-scrollbar { display:none; }
+.cat-tab { background: transparent; border: none; border-bottom: 3px solid transparent; padding: 0.75rem 0.5rem; font-size: 0.95rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; white-space: nowrap; margin-bottom: -2px; }
+.cat-tab:hover { color: #1e293b; }
+.cat-tab.active { color: #4338ca; border-bottom-color: #4338ca; }
+
+/* Document Grid */
+.cloud-files-section { min-height: 400px; }
+.view-toggle { display:flex; gap:0.25rem; background:#f1f5f9; padding:0.25rem; border-radius:8px; }
+.view-toggle button { background:transparent; border:none; border-radius:6px; padding:0.4rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.view-toggle button svg { width:20px; height:20px; }
+.view-toggle button:hover { color:#1e293b; }
+.view-toggle button.active { background:#fff; color:#4f46e5; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+
+.doc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem; margin-top: 1rem; }
+.doc-card { background:#fff; border-radius:12px; border:1px solid #e2e8f0; border-left-width: 4px; overflow:hidden; display:flex; flex-direction:column; transition:all 0.2s; position:relative; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+.doc-card:hover { transform:translateY(-2px); box-shadow:0 10px 25px rgba(0,0,0,0.06); border-color:#cbd5e1; }
+
+.border-prescription { border-left-color: #ef4444; }
+.border-image { border-left-color: #3b82f6; }
+.border-text { border-left-color: #10b981; }
+
+/* Card Header */
+.dc-header { display:flex; justify-content:space-between; align-items:flex-start; padding:1rem 1.25rem; border-bottom:1px solid #f1f5f9; background: #fafbfc; }
+.dc-title-area { display:flex; align-items:center; gap:0.75rem; overflow:hidden; }
+.dc-icon { width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:1.1rem; flex-shrink:0; }
+.dc-title { font-size:0.9rem; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dc-date { font-size:0.75rem; color:#64748b; font-weight:600; margin-top: 0.1rem; }
+
+.dc-actions { position:relative; }
+.dc-menu-btn { background:none; border:none; padding:0.2rem; cursor:pointer; color:#94a3b8; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.dc-menu-btn:hover { background:#e2e8f0; color:#1e293b; }
+.dc-menu-btn svg { width:20px; height:20px; }
+.dc-dropdown { position:absolute; right:0; top:100%; background:#fff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:10; min-width:140px; padding:0.35rem; }
+.dc-dd-item { padding:0.5rem 0.75rem; font-size:0.85rem; font-weight:600; color:#475569; cursor:pointer; border-radius:6px; transition:background 0.2s; }
+.dc-dd-item:hover { background:#f1f5f9; color: #1e293b; }
+.dc-dd-item.text-red { color:#ef4444; }
+.dc-dd-item.text-red:hover { background:#fee2e2; }
+
+/* Card Body Summary */
+.dc-body { padding:1.25rem; background:#fff; display:flex; align-items:flex-start; justify-content:flex-start; height: 120px; overflow:hidden; }
+
+.dc-text-summary { width:100%; }
+.dc-meds { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.35rem; }
+.dc-meds li { font-size:0.85rem; color:#334155; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dc-text-summary p { font-size:0.85rem; color:#475569; margin:0 0 0.5rem 0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; line-height:1.5; }
+
+.dc-img-summary { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+.dc-img-summary img { max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; mix-blend-mode: multiply; }
+
+.pr-ai { display:inline-block; font-size:0.75rem; background:#fef3c7; color:#d97706; padding:0.25rem 0.6rem; border-radius:6px; font-weight:700; align-self:flex-start; }
+
