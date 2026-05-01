@@ -1,153 +1,241 @@
 <div class="pw">
-  <!-- Header -->
-  <div class="ph">
-    <div class="ph-left">
-      <div class="ph-ico">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
-        </svg>
+  <!-- Onboarding Wizard (Empty State) -->
+  <div *ngIf="records.length === 0 && !showForm && !errorMessage" class="onboarding-wizard">
+    <div class="ob-card">
+      <div class="ob-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
       </div>
-      <div>
-        <h1>Medical Records</h1>
-        <p>View and manage your health records</p>
-      </div>
-    </div>
-    <div style="display:flex; gap:1rem; align-items:center;">
-      <button class="btn-visite" style="padding:.6rem 1.2rem; font-size:.85rem; background:linear-gradient(135deg,#0ea5e9,#3b82f6);" (click)="openAddForm()">
-        New Record / Laboratory
-      </button>
-      <div class="stat-badge">
-        <span class="sn">{{ records.length }}</span>
-        <span class="sl">record(s)</span>
-      </div>
+      <h2>Welcome to your Digital Medical Record</h2>
+      <p>It looks like you don't have any medical records yet. Let's set up your profile to help your doctor provide the best care.</p>
+      <button class="btn-primary-large" (click)="openAddForm()">Start Setup</button>
     </div>
   </div>
 
-  <!-- Filters -->
-  <div class="filters-wrap">
-    <button *ngFor="let f of filters" (click)="activeFilter = f"
-      [class.active]="activeFilter === f" class="filter-btn">
-      {{f}}
-    </button>
-  </div>
+  <!-- Main Clinical Vault Interface (When Records Exist) -->
+  <div *ngIf="records.length > 0 || prescriptions.length > 0" class="medical-vault-container">
+    
+    <div class="cloud-header">
+      <div class="ch-left">
+        <h2>Medical Documents</h2>
+      </div>
+      <div class="ch-right">
+        <button class="btn-primary-large" style="padding:0.6rem 1.2rem; font-size:0.9rem;" (click)="openAddForm()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:20px; height:20px; display:inline; vertical-align:middle; margin-right:5px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> New Document
+        </button>
+      </div>
+    </div>
 
-  <div *ngIf="errorMessage" class="err-bar">⚠ {{errorMessage}}</div>
+    <!-- Category Tabs -->
+    <div class="cloud-folders-section">
+      <div class="category-tabs">
+        <button *ngFor="let folder of folders" 
+                class="cat-tab" 
+                [class.active]="activeFolder === folder"
+                (click)="activeFolder = folder">
+          <span>{{folder}}</span>
+        </button>
+      </div>
+    </div>
 
-  <!-- Table List -->
-  <div class="tbl-card">
-    <table class="ptbl">
-      <thead><tr>
-        <th>ID</th><th>Laboratory / Image</th><th>Score</th><th>Type</th><th>Chronic Disease</th><th>Action</th>
-      </tr></thead>
-      <tbody>
-        <tr *ngIf="filteredRecords.length === 0 && !errorMessage"><td colspan="6" class="empty-state">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-          No records found
-        </td></tr>
-        <tr *ngFor="let record of filteredRecords; let i = index" class="prow" (click)="viewRecord(record)">
-          <td><span class="dos-badge">#{{record.medicalfile_id || 'N/A'}}</span></td>
-          <td>
-            <div style="display:flex; align-items:center; gap:.75rem;">
-              <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">
-                {{record.icon}}
-              </div>
-              <div style="display:flex; flex-direction:column">
-                <span style="font-weight:600; color:#1e293b">{{record.imageLabo || 'Unnamed record'}}</span>
-                <span class="em" style="font-size:0.75rem">{{record.type}}</span>
+    <!-- Files Section -->
+    <div class="cloud-files-section">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-size:1rem; font-weight:700; color:#1e293b; margin:0;">Recent Documents</h3>
+        <div class="view-toggle">
+          <button [class.active]="viewMode === 'timeline'" (click)="viewMode = 'timeline'" title="Grid View">
+             <svg fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          </button>
+          <button [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" title="List View">
+             <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid View -->
+      <div *ngIf="viewMode === 'timeline'" class="doc-grid">
+        <div *ngFor="let item of filteredCloudItems" class="doc-card" [ngClass]="'border-' + item.previewType" (click)="viewCloudItem(item)">
+          
+          <div class="dc-header">
+            <div class="dc-title-area">
+              <span class="dc-icon" [ngStyle]="{'background': item.iconBg, 'color': item.iconColor}">{{item.icon}}</span>
+              <div style="display:flex; flex-direction:column; overflow:hidden;">
+                <span class="dc-title" [title]="item.title">{{item.title}}</span>
+                <span class="dc-date">{{item.date | date:'mediumDate'}}</span>
               </div>
             </div>
-          </td>
-          <td>
-            <div style="font-weight:700" [class]="getScoreColor(record.healthScore)">{{record.healthScore}}/100</div>
-          </td>
-          <td><span class="ch-tag">{{record.status}}</span></td>
-          <td class="em" style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-            {{record.chronic_diseas || '—'}}
-          </td>
-          <td style="display:flex; gap:0.5rem; align-items:center;">
-            <button class="btn-visite" style="padding:0.4rem 0.8rem; font-size:0.75rem;" (click)="viewRecord(record); $event.stopPropagation()">Open</button>
-            <button class="btn-cancel" style="padding:0.3rem 0.6rem; font-size:0.75rem;" (click)="openEditForm(record); $event.stopPropagation()">Edit</button>
-            <button class="btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" (click)="deleteRecord(record); $event.stopPropagation()">X</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <!-- Actions Menu -->
+            <div class="dc-actions" (click)="$event.stopPropagation()">
+               <button class="dc-menu-btn" (click)="item.showMenu = !item.showMenu">
+                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+               </button>
+               <div *ngIf="item.showMenu" class="dc-dropdown" (mouseleave)="item.showMenu = false">
+                  <div *ngIf="item.previewType !== 'prescription'" class="dc-dd-item" (click)="openEditForm(item.originalRef); item.showMenu = false">Edit</div>
+                  <div *ngIf="item.previewType !== 'prescription'" class="dc-dd-item text-red" (click)="deleteRecord(item.originalRef); item.showMenu = false">Delete</div>
+                  <div *ngIf="item.previewType === 'prescription'" class="dc-dd-item" style="color:#94a3b8; font-size:0.75rem;">(Managed by Doctor)</div>
+               </div>
+            </div>
+          </div>
+
+          <!-- Card Content Summary -->
+          <div class="dc-body">
+            <div *ngIf="item.previewType === 'prescription'" class="dc-text-summary">
+               <ul class="dc-meds">
+                 <li *ngFor="let med of $any(item.previewData).medicines | slice:0:3">💊 {{$any(med).medicineName}} (x{{$any(med).quantity}})</li>
+                 <li *ngIf="$any(item.previewData).medicines?.length > 3" style="color:#94a3b8; font-style:italic; font-size:0.75rem;">+ {{$any(item.previewData).medicines.length - 3}} more</li>
+               </ul>
+            </div>
+
+            <div *ngIf="item.previewType === 'image'" class="dc-img-summary">
+               <img [src]="item.previewData.imageUrl" alt="Preview" />
+            </div>
+
+            <div *ngIf="item.previewType === 'text'" class="dc-text-summary">
+               <p>{{item.previewData.medical_historuy || 'No details provided.'}}</p>
+               <div *ngIf="item.previewData.result_ia" class="pr-ai">AI: {{item.previewData.result_ia}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- List View (Table) -->
+      <div *ngIf="viewMode === 'table'" class="tbl-card" style="animation: slideUp 0.3s ease;">
+        <table class="ptbl">
+          <thead>
+            <tr>
+              <th>Document Name</th>
+              <th>Category</th>
+              <th>Date</th>
+              <th>Type</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredCloudItems" class="prow" (click)="viewCloudItem(item)">
+              <td style="font-weight:600; color:#334155; display:flex; align-items:center; gap:0.5rem;">
+                <span class="dc-icon" [ngStyle]="{'background': item.iconBg, 'color': item.iconColor, 'width':'32px', 'height':'32px'}">{{item.icon}}</span>
+                {{item.title}}
+              </td>
+              <td><span class="dos-badge">{{item.folder}}</span></td>
+              <td>{{item.date | date:'mediumDate'}}</td>
+              <td style="color:#64748b; font-size:0.85rem;">
+                <span *ngIf="item.previewType === 'prescription'">Prescription ({{$any(item.previewData).medicines?.length}} med(s))</span>
+                <span *ngIf="item.previewType === 'image'">Medical Image / Scan</span>
+                <span *ngIf="item.previewType === 'text'">Text Document / AI Result</span>
+              </td>
+              <td style="text-align:right;" (click)="$event.stopPropagation()">
+                <button *ngIf="item.previewType !== 'prescription'" class="mc-btn" (click)="openEditForm(item.originalRef)" title="Edit">✎</button>
+                <button *ngIf="item.previewType !== 'prescription'" class="mc-btn" style="color:#ef4444;" (click)="deleteRecord(item.originalRef)" title="Delete">✕</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="filteredCloudItems.length === 0" class="empty-state">
+        No documents found in this category.
+      </div>
+    </div>
   </div>
 
-  <!-- Modal Read (View Record) -->
-  <div class="overlay" *ngIf="selectedRecord && !showForm" (click)="selectedRecord = null">
+  <!-- Unified Unified Modal (Read Record/Prescription) -->
+  <div class="overlay" *ngIf="selectedCloudItem && !showForm" (click)="selectedCloudItem = null">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="mh">
         <div class="mh-left">
-          <div class="mh-ico">
-             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <div class="mh-ico" [ngStyle]="{'background': selectedCloudItem.iconBg, 'color': selectedCloudItem.iconColor}">
+             <span>{{selectedCloudItem.icon}}</span>
           </div>
           <div>
-            <h2>Record details #{{selectedRecord.medicalfile_id}}</h2>
-            <p>{{selectedRecord.imageLabo}}</p>
+            <h2>{{selectedCloudItem.title}}</h2>
+            <p>{{selectedCloudItem.date | date:'fullDate'}}</p>
           </div>
         </div>
-        <button class="mc-btn" (click)="selectedRecord = null">✕</button>
+        <button class="mc-btn" (click)="selectedCloudItem = null">✕</button>
       </div>
 
       <div class="mb">
-        <div class="info-grid">
-          <div class="ii"><label>AI Result</label><div class="iv">{{selectedRecord.result_ia || '—'}}</div></div>
-          <div class="ii"><label>Chronic diseases</label><div class="iv">{{selectedRecord.chronic_diseas || '—'}}</div></div>
-          <div class="ii"><label>Type / Category</label><div class="iv">{{selectedRecord.type || selectedRecord.category || '—'}}</div></div>
-          <div class="ii"><label>Overall health score</label><div class="iv last-v" [class]="getScoreColor(selectedRecord.healthScore)">{{selectedRecord.healthScore}}<span style="font-size:0.75rem; color:#94a3b8">/100</span> ({{getScoreLabel(selectedRecord.healthScore)}})</div></div>
-        </div>
-
-        <div class="section-divider"><div class="sd-label">Medical History</div></div>
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; font-size:.875rem; color:#334155; white-space:pre-wrap;">{{selectedRecord.medical_historuy || 'No history provided.'}}</div>
-
-        <div *ngIf="selectedRecord.imageUrl">
-          <div class="section-divider"><div class="sd-label">AI Medical Image</div></div>
-          <img [src]="selectedRecord.imageUrl" alt="AI result" style="width:100%; max-height:200px; object-fit:contain; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; padding:0.5rem;"/>
-        </div>
-
-        <div class="section-divider">
-          <div class="sd-label">Patient Documents (Tests, Scans)</div>
-        </div>
-        
-        <!-- File input button instead of dropzone -->
-        <input #patientImageInput type="file" accept="image/*,.pdf" multiple class="hidden" style="display:none" (change)="onPatientImageSelected($event)" />
-        <button class="btn-upload" (click)="patientImageInput.click()" [disabled]="isUploadingPatientImage">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-          <span *ngIf="!isUploadingPatientImage">From Explorer</span>
-          <span *ngIf="isUploadingPatientImage">Uploading...</span>
-        </button>
-
-        <!-- Gallery -->
-        <div *ngIf="selectedRecord.patientImages && selectedRecord.patientImages.length > 0" class="gallery-grid">
-          <div *ngFor="let img of selectedRecord.patientImages" class="gallery-item" [title]="getFileName(img)">
-             
-             <!-- PDF -->
-             <a *ngIf="isPdf(img)" [href]="getImageUrl(img)" target="_blank" class="gallery-pdf" style="text-decoration:none">
-                <svg fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline stroke-linecap="round" stroke-linejoin="round" points="14 2 14 8 20 8"/></svg>
-                <span>{{getFileLabel(img)}}</span>
-             </a>
-
-             <!-- Image -->
-             <a *ngIf="!isPdf(img)" [href]="getImageUrl(img)" target="_blank" style="width:100%;height:100%">
-               <img [src]="getImageUrl(img)" [alt]="getFileName(img)" class="gallery-img"/>
-             </a>
-
-             <button class="btn-del-img" (click)="deletePatientImage(img, $event)" title="Delete">✕</button>
+        <!-- ── PRESCRIPTION VIEW ── -->
+        <ng-container *ngIf="selectedCloudItem.previewType === 'prescription'">
+          <div class="section-divider"><div class="sd-label">Doctor Information</div></div>
+          <div class="info-grid">
+             <div class="ii"><label>Status</label><div class="iv"><span class="ch-tag">Active</span></div></div>
+             <div class="ii"><label>Notes</label><div class="iv">{{selectedCloudItem.previewData.notes || 'No extra notes.'}}</div></div>
           </div>
-        </div>
-        <div *ngIf="!selectedRecord.patientImages || selectedRecord.patientImages.length === 0" class="empty-state">
-           No additional patient documents added.
-        </div>
+          
+          <div class="section-divider"><div class="sd-label">Medications List</div></div>
+          <table class="ptbl" style="border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+            <thead style="background:#f8fafc">
+              <tr>
+                <th style="color:#64748b; font-size:0.75rem;">Medicine</th>
+                <th style="color:#64748b; font-size:0.75rem;">Dosage</th>
+                <th style="color:#64748b; font-size:0.75rem;">Duration</th>
+                <th style="color:#64748b; font-size:0.75rem;">Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let med of $any(selectedCloudItem.previewData).medicines">
+                <td style="font-weight:600; color:#1e293b;">{{$any(med).medicineName}}</td>
+                <td>{{$any(med).dosage}}</td>
+                <td>{{$any(med).duration}}</td>
+                <td style="font-weight:700;">x{{$any(med).quantity}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
 
-        <div *ngIf="selectedRecord.rep_doc">
-          <div class="section-divider"><div class="sd-label">Doctor's Report</div></div>
-          <div style="padding:1rem; background:#fffbdd; border-left:4px solid #fde047; font-size:.875rem;">{{selectedRecord.rep_doc}}</div>
-        </div>
+        <!-- ── MEDICAL RECORD VIEW (Image / Text) ── -->
+        <ng-container *ngIf="selectedCloudItem.previewType !== 'prescription'">
+          <div class="info-grid">
+            <div class="ii"><label>AI Result</label><div class="iv">{{selectedCloudItem.originalRef.result_ia || '—'}}</div></div>
+            <div class="ii"><label>Chronic diseases</label><div class="iv">{{selectedCloudItem.originalRef.chronic_diseas || '—'}}</div></div>
+            <div class="ii"><label>Type / Category</label><div class="iv">{{selectedCloudItem.originalRef.type || selectedCloudItem.originalRef.category || '—'}}</div></div>
+            <div class="ii"><label>Overall health score</label><div class="iv last-v" [class]="getScoreColor(selectedCloudItem.originalRef.healthScore)">{{selectedCloudItem.originalRef.healthScore}}<span style="font-size:0.75rem; color:#94a3b8">/100</span> ({{getScoreLabel(selectedCloudItem.originalRef.healthScore)}})</div></div>
+          </div>
+
+          <div class="section-divider"><div class="sd-label">Medical History</div></div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; font-size:.875rem; color:#334155; white-space:pre-wrap;">{{selectedCloudItem.originalRef.medical_historuy || 'No history provided.'}}</div>
+
+          <div *ngIf="selectedCloudItem.originalRef.imageUrl">
+            <div class="section-divider"><div class="sd-label">AI Medical Image</div></div>
+            <img [src]="selectedCloudItem.originalRef.imageUrl" alt="AI result" style="width:100%; max-height:200px; object-fit:contain; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; padding:0.5rem;"/>
+          </div>
+
+          <div class="section-divider">
+            <div class="sd-label">Patient Documents (Tests, Scans)</div>
+          </div>
+          
+          <input #patientImageInput type="file" accept="image/*,.pdf" multiple class="hidden" style="display:none" (change)="onPatientImageSelected($event)" />
+          <button class="btn-upload" (click)="patientImageInput.click()" [disabled]="isUploadingPatientImage">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+            <span *ngIf="!isUploadingPatientImage">Upload from computer</span>
+            <span *ngIf="isUploadingPatientImage">Uploading...</span>
+          </button>
+
+          <div *ngIf="selectedCloudItem.originalRef.patientImages && selectedCloudItem.originalRef.patientImages.length > 0" class="gallery-grid">
+            <div *ngFor="let img of selectedCloudItem.originalRef.patientImages" class="gallery-item" [title]="getFileName(img)">
+               <a *ngIf="isPdf(img)" [href]="getImageUrl(img)" target="_blank" class="gallery-pdf" style="text-decoration:none">
+                  <svg fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline stroke-linecap="round" stroke-linejoin="round" points="14 2 14 8 20 8"/></svg>
+                  <span>{{getFileLabel(img)}}</span>
+               </a>
+               <a *ngIf="!isPdf(img)" [href]="getImageUrl(img)" target="_blank" style="width:100%;height:100%">
+                 <img [src]="getImageUrl(img)" [alt]="getFileName(img)" class="gallery-img"/>
+               </a>
+               <button class="btn-del-img" (click)="deletePatientImage(img, $event)" title="Delete">✕</button>
+            </div>
+          </div>
+          <div *ngIf="!selectedCloudItem.originalRef.patientImages || selectedCloudItem.originalRef.patientImages.length === 0" class="empty-state">
+             No additional patient documents attached.
+          </div>
+
+          <div *ngIf="selectedCloudItem.originalRef.rep_doc">
+            <div class="section-divider"><div class="sd-label">Doctor's Report</div></div>
+            <div style="padding:1rem; background:#fffbdd; border-left:4px solid #fde047; font-size:.875rem;">{{selectedCloudItem.originalRef.rep_doc}}</div>
+          </div>
+        </ng-container>
+
       </div>
       <div class="mf">
-        <button class="btn-cancel" (click)="selectedRecord = null">Close</button>
+        <button class="btn-cancel" (click)="selectedCloudItem = null">Close</button>
       </div>
     </div>
   </div>
@@ -161,8 +249,8 @@
              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
           </div>
           <div>
-            <h2>{{ isEditing ? 'Edit record' : 'New record' }}</h2>
-            <p>Enter the record information</p>
+            <h2>{{ isEditing ? 'Edit record' : 'Setup Profile / New Record' }}</h2>
+            <p>Enter your medical information</p>
           </div>
         </div>
         <button class="mc-btn" (click)="cancelForm()">✕</button>
@@ -172,13 +260,13 @@
         <form [formGroup]="formMedicalRecord">
           <div class="fg">
             <label class="fl">Medical history *</label>
-            <textarea formControlName="medical_historuy" class="form-ta" rows="3" placeholder="Describe the history..."></textarea>
+            <textarea formControlName="medical_historuy" class="form-ta" rows="3" placeholder="Describe your medical history..."></textarea>
             <p *ngIf="formMedicalRecord.controls['medical_historuy'].invalid && formMedicalRecord.controls['medical_historuy'].touched"
                 style="color:#ef4444; font-size:0.75rem; margin-top:0.25rem;">Minimum 4 characters</p>
           </div>
           <div class="fg">
              <label class="fl">Chronic diseases</label>
-             <input formControlName="chronic_diseas" class="form-inp" placeholder="Ex: Diabetes..."/>
+             <input formControlName="chronic_diseas" class="form-inp" placeholder="Ex: Diabetes, Hypertension..."/>
           </div>
 
           <div class="section-divider"><div class="sd-label">Main Medical Image (Preview)</div></div>
@@ -207,13 +295,13 @@
       <div class="mf">
         <button type="button" class="btn-cancel" (click)="cancelForm()">Cancel</button>
         <button type="button" class="btn-valid" [disabled]="formMedicalRecord.invalid" (click)="saveForm()">
-           {{ isEditing ? 'Update' : 'Add' }}
+           {{ isEditing ? 'Update' : 'Save & Continue' }}
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Add Acte (kept functionality) -->
+  <!-- Modal Add Acte -->
   <div class="overlay" *ngIf="showActeForm" (click)="cancelActeForm()">
     <div class="modal" (click)="$event.stopPropagation()" style="max-width:500px">
       <div class="mh">
@@ -228,7 +316,6 @@
         </div>
         <button class="mc-btn" (click)="cancelActeForm()">✕</button>
       </div>
-      
       <div class="mb">
         <div class="fg">
           <label class="fl">Description</label>
@@ -249,5 +336,4 @@
       </div>
     </div>
   </div>
-
 </div>
