@@ -22,6 +22,12 @@ public class Order {
     Long orderId;
     Date deliveryDate;
     float totalAmount;
+    String deliveryMethod;
+    String deliveryAddress;
+    String paymentMethod;
+    
+    @Column(columnDefinition = "LONGTEXT")
+    String prescriptionImage;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", length = 20)

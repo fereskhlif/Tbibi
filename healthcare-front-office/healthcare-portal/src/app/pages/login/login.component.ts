@@ -13,6 +13,8 @@ type UserRole = 'PATIENT' | 'DOCTEUR' | 'PHARMASIS' | 'KINE' | 'LABORATORY';
 export class LoginComponent {
 
   isSignup = false;
+  showRegistrationSuccess = false;
+  lastRegisteredRole = '';
   selectedRole = '';
   email = '';
   password = '';
@@ -21,8 +23,6 @@ export class LoginComponent {
   gender = '';
   adresse = '';
   specialty = '';
-  pharmacyName = '';
-  pharmacyAddress = '';
   
   countries = COUNTRIES;
   selectedCountry = this.countries.find(c => c.name === 'Tunisia') || this.countries[0];
@@ -221,17 +221,6 @@ export class LoginComponent {
         hasFrontendErrors = true;
       }
 
-      if (this.selectedRole === 'PHARMASIS') {
-        if (!this.pharmacyName || !this.pharmacyName.trim()) {
-          this.fieldErrors['pharmacyName'] = 'Invalid pharmacy name';
-          hasFrontendErrors = true;
-        }
-        if (!this.pharmacyAddress || !this.pharmacyAddress.trim()) {
-          this.fieldErrors['pharmacyAddress'] = 'Invalid pharmacy address';
-          hasFrontendErrors = true;
-        }
-      }
-
       if (hasFrontendErrors) {
         return;
       }
@@ -251,10 +240,6 @@ export class LoginComponent {
         }),
         ...(this.selectedRole === 'DOCTEUR' && this.specialty && {
           specialty: this.specialty
-        }),
-        ...(this.selectedRole === 'PHARMASIS' && {
-          pharmacyName: this.pharmacyName,
-          pharmacyAddress: this.pharmacyAddress
         })
       };
 
@@ -269,13 +254,19 @@ export class LoginComponent {
       }
 
       console.log('Sending registration data:', registerData);
-
       this.authService.register(registerData).subscribe({
         next: (response: any) => {
           this.isLoading = false;
           console.log('Registration successful:', response);
-          alert('Registration successful! Please log in.');
+          
+          // Capture the role BEFORE resetting everything
+          this.lastRegisteredRole = this.selectedRole;
+          console.log('Role captured for success message:', this.lastRegisteredRole);
+
+          this.showRegistrationSuccess = true;
           this.isSignup = false;
+          
+          // Clear form fields
           this.selectedRole = '';
           this.password = '';
           this.name = '';
@@ -416,8 +407,6 @@ export class LoginComponent {
     this.gender = '';
     this.adresse = '';
     this.specialty = '';
-    this.pharmacyName = '';
-    this.pharmacyAddress = '';
     this.phoneNumber = '';
     this.selectedRole = '';
     this.uploadedDocument = null;

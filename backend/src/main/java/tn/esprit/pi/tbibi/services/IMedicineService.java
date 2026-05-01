@@ -22,6 +22,7 @@ public interface IMedicineService {
     MedicineResponse removeImage(Long id, String imageUrl);
     List<MedicineResponse> getMedicinesByPharmacy(Long pharmacyId);
     List<Object[]> getTopSellingMedicinesForPharmacy(Long pharmacyId);
+    List<MedicineResponse> filterMedicines(String name, Long pharmacyId, MedicineCategory category, boolean inStockOnly);
 
     // ─── PAGINATED ───
     Page<MedicineResponse> getAllMedicinesPaginated(Pageable pageable);

@@ -14,6 +14,7 @@ export interface Medicine {
     pharmacy?: any; // Add pharmacy object for global search branding
     form?: string;
     category?: string;
+    prescriptionRequired: boolean;
 }
 
 export interface Page<T> {

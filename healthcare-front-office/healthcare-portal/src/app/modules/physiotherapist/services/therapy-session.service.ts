@@ -31,6 +31,10 @@ export class TherapySessionService {
     return this.http.get<TherapySessionResponse[]>(`${this.apiUrl}/physiotherapist/${physioId}/upcoming`);
   }
 
+  getPatientProgressByPhysiotherapist(physioId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/physiotherapist/${physioId}/patient-progress`);
+  }
+
   create(request: TherapySessionRequest): Observable<TherapySessionResponse> {
     return this.http.post<TherapySessionResponse>(this.apiUrl, request);
   }

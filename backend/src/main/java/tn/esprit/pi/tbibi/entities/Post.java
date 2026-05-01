@@ -72,4 +72,16 @@ public class Post {
     @Column(name = "media_url")
     @Builder.Default
     List<String> mediaUrls = new ArrayList<>();
+
+    @Column(name = "toxicity_score")
+    Double toxicityScore;
+
+    @Column(name = "toxicity_verdict", length = 20)
+    String toxicityVerdict;
+
+    @Column(name = "toxicity_source", length = 50)
+    String toxicitySource;
+
+    @Column(name = "toxicity_scored_at")
+    LocalDateTime toxicityScoredAt;
 }

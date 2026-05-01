@@ -7,6 +7,7 @@ import tn.esprit.pi.tbibi.DTO.comment.CommentResponse;
 import tn.esprit.pi.tbibi.DTO.post.PostRequest;
 import tn.esprit.pi.tbibi.DTO.post.PostResponse;
 import tn.esprit.pi.tbibi.DTO.category.*;
+import tn.esprit.pi.tbibi.DTO.relatedpost.RelatedPostDTO;
 import tn.esprit.pi.tbibi.DTO.vote.VoteRequest;
 import tn.esprit.pi.tbibi.DTO.vote.VoteResponse;
 import tn.esprit.pi.tbibi.DTO.vote.CommentVoteRequest;
@@ -27,14 +28,14 @@ public interface IForumService {
 
     // ─── Post ─────────────────────────────────────────────────────────────────
     List<PostResponse> getAllPosts();
-    Page<PostResponse> getAllPostsPaginated(String status, Pageable pageable);
+    Page<PostResponse> getAllPostsPaginated(List<Long> categoryIds, String status, Pageable pageable);
     PostResponse createPost(PostRequest request);
-    PostResponse getPostById(Long id);
+    PostResponse getPostById(Long id, Integer userId);
     List<PostResponse> getPostsByCategory(Long categoryId);
     Page<PostResponse> getPostsByCategoryPaginated(Long categoryId, String status, Pageable pageable);
     List<PostResponse> getPostsByAuthor(Integer authorId);
     List<PostResponse> searchPosts(String keyword);
-    Page<PostResponse> searchPostsPaginated(String keyword, String status, Pageable pageable);
+    Page<PostResponse> searchPostsPaginated(String keyword, List<Long> categoryIds, String status, Pageable pageable);
 
     // ─── Stats ────────────────────────────────────────────────────────────────
     java.util.Map<String, Long> getCategoryStats(Long categoryId);
@@ -61,4 +62,7 @@ public interface IForumService {
     CommentVoteResponse voteComment(CommentVoteRequest request);
     void unvoteComment(Integer userId, Long commentId);
     List<Long> getUserVotedComments(Integer userId, Long postId);
+    List<RelatedPostDTO> getRelatedPosts(Long postId);
+    String getThreadSummary(Long postId);
+    reactor.core.publisher.Flux<String> getThreadSummaryStream(Long postId);
 }

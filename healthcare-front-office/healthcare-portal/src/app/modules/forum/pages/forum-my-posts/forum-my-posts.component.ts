@@ -13,8 +13,8 @@ export class ForumMyPostsComponent implements OnInit {
   loading = true;
   error = '';
   
-  currentUserId = 1;
-  currentUserName = 'Karim Patient';
+  currentUserId = 0;
+  currentUserName = 'User';
 
   // Filter & Pagination state
   filterStatus: string = 'all';
@@ -30,6 +30,11 @@ export class ForumMyPostsComponent implements OnInit {
   totalPages: number = 1;
   pageNumbers: number[] = [];
 
+  // Delete Modal State
+  showDeleteModal = false;
+  postToDelete: number | null = null;
+  deletingPost = false;
+
   constructor(
     private forumService: ForumService,
     private router: Router,
@@ -44,8 +49,8 @@ export class ForumMyPostsComponent implements OnInit {
       ? this.route.snapshot.data
       : this.route.parent?.snapshot.data || {};
 
-    this.currentUserId = data['userId'] || 1;
-    this.currentUserName = data['userName'] || 'User';
+    this.currentUserId = parseInt(localStorage.getItem('userId') || '0', 10) || data['userId'] || 0;
+    this.currentUserName = localStorage.getItem('UserName') || data['userName'] || 'User';
 
     this.titleService.setTitle('My Discussions | Community Forum');
     this.loadMyPosts();
@@ -145,20 +150,37 @@ export class ForumMyPostsComponent implements OnInit {
     this.router.navigate(['/forum/post', id]);
   }
 
-  deletePost(id: number, event: Event): void {
-    event.stopPropagation(); // Prevent opening the post
-    if (window.confirm('Are you sure you want to delete this discussion? This action cannot be undone.')) {
-      this.forumService.deletePost(id).subscribe({
-        next: () => {
-          this.posts = this.posts.filter(p => Number(p.postId) !== id);
-          this.applyFilters();
-        },
-        error: (err) => {
-          console.error('Error deleting post:', err);
-          alert('Failed to delete the post. Please try again.');
-        }
-      });
-    }
+  confirmDelete(id: number, event: Event): void {
+    event.stopPropagation();
+    this.postToDelete = id;
+    this.showDeleteModal = true;
+  }
+
+  cancelDelete(): void {
+    this.showDeleteModal = false;
+    this.postToDelete = null;
+  }
+
+  deletePost(): void {
+    if (!this.postToDelete) return;
+    
+    this.deletingPost = true;
+    this.forumService.deletePost(this.postToDelete).subscribe({
+      next: () => {
+        this.posts = this.posts.filter(p => Number(p.postId) !== this.postToDelete);
+        this.applyFilters();
+        this.deletingPost = false;
+        this.showDeleteModal = false;
+        this.postToDelete = null;
+      },
+      error: (err) => {
+        console.error('Error deleting post:', err);
+        this.deletingPost = false;
+        this.showDeleteModal = false;
+        this.postToDelete = null;
+        alert('Failed to delete the post. Please try again.');
+      }
+    });
   }
 
   goBack(): void {
@@ -185,8 +207,16 @@ export class ForumMyPostsComponent implements OnInit {
     return colors[categoryName] || 'bg-gray-100 text-gray-600';
   }
 
-  timeAgo(dateStr: string): string {
-    const date = new Date(dateStr);
+  timeAgo(dateStr: any): string {
+    if (!dateStr) return 'Date unavailable';
+    let date: Date;
+    if (Array.isArray(dateStr)) {
+      const [year, month, day, hour = 0, minute = 0, second = 0] = dateStr;
+      date = new Date(year, month - 1, day, hour, minute, second);
+    } else {
+      date = new Date(dateStr);
+    }
+    if (isNaN(date.getTime())) return 'Date unavailable';
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     if (seconds < 60) return 'just now';

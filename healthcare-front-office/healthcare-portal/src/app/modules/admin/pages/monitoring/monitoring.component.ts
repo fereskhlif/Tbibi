@@ -19,17 +19,17 @@ interface GrafanaPanel {
       <div class="header-left">
         <div class="header-icon">📊</div>
         <div>
-          <h1>Monitoring Système</h1>
-          <p>Métriques temps réel — Tbibi Infrastructure</p>
+          <h1>System Monitoring</h1>
+          <p>Real-time metrics — Tbibi Infrastructure</p>
         </div>
       </div>
       <div class="header-right">
         <span class="status-badge" [class.online]="grafanaOnline" [class.offline]="!grafanaOnline">
           <span class="status-dot"></span>
-          {{ grafanaOnline ? 'Grafana En ligne' : 'Grafana Hors ligne' }}
+          {{ grafanaOnline ? 'Grafana Online' : 'Grafana Offline' }}
         </span>
         <a [href]="grafanaBaseUrl" target="_blank" class="btn-open-grafana">
-          🔗 Ouvrir Grafana
+          🔗 Open Grafana
         </a>
         <a [href]="prometheusUrl" target="_blank" class="btn-open-prometheus">
           🔍 Prometheus
@@ -43,19 +43,19 @@ interface GrafanaPanel {
         class="tab-btn"
         [class.active]="activeTab === 'backend'"
         (click)="activeTab = 'backend'">
-        🖥️ Backend Spring Boot
+        🖥️ Spring Boot Backend
       </button>
       <button
         class="tab-btn"
         [class.active]="activeTab === 'system'"
         (click)="activeTab = 'system'">
-        🐧 Système Linux
+        🐧 Linux System
       </button>
       <button
         class="tab-btn"
         [class.active]="activeTab === 'full'"
         (click)="activeTab = 'full'">
-        📺 Vue Complète
+        📺 Full View
       </button>
     </div>
 
@@ -64,8 +64,8 @@ interface GrafanaPanel {
       <div class="offline-content">
         <span class="offline-icon">⚠️</span>
         <div>
-          <strong>Grafana n'est pas accessible</strong>
-          <p>Assurez-vous que le stack de monitoring est démarré sur le serveur.</p>
+          <strong>Grafana is not accessible</strong>
+          <p>Ensure the monitoring stack is running on the server.</p>
           <code>docker compose -f docker-compose.monitoring.yml up -d</code>
         </div>
       </div>
@@ -80,7 +80,7 @@ interface GrafanaPanel {
       <div class="panel-card span-1">
         <div class="panel-header">
           <span class="panel-icon">💚</span>
-          <span class="panel-title">Statut Backend</span>
+          <span class="panel-title">Backend Status</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-springboot', 1)"
@@ -94,7 +94,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">📈</span>
-          <span class="panel-title">Taux de Requêtes HTTP (req/s)</span>
+          <span class="panel-title">HTTP Request Rate (req/s)</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-springboot', 2)"
@@ -108,7 +108,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">💾</span>
-          <span class="panel-title">Mémoire JVM</span>
+          <span class="panel-title">JVM Memory</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-springboot', 4)"
@@ -122,7 +122,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">⏱️</span>
-          <span class="panel-title">Temps de Réponse HTTP (p99)</span>
+          <span class="panel-title">HTTP Response Time (p99)</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-springboot', 3)"
@@ -136,7 +136,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">🔥</span>
-          <span class="panel-title">Usage CPU (Process &amp; Système)</span>
+          <span class="panel-title">CPU Usage (Process &amp; System)</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-springboot', 6)"
@@ -150,7 +150,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">🧵</span>
-          <span class="panel-title">Threads JVM</span>
+          <span class="panel-title">JVM Threads</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-springboot', 5)"
@@ -164,7 +164,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">🗄️</span>
-          <span class="panel-title">Pool de Connexions DB (HikariCP)</span>
+          <span class="panel-title">DB Connection Pool (HikariCP)</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-springboot', 7)"
@@ -177,7 +177,7 @@ interface GrafanaPanel {
     </div>
 
     <!-- ═══════════════════════════════════════ -->
-    <!-- TAB: SYSTÈME LINUX                     -->
+    <!-- TAB: LINUX SYSTEM                     -->
     <!-- ═══════════════════════════════════════ -->
     <div class="panels-grid" *ngIf="activeTab === 'system' && grafanaOnline">
 
@@ -213,7 +213,7 @@ interface GrafanaPanel {
       <div class="panel-card span-1">
         <div class="panel-header">
           <span class="panel-icon">💿</span>
-          <span class="panel-title">Disque %</span>
+          <span class="panel-title">Disk %</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-system', 3)"
@@ -241,7 +241,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">📈</span>
-          <span class="panel-title">Évolution CPU</span>
+          <span class="panel-title">CPU Evolution</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-system', 5)"
@@ -255,7 +255,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">📉</span>
-          <span class="panel-title">Évolution Mémoire</span>
+          <span class="panel-title">Memory Evolution</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-system', 6)"
@@ -269,7 +269,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">🌐</span>
-          <span class="panel-title">Réseau I/O</span>
+          <span class="panel-title">Network I/O</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-system', 7)"
@@ -283,7 +283,7 @@ interface GrafanaPanel {
       <div class="panel-card span-2">
         <div class="panel-header">
           <span class="panel-icon">💿</span>
-          <span class="panel-title">Disque I/O</span>
+          <span class="panel-title">Disk I/O</span>
         </div>
         <iframe
           [src]="getPanelUrl('tbibi-system', 8)"
@@ -296,7 +296,7 @@ interface GrafanaPanel {
     </div>
 
     <!-- ═══════════════════════════════════════ -->
-    <!-- TAB: VUE COMPLETE (Full Dashboard)     -->
+    <!-- TAB: FULL VIEW (Full Dashboard)        -->
     <!-- ═══════════════════════════════════════ -->
     <div class="full-dashboard" *ngIf="activeTab === 'full' && grafanaOnline">
       <div class="full-tabs">

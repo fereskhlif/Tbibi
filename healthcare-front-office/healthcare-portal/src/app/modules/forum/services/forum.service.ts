@@ -36,18 +36,21 @@ export class ForumService {
     return this.http.get<PostResponse[]>(`${this.apiUrl}/posts/author/${authorId}`);
   }
 
-  getPostById(id: number): Observable<PostResponse> {
-    return this.http.get<PostResponse>(`${this.apiUrl}/posts/${id}`);
+  getPostById(id: number, userId?: number): Observable<PostResponse> {
+    const params: any = {};
+    if (userId && userId > 0) params.userId = userId;
+    return this.http.get<PostResponse>(`${this.apiUrl}/posts/${id}`, { params });
   }
 
   searchPosts(keyword: string): Observable<PostResponse[]> {
     return this.http.get<PostResponse[]>(`${this.apiUrl}/posts/search`, { params: { keyword } });
   }
 
-  getPostsPaginated(page: number, size: number, status?: string, sortBy?: string): Observable<Page<PostResponse>> {
+  getPostsPaginated(page: number, size: number, status?: string, sortBy?: string, categoryIds?: number[]): Observable<Page<PostResponse>> {
     const params: any = { page, size };
     if (status) params.status = status;
     if (sortBy) params.sortBy = sortBy;
+    if (categoryIds && categoryIds.length > 0) params.categoryIds = categoryIds.join(',');
     return this.http.get<Page<PostResponse>>(`${this.apiUrl}/posts/paginated`, { params });
   }
 
@@ -58,10 +61,11 @@ export class ForumService {
     return this.http.get<Page<PostResponse>>(`${this.apiUrl}/posts/category/${categoryId}/paginated`, { params });
   }
 
-  searchPostsPaginated(keyword: string, page: number, size: number, status?: string, sortBy?: string): Observable<Page<PostResponse>> {
+  searchPostsPaginated(keyword: string, page: number, size: number, status?: string, sortBy?: string, categoryIds?: number[]): Observable<Page<PostResponse>> {
     const params: any = { keyword, page, size };
     if (status) params.status = status;
     if (sortBy) params.sortBy = sortBy;
+    if (categoryIds && categoryIds.length > 0) params.categoryIds = categoryIds.join(',');
     return this.http.get<Page<PostResponse>>(`${this.apiUrl}/posts/search/paginated`, { params });
   }
 
@@ -75,6 +79,10 @@ export class ForumService {
 
   updatePostStatus(id: number, status: string): Observable<PostResponse> {
     return this.http.put<PostResponse>(`${this.apiUrl}/posts/${id}/status`, null, { params: { status } });
+  }
+
+  updatePost(id: number, request: CreatePostRequest): Observable<PostResponse> {
+    return this.http.put<PostResponse>(`${this.apiUrl}/posts/${id}`, request);
   }
 
   uploadPostMedia(postId: number, files: File[]): Observable<PostResponse> {
@@ -144,5 +152,19 @@ export class ForumService {
 
   getUserVotedComments(userId: number, postId: number): Observable<number[]> {
     return this.http.get<number[]>(`${this.apiUrl}/posts/${postId}/voted-comments`, { params: { userId } });
+  }
+
+  // ─── Related Posts ──────────────────────────────────────────────────────────
+  getRelatedPosts(postId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${postId}/related`);
+  }
+
+  // ─── AI Summarization ───────────────────────────────────────────────────────
+  summarizePost(postId: number): Observable<string> {
+    return this.http.get(`${this.apiUrl}/summarize-thread/${postId}`, { responseType: 'text' });
+  }
+
+  getSummaryStreamUrl(postId: number): string {
+    return `${this.apiUrl}/summarize-thread-stream/${postId}`;
   }
 }

@@ -6,6 +6,10 @@ export interface OrderLineRequest {
 export interface OrderRequest {
     userId: number;
     pharmacyId: number;
+    deliveryMethod?: string;
+    deliveryAddress?: string;
+    paymentMethod?: string;
+    prescriptionImage?: string;
     orderLines: OrderLineRequest[];
 }
 
@@ -27,5 +31,18 @@ export interface OrderResponse {
     pharmacyName: string;
     userId: number;
     userName: string;
+    deliveryMethod?: string;
+    deliveryAddress?: string;
+    paymentMethod?: string;
+    prescriptionImage?: string;
     orderLines: OrderLineResponse[];
+}
+
+export interface PatientSpendingAnalytics {
+    category: string;
+    form: string;
+    orderCount: number;
+    totalUnits: number;
+    totalSpent: number;
+    mostBoughtMedicine: string;
 }

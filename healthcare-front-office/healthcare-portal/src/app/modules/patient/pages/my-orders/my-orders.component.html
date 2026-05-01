@@ -1,27 +1,41 @@
 <div style="min-height: 100vh; background-color: #F8FAFC; padding-bottom: 5rem; font-family: ui-sans-serif, system-ui, sans-serif;">
     
-    <!-- Ultra Modern Header -->
-    <div style="background: linear-gradient(135deg, #0f172a, #1e293b); padding: 5rem 1.5rem; position: relative; overflow: hidden; color: white;">
-        <div style="position: absolute; top: -10%; left: -5%; width: 300px; height: 300px; background: rgba(37, 99, 235, 0.1); border-radius: 50%; filter: blur(60px);"></div>
-        <div style="position: absolute; bottom: -10%; right: -5%; width: 400px; height: 400px; background: rgba(37, 99, 235, 0.05); border-radius: 50%; filter: blur(60px);"></div>
-        
-        <div style="max-width: 1280px; margin: 0 auto; position: relative; z-index: 10;">
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="background: rgba(255,255,255,0.1); width: fit-content; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; padding: 4px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.15); margin-bottom: 8px;">
-                    Order History
-                </div>
-                <h1 style="font-size: 3rem; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 0.5rem; line-height: 1;">My Medical Orders</h1>
-                <p style="font-size: 1.125rem; color: #94a3b8; font-weight: 500; max-width: 600px;">
-                    Track and manage your pharmaceutical requests across our partner network.
+    <!-- Compact Header -->
+    <div style="background: white; border-bottom: 1px solid #e2e8f0; padding: 2rem 1.5rem; position: sticky; top: 0; z-index: 40;">
+        <div style="max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 style="font-size: 1.75rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">My Medical Orders</h1>
+                <p style="font-size: 14px; color: #64748b; font-weight: 500;">
+                    Manage your prescriptions and track deliveries.
                 </p>
+            </div>
+            
+            <!-- View Mode Toggle -->
+            <div style="background: #f1f5f9; padding: 4px; border-radius: 12px; display: flex; gap: 4px;">
+                <button (click)="toggleViewMode('ORDERS')"
+                    [style.background]="viewMode === 'ORDERS' ? 'white' : 'transparent'"
+                    [style.boxShadow]="viewMode === 'ORDERS' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'"
+                    [style.color]="viewMode === 'ORDERS' ? '#0f172a' : '#64748b'"
+                    style="padding: 8px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                    <lucide-icon name="list" [size]="16"></lucide-icon>
+                    Order List
+                </button>
+                <button (click)="toggleViewMode('ANALYTICS')"
+                    [style.background]="viewMode === 'ANALYTICS' ? 'white' : 'transparent'"
+                    [style.boxShadow]="viewMode === 'ANALYTICS' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'"
+                    [style.color]="viewMode === 'ANALYTICS' ? '#0f172a' : '#64748b'"
+                    style="padding: 8px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                    <lucide-icon name="bar-chart-2" [size]="16"></lucide-icon>
+                    Spending Summary
+                </button>
             </div>
         </div>
     </div>
 
-    <div style="max-width: 1280px; margin: -3rem auto 0; padding: 0 1.5rem; position: relative; z-index: 20;">
+    <div style="max-width: 1280px; margin: 1rem auto 0; padding: 0 1.5rem; position: relative; z-index: 20;">
         
-        <!-- ─── CONTROL PANEL ────────────────────────────────────────────────── -->
-        <div class="bg-white rounded-[2rem] p-4 mb-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-gray-100 flex flex-col xl:flex-row gap-4 items-center justify-between">
+        <!-- ─── CONTROL PANEL (Only visible in Orders Mode) ────────────────────────────────────────────────── -->
+        <div *ngIf="viewMode === 'ORDERS'" class="bg-white rounded-[2rem] p-4 mb-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-gray-100 flex flex-col xl:flex-row gap-4 items-center justify-between">
             
             <!-- Tabs -->
             <div class="flex items-center gap-2 overflow-x-auto w-full xl:w-auto pb-2 xl:pb-0 hide-scrollbar" style="scroll-snap-type: x mandatory;">
@@ -29,9 +43,6 @@
                     [class]="activeTab === tab.key ? 'bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-100'"
                     class="flex items-center gap-2 px-5 py-2.5 min-h-[44px] shrink-0 rounded-2xl text-sm font-bold transition-all duration-200" style="scroll-snap-align: start;">
                     {{ tab.label }}
-                    <span *ngIf="activeTab === tab.key" class="text-[10px] uppercase px-2.5 py-0.5 rounded-full font-black bg-white/20 text-white">
-                        Active
-                    </span>
                 </button>
             </div>
 
@@ -39,7 +50,7 @@
             <div class="flex items-center gap-3 w-full xl:w-auto">
                 <div class="relative flex-1 xl:w-64">
                     <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="onSearchChange()"
-                        placeholder="Search pharmacy or ID..."
+                        placeholder="Search by medicine name, pharmacy, or order ID..."
                         class="w-full pl-11 pr-4 py-3 min-h-[48px] bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     <lucide-icon name="search" [size]="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></lucide-icon>
                 </div>
@@ -59,9 +70,12 @@
             </div>
         </div>
 
-        <!-- ─── RESULTS METRIC ───────────────────────────────────────────────── -->
-        <div class="flex justify-between items-center mb-6 px-2">
-            <h2 class="text-xl font-black text-slate-800 tracking-tight">Active Overview</h2>
+
+        <!-- ─── RESULTS METRIC (Only for Orders) ────────────────────────────────────────── -->
+        <div *ngIf="viewMode === 'ORDERS'" class="flex justify-between items-center mb-6 px-2">
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">
+                Active Overview
+            </h2>
             <div class="px-4 py-2 bg-white border border-gray-100 rounded-2xl flex items-center gap-2 shadow-sm">
                 <lucide-icon name="database" [size]="14" class="text-gray-400"></lucide-icon>
                 <span class="text-xs font-bold text-gray-500">
@@ -84,13 +98,215 @@
             </button>
         </div>
 
-        <div *ngIf="loading && pagedOrders.length === 0" style="background: white; border: 1px solid #f1f5f9; border-radius: 2.5rem; padding: 6rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2rem;">
+        <div *ngIf="loading && pagedOrders.length === 0 && activeTab !== 'ANALYTICS'" style="background: white; border: 1px solid #f1f5f9; border-radius: 2.5rem; padding: 6rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2rem;">
             <div style="width: 3rem; height: 3rem; border: 4px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%;" class="animate-spin"></div>
             <p style="margin-top: 1.5rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; font-size: 11px;">Polling Database...</p>
         </div>
 
+        <!-- ─── ANALYTICS VIEW ────────────────────────────────────────────────── -->
+        <div *ngIf="viewMode === 'ANALYTICS'" class="animate-fade-in" style="padding-bottom: 2rem;">
+            
+            <!-- Loading Analytics -->
+            <div *ngIf="loadingAnalytics && analyticsData.length === 0" style="background: white; border: 1px solid #f1f5f9; border-radius: 2.5rem; padding: 6rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2rem;">
+                <div style="width: 3rem; height: 3rem; border: 4px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%;" class="animate-spin"></div>
+                <p style="margin-top: 1.5rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; font-size: 11px;">Computing Insights...</p>
+            </div>
+
+            <!-- Analytics Content -->
+            <div *ngIf="!loadingAnalytics || analyticsData.length > 0">
+                
+                <!-- Hero Spending Summary -->
+                <div style="background: linear-gradient(135deg, #2563eb, #1e40af); border-radius: 2.5rem; padding: 3rem; margin-bottom: 2.5rem; color: white; position: relative; overflow: hidden; box-shadow: 0 20px 40px -10px rgba(37,99,235,0.3);">
+                    <div style="position: absolute; top: -20%; right: -10%; width: 300px; height: 300px; background: rgba(255,255,255,0.05); border-radius: 50%; filter: blur(50px);"></div>
+                    <div style="position: relative; z-index: 10;">
+                        <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.7; display: block; margin-bottom: 12px;">My Spending Summary</span>
+                        <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 3rem;">
+                            <div>
+                                <h3 style="font-size: 3.5rem; font-weight: 950; letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px;">{{totalSpent | number:'1.2-2'}} <span style="font-size: 1.25rem; opacity: 0.6; font-weight: 700;">DT</span></h3>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <p style="font-size: 15px; font-weight: 600; opacity: 0.8;">Total Spent &middot; All time</p>
+                                    <div *ngIf="analyticsData.length > 0" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+                                        <div style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></div>
+                                        Main: {{formatCategory(analyticsData[0].category)}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="height: 60px; width: 1px; background: rgba(255,255,255,0.2); display: none; md:block;"></div>
+                            <div style="display: flex; gap: 3rem;">
+                                <div>
+                                    <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.6; display: block; margin-bottom: 4px;">Orders Placed</span>
+                                    <span style="font-size: 1.5rem; font-weight: 900;">{{totalOrdersCount}}</span>
+                                </div>
+                                <div>
+                                    <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.6; display: block; margin-bottom: 4px;">Units Purchased</span>
+                                    <span style="font-size: 1.5rem; font-weight: 900;">{{totalUnits}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Breakdown Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem;">
+                    
+                    <!-- Left Column: Spending Distribution -->
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 2.5rem; padding: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+                            <h4 style="font-size: 1.25rem; font-weight: 900; color: #0f172a;">Spending Distribution</h4>
+                            <lucide-icon name="pie-chart" [size]="20" class="text-gray-400"></lucide-icon>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <div *ngFor="let item of analyticsData" class="group">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span style="font-size: 13px; font-weight: 800; color: #334155;">{{formatCategory(item.category)}}</span>
+                                        <span style="font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">{{item.form}}</span>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <span style="font-size: 14px; font-weight: 900; color: #0f172a;">{{item.totalSpent | number:'1.2-2'}} <span style="font-size: 10px; color: #94a3b8;">DT</span></span>
+                                    </div>
+                                </div>
+                                <div style="height: 10px; background: #f1f5f9; border-radius: 99px; overflow: hidden; position: relative;">
+                                    <div [style.width]="(item.totalSpent / (totalSpent || 1) * 100) + '%'"
+                                         style="position: absolute; inset: 0; background: #2563eb; border-radius: 99px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);"></div>
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                                    <span style="font-size: 10px; font-weight: 700; color: #94a3b8;">{{item.totalUnits}} units &middot; All time</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Favorite Medicines -->
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 2.5rem; padding: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+                            <h4 style="font-size: 1.25rem; font-weight: 900; color: #0f172a;">Frequently Ordered</h4>
+                            <lucide-icon name="star" [size]="20" class="text-amber-400"></lucide-icon>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                            <div *ngFor="let item of (showAllMedicines ? analyticsData : (analyticsData | slice:0:3))" 
+                                 (click)="viewMedicineHistory(item)"
+                                 style="background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 1.5rem; padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;"
+                                 onmouseover="this.style.transform='translateX(8px)'; this.style.borderColor='#cbd5e1'; this.style.background='white';"
+                                 onmouseout="this.style.transform='translateX(0)'; this.style.borderColor='#f1f5f9'; this.style.background='#f8fafc';">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="width: 44px; height: 44px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #2563eb;">
+                                        <lucide-icon name="pill" [size]="20"></lucide-icon>
+                                    </div>
+                                    <div>
+                                        <h5 style="font-size: 14px; font-weight: 800; color: #1e293b;">{{item.mostBoughtMedicine}}</h5>
+                                        <p style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">{{formatCategory(item.category)}}</p>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block;">Orders</span>
+                                    <span style="font-size: 14px; font-weight: 900; color: #0f172a;">{{item.orderCount}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button *ngIf="analyticsData.length > 3" (click)="toggleShowAllMedicines()" style="margin-top: 1rem; width: 100%; background: transparent; border: 1px solid #e2e8f0; color: #64748b; padding: 12px; border-radius: 1rem; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='#f8fafc'; this.style.color='#0f172a';" onmouseout="this.style.background='transparent'; this.style.color='#64748b';">
+                            {{showAllMedicines ? 'Show Less' : 'View all medicines'}} <lucide-icon [name]="showAllMedicines ? 'chevron-up' : 'chevron-down'" [size]="16"></lucide-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ─── MEDICATION PURCHASE LOG ────────────────────────────────────── -->
+                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 2.5rem; padding: 2.5rem; margin-top: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h4 style="font-size: 1.25rem; font-weight: 900; color: #0f172a;">Detailed Purchase History</h4>
+                            <p style="font-size: 13px; color: #64748b; font-weight: 500;">Chronological log of every medicine purchase.</p>
+                        </div>
+                        
+                        <!-- History Sort -->
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Sort by</span>
+                            <select (change)="onHistorySortChange($event)"
+                                style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 16px; font-size: 13px; font-weight: 700; color: #1e293b; cursor: pointer; outline: none; transition: all 0.2s;"
+                                onmouseover="this.style.borderColor='#cbd5e1'" onmouseout="this.style.borderColor='#e2e8f0'">
+                                <option value="recent">Most Recent</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="expensive">Highest Price</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- History Grid/Table -->
+                    <div *ngIf="!loadingFullHistory && filteredMedicineHistory.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+                        <div *ngFor="let item of filteredMedicineHistory" 
+                             style="background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 1.5rem; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; transition: all 0.2s;"
+                             onmouseover="this.style.background='white'; this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.04)';"
+                             onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#f1f5f9'; this.style.boxShadow='none';">
+                            
+                            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <div style="width: 36px; height: 36px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #2563eb;">
+                                        <lucide-icon name="shopping-bag" [size]="16"></lucide-icon>
+                                    </div>
+                                    <div>
+                                        <h5 style="font-size: 14px; font-weight: 800; color: #1e293b; margin: 0;">{{item.medicineName}}</h5>
+                                        <span style="font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">#ORD-{{item.orderId}}</span>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="font-size: 14px; font-weight: 950; color: #0f172a;">{{item.quantity * item.unitPrice | number:'1.2-2'}} DT</span>
+                                    <span style="font-size: 10px; color: #64748b; font-weight: 700; display: block;">{{item.quantity}} x {{item.unitPrice}} DT</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+                                <div style="display: flex; align-items: center; gap: 6px; color: #64748b;">
+                                    <lucide-icon name="calendar" [size]="14"></lucide-icon>
+                                    <span style="font-size: 12px; font-weight: 600;">{{item.orderDate | date:'mediumDate'}}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; color: #64748b;">
+                                    <lucide-icon name="home" [size]="14"></lucide-icon>
+                                    <span style="font-size: 11px; font-weight: 700;">{{item.pharmacyName}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div *ngIf="loadingFullHistory" style="padding: 5rem; text-align: center;">
+                         <div style="width: 3rem; height: 3rem; border: 4px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%; margin: 0 auto;" class="animate-spin"></div>
+                         <p style="margin-top: 1rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px;">Loading full history...</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div *ngIf="!loadingFullHistory && historyError" style="padding: 4rem; text-align: center; border: 2px dashed #fee2e2; border-radius: 2rem; background: #fffafb;">
+                        <lucide-icon name="alert-circle" [size]="32" style="color: #ef4444; margin-bottom: 12px;"></lucide-icon>
+                        <p style="color: #ef4444; font-weight: 800; margin-bottom: 4px;">{{historyError}}</p>
+                        <button (click)="fetchFullMedicineHistory()" style="background: white; border: 1px solid #fee2e2; color: #ef4444; padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fecaca'; this.style.color='white';">Try Again</button>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div *ngIf="!loadingFullHistory && !historyError && filteredMedicineHistory.length === 0" style="padding: 4rem; text-align: center; border: 2px dashed #f1f5f9; border-radius: 2rem;">
+                         <p style="color: #94a3b8; font-weight: 600;">No history available.</p>
+                    </div>
+                </div>
+
+                <!-- Footer Note -->
+                <div style="margin-top: 2rem; display: flex; align-items: center; justify-content: center; gap: 10px; color: #94a3b8; font-size: 12px; font-weight: 600;">
+                    <lucide-icon name="shield-check" [size]="14"></lucide-icon>
+                    Analytics are based on confirmed and delivered orders only.
+                </div>
+
+                <!-- Empty State for Analytics -->
+                <div *ngIf="analyticsData.length === 0 && !loadingAnalytics" style="padding: 8rem 2rem; text-align: center; background: white; border-radius: 2.5rem; border: 2px dashed #e2e8f0; margin-top: 2rem;">
+                     <div style="width: 4.5rem; height: 4.5rem; background: #f8fafc; border-radius: 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #cbd5e1;">
+                         <lucide-icon name="pie-chart" [size]="36"></lucide-icon>
+                     </div>
+                     <h3 style="font-size: 1.5rem; font-weight: 900; color: #1e293b; margin-bottom: 0.5rem;">Insights Pending</h3>
+                     <p style="color: #64748b; max-width: 350px; margin: 0 auto; line-height: 1.6;">Your financial dashboard will activate once you have completed and confirmed orders in your history.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- ─── ORDERS GRID ──────────────────────────────────────────────────── -->
-        <div *ngIf="!error && pagedOrders.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem;" [class.opacity-50]="loading">
+        <div *ngIf="!error && viewMode === 'ORDERS' && pagedOrders.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem;" [class.opacity-50]="loading">
             
             <div *ngFor="let order of pagedOrders" 
                 style="background: white; border: 1px solid #e2e8f0; border-radius: 2rem; padding: 2rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 1.5rem;"
@@ -100,11 +316,11 @@
                 
                 <!-- Status Badge -->
                 <div style="position: absolute; top: 2rem; right: 2rem;">
-                    <span [style.background]="order.orderStatus === 'PENDING' ? '#fefce8' : order.orderStatus === 'CONFIRMED' ? '#f0fdf4' : '#f8fafc'"
-                          [style.color]="order.orderStatus === 'PENDING' ? '#854d0e' : order.orderStatus === 'CONFIRMED' ? '#166534' : '#64748b'"
-                          [style.border]="order.orderStatus === 'PENDING' ? '1px solid #fef08a' : order.orderStatus === 'CONFIRMED' ? '1px solid #bbf7d0' : '1px solid #e2e8f0'"
+                    <span [style.background]="order.orderStatus === 'DELIVERED' ? '#f0fdf4' : order.orderStatus === 'CONFIRMED' ? '#eff6ff' : order.orderStatus === 'IN_PROGRESS' ? '#fefce8' : order.orderStatus === 'CANCELLED' ? '#fef2f2' : '#f8fafc'"
+                          [style.color]="order.orderStatus === 'DELIVERED' ? '#166534' : order.orderStatus === 'CONFIRMED' ? '#1d4ed8' : order.orderStatus === 'IN_PROGRESS' ? '#854d0e' : order.orderStatus === 'CANCELLED' ? '#991b1b' : '#64748b'"
+                          [style.border]="order.orderStatus === 'DELIVERED' ? '1px solid #bbf7d0' : order.orderStatus === 'CONFIRMED' ? '1px solid #bfdbfe' : order.orderStatus === 'IN_PROGRESS' ? '1px solid #fef08a' : order.orderStatus === 'CANCELLED' ? '1px solid #fecaca' : '1px solid #e2e8f0'"
                           style="font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 14px; border-radius: 99px; letter-spacing: 0.05em;">
-                        {{order.orderStatus}}
+                        {{order.orderStatus.replace('_', ' ')}}
                     </span>
                 </div>
 
@@ -113,11 +329,23 @@
                         <lucide-icon name="package" [size]="24"></lucide-icon>
                     </div>
                     <div>
-                        <h3 style="font-size: 1.25rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">#ORD-{{order.orderId}}</h3>
-                        <p style="font-size: 13px; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
+                        <h3 style="font-size: 1.25rem; font-weight: 900; color: #0f172a; margin-bottom: 4px;">{{order.pharmacyName}}</h3>
+                        <p style="font-size: 13px; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px; margin-bottom: 12px;">
                             <lucide-icon name="calendar" [size]="14"></lucide-icon>
-                            {{order.orderDate | date:'mediumDate'}}
+                            {{order.orderDate | date:'mediumDate'}} &nbsp;&bull;&nbsp; #ORD-{{order.orderId}}
                         </p>
+                        
+                        <!-- Medicine Preview Chips -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            <span *ngFor="let line of order.orderLines | slice:0:3" 
+                                  style="background: #f8fafc; color: #334155; padding: 4px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; border: 1px solid #e2e8f0; white-space: nowrap;">
+                                {{line.medicineName}}
+                            </span>
+                            <span *ngIf="order.orderLines.length > 3" 
+                                  style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: 800; border: 1px dashed #cbd5e1;">
+                                +{{order.orderLines.length - 3}} more
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -128,7 +356,10 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <lucide-icon name="clipboard-check" [size]="14" style="color: #64748b;"></lucide-icon>
-                        <span style="font-size: 14px; font-weight: 700; color: #334155;">{{order.orderLines.length}} Items Processed</span>
+                        <span style="font-size: 14px; font-weight: 700; color: #334155;">
+                            {{order.orderLines.length === 1 ? '1 Item' : order.orderLines.length + ' Items'}} Ordered
+                            <span *ngIf="order.orderLines.length > 1" style="color: #94a3b8; font-size: 12px; margin-left: 4px;">(+{{order.orderLines.length - 1}} more)</span>
+                        </span>
                     </div>
                 </div>
 
@@ -160,7 +391,7 @@
         </div>
 
         <!-- ─── PAGINATION ───────────────────────────────────────────────────── -->
-        <div *ngIf="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between mt-8 mb-4 px-2 gap-4">
+        <div *ngIf="totalPages > 1 && viewMode === 'ORDERS'" class="flex flex-col sm:flex-row items-center justify-between mt-8 mb-4 px-2 gap-4">
             <span class="text-sm text-gray-500 font-bold bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">Page {{currentPage}} of {{totalPages}}</span>
             <div class="flex items-center gap-2">
                 <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"
@@ -186,7 +417,7 @@
         </div>
 
         <!-- ─── EMPTY STATE ──────────────────────────────────────────────────── -->
-        <div *ngIf="!loading && !error && totalElements === 0" style="background: white; border: 2px dashed #e2e8f0; border-radius: 2.5rem; padding: 8rem 2rem; text-align: center;">
+        <div *ngIf="!loading && !error && viewMode === 'ORDERS' && totalElements === 0" style="background: white; border: 2px dashed #e2e8f0; border-radius: 2.5rem; padding: 8rem 2rem; text-align: center;">
             <div style="width: 5rem; height: 5rem; background: #f8fafc; border-radius: 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: #cbd5e1;">
                 <lucide-icon name="package" [size]="40"></lucide-icon>
             </div>
@@ -209,47 +440,87 @@
     <div *ngIf="selectedOrder" style="position: fixed; inset: 0; z-index: 120; display: flex; justify-content: flex-end; font-family: ui-sans-serif, system-ui, sans-serif;">
         <div style="absolute: inset 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px);" (click)="closeDetails()" class="animate-fade-in"></div>
         
-        <div style="background: white; width: 100%; max-width: 500px; height: 100vh; overflow-y: auto; position: relative; z-index: 10; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15);" class="animate-slide-left">
+        <div style="background: white; width: 100%; max-width: 800px; height: 100vh; overflow-y: auto; position: relative; z-index: 10; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15);" class="animate-slide-left">
             
             <!-- Modal Header -->
-            <div style="padding: 3rem; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; background: white; z-index: 20;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
-                    <div style="background: #eff6ff; color: #2563eb; padding: 8px 18px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">
+            <div style="padding: 1rem 2rem; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; background: white; z-index: 20;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <div style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">
                         Order Details
                     </div>
-                    <button (click)="closeDetails()" style="width: 44px; height: 44px; background: #f8fafc; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;"
+                    <button (click)="closeDetails()" style="width: 32px; height: 32px; background: #f8fafc; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;"
                         onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b'">
-                        <lucide-icon name="x" [size]="20"></lucide-icon>
+                        <lucide-icon name="x" [size]="16"></lucide-icon>
                     </button>
                 </div>
-                <h2 style="font-size: 2.25rem; font-weight: 950; color: #0f172a; letter-spacing: -0.04em; margin-bottom: 0.5rem;">#ORD-{{selectedOrder.orderId}}</h2>
-                <p style="font-size: 14px; color: #64748b; font-weight: 600;">Ordered on {{selectedOrder.orderDate | date:'fullDate'}}</p>
+                <h2 style="font-size: 1.5rem; font-weight: 950; color: #0f172a; letter-spacing: -0.04em; margin-bottom: 0;">#ORD-{{selectedOrder.orderId}}</h2>
+                <p style="font-size: 12px; color: #64748b; font-weight: 600;">Ordered on {{selectedOrder.orderDate | date:'fullDate'}}</p>
             </div>
 
             <!-- Modal Content -->
-            <div style="flex: 1; padding: 3rem; display: flex; flex-direction: column; gap: 3rem;">
+            <div style="flex: 1; padding: 1rem 2rem; display: flex; flex-direction: column; gap: 1.25rem;">
                 
                 <!-- Brief Info -->
-                <div style="display: flex; gap: 1.5rem;">
-                    <div style="flex: 1; background: #f8fafc; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid #f1f5f9;">
-                        <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Provider</span>
-                        <p style="font-size: 14px; font-weight: 800; color: #1e293b;">{{selectedOrder.pharmacyName}}</p>
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1; background: #f8fafc; padding: 1rem; border-radius: 1rem; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 2px;">Provider</span>
+                        <p style="font-size: 13px; font-weight: 800; color: #1e293b;">{{selectedOrder.pharmacyName}}</p>
                     </div>
-                    <div style="flex: 1; background: #f8fafc; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid #f1f5f9;">
-                        <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Status</span>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div [style.background]="selectedOrder.orderStatus === 'CONFIRMED' ? '#10b981' : '#f59e0b'" style="width: 8px; height: 8px; border-radius: 50%;"></div>
-                            <p style="font-size: 14px; font-weight: 800; color: #1e293b;">{{selectedOrder.orderStatus}}</p>
+                    <div style="flex: 1; background: #f8fafc; padding: 1rem; border-radius: 1rem; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 2px;">Status</span>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div [style.background]="selectedOrder.orderStatus === 'CONFIRMED' || selectedOrder.orderStatus === 'DELIVERED' ? '#10b981' : '#f59e0b'" style="width: 8px; height: 8px; border-radius: 50%;"></div>
+                            <p style="font-size: 13px; font-weight: 800; color: #1e293b;">{{selectedOrder.orderStatus}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Tracking Timeline -->
+                <div>
+                    <h3 style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem;">Order Progress</h3>
+                    <div style="background: white; border: 1px solid #f1f5f9; border-radius: 1rem; padding: 1rem; position: relative;">
+                        <!-- Track Line -->
+                        <div style="position: absolute; top: 29px; left: 46px; right: 46px; height: 3px;">
+                            <div style="width: 100%; height: 100%; background: #f1f5f9; position: absolute; z-index: 0; border-radius: 4px;"></div>
+                            <div style="height: 100%; background: #2563eb; position: absolute; z-index: 1; border-radius: 4px; transition: width 1s;"
+                                 [style.width]="selectedOrder.orderStatus === 'DELIVERED' ? '100%' : selectedOrder.orderStatus === 'IN_PROGRESS' ? '66%' : selectedOrder.orderStatus === 'CONFIRMED' ? '33%' : '0%'"
+                                 [style.display]="selectedOrder.orderStatus === 'CANCELLED' ? 'none' : 'block'"></div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; position: relative; z-index: 10;">
+                            <!-- Placed -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 60px;">
+                                <div [style.background]="selectedOrder.orderStatus === 'CANCELLED' ? '#ef4444' : '#2563eb'" style="width: 20px; height: 20px; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 0 4px #f8fafc; margin-top: 4px;"></div>
+                                <span style="font-size: 11px; font-weight: 800; color: #1e293b; text-align: center;">Placed</span>
+                            </div>
+                            <!-- Confirmed -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 60px;">
+                                <div [style.background]="['CONFIRMED', 'IN_PROGRESS', 'DELIVERED'].includes(selectedOrder.orderStatus) ? '#2563eb' : '#e2e8f0'" style="width: 20px; height: 20px; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 0 4px #f8fafc; transition: background 0.3s; margin-top: 4px;"></div>
+                                <span [style.color]="['CONFIRMED', 'IN_PROGRESS', 'DELIVERED'].includes(selectedOrder.orderStatus) ? '#1e293b' : '#94a3b8'" style="font-size: 11px; font-weight: 800; text-align: center;">Confirmed</span>
+                            </div>
+                            <!-- Dispatched -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 60px;">
+                                <div [style.background]="['IN_PROGRESS', 'DELIVERED'].includes(selectedOrder.orderStatus) ? '#2563eb' : '#e2e8f0'" style="width: 20px; height: 20px; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 0 4px #f8fafc; transition: background 0.3s; margin-top: 4px;"></div>
+                                <span [style.color]="['IN_PROGRESS', 'DELIVERED'].includes(selectedOrder.orderStatus) ? '#1e293b' : '#94a3b8'" style="font-size: 11px; font-weight: 800; text-align: center;">Dispatched</span>
+                            </div>
+                            <!-- Delivered -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 60px;">
+                                <div [style.background]="selectedOrder.orderStatus === 'DELIVERED' ? '#10b981' : '#e2e8f0'" style="width: 20px; height: 20px; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 0 4px #f8fafc; transition: background 0.3s; margin-top: 4px;"></div>
+                                <span [style.color]="selectedOrder.orderStatus === 'DELIVERED' ? '#166534' : '#94a3b8'" style="font-size: 11px; font-weight: 800; text-align: center;">Delivered</span>
+                            </div>
+                        </div>
+                        <div *ngIf="selectedOrder.orderStatus === 'CANCELLED'" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 20; border-radius: 1.5rem; backdrop-filter: blur(2px);">
+                            <span style="background: #fef2f2; color: #ef4444; padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: 800; border: 1px solid #fca5a5;">Order Cancelled</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Items List -->
                 <div>
-                    <h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem;">Inventory Dispatch</h3>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <h3 style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem;">Inventory Dispatch</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
                         <div *ngFor="let item of selectedOrder.orderLines" 
-                            style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; background: #fcfdfe; border: 1px solid #f1f5f9; border-radius: 1.25rem;">
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: #fcfdfe; border: 1px solid #f1f5f9; border-radius: 1rem;">
                             <div style="display: flex; align-items: center; gap: 16px;">
                                 <div style="width: 44px; height: 44px; background: white; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #2563eb;">
                                     {{item.quantity}}x
@@ -267,28 +538,105 @@
             </div>
 
             <!-- Modal Footer -->
-            <div style="padding: 3rem; background: #f8fafc; border-top: 1px solid #f1f5f9; position: sticky; bottom: 0; z-index: 20;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem;">
-                    <span style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Total Invested</span>
-                    <span style="font-size: 2.75rem; font-weight: 950; color: #0f172a; letter-spacing: -0.04em;">{{selectedOrder.totalAmount | number:'1.2-2'}} <span style="font-size: 1.25rem; color: #94a3b8;">DT</span></span>
+            <div style="padding: 1.25rem 2rem; background: #f8fafc; border-top: 1px solid #f1f5f9; position: sticky; bottom: 0; z-index: 20;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <span style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Order Total</span>
+                    <span style="font-size: 1.5rem; font-weight: 950; color: #0f172a; letter-spacing: -0.04em;">{{selectedOrder.totalAmount | number:'1.2-2'}} <span style="font-size: 12px; color: #94a3b8;">DT</span></span>
                 </div>
                 
-                <div style="display: flex; gap: 12px;">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <button (click)="closeDetails()"
-                        style="flex: 1; height: 4rem; background: white; border: 2px solid #e2e8f0; border-radius: 1.25rem; font-size: 15px; font-weight: 800; color: #64748b; cursor: pointer;">
-                        Dismiss
+                        style="flex: 1; min-width: 120px; height: 3rem; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; font-size: 13px; font-weight: 800; color: #64748b; cursor: pointer; transition: all 0.2s;"
+                        onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                        Close
                     </button>
                     <button *ngIf="selectedOrder.orderStatus === 'PENDING'" (click)="cancelOrder(selectedOrder.orderId)"
                         [disabled]="cancellingOrderId === selectedOrder.orderId"
-                        style="flex: 1.5; height: 4rem; background: #ef4444; color: white; border: none; border-radius: 1.25rem; font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.4);"
-                        onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
-                        <lucide-icon *ngIf="cancellingOrderId !== selectedOrder.orderId" name="trash-2" [size]="18"></lucide-icon>
-                        <div *ngIf="cancellingOrderId === selectedOrder.orderId" style="width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%;" class="animate-spin"></div>
+                        style="width: 100%; height: 3.5rem; margin-top: 0.5rem; background: transparent; color: #ef4444; border: 2px dashed #fecaca; border-radius: 1rem; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;"
+                        onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
+                        <lucide-icon *ngIf="cancellingOrderId !== selectedOrder.orderId" name="trash-2" [size]="16"></lucide-icon>
+                        <div *ngIf="cancellingOrderId === selectedOrder.orderId" style="width: 16px; height: 16px; border: 2px solid #ef4444; border-top-color: transparent; border-radius: 50%;" class="animate-spin"></div>
                         Abort Order
                     </button>
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- ─── MEDICINE HISTORY MODAL (Drill down) ────────────────────────────────────────── -->
+    <div *ngIf="selectedMedicineAnalytics" style="position: fixed; inset: 0; z-index: 130; display: flex; justify-content: flex-end; font-family: ui-sans-serif, system-ui, sans-serif;">
+        <div style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px);" (click)="closeMedicineHistory()" class="animate-fade-in"></div>
+        
+        <div style="background: white; width: 100%; max-width: 600px; height: 100vh; overflow-y: auto; position: relative; z-index: 10; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15);" class="animate-slide-left">
+            <div style="padding: 1.5rem 2rem; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; background: white; z-index: 20;">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <div>
+                        <div style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: inline-block; margin-bottom: 8px;">
+                            Purchase History
+                        </div>
+                        <h2 style="font-size: 1.5rem; font-weight: 950; color: #0f172a; letter-spacing: -0.04em; margin-bottom: 4px;">{{selectedMedicineAnalytics.mostBoughtMedicine}}</h2>
+                        <p style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">{{formatCategory(selectedMedicineAnalytics.category)}} &middot; {{selectedMedicineAnalytics.form}}</p>
+                    </div>
+                    <button (click)="closeMedicineHistory()" style="width: 32px; height: 32px; background: #f8fafc; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;"
+                        onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b'">
+                        <lucide-icon name="x" [size]="16"></lucide-icon>
+                    </button>
+                </div>
+            </div>
+
+            <div style="flex: 1; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; background: #f8fafc;">
+                <!-- Aggregate Stats -->
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1; background: white; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid #e2e8f0; text-align: center;">
+                        <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Total Spent</span>
+                        <p style="font-size: 1.5rem; font-weight: 900; color: #2563eb;">{{selectedMedicineAnalytics.totalSpent | number:'1.2-2'}} <span style="font-size: 12px;">DT</span></p>
+                    </div>
+                    <div style="flex: 1; background: white; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid #e2e8f0; text-align: center;">
+                        <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Units Bought</span>
+                        <p style="font-size: 1.5rem; font-weight: 900; color: #0f172a;">{{selectedMedicineAnalytics.totalUnits}}</p>
+                    </div>
+                </div>
+
+                <!-- History List -->
+                <div>
+                    <h3 style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem;">Recent Orders</h3>
+                    
+                    <!-- Loading State -->
+                    <div *ngIf="loadingMedicineHistory" style="padding: 3rem; text-align: center;">
+                        <div style="width: 2rem; height: 2rem; border: 3px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%; margin: 0 auto;" class="animate-spin"></div>
+                    </div>
+
+                    <!-- Real History List -->
+                    <div *ngIf="!loadingMedicineHistory && medicineHistory.length > 0" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div *ngFor="let purchase of medicineHistory" 
+                             style="background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; padding: 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; background: #eff6ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #2563eb;">
+                                    <lucide-icon name="shopping-bag" [size]="18"></lucide-icon>
+                                </div>
+                                <div>
+                                    <p style="font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 2px;">#ORD-{{purchase.orderId}}</p>
+                                    <p style="font-size: 11px; color: #94a3b8; font-weight: 600;">{{purchase.orderDate | date:'mediumDate'}} &middot; {{purchase.pharmacyName}}</p>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 14px; font-weight: 900; color: #0f172a; display: block;">{{purchase.quantity * purchase.unitPrice | number:'1.2-2'}} DT</span>
+                                <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">{{purchase.quantity}} Units</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty History State -->
+                    <div *ngIf="!loadingMedicineHistory && medicineHistory.length === 0" style="background: white; border: 1px dashed #cbd5e1; border-radius: 1.5rem; padding: 3rem 2rem; text-align: center;">
+                        <div style="width: 3rem; height: 3rem; background: #f1f5f9; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: #94a3b8;">
+                            <lucide-icon name="history" [size]="24"></lucide-icon>
+                        </div>
+                        <h4 style="font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 4px;">No History Found</h4>
+                        <p style="font-size: 12px; color: #64748b; max-width: 250px; margin: 0 auto;">We couldn't find any individual order records for this medication.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

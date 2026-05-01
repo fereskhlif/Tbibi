@@ -29,5 +29,5 @@ public class MedicineResponse {
     MedicineForm form;
     String activeIngredient;
     MedicineCategory category;
-
+    boolean prescriptionRequired;
 }

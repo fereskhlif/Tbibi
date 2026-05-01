@@ -10,7 +10,8 @@ ehthumbs.db
 .Spotlight-V100
 .Trashes
 ._*
-
+toxicity-service/
+**/ai_service/
 # IDEs
 .idea/
 .vscode/
@@ -30,6 +31,7 @@ build*.txt
 test*.txt
 *_output.txt
 backend/uploads/
+uploads/
 
 # ======================
 # Java / Spring Boot
@@ -75,3 +77,9 @@ __pycache__/
 # ======================
 *.bak
 *.tmp
+*.png
+*.jpg
+*.jpeg
+*.gif
+models.json
+scratch.json

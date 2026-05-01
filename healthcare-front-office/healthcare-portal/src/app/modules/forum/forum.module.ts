@@ -7,11 +7,11 @@ import {
   LucideAngularModule,
   MessageSquare, Search, Plus, ArrowLeft, ThumbsUp, Eye, Clock,
   Pin, Send, MessageCircle, Tag, ChevronRight, CornerDownRight,
-  AlertCircle, CheckCircle2, Lock, Trash2, Edit3, LayoutGrid, Users,
+  AlertCircle, CheckCircle2, Lock, Trash2, Edit3, Edit2, LayoutGrid, Users,
   Bold, Italic, Strikethrough, Type, Link, Image as ImageIcon, Video,
   List, ListOrdered, Quote, Code, Table, Eraser, Paperclip, Minus,
   HeartPulse, Pill, Activity, Brain, FlaskConical, Dumbbell, ArrowUp,
-  ChevronDown, Stethoscope
+  ChevronDown, Stethoscope, Sparkles, Zap, Share2, Bookmark
 } from 'lucide-angular';
 
 import { ForumHomeComponent } from './pages/forum-home/forum-home.component';
@@ -42,11 +42,11 @@ import { CommentItemComponent } from './components/comment-item/comment-item/com
     LucideAngularModule.pick({
       MessageSquare, Search, Plus, ArrowLeft, ThumbsUp, Eye, Clock,
       Pin, Send, MessageCircle, Tag, ChevronRight, CornerDownRight,
-      AlertCircle, CheckCircle2, Lock, Trash2, Edit3, LayoutGrid, Users,
+      AlertCircle, CheckCircle2, Lock, Trash2, Edit3, Edit2, LayoutGrid, Users,
       Bold, Italic, Strikethrough, Type, Link, Image: ImageIcon, Video,
       List, ListOrdered, Quote, Code, Table, Eraser, Paperclip, Minus,
       HeartPulse, Pill, Activity, Brain, FlaskConical, Dumbbell, ArrowUp,
-      ChevronDown, Stethoscope
+      ChevronDown, Stethoscope, Sparkles, Zap, Share2, Bookmark
     })
   ]
 })

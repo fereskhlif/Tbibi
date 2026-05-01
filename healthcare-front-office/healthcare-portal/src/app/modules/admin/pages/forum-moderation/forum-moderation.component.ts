@@ -20,10 +20,10 @@ export class ForumModerationComponent implements OnInit, OnDestroy {
   private refreshInterval: any;
 
   filters = [
-    { key: 'ALL', label: 'Tous', icon: '📋' },
-    { key: 'TOXIC', label: 'Toxique', icon: '🚫' },
-    { key: 'UNCERTAIN', label: 'Incertain', icon: '⚠️' },
-    { key: 'CLEAN', label: 'Sain', icon: '✅' }
+    { key: 'ALL', label: 'All', icon: '📋' },
+    { key: 'TOXIC', label: 'Toxic', icon: '🚫' },
+    { key: 'UNCERTAIN', label: 'Uncertain', icon: '⚠️' },
+    { key: 'CLEAN', label: 'Clean', icon: '✅' }
   ];
 
   constructor(private adminForumService: AdminForumService) {}
@@ -97,29 +97,27 @@ export class ForumModerationComponent implements OnInit, OnDestroy {
 
   deletePost(post: any, event?: Event): void {
     if (event) event.stopPropagation();
-    if (!confirm('Supprimer ce post et tous ses commentaires ?')) return;
     post.removing = true;
     this.adminForumService.deletePost(post.postId).subscribe({
       next: () => {
         this.posts = this.posts.filter(p => p.postId !== post.postId);
-        this.showToast('Post supprimé avec succès', 'success');
+        this.showToast('Post deleted successfully', 'success');
         this.loadStats();
       },
-      error: () => { post.removing = false; this.showToast('Erreur lors de la suppression', 'error'); }
+      error: () => { post.removing = false; this.showToast('Error during deletion', 'error'); }
     });
   }
 
   deleteComment(post: any, commentId: number): void {
-    if (!confirm('Supprimer ce commentaire ?')) return;
     this.adminForumService.deleteComment(commentId).subscribe({
       next: () => {
         post.comments = post.comments.filter((c: any) => c.commentId !== commentId);
         if (post.selectedIds) post.selectedIds[commentId] = false;
-        this.showToast('Commentaire supprimé', 'success');
+        this.showToast('Comment deleted', 'success');
         this.loadStats();
         this.loadPosts(); // Instantly update post percentage
       },
-      error: () => this.showToast('Erreur', 'error')
+      error: () => this.showToast('Error', 'error')
     });
   }
 
@@ -146,16 +144,15 @@ export class ForumModerationComponent implements OnInit, OnDestroy {
                   .filter(k => post.selectedIds[k])
                   .map(k => Number(k));
     if (!ids.length) return;
-    if (!confirm(`Supprimer ${ids.length} commentaire(s) ?`)) return;
     this.adminForumService.deleteComments(ids).subscribe({
       next: () => {
         post.comments = post.comments.filter((c: any) => !post.selectedIds[c.commentId]);
         post.selectedIds = {};
-        this.showToast('Commentaires supprimés', 'success');
+        this.showToast('Comments deleted', 'success');
         this.loadStats();
         this.loadPosts(); // Instantly update post percentage
       },
-      error: () => this.showToast('Erreur lors de la suppression', 'error')
+      error: () => this.showToast('Error during deletion', 'error')
     });
   }
 

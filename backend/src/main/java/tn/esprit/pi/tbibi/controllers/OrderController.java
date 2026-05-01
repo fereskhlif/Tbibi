@@ -85,4 +85,23 @@ public class OrderController {
             @RequestParam(defaultValue = "10") int size) {
         return orderService.getUserOrdersPaginated(userId, status, search, sortType, page, size);
     }
+
+    @GetMapping("/patient/{userId}/analytics")
+    public List<tn.esprit.pi.tbibi.DTO.order.PatientSpendingAnalyticsDTO> getPatientSpendingAnalytics(
+            @PathVariable("userId") Integer userId) {
+        return orderService.getPatientSpendingAnalytics(userId);
+    }
+
+    @GetMapping("/patient/{userId}/medicine-history")
+    public List<tn.esprit.pi.tbibi.DTO.order.MedicinePurchaseHistoryDTO> getMedicineHistory(
+            @PathVariable("userId") Integer userId,
+            @RequestParam("medicineName") String medicineName) {
+        return orderService.getMedicinePurchaseHistory(userId, medicineName);
+    }
+
+    @GetMapping("/patient/{userId}/medicine-history/all")
+    public List<tn.esprit.pi.tbibi.DTO.order.MedicinePurchaseHistoryDTO> getFullMedicineHistory(
+            @PathVariable("userId") Integer userId) {
+        return orderService.getAllPatientMedicineHistory(userId);
+    }
 }

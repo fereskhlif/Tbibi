@@ -4,12 +4,12 @@
   <div class="page-header">
     <div class="header-left">
       <div>
-        <h1>Modération Forum</h1>
-        <p>Surveillance et gestion des contenus du forum</p>
+        <h1>Forum Moderation</h1>
+        <p>Monitor and manage forum content</p>
       </div>
     </div>
-    <button class="refresh-btn" (click)="refreshAll()" title="Rafraîchir">
-      🔄 Rafraîchir
+    <button class="refresh-btn" (click)="refreshAll()" title="Refresh">
+      🔄 Refresh
     </button>
   </div>
 
@@ -28,8 +28,8 @@
       <div class="stat-body">
         <p class="stat-num text-red" *ngIf="!loadingStats">{{ stats?.toxic ?? 0 }}</p>
         <div class="skeleton-bar" *ngIf="loadingStats"></div>
-        <p class="stat-label">Messages Toxiques</p>
-        <p class="stat-sub text-red" *ngIf="!loadingStats">Taux toxique: {{ getToxicPercent() }}%</p>
+        <p class="stat-label">Toxic Messages</p>
+        <p class="stat-sub text-red" *ngIf="!loadingStats">Toxicity rate: {{ getToxicPercent() }}%</p>
       </div>
     </div>
     <div class="stat-card">
@@ -37,7 +37,7 @@
       <div class="stat-body">
         <p class="stat-num text-orange" *ngIf="!loadingStats">{{ stats?.uncertain ?? 0 }}</p>
         <div class="skeleton-bar" *ngIf="loadingStats"></div>
-        <p class="stat-label">À Vérifier</p>
+        <p class="stat-label">To Verify</p>
       </div>
     </div>
     <div class="stat-card">
@@ -45,7 +45,7 @@
       <div class="stat-body">
         <p class="stat-num text-green" *ngIf="!loadingStats">{{ stats?.clean ?? 0 }}</p>
         <div class="skeleton-bar" *ngIf="loadingStats"></div>
-        <p class="stat-label">Messages Sains</p>
+        <p class="stat-label">Clean Messages</p>
       </div>
     </div>
   </div>
@@ -68,8 +68,8 @@
   <!-- Empty State -->
   <div class="empty-state" *ngIf="!loadingPosts && posts.length === 0">
     <span class="empty-icon">💬</span>
-    <p class="empty-title">Aucun post trouvé</p>
-    <p class="empty-sub">Modifiez les filtres pour afficher d'autres résultats</p>
+    <p class="empty-title">No posts found</p>
+    <p class="empty-sub">Adjust filters to see more results</p>
   </div>
 
   <!-- Posts List -->
@@ -89,7 +89,7 @@
         <span class="post-title">{{ truncate(post.title, 50) }}</span>
         <span class="post-author">{{ post.authorName }}</span>
         <span class="post-date">{{ formatDate(post.createdDate) }}</span>
-        <button class="btn-icon btn-trash" (click)="deletePost(post, $event)" title="Supprimer">🗑️</button>
+        <button class="btn-icon btn-trash" (click)="deletePost(post, $event)" title="Delete">🗑️</button>
         <span class="chevron" [class.rotated]="post.expanded">▼</span>
       </div>
 
@@ -104,9 +104,9 @@
               [checked]="post.comments?.length > 0 && getSelectedCount(post) === post.comments?.length"
               style="pointer-events: none;" />
             <span class="comment-count">
-              {{ post.comments?.length ?? 0 }} commentaire(s)
+              {{ post.comments?.length ?? 0 }} comment(s)
               <span *ngIf="getSelectedCount(post) > 0" class="selected-count">
-                · {{ getSelectedCount(post) }} sélectionné(s)
+                · {{ getSelectedCount(post) }} selected
               </span>
             </span>
           </div>
@@ -114,10 +114,10 @@
             <button *ngIf="getSelectedCount(post) > 0"
               class="btn-bulk-delete"
               (click)="deleteSelectedComments(post)">
-              🗑️ Supprimer la sélection ({{ getSelectedCount(post) }})
+              🗑️ Delete selected ({{ getSelectedCount(post) }})
             </button>
             <button class="btn-delete-post" (click)="deletePost(post, $event)">
-              🗑️ Supprimer ce post
+              🗑️ Delete this post
             </button>
           </div>
         </div>
@@ -127,7 +127,7 @@
 
         <!-- No comments -->
         <div class="no-comments" *ngIf="post.comments !== undefined && post.comments.length === 0">
-          Aucun commentaire
+          No comments
         </div>
 
         <!-- Comment Rows -->
@@ -156,7 +156,7 @@
 
           <span class="comment-date">{{ formatDate(c.commentDate) }}</span>
 
-          <button class="btn-icon btn-trash-sm" (click)="deleteComment(post, c.commentId); $event.stopPropagation()" title="Supprimer">🗑️</button>
+          <button class="btn-icon btn-trash-sm" (click)="deleteComment(post, c.commentId); $event.stopPropagation()" title="Delete">🗑️</button>
         </div>
       </div>
     </div>

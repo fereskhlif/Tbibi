@@ -17,6 +17,10 @@ export interface PharmacistOrder {
     userId: number;
     userName: string;
     userEmail: string;
+    deliveryMethod?: string;
+    deliveryAddress?: string;
+    paymentMethod?: string;
+    prescriptionImage?: string;
     orderLines: PharmacistOrderLine[];
 }
 

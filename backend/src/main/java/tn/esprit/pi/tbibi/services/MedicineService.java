@@ -77,6 +77,15 @@ public class MedicineService implements IMedicineService {
     }
 
     @Override
+    public List<MedicineResponse> filterMedicines(String name, Long pharmacyId, MedicineCategory category, boolean inStockOnly) {
+        String searchName = (name != null && !name.trim().isEmpty()) ? name : null;
+        return medicineRepo.filterAll(searchName, pharmacyId, category, inStockOnly)
+                .stream()
+                .map(medicineMapper::toDto)
+                .toList();
+    }
+
+    @Override
     public Page<MedicineResponse> searchMedicinesPaginated(String name, Long pharmacyId, MedicineCategory category, boolean inStockOnly, Pageable pageable) {
         String searchName = (name != null && !name.trim().isEmpty()) ? name : null;
         return medicineRepo.searchAndFilter(searchName, pharmacyId, category, inStockOnly, pageable)
@@ -124,6 +133,12 @@ public class MedicineService implements IMedicineService {
         medicine.setPrice(request.getPrice());
         medicine.setStock(request.getStock());
         medicine.setMinStockAlert(request.getMinStockAlert());
+        medicine.setDescription(request.getDescription());
+        medicine.setDosage(request.getDosage());
+        medicine.setForm(request.getForm());
+        medicine.setActiveIngredient(request.getActiveIngredient());
+        medicine.setCategory(request.getCategory());
+        medicine.setPrescriptionRequired(request.isPrescriptionRequired());
         return medicineMapper.toDto(medicineRepo.save(medicine));
     }
 

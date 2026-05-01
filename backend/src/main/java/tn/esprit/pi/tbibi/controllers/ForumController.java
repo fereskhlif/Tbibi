@@ -7,13 +7,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.pi.tbibi.DTO.post.*;
 import tn.esprit.pi.tbibi.DTO.category.*;
 import tn.esprit.pi.tbibi.DTO.comment.*;
+import tn.esprit.pi.tbibi.DTO.relatedpost.RelatedPostDTO;
 import tn.esprit.pi.tbibi.DTO.vote.*;
 import org.springframework.transaction.annotation.Transactional;
+import tn.esprit.pi.tbibi.services.ForumService;
 import tn.esprit.pi.tbibi.services.IForumService;
 
 import java.util.List;
@@ -58,12 +61,13 @@ public class ForumController {
     @GetMapping("/posts/paginated")
     @Transactional
     public Page<PostResponse> getAllPostsPaginated(
+            @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "latest") String sortBy,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         Pageable pageable = createPageable(page, size, sortBy);
-        return forumService.getAllPostsPaginated(status, pageable);
+        return forumService.getAllPostsPaginated(categoryIds, status, pageable);
     }
 
     @PostMapping("/posts")                               // ← CREATE post
@@ -72,8 +76,9 @@ public class ForumController {
     }
 
     @GetMapping("/posts/{id}")
-    public PostResponse getPostById(@PathVariable("id") Long id) {
-        return forumService.getPostById(id);
+    public PostResponse getPostById(@PathVariable("id") Long id,
+                                    @RequestParam(value = "userId", required = false) Integer userId) {
+        return forumService.getPostById(id, userId);
     }
 
     @GetMapping("/posts/category/{categoryId}")
@@ -107,12 +112,13 @@ public class ForumController {
     @Transactional
     public Page<PostResponse> searchPostsPaginated(
             @RequestParam("keyword") String keyword,
+            @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "latest") String sortBy,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         Pageable pageable = createPageable(page, size, sortBy);
-        return forumService.searchPostsPaginated(keyword, status, pageable);
+        return forumService.searchPostsPaginated(keyword, categoryIds, status, pageable);
     }
 
     @GetMapping("/posts/category/{categoryId}/stats")
@@ -227,5 +233,51 @@ public class ForumController {
     @GetMapping("/posts/{postId}/voted-comments")
     public List<Long> getUserVotedComments(@RequestParam("userId") Integer userId, @PathVariable("postId") Long postId) {
         return forumService.getUserVotedComments(userId, postId);
+    }
+
+    @GetMapping("/{postId}/related")
+    public ResponseEntity<List<RelatedPostDTO>> getRelatedPosts(@PathVariable Long postId) {
+        List<RelatedPostDTO> related = forumService.getRelatedPosts(postId);
+        return ResponseEntity.ok(related);
+    }
+
+    @GetMapping("/summarize-thread/{postId}")
+    public String getThreadSummary(@PathVariable Long postId) {
+        return forumService.getThreadSummary(postId);
+    }
+
+    @GetMapping(value = "/summarize-thread-stream/{postId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter getThreadSummaryStream(@PathVariable Long postId) {
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(60000L);
+        
+        // Run on a background thread so the response starts immediately
+        new Thread(() -> {
+            try {
+                // Use the proven, working non-streaming method
+                String fullSummary = forumService.getThreadSummary(postId);
+                System.out.println("AI Summary received: " + fullSummary.length() + " chars");
+                
+                // Stream in small character chunks to preserve spaces
+                int chunkSize = 5;
+                for (int i = 0; i < fullSummary.length(); i += chunkSize) {
+                    String chunk = fullSummary.substring(i, Math.min(i + chunkSize, fullSummary.length()));
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(chunk));
+                    Thread.sleep(25); // smooth typing effect
+                }
+                
+                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data("[DONE]"));
+                emitter.complete();
+            } catch (Exception e) {
+                System.err.println("Stream Error: " + e.getMessage());
+                try {
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data("Error: " + e.getMessage()));
+                    emitter.complete();
+                } catch (Exception ex) {
+                    emitter.completeWithError(e);
+                }
+            }
+        }).start();
+            
+        return emitter;
     }
 }

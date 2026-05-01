@@ -87,10 +87,46 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
 
               <div class="section-block" style="margin-top: 2rem;">
                 <div class="section-header"><div class="section-bar bar-amber"></div><h3>Change Password</h3></div>
-                <div class="form-group"><label>Current Password</label><input type="password" [(ngModel)]="passwords.oldPassword" placeholder="Enter current password" /></div>
-                <div class="form-group"><label>New Password</label><input type="password" [(ngModel)]="passwords.newPassword" placeholder="Enter new password" /></div>
-                <div class="form-group"><label>Confirm New Password</label><input type="password" [(ngModel)]="passwords.confirmPassword" placeholder="Confirm new password" /></div>
-                <button class="change-pw-btn" (click)="changePassword()" [disabled]="changingPw || !passwords.oldPassword || !passwords.newPassword || !passwords.confirmPassword">
+                
+                <div class="form-group">
+                  <label>Current Password</label>
+                  <input type="password" [(ngModel)]="passwords.oldPassword" placeholder="Enter current password" />
+                </div>
+
+                <div class="form-group">
+                  <label>New Password</label>
+                  <input type="password" [(ngModel)]="passwords.newPassword" placeholder="Enter new password" />
+                  
+                  <!-- Strength Meter -->
+                  <div class="strength-meter" *ngIf="passwords.newPassword">
+                    <div class="strength-bar" [style.width.%]="getPasswordStrength()" [style.background-color]="getStrengthColor()"></div>
+                    <p class="strength-text" [style.color]="getStrengthColor()">{{ getStrengthLabel() }}</p>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Confirm New Password</label>
+                  <input type="password" [(ngModel)]="passwords.confirmPassword" placeholder="Confirm new password" [class.input-error]="passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword" />
+                  <p class="match-error" *ngIf="passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword">Passwords do not match</p>
+                </div>
+
+                <!-- Requirement Checklist -->
+                <div class="checklist" *ngIf="passwords.newPassword">
+                  <div class="check-item" [class.valid]="getValidation().length">
+                    <span class="icon">{{ getValidation().length ? '✅' : '❌' }}</span> 8+ characters
+                  </div>
+                  <div class="check-item" [class.valid]="getValidation().upper">
+                    <span class="icon">{{ getValidation().upper ? '✅' : '❌' }}</span> Uppercase letter
+                  </div>
+                  <div class="check-item" [class.valid]="getValidation().number">
+                    <span class="icon">{{ getValidation().number ? '✅' : '❌' }}</span> Number
+                  </div>
+                  <div class="check-item" [class.valid]="getValidation().special">
+                    <span class="icon">{{ getValidation().special ? '✅' : '❌' }}</span> Special character
+                  </div>
+                </div>
+
+                <button class="change-pw-btn" (click)="changePassword()" [disabled]="changingPw || !isPasswordValid() || !passwords.oldPassword">
                   {{ changingPw ? 'Changing...' : 'Update Password' }}
                 </button>
                 <p *ngIf="pwMessage" class="form-msg" [class.success]="pwSuccess">{{ pwMessage }}</p>
@@ -150,6 +186,15 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
     .error-banner { background: #fef2f2; border: 1px solid #fecaca; border-radius: 1rem; padding: 2rem; text-align: center; color: #dc2626; font-weight: 600; }
     .retry-btn { margin-top: 1rem; padding: 0.6rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
     .retry-btn:hover { background: #1d4ed8; }
+    .strength-meter { height: 6px; background: #e2e8f0; border-radius: 3px; margin: 0.5rem 0 0.25rem; overflow: hidden; position: relative; }
+    .strength-bar { height: 100%; transition: all 0.3s; }
+    .strength-text { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; margin-top: 0.25rem; }
+    .checklist { background: #f8fafc; padding: 0.75rem; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1rem; }
+    .check-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; transition: all 0.2s; }
+    .check-item.valid { color: #10b981; font-weight: 600; }
+    .check-item .icon { font-size: 0.8rem; }
+    .input-error { border-color: #ef4444 !important; }
+    .match-error { font-size: 0.7rem; color: #ef4444; font-weight: 600; margin-top: 0.25rem; }
     @media (max-width: 768px) { .profile-container { padding: 0 1rem; } .input-row { flex-direction: column; } }
   `]
 })
@@ -236,11 +281,8 @@ export class ProfileComponent implements OnInit {
   }
 
   changePassword(): void {
-    if (!this.passwords.oldPassword || !this.passwords.newPassword || !this.passwords.confirmPassword) {
-      this.pwMessage = 'Please fill all fields.'; this.pwSuccess = false; return;
-    }
-    if (this.passwords.newPassword !== this.passwords.confirmPassword) {
-      this.pwMessage = 'New passwords do not match.'; this.pwSuccess = false; return;
+    if (!this.isPasswordValid() || !this.passwords.oldPassword) {
+      this.pwMessage = 'Please meet all security requirements.'; this.pwSuccess = false; return;
     }
     this.changingPw = true; this.pwMessage = '';
     this.userService.changePassword(this.passwords.oldPassword, this.passwords.newPassword).subscribe({
@@ -255,5 +297,48 @@ export class ProfileComponent implements OnInit {
         this.pwMessage = err?.error || 'Failed to change password.';
       }
     });
+  }
+
+  getPasswordStrength(): number {
+    const pw = this.passwords.newPassword;
+    if (!pw) return 0;
+    let s = 0;
+    if (pw.length >= 8) s += 25;
+    if (/[A-Z]/.test(pw)) s += 25;
+    if (/[0-9]/.test(pw)) s += 25;
+    if (/[^A-Za-z0-9]/.test(pw)) s += 25;
+    return s;
+  }
+
+  getStrengthColor(): string {
+    const s = this.getPasswordStrength();
+    if (s <= 25) return '#ef4444';
+    if (s <= 50) return '#f59e0b';
+    if (s <= 75) return '#3b82f6';
+    return '#10b981';
+  }
+
+  getStrengthLabel(): string {
+    const s = this.getPasswordStrength();
+    if (s <= 25) return 'Very Weak';
+    if (s <= 50) return 'Weak';
+    if (s <= 75) return 'Fair';
+    return 'Strong';
+  }
+
+  getValidation() {
+    const pw = this.passwords.newPassword || '';
+    return {
+      length: pw.length >= 8,
+      upper: /[A-Z]/.test(pw),
+      number: /[0-9]/.test(pw),
+      special: /[^A-Za-z0-9]/.test(pw),
+      match: pw === this.passwords.confirmPassword && pw.length > 0
+    };
+  }
+
+  isPasswordValid(): boolean {
+    const v = this.getValidation();
+    return v.length && v.upper && v.number && v.special && v.match;
   }
 }

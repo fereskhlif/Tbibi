@@ -76,7 +76,7 @@ export class DashboardComponent implements OnInit {
     { icon: '💬', title: 'AI Health Assistant', description: 'Chat with our AI assistant', route: '/patient/ai-chat' },
     { icon: '📋', title: 'Medical Records', description: 'View your health records', route: '/patient/medical-records' },
     { icon: '💊', title: 'Prescriptions', description: 'View your prescriptions', route: '/patient/prescriptions' },
-    { icon: '🛍️', title: 'Pharmacy Shop', description: 'Order medications online', route: '/patient/pharmacy-shop' },
+    { icon: '🛍️', title: 'Pharmacy Shop', description: 'Order medications online', route: '/patient/medicine-catalog' },
     { icon: '🔬', title: 'Lab Results', description: 'Check your lab results', route: '/patient/lab-results' }
   ];
 

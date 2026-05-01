@@ -12,6 +12,7 @@ export interface Medicine {
     form?: string | null;
     activeIngredient: string;
     category?: string | null;
+    prescriptionRequired: boolean;
 }
 
 export interface MedicineCreateRequest {
@@ -26,6 +27,7 @@ export interface MedicineCreateRequest {
     activeIngredient: string | null;
     pharmacyId: number;
     category?: string | null;
+    prescriptionRequired: boolean;
 }
 
 export interface MedicineUpdateRequest {
@@ -40,4 +42,5 @@ export interface MedicineUpdateRequest {
     activeIngredient: string | null;
     pharmacyId: number;
     category?: string | null;
+    prescriptionRequired: boolean;
 }
