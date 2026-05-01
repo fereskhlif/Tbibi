@@ -61,7 +61,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
     { path: 'profile', icon: 'user', label: 'Professional Profile' },
     { path: 'all-appointments', icon: 'calendar', label: 'All Appointments' },
-    //{ path: 'manage-schedules', icon: 'clock', label: 'Manage Schedules' },
+    { path: 'manage-schedules', icon: 'clock', label: 'Manage Schedules' },
     { path: 'notifications', icon: 'bell', label: 'Notifications' },
     { path: 'messages', icon: 'message-square', label: 'Patient Chat' },
     { path: 'patient-records', icon: 'users', label: 'Patient Records' },
