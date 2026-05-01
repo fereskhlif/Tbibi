@@ -23,7 +23,7 @@ public class FractureAnalysisService implements IFractureAnalysisService {
     private final MedicalPictureAnalysisRepository repo;
     private final RestTemplate restTemplate;
 
-    private static final String AI_SERVICE_URL = "http://localhost:5000/predict";
+    private static final String AI_SERVICE_URL = "http://localhost:5000/fracture/predict";
     private static final String UPLOAD_DIR = "uploads/medical-pictures/";
 
     @Override
@@ -114,7 +114,7 @@ public class FractureAnalysisService implements IFractureAnalysisService {
     @Override
     public boolean checkAiServiceHealth() {
         try {
-            String healthUrl = "http://localhost:5000/health";
+            String healthUrl = "http://localhost:5000/fracture/health";
             ResponseEntity<Map> response = restTemplate.getForEntity(healthUrl, Map.class);
             return response.getStatusCode() == HttpStatus.OK;
         } catch (Exception e) {
