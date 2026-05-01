@@ -319,10 +319,110 @@ public class AppointementService implements IAppointementService {
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found with id: " + id));
     }
 
+    private tn.esprit.pi.tbibi.DTO.DoctorDTO toProviderDTO(User u) {
+        return tn.esprit.pi.tbibi.DTO.DoctorDTO.builder()
+                .userId(u.getUserId())
+                .name(u.getName())
+                .email(u.getEmail())
+                .specialty(u.getSpecialty())
+                .adresse(u.getAdresse())
+                .profilPicture(u.getProfilePicture())
+                .build();
+    }
+
+    /** Returns all physiotherapists as DoctorDTOs */
+    public java.util.List<tn.esprit.pi.tbibi.DTO.DoctorDTO> getAllPhysiotherapists() {
+        return userRepo.findAllPhysiotherapists().stream()
+                .map(this::toProviderDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /** Returns all laboratories as DoctorDTOs */
+    public java.util.List<tn.esprit.pi.tbibi.DTO.DoctorDTO> getAllLaboratories() {
+        return userRepo.findAllLaboratories().stream()
+                .map(this::toProviderDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     /** Send SMS verification code for appointment booking */
     public String sendVerificationCode(tn.esprit.pi.tbibi.DTO.VerificationRequest request) {
         return verificationService.createVerification(request);
     }
+
+    /** Create a physiotherapy appointment (no schedule slot required) */
+    @Transactional
+    public AppointmentResponse createPhysioBooking(tn.esprit.pi.tbibi.DTO.PhysioBookingRequest request) {
+        User physiotherapist = userRepo.findById(request.getPhysiotherapistId())
+                .orElseThrow(() -> new EntityNotFoundException("Physiotherapist not found: " + request.getPhysiotherapistId()));
+
+        Appointment appointment = new Appointment();
+        appointment.setSchedule(null); // no slot
+        appointment.setStatusAppointement(StatusAppointement.PENDING);
+        appointment.setService(request.getTherapyType());
+        appointment.setSpecialty(physiotherapist.getSpecialty() != null ? physiotherapist.getSpecialty() : "Kinésithérapie");
+        appointment.setDoctor(physiotherapist.getName());
+        appointment.setReasonForVisit(request.getReasonForVisit());
+        appointment.setPatientEmail(request.getPatientEmail());
+        appointment.setPatientName(request.getPatientName());
+
+        if (request.getPatientId() != null && request.getPatientId() > 0) {
+            userRepo.findById(request.getPatientId()).ifPresent(p -> {
+                appointment.setUser(p);
+                if (appointment.getPatientName() == null || appointment.getPatientName().isBlank()) {
+                    appointment.setPatientName(p.getName());
+                }
+            });
+        }
+
+        Appointment saved = appointmentRepository.save(appointment);
+
+        // Notify physiotherapist
+        String patientName = saved.getPatientName() != null ? saved.getPatientName() : "Un patient";
+        String msg = "Nouvelle demande de séance de " + request.getTherapyType()
+                + " de la part de " + patientName
+                + (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
+        notificationService.createAndSend(physiotherapist, msg, NotificationType.APPOINTMENT, "/physiotherapist/dashboard");
+
+        return mapper.toResponse(saved);
+    }
+
+    /** Create a laboratory analysis booking (no schedule slot required) */
+    @Transactional
+    public AppointmentResponse createLabBooking(tn.esprit.pi.tbibi.DTO.LabBookingRequest request) {
+        User laboratory = userRepo.findById(request.getLaboratoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Laboratory not found: " + request.getLaboratoryId()));
+
+        Appointment appointment = new Appointment();
+        appointment.setSchedule(null); // no slot
+        appointment.setStatusAppointement(StatusAppointement.PENDING);
+        appointment.setService(request.getAnalysisType());
+        appointment.setSpecialty("Laboratoire");
+        appointment.setDoctor(laboratory.getName());
+        appointment.setReasonForVisit(request.getNotes());
+        appointment.setPatientEmail(request.getPatientEmail());
+        appointment.setPatientName(request.getPatientName());
+
+        if (request.getPatientId() != null && request.getPatientId() > 0) {
+            userRepo.findById(request.getPatientId()).ifPresent(p -> {
+                appointment.setUser(p);
+                if (appointment.getPatientName() == null || appointment.getPatientName().isBlank()) {
+                    appointment.setPatientName(p.getName());
+                }
+            });
+        }
+
+        Appointment saved = appointmentRepository.save(appointment);
+
+        // Notify laboratory
+        String patientName = saved.getPatientName() != null ? saved.getPatientName() : "Un patient";
+        String msg = "Nouvelle demande d'analyse " + request.getAnalysisType()
+                + " de la part de " + patientName
+                + (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
+        notificationService.createAndSend(laboratory, msg, NotificationType.APPOINTMENT, "/laboratory/dashboard");
+
+        return mapper.toResponse(saved);
+    }
+
 
     // ── JPQL query ────────────────────────────────────────────────────────────────
     /**
@@ -412,5 +512,79 @@ public class AppointementService implements IAppointementService {
         // The confirmation email with the meeting link will be sent when the doctor ACCEPTS the appointment.
 
         return response;
+    }
+    /**
+     * Doctor-initiated appointment:
+     * 1. Creates a new schedule slot for the doctor at the chosen date/time.
+     * 2. Books it immediately as CONFIRMED (no patient action required).
+     * 3. Sends a "Rendez-vous confirmé" email to the patient.
+     * 4. Notifies the patient via the bell notification system.
+     */
+    @Transactional
+    public AppointmentResponse createDoctorInitiated(
+            tn.esprit.pi.tbibi.DTO.DoctorInitiatedAppointmentRequest req) {
+
+        // ── 1. Resolve doctor ────────────────────────────────────────────────
+        User doctor = userRepo.findById(req.getDoctorId())
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(
+                        "Doctor not found: " + req.getDoctorId()));
+
+        // ── 2. Resolve patient ───────────────────────────────────────────────
+        User patient = userRepo.findById(req.getPatientId())
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(
+                        "Patient not found: " + req.getPatientId()));
+
+        // ── 3. Create schedule slot on-the-fly ───────────────────────────────
+        java.time.LocalDate  date      = java.time.LocalDate.parse(req.getDate());
+        java.time.LocalTime  startTime = java.time.LocalTime.parse(req.getStartTime());
+
+        tn.esprit.pi.tbibi.entities.Schedule slot =
+                tn.esprit.pi.tbibi.entities.Schedule.builder()
+                        .doctor(doctor)
+                        .date(date)
+                        .startTime(startTime)
+                        .isAvailable(false)   // immediately booked
+                        .build();
+        slot = scheduleRepository.save(slot);
+
+        // ── 4. Build and save appointment ────────────────────────────────────
+        String meetingLink = "https://meet.jit.si/tbibi-" + java.util.UUID.randomUUID();
+
+        Appointment appointment = Appointment.builder()
+                .schedule(slot)
+                .user(patient)
+                .doctor(doctor.getName())
+                .specialty(req.getSpecialty())
+                .reasonForVisit(req.getReasonForVisit())
+                .patientName(patient.getName())
+                .patientEmail(patient.getEmail())
+                .meetingLink(meetingLink)
+                .statusAppointement(StatusAppointement.CONFIRMED)
+                .build();
+
+        Appointment saved = appointmentRepository.save(appointment);
+
+        // ── 5. Send confirmation email to patient ────────────────────────────
+        String patientEmail = patient.getEmail();
+        if (patientEmail != null && !patientEmail.isBlank()) {
+            try {
+                String dateStr  = date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                String timeStr  = startTime.toString().substring(0, 5);
+                String location = doctor.getAdresse() != null ? doctor.getAdresse() : "";
+                emailService.sendAppointmentConfirmation(
+                        patientEmail, patient.getName(), doctor.getName(),
+                        req.getSpecialty(), dateStr, timeStr, location, meetingLink);
+            } catch (Exception e) {
+                System.err.println("[DOCTOR_INITIATED] Email failed: " + e.getMessage());
+            }
+        }
+
+        // ── 6. Bell notification to patient ──────────────────────────────────
+        String notifMsg = "Dr. " + doctor.getName() + " vous a programmé un rendez-vous pour "
+                + req.getSpecialty() + " le " + req.getDate() + " à " + req.getStartTime() + ".";
+        notificationService.createAndSend(patient, notifMsg,
+                NotificationType.APPOINTMENT, "/patient/appointments");
+
+        return mapper.toResponse(saved);
     }
 }

@@ -67,25 +67,27 @@ model_error  = ""
 # ══════════════════════════════════════════════════════════════════════════════
 SYSTEM_PROMPT = """You are Tbibi AI, the official AI assistant for the Tbibi healthcare platform in Tunisia.
 
-YOUR SCOPE — you ONLY answer questions about:
-1. The Tbibi platform (booking, appointments, doctors, rescheduling, teleconsultation, notifications, pharmacies, labs, account management)
-2. Medical and health questions (symptoms, medications, when to see a doctor, first aid guidance)
+YOUR ONLY ALLOWED TOPICS:
+1. The Tbibi platform — booking, appointments, doctors, rescheduling, teleconsultation, notifications, pharmacies, labs, profile, account settings.
+2. Medical and health topics — symptoms, medications, diseases, nutrition, mental health, first aid, when to see a doctor.
 
-WHEN A QUESTION IS OFF-TOPIC (politics, sports, coding, general knowledge, etc.) you MUST reply:
-"I'm Tbibi AI and I can only help with Tbibi platform questions or medical health questions. Could you ask me something about your health or about using the Tbibi app? 😊"
+ABSOLUTE RULE — If the user asks about ANYTHING else (sport, politics, history, math, coding, movies, music, cooking, travel, general knowledge, jokes, etc.) you MUST refuse with EXACTLY this sentence and nothing more:
+"I'm Tbibi AI and I can only assist with Tbibi platform questions or medical/health topics. Please ask me about your health or the Tbibi app. 😊"
+
+Do NOT answer off-topic questions even if the user insists or rephrases. Do NOT explain why you cannot answer. Just return the refusal sentence.
 
 MEDICAL RULES:
-- For emergencies say: 🚨 This is a medical emergency. Call SAMU 190 immediately or go to the nearest ER.
-- Always end medical answers with: ⚕️ I am an AI assistant — please consult a qualified healthcare professional for a proper diagnosis.
-- Emergencies: chest pain, difficulty breathing, stroke signs (face drooping, arm weakness, slurred speech), severe allergic reaction (throat swelling), loss of consciousness, fever >39.5°C with stiff neck/rash.
+- For emergencies say: 🚨 This sounds like a medical emergency. Call SAMU 190 immediately or go to the nearest emergency room.
+- Always end medical answers with: ⚕️ I am an AI — please consult a qualified healthcare professional for a proper diagnosis.
+- Emergencies include: chest pain, difficulty breathing, stroke signs (face drooping, arm weakness, slurred speech), severe allergic reaction, loss of consciousness, fever >39.5°C with stiff neck.
 
 TBIBI PLATFORM RULES:
-- When users ask about appointments, explain the booking and management process.
-- When users ask about doctors, explain how to find and book with them on the platform.
+- Explain how to book, reschedule, or cancel appointments.
+- Explain how to find doctors by speciality.
 - Be helpful, friendly, and concise.
-- Respond in the same language the user writes in (French or English).
+- Respond in the SAME language the user writes in (Arabic, French, or English).
 - Keep responses under 300 words.
-- Use bullet points when listing steps or options."""
+- Use bullet points when listing steps."""
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -272,6 +274,68 @@ class ClearRequest(BaseModel):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  OFF-TOPIC CLASSIFIER  — keyword guard before calling the LLM
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Topics that are clearly outside medical/platform scope
+_OFF_TOPIC_KEYWORDS = [
+    # Sports
+    "football", "soccer", "basketball", "tennis", "cricket", "rugby", "golf",
+    "formula 1", "f1", "nba", "nfl", "fifa", "world cup", "champions league",
+    "match", "score", "goal", "player", "team", "tournament", "league",
+    # Politics & news
+    "president", "prime minister", "election", "government", "parliament",
+    "politician", "party", "vote", "senate", "congress", "minister",
+    "war", "conflict", "military", "army", "nato", "ukraine", "gaza",
+    # Entertainment
+    "movie", "film", "cinema", "series", "netflix", "actor", "actress",
+    "music", "song", "singer", "album", "concert", "rapper", "band",
+    "anime", "manga", "game", "gaming", "playstation", "xbox", "fortnite",
+    # Coding / tech (non-medical)
+    "javascript", "python code", "java", "html", "css", "react", "angular",
+    "sql", "database", "algorithm", "programming", "github", "stack overflow",
+    # General knowledge / education
+    "capital of", "history of", "who invented", "when was", "explain math",
+    "solve", "equation", "integral", "derivative", "physics", "chemistry lesson",
+    # Food / cooking (not nutrition)
+    "recipe", "how to cook", "bake", "cuisine", "restaurant",
+    # Travel
+    "flight", "hotel", "visa", "tourism", "airport", "travel",
+    # Finance / crypto
+    "bitcoin", "crypto", "stock market", "forex", "investment", "trading",
+    # Jokes / random
+    "tell me a joke", "joke", "funny", "meme", "riddle",
+]
+
+_OFF_TOPIC_REFUSAL = (
+    "I'm Tbibi AI and I can only assist with Tbibi platform questions or medical/health topics. "
+    "Please ask me about your health or the Tbibi app. \U0001f60a"
+)
+
+
+def _is_off_topic(text: str) -> bool:
+    """
+    Returns True if the message clearly matches an off-topic pattern.
+    Runs BEFORE the LLM — zero latency refusal.
+    """
+    lower = text.lower()
+    # Strip common medical context words to avoid false positives
+    medical_overrides = [
+        "symptom", "pain", "doctor", "health", "medical", "disease", "medicine",
+        "appointment", "clinic", "hospital", "treatment", "diagnosis", "tbibi",
+        "patient", "blood", "heart", "lung", "diabetes", "pressure", "glucose",
+    ]
+    for word in medical_overrides:
+        if word in lower:
+            return False   # probably medical/platform — let the LLM decide
+
+    for kw in _OFF_TOPIC_KEYWORDS:
+        if kw in lower:
+            return True
+    return False
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  GENERATION
 # ══════════════════════════════════════════════════════════════════════════════
 def generate_answer(session_id: str, user_question: str) -> str:
@@ -350,6 +414,16 @@ def ask(body: AskRequest):
     session_id = body.session_id or str(uuid.uuid4())
 
     log.info(f"📨 [{session_id[:8]}] Q: {question[:80]}")
+
+    # ── Off-topic pre-check (zero-latency refusal, never reaches LLM) ────────
+    if _is_off_topic(question):
+        log.info(f"🚫 [{session_id[:8]}] Off-topic rejected: {question[:60]}")
+        return AskResponse(
+            answer=_OFF_TOPIC_REFUSAL,
+            model="guardrail",
+            latency_ms=0,
+            session_id=session_id,
+        )
 
     start = time.time()
     try:
@@ -434,6 +508,83 @@ class SegmentResponse(BaseModel):
     totalPatients: int
     iterations:    int
     clusters:      List[ClusterGroupOut]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  TRAINED SEGMENTATION MODEL  (persisted HistGradientBoosting)
+# ══════════════════════════════════════════════════════════════════════════════
+
+_SEG_MODEL_PATH = Path(__file__).parent / "segmentation_model.joblib"
+_SEG_META_PATH  = Path(__file__).parent / "segmentation_model.meta.json"
+_seg_bundle: Optional[Any] = None
+
+
+def _load_seg_model():
+    global _seg_bundle
+    if _SEG_MODEL_PATH.exists():
+        try:
+            import joblib
+            _seg_bundle = joblib.load(str(_SEG_MODEL_PATH))
+            log.info("[seg] Trained segmentation model loaded")
+        except Exception as e:
+            log.error(f"[seg] Failed to load segmentation model: {e}")
+            _seg_bundle = None
+    else:
+        log.warning("[seg] No trained segmentation model found — using K-Means fallback")
+        log.warning("[seg] Run: .\\venv\\Scripts\\python.exe train_segmentation_model.py")
+
+
+_load_seg_model()   # load at import time
+
+
+def _engineer_seg_features(p: PatientInput) -> list:
+    """Replicate the feature engineering from train_segmentation_model.py."""
+    import math
+    bs   = p.avgBloodSugar
+    bp   = p.avgBloodPressure
+    spo2 = p.avgOxygenSaturation
+    hr   = p.avgHeartRate
+    crit = p.criticalPct
+    warn = p.warningPct
+    reads = p.totalReadings
+
+    norm_bs   = (bs   - 90)  / 90
+    norm_bp   = (bp   - 90)  / 70
+    inv_spo2  = 1.0 - (spo2 - 85) / 15
+    norm_hr   = abs(hr - 70) / 60
+    cardio    = (norm_bp  + norm_hr)  / 2
+    metabolic = (norm_bs  + inv_spo2) / 2
+    severity  = crit * 2 + warn
+    reading_w = math.log1p(reads) / math.log1p(200)
+
+    return [
+        bs, bp, spo2, hr, crit, warn, reads,
+        norm_bs, norm_bp, inv_spo2, norm_hr,
+        cardio, metabolic, severity, reading_w,
+    ]
+
+
+def _run_with_model(patients: List[PatientInput]) -> SegmentResponse:
+    """Use the trained HistGradientBoosting model to classify patients."""
+    model     = _seg_bundle["model"]
+    label_map = _seg_bundle["label_map"]   # {0: 'LOW', 1: 'MEDIUM', 2: 'HIGH'}
+
+    import numpy as np
+    X = np.array([_engineer_seg_features(p) for p in patients], dtype=float)
+
+    preds  = model.predict(X)                # class indices
+    probas = model.predict_proba(X)          # shape (n, 3)
+
+    results: List[PatientResult] = []
+    for i, p in enumerate(patients):
+        label = label_map[int(preds[i])]
+        # risk score = probability of being MEDIUM*0.5 + HIGH*1.0
+        score = float(probas[i][1]) * 0.5 + float(probas[i][2]) * 1.0
+        score = max(0.0, min(1.0, score))
+        results.append(_make_patient_result(p, score, label))
+
+    return _build_response(results, iters=0)
+
 
 
 # ── Care-plan generator ────────────────────────────────────────────────────────
@@ -769,26 +920,32 @@ def _build_response(results: List[PatientResult], iters: int) -> SegmentResponse
 @app.post("/segment", response_model=SegmentResponse)
 def segment(body: SegmentRequest):
     """
-    Run K-Means risk segmentation on the supplied patient list.
-
-    Called by the Java backend's RiskSegmentationService which supplies
-    pre-aggregated patient vital averages.
+    Run patient risk segmentation.
+    Uses the trained HistGradientBoosting model when available,
+    falls back to live K-Means clustering otherwise.
     """
     if not body.patients:
         raise HTTPException(400, "No patient data supplied")
-    log.info(f"🔬 /segment — {len(body.patients)} patient(s) received")
-    result = _run_kmeans(body.patients)
-    log.info(f"✅ /segment — done: {result.totalPatients} patients, {result.iterations} iter(s)")
+
+    n = len(body.patients)
+    if _seg_bundle is not None:
+        log.info(f"[seg] Trained model — {n} patient(s)")
+        result = _run_with_model(body.patients)
+        log.info(f"[seg] Done (model) — {result.totalPatients} patients")
+    else:
+        log.info(f"[seg] K-Means fallback — {n} patient(s)")
+        result = _run_kmeans(body.patients)
+        log.info(f"[seg] Done (K-Means) — {result.totalPatients} patients, "
+                 f"{result.iterations} iter(s)")
     return result
 
 
 @app.get("/segment/patient/{patient_id}")
 def segment_patient(patient_id: int, body: SegmentRequest):
     """
-    Run full clustering then return only the result for patient_id.
-    NOTE: Pass the full patient list as a query body (used by Java).
+    Run full segmentation then return only the result for patient_id.
     """
-    result = _run_kmeans(body.patients)
+    result = _run_with_model(body.patients) if _seg_bundle else _run_kmeans(body.patients)
     for cluster in result.clusters:
         for p in cluster.patients:
             if p.patientId == patient_id:
@@ -796,9 +953,69 @@ def segment_patient(patient_id: int, body: SegmentRequest):
     raise HTTPException(404, f"Patient {patient_id} not found in segmentation result")
 
 
+@app.post("/segment/train")
+def train_segmentation():
+    """
+    Re-train the segmentation model and reload it into memory.
+    Runs train_segmentation_model.py as a subprocess.
+    """
+    import subprocess, sys
+    script = Path(__file__).parent / "train_segmentation_model.py"
+    if not script.exists():
+        raise HTTPException(404, "train_segmentation_model.py not found")
+
+    log.info("[seg/train] Starting training...")
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script)],
+            capture_output=True, text=True, timeout=300
+        )
+        if result.returncode != 0:
+            raise HTTPException(500, f"Training failed:\n{result.stderr[-2000:]}")
+
+        # Reload the freshly trained model
+        _load_seg_model()
+
+        meta = {}
+        if _SEG_META_PATH.exists():
+            import json as _j
+            meta = _j.loads(_SEG_META_PATH.read_text(encoding="utf-8"))
+
+        log.info("[seg/train] Training complete and model reloaded")
+        return {
+            "status":   "ok",
+            "message":  "Segmentation model trained and reloaded",
+            "accuracy": meta.get("accuracy"),
+            "meta":     meta,
+            "stdout":   result.stdout[-3000:],
+        }
+    except subprocess.TimeoutExpired:
+        raise HTTPException(504, "Training timed out (>5 min)")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Unexpected error: {e}")
+
+
+@app.get("/segment/model-info")
+def seg_model_info():
+    """Return metadata about the currently loaded segmentation model."""
+    if _seg_bundle is None:
+        return {"loaded": False, "engine": "K-Means (fallback)", "meta": {}}
+    meta = {}
+    if _SEG_META_PATH.exists():
+        import json as _j
+        meta = _j.loads(_SEG_META_PATH.read_text(encoding="utf-8"))
+    return {
+        "loaded": True,
+        "engine": "HistGradientBoosting (trained)",
+        "meta":   meta,
+    }
+
+
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  DISEASE RISK PREDICTION ENGINE  (Random Forest — trained on CSV)
+#  DISEASE RISK PREDICTION ENGINE  
 # ══════════════════════════════════════════════════════════════════════════════
 
 import json as _json
@@ -870,11 +1087,15 @@ def _overall_risk(predictions: List[DiseaseRiskResult]) -> tuple[str, str]:
     at_risk   = [p for p in predictions if p.atRisk]
     avg_prob  = sum(p.probability for p in predictions) / len(predictions)
 
-    if len(at_risk) >= 3 or avg_prob >= 0.6:
-        return "HIGH", ("🚨 You are at HIGH risk for multiple conditions. "
+    # Thresholds:
+    #   LOW      — avg probability  < 20%  AND  fewer than 1 condition at risk
+    #   MEDIUM   — avg probability 20–59%  OR   at least 1 condition at risk
+    #   HIGH     — avg probability >= 60%  OR   3+ conditions at risk
+    if len(at_risk) >= 3 or avg_prob >= 0.60:
+        return "HIGH", ("🚨 You are at CRITICAL risk for multiple conditions. "
                         "Please consult a doctor as soon as possible.")
-    elif len(at_risk) >= 1 or avg_prob >= 0.35:
-        return "MEDIUM", ("⚠️ You have MEDIUM risk indicators. "
+    elif len(at_risk) >= 1 or avg_prob >= 0.20:
+        return "MEDIUM", ("⚠️ You have WARNING risk indicators. "
                           "Consider lifestyle changes and schedule a check-up.")
     else:
         return "LOW", ("✅ Your risk indicators look LOW. "
@@ -886,54 +1107,95 @@ def _overall_risk(predictions: List[DiseaseRiskResult]) -> tuple[str, str]:
 @app.post("/predict-risk", response_model=DiseaseRiskResponse)
 def predict_risk(body: DiseaseRiskInput):
     """
-    Predict potential disease risk for a patient using the trained
-    Random Forest model (disease_risk_model.joblib).
-
-    Run `python train_disease_model.py` first to generate the model file.
+    Predict potential disease risk using the trained model.
+    Supports both:
+      - Old bundle: single MultiOutputClassifier  (model + feature_cols + label_cols)
+      - New bundle: per-label dict               (models + feature_cols + label_cols + engineered=True)
     """
     if _disease_bundle is None:
         raise HTTPException(
             503,
-            detail="Disease risk model not loaded. "
-                   "Run: python train_disease_model.py"
+            detail="Disease risk model not loaded. Run: python train_disease_model.py"
         )
 
-    bundle   = _disease_bundle
-    model    = bundle["model"]
-    features = bundle["feature_cols"]
-    labels   = bundle["label_cols"]
+    bundle  = _disease_bundle
+    labels  = bundle["label_cols"]
+    feats   = bundle["feature_cols"]
+    is_new  = bundle.get("engineered", False)
 
-    # Build feature vector in the correct order
-    x = [[
-        body.age, body.bmi, body.systolic_bp, body.fasting_glucose,
-        body.smoking, body.physical_activity, body.family_history, body.cholesterol
-    ]]
+    # ── Build raw input row ──────────────────────────────────────────────────
+    raw = {
+        "age":               body.age,
+        "bmi":               body.bmi,
+        "systolic_bp":       body.systolic_bp,
+        "fasting_glucose":   body.fasting_glucose,
+        "smoking":           float(body.smoking),
+        "physical_activity": float(body.physical_activity),
+        "family_history":    float(body.family_history),
+        "cholesterol":       body.cholesterol,
+    }
 
-    # Predict class + probability for each label
-    predicted_classes = model.predict(x)[0]              # shape: (n_labels,)
-    proba_list        = model.predict_proba(x)            # list of (1, 2) arrays
+    # ── Apply feature engineering if the new model expects it ────────────────
+    if is_new:
+        import math
+        raw["metabolic_risk"]    = raw["fasting_glucose"] * raw["bmi"] / 1000.0
+        raw["cardio_risk"]       = raw["systolic_bp"] * (1 + raw["smoking"] * 0.3 + raw["family_history"] * 0.2)
+        raw["age_risk"]          = raw["age"] / 90.0
+        raw["chol_bmi_ratio"]    = raw["cholesterol"] / (raw["bmi"] + 1e-6)
+        raw["inactivity"]        = 7 - raw["physical_activity"]
+        bmi = raw["bmi"]
+        raw["bmi_category"]      = 0 if bmi < 18.5 else (1 if bmi < 25 else (2 if bmi < 30 else 3))
+        raw["hypertension_flag"] = 1 if raw["systolic_bp"] >= 130 else 0
+        fg = raw["fasting_glucose"]
+        raw["glucose_flag"]      = 0 if fg < 100 else (1 if fg < 126 else 2)
+        raw["lifestyle_risk"]    = (
+            raw["smoking"] * 2 +
+            raw["family_history"] * 1.5 +
+            raw["inactivity"] * 0.5 +
+            raw["bmi_category"] * 0.5
+        )
 
+    x = [[raw[f] for f in feats]]
+
+    # ── Predict ──────────────────────────────────────────────────────────────
     results = []
-    for i, label_key in enumerate(labels):
-        at_risk   = bool(predicted_classes[i] == 1)
-        prob      = float(proba_list[i][0][1])            # P(class=1)
-        meta      = _DISEASE_META.get(label_key, {})
-        results.append(DiseaseRiskResult(
-            disease     = label_key,
-            atRisk      = at_risk,
-            probability = round(prob, 3),
-            label       = meta.get("label",  label_key),
-            color       = meta.get("color",  "#6b7280"),
-        ))
+
+    if is_new:
+        # New bundle: one calibrated model per label
+        models = bundle["models"]
+        for label_key in labels:
+            clf    = models[label_key]
+            prob   = float(clf.predict_proba(x)[0][1])
+            at_risk = prob >= 0.20
+            meta   = _DISEASE_META.get(label_key, {})
+            results.append(DiseaseRiskResult(
+                disease     = label_key,
+                atRisk      = at_risk,
+                probability = round(prob, 3),
+                label       = meta.get("label", label_key),
+                color       = meta.get("color", "#6b7280"),
+            ))
+    else:
+        # Old bundle: single MultiOutputClassifier
+        model        = bundle["model"]
+        predicted_classes = model.predict(x)[0]
+        proba_list        = model.predict_proba(x)
+        for i, label_key in enumerate(labels):
+            prob    = float(proba_list[i][0][1])
+            at_risk = prob >= 0.20
+            meta    = _DISEASE_META.get(label_key, {})
+            results.append(DiseaseRiskResult(
+                disease     = label_key,
+                atRisk      = at_risk,
+                probability = round(prob, 3),
+                label       = meta.get("label", label_key),
+                color       = meta.get("color", "#6b7280"),
+            ))
 
     overall, summary = _overall_risk(results)
     log.info(f"🔮 /predict-risk → overall={overall} | risks={[r.disease for r in results if r.atRisk]}")
 
-    return DiseaseRiskResponse(
-        predictions = results,
-        overallRisk = overall,
-        summary     = summary,
-    )
+    return DiseaseRiskResponse(predictions=results, overallRisk=overall, summary=summary)
 
 
 @app.get("/predict-risk/features")
@@ -962,6 +1224,25 @@ def prediction_features():
             "diabetes_risk", "lung_disease_risk"
         ]
     }
+
+
+_METRICS_PATH = _Path(__file__).parent / "disease_risk_model.metrics.json"
+
+@app.get("/predict-risk/metrics")
+def prediction_metrics():
+    """
+    Returns the evaluation metrics (accuracy, precision, recall, F1, ROC-AUC)
+    computed during the last training run (python train_disease_model.py).
+    """
+    if not _METRICS_PATH.exists():
+        raise HTTPException(
+            404,
+            detail=(
+                "Metrics file not found. "
+                "Run: python train_disease_model.py  to generate it."
+            )
+        )
+    return _json.loads(_METRICS_PATH.read_text())
 
 
 # ══════════════════════════════════════════════════════════════════════════════

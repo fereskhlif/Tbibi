@@ -13,6 +13,7 @@ import { TreatmentPlanComponent } from './pages/treatment-plan/treatment-plan.co
 import { PatientEvaluationComponent } from './pages/patient-evaluation/patient-evaluation.component';
 // ✅ TherapySessionComponent remplacé par la version CRUD
 import { TherapySessionComponent } from './pages/therapy-session/therapy-session.component';
+import { PhysioManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
 
 @NgModule({
   declarations: [
@@ -23,6 +24,7 @@ import { TherapySessionComponent } from './pages/therapy-session/therapy-session
     TreatmentPlanComponent,
     PatientEvaluationComponent,
     TherapySessionComponent, // ✅ Même nom, même chemin — juste le contenu est remplacé
+    PhysioManageSchedulesComponent,
   ],
   imports: [
     CommonModule,

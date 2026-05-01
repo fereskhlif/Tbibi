@@ -12,6 +12,7 @@ import tn.esprit.pi.tbibi.entities.StatusAppointement;
 public class AppointmentResponse {
     private Long appointmentId;
     private Integer userId;
+    private Integer doctorId;
     private String patientName;
     private String doctor;
     private String service;

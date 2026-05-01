@@ -60,6 +60,15 @@ public class AppointementMapper implements IAppointementMapper {
                 builder.scheduleDate(appointment.getSchedule().getDate().toString());
             if (appointment.getSchedule().getStartTime() != null)
                 builder.scheduleTime(appointment.getSchedule().getStartTime().toString());
+            if (appointment.getSchedule().getDoctor() != null) {
+                tn.esprit.pi.tbibi.entities.User linkedDoctor = appointment.getSchedule().getDoctor();
+                builder.doctorId(linkedDoctor.getUserId());
+                // Override the stored doctor name string with the live profile name
+                // so name changes in the doctor's profile are always reflected.
+                if (linkedDoctor.getName() != null && !linkedDoctor.getName().isBlank()) {
+                    builder.doctor(linkedDoctor.getName());
+                }
+            }
         }
 
         return builder.build();

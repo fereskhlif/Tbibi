@@ -67,4 +67,12 @@ public interface UserRepo extends JpaRepository<User, Integer> {
         List<User> findDoctorsByNameContaining(@Param("pattern") String pattern);
 
         Optional<User> findByPharmacy_PharmacyId(Long pharmacyId);
+
+        /** Find all users with the PHYSIOTHERAPIST role */
+        @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE '%physio%'")
+        List<User> findAllPhysiotherapists();
+
+        /** Find all users with the LABORATORY role */
+        @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE '%lab%'")
+        List<User> findAllLaboratories();
 }

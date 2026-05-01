@@ -18,6 +18,7 @@ import { LabPrescriptionsComponent } from './pages/prescriptions/prescriptions.c
 import { LaboratoryResultListComponent } from './pages/laboratory-result-list/laboratory-result-list.component';
 import { MedicalPictureListComponent } from './pages/medical-picture-list/medical-picture-list.component';
 import { LabStatisticsComponent } from './pages/lab-statistics/lab-statistics.component';
+import { LabManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
 
 @NgModule({
   declarations: [
@@ -33,6 +34,7 @@ import { LabStatisticsComponent } from './pages/lab-statistics/lab-statistics.co
     LaboratoryResultListComponent,
     MedicalPictureListComponent,
     LabStatisticsComponent,
+    LabManageSchedulesComponent,
   ],
   imports: [
     CommonModule,

@@ -44,6 +44,7 @@ export interface VerificationRequest {
 export interface AppointmentResponse {
     appointmentId: number;
     userId: number;
+    doctorId?: number;
     patientName: string;
     doctor: string;
     service: string;
@@ -150,5 +151,33 @@ export class AppointmentService {
     /** Updates appointment reason/details */
     updateAppointment(appointmentId: number, req: Partial<AppointmentRequest>): Observable<AppointmentResponse> {
         return this.http.put<AppointmentResponse>(`${this.base}/appointement/${appointmentId}`, req);
+    }
+
+    /** Returns list of all physiotherapists */
+    getPhysiotherapists(): Observable<Doctor[]> {
+        return this.http.get<Doctor[]>(`${this.base}/appointement/api/public/physiotherapists`);
+    }
+
+    /** Returns list of all laboratories */
+    getLaboratories(): Observable<Doctor[]> {
+        return this.http.get<Doctor[]>(`${this.base}/appointement/api/public/laboratories`);
+    }
+
+    /** Books a physiotherapy session (no schedule slot) */
+    bookPhysio(req: {
+        patientId: number; physiotherapistId: number; therapyType: string;
+        reasonForVisit: string; preferredDate: string;
+        patientName: string; patientEmail: string; patientPhone: string;
+    }): Observable<AppointmentResponse> {
+        return this.http.post<AppointmentResponse>(`${this.base}/appointement/physio-booking`, req);
+    }
+
+    /** Books a laboratory analysis (no schedule slot) */
+    bookLab(req: {
+        patientId: number; laboratoryId: number; analysisType: string;
+        notes: string; preferredDate: string;
+        patientName: string; patientEmail: string; patientPhone: string;
+    }): Observable<AppointmentResponse> {
+        return this.http.post<AppointmentResponse>(`${this.base}/appointement/lab-booking`, req);
     }
 }

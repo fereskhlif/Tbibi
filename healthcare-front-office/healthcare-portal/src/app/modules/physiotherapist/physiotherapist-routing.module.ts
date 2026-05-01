@@ -7,6 +7,7 @@ import { PatientProgressComponent } from './pages/patient-progress/patient-progr
 import { TreatmentPlanComponent } from './pages/treatment-plan/treatment-plan.component';
 import { PatientEvaluationComponent } from './pages/patient-evaluation/patient-evaluation.component';
 import { TherapySessionComponent } from './pages/therapy-session/therapy-session.component';
+import { PhysioManageSchedulesComponent } from './pages/manage-schedules/manage-schedules.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -17,6 +18,7 @@ const routes: Routes = [
     { path: 'treatment-plan', component: TreatmentPlanComponent },
     { path: 'evaluation', component: PatientEvaluationComponent },
     { path: 'session', component: TherapySessionComponent },
+    { path: 'my-schedule', component: PhysioManageSchedulesComponent },
     {
         path: 'forum',
         loadChildren: () => import('../forum/forum.module').then(m => m.ForumModule),
