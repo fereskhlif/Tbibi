@@ -206,6 +206,15 @@ export class LaboratoryResultListComponent implements OnInit {
     });
   }
 
+  countByPriority(p: string): number {
+    return this.results.filter(r => (r.priority || 'Normal') === p).length;
+  }
+
+  countByStatusLab(s: string): number {
+    return this.results.filter(r => r.status === s).length;
+  }
+
+
   // ✅ NOUVEAU - Obtenir le nom du technicien connecté
   get currentTechnicianName(): string {
     return this.currentUser?.name || 'Loading...';

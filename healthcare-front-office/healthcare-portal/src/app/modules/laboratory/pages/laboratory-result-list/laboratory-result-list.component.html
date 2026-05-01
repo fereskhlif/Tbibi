@@ -1,50 +1,101 @@
-<div class="page-container">
+<div class="min-h-screen bg-gray-50 p-6 lg:p-8">
 
-  <!-- HEADER -->
-  <div class="page-header">
-    <div class="header-left">
-      <h1 class="page-title">Laboratory Results</h1>
-      <p class="page-subtitle">Review and manage laboratory test results</p>
-    </div>
-    <button class="btn-primary" (click)="openCreateForm()">+ New Result</button>
-  </div>
-
-  <!-- ALERTS -->
-  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
-  <div *ngIf="errorMessage && !showForm" class="alert alert-error">{{ errorMessage }}</div>
-
-  <!-- FILTER TABS -->
-  <div class="filter-tabs">
-    <button
-      *ngFor="let s of allStatuses"
-      class="filter-tab"
-      [class.active]="activeStatus === s"
-      (click)="filterByStatus(s)">
-      {{ s }}
-    </button>
-  </div>
-
-  <!-- ✅ NOUVEAU - FILTRES DE PRIORITÉ -->
-  <div class="filter-section">
-    <div class="filter-group">
-      <label class="filter-label">🎯 Priority:</label>
-      <div class="filter-tabs priority-tabs">
-        <button
-          *ngFor="let p of allPriorities"
-          class="filter-tab"
-          [class.active]="activePriority === p"
-          (click)="filterByPriority(p)">
-          {{ p }}
-        </button>
+  <!-- ── Header ────────────────────────────────────────────────────────────── -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div class="flex items-center gap-4">
+      <div
+        style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(16,185,129,.35);flex-shrink:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="white"
+          style="width:26px;height:26px;">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0018 4.5H6.75A2.25 2.25 0 004.5 6.75v10.5A2.25 2.25 0 006.75 19.5h3.75M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0018 4.5H6.75A2.25 2.25 0 004.5 6.75v10.5A2.25 2.25 0 006.75 19.5h3.75" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Laboratory Results</h1>
+        <p class="text-sm text-gray-500 mt-0.5">
+          {{results.length}} total record(s) •
+          <span class="text-emerald-600 font-medium">Diagnostic Management</span>
+        </p>
       </div>
     </div>
-    
-    <button 
-      class="btn-urgent-toggle" 
-      [class.active]="showUrgentOnly"
-      (click)="toggleUrgentOnly()">
-      🚨 {{ showUrgentOnly ? 'Show All' : 'Urgent Only' }}
-    </button>
+    <div class="flex items-center gap-3">
+      <button (click)="loadAll()"
+        class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-bold text-sm transition-all shadow-sm flex items-center gap-2">
+        🔄 Refresh
+      </button>
+      <button (click)="openCreateForm()"
+        style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 12px rgba(16,185,129,.3);"
+        class="px-5 py-2.5 text-white rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+        + New Result
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Summary Cards ─────────────────────────────────────────────────────── -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div (click)="activePriority = 'All'"
+      class="bg-white rounded-2xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg"
+      [style.border-color]="activePriority === 'All' ? '#10b981' : '#f1f5f9'"
+      [style.background]="activePriority === 'All' ? '#f0fdf4' : 'white'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-2xl">🧪</span>
+        <span class="text-3xl font-black text-emerald-600">{{results.length}}</span>
+      </div>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Results</p>
+    </div>
+
+    <div (click)="activePriority = 'Critical'"
+      class="bg-white rounded-2xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg"
+      [style.border-color]="activePriority === 'Critical' ? '#ef4444' : '#f1f5f9'"
+      [style.background]="activePriority === 'Critical' ? '#fef2f2' : 'white'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-2xl">🔴</span>
+        <span class="text-3xl font-black text-red-600">{{countByPriority('Critical')}}</span>
+      </div>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Critical</p>
+    </div>
+
+    <div (click)="activePriority = 'Urgent'"
+      class="bg-white rounded-2xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg"
+      [style.border-color]="activePriority === 'Urgent' ? '#f59e0b' : '#f1f5f9'"
+      [style.background]="activePriority === 'Urgent' ? '#fffbeb' : 'white'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-2xl">🟠</span>
+        <span class="text-3xl font-black text-amber-600">{{countByPriority('Urgent')}}</span>
+      </div>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Urgent</p>
+    </div>
+
+    <div (click)="activeStatus = 'Pending'"
+      class="bg-white rounded-2xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg"
+      [style.border-color]="activeStatus === 'Pending' ? '#3b82f6' : '#f1f5f9'"
+      [style.background]="activeStatus === 'Pending' ? '#eff6ff' : 'white'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-2xl">⏳</span>
+        <span class="text-3xl font-black text-blue-600">{{countByStatusLab('Pending')}}</span>
+      </div>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Pending</p>
+    </div>
+  </div>
+
+  <!-- ── Filters Section ────────────────────────────────────────────────────── -->
+  <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <button *ngFor="let s of allStatuses" (click)="activeStatus = s"
+        class="px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+        [class]="activeStatus === s ? 'bg-gray-900 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'">
+        {{s}}
+      </button>
+    </div>
+    <div class="flex items-center gap-3">
+      <button 
+        class="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all border-2" 
+        [class]="showUrgentOnly ? 'border-red-500 bg-red-50 text-red-600 shadow-sm' : 'border-gray-200 bg-white text-gray-400'"
+        (click)="toggleUrgentOnly()">
+        🚨 {{ showUrgentOnly ? 'Urgent Only Active' : 'Show All Priorities' }}
+      </button>
+    </div>
   </div>
 
   <!-- SEARCH -->

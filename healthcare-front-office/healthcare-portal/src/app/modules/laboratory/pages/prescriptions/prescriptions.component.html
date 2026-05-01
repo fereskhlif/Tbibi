@@ -1,185 +1,303 @@
 <div class="min-h-screen bg-gray-50 p-6 lg:p-8">
-
-  <!-- Header -->
+  
+  <!-- ── Header ────────────────────────────────────────────────────────────── -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-    <div>
-      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Prescriptions d'Analyses</h1>
-      <p class="text-sm text-gray-500 mt-0.5">
-        {{prescriptions.length}} prescription(s) reçue(s) •
-        <span class="text-cyan-600 font-medium">Portail Laboratoire</span>
-      </p>
+    <div class="flex items-center gap-4">
+      <div
+        style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#0ea5e9,#2563eb);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(37,99,235,.35);flex-shrink:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="white"
+          style="width:26px;height:26px;">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Analysis Prescriptions</h1>
+        <p class="text-sm text-gray-500 mt-0.5">
+          {{prescriptions.length}} total request(s) •
+          <span class="text-blue-600 font-medium">Laboratory Portal</span>
+        </p>
+      </div>
     </div>
-    <button (click)="load()"
-      class="px-4 py-2.5 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 font-semibold text-sm transition-colors shadow-sm flex items-center gap-2">
-      🔄 Actualiser
-    </button>
+    <div class="flex items-center gap-3">
+      <button (click)="load()"
+        class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-bold text-sm transition-all shadow-sm flex items-center gap-2">
+        🔄 Refresh
+      </button>
+    </div>
   </div>
 
-  <!-- Filter tabs by analysis type -->
-  <div class="flex gap-2 flex-wrap mb-6">
+  <!-- ── Summary Cards ─────────────────────────────────────────────────────── -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div (click)="activeStatusFilter = 'ALL'"
+      class="bg-white rounded-2xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg"
+      [style.border-color]="activeStatusFilter === 'ALL' ? '#3b82f6' : '#f1f5f9'"
+      [style.background]="activeStatusFilter === 'ALL' ? '#eff6ff' : 'white'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-2xl">📋</span>
+        <span class="text-3xl font-black text-blue-600">{{prescriptions.length}}</span>
+      </div>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Orders</p>
+    </div>
+
+    <div (click)="activeStatusFilter = 'PENDING'"
+      class="bg-white rounded-2xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg"
+      [style.border-color]="activeStatusFilter === 'PENDING' ? STATUS_META['PENDING'].color : '#f1f5f9'"
+      [style.background]="activeStatusFilter === 'PENDING' ? STATUS_META['PENDING'].bg : 'white'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-2xl">{{STATUS_META['PENDING'].icon}}</span>
+        <span class="text-3xl font-black" [style.color]="STATUS_META['PENDING'].color">
+          {{countByStatus('PENDING')}}
+        </span>
+      </div>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">To Process</p>
+    </div>
+
+    <div (click)="activeStatusFilter = 'VALIDATED'"
+      class="bg-white rounded-2xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg"
+      [style.border-color]="activeStatusFilter === 'VALIDATED' ? STATUS_META['VALIDATED'].color : '#f1f5f9'"
+      [style.background]="activeStatusFilter === 'VALIDATED' ? STATUS_META['VALIDATED'].bg : 'white'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-2xl">{{STATUS_META['VALIDATED'].icon}}</span>
+        <span class="text-3xl font-black" [style.color]="STATUS_META['VALIDATED'].color">
+          {{countByStatus('VALIDATED')}}
+        </span>
+      </div>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Processing</p>
+    </div>
+
+    <div (click)="activeStatusFilter = 'COMPLETED'"
+      class="bg-white rounded-2xl border-2 p-5 cursor-pointer transition-all hover:shadow-lg"
+      [style.border-color]="activeStatusFilter === 'COMPLETED' ? STATUS_META['COMPLETED'].color : '#f1f5f9'"
+      [style.background]="activeStatusFilter === 'COMPLETED' ? STATUS_META['COMPLETED'].bg : 'white'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-2xl">{{STATUS_META['COMPLETED'].icon}}</span>
+        <span class="text-3xl font-black" [style.color]="STATUS_META['COMPLETED'].color">
+          {{countByStatus('COMPLETED')}}
+        </span>
+      </div>
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Completed</p>
+    </div>
+  </div>
+
+  <!-- ── Category Tabs ──────────────────────────────────────────────────────── -->
+  <div class="flex gap-2 flex-wrap mb-8 pb-2 border-b border-gray-200">
     <button (click)="activeTypeFilter = 'ALL'"
-      [class]="'px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ' +
-               (activeTypeFilter === 'ALL' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50')">
-      Tous ({{prescriptions.length}})
+      class="px-4 py-2 text-sm font-bold transition-all relative"
+      [class.text-blue-600]="activeTypeFilter === 'ALL'"
+      [class.text-gray-400]="activeTypeFilter !== 'ALL'">
+      All Categories
+      <div *ngIf="activeTypeFilter === 'ALL'" class="absolute bottom-[-9px] left-0 right-0 h-1 bg-blue-600 rounded-full"></div>
     </button>
     <button *ngFor="let key of analysisTypeKeys"
       (click)="activeTypeFilter = (activeTypeFilter === key ? 'ALL' : key)"
-      [style.background]="activeTypeFilter === key ? ANALYSIS_TYPE_META[key].color : 'white'"
-      [style.color]="activeTypeFilter === key ? 'white' : '#4b5563'"
-      [style.border-color]="activeTypeFilter === key ? ANALYSIS_TYPE_META[key].color : '#e5e7eb'"
-      class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors hover:opacity-90">
-      {{ANALYSIS_TYPE_META[key].icon}} {{ANALYSIS_TYPE_META[key].label}} ({{countByType(key)}})
+      class="px-4 py-2 text-sm font-bold transition-all relative"
+      [class.text-blue-600]="activeTypeFilter === key"
+      [class.text-gray-400]="activeTypeFilter !== key">
+      {{ANALYSIS_TYPE_META[key].icon}} {{ANALYSIS_TYPE_META[key].label}}
+      <div *ngIf="activeTypeFilter === key" class="absolute bottom-[-9px] left-0 right-0 h-1 bg-blue-600 rounded-full"></div>
     </button>
   </div>
 
-  <!-- Status filter chips -->
-  <div class="flex gap-2 flex-wrap mb-6">
-    <button (click)="activeStatusFilter = 'ALL'"
-      [class]="'px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ' +
-               (activeStatusFilter === 'ALL' ? 'bg-cyan-700 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50')">
-      Tous les statuts
-    </button>
-    <button *ngFor="let s of statusKeys"
-      (click)="activeStatusFilter = (activeStatusFilter === s ? 'ALL' : s)"
-      [style.background]="activeStatusFilter === s ? STATUS_META[s].color : 'white'"
-      [style.color]="activeStatusFilter === s ? 'white' : '#4b5563'"
-      [style.border-color]="activeStatusFilter === s ? STATUS_META[s].color : '#e5e7eb'"
-      class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors">
-      {{STATUS_META[s].icon}} {{STATUS_META[s].label}} ({{countByStatus(s)}})
-    </button>
-  </div>
-
+  <!-- ── List Section ───────────────────────────────────────────────────────── -->
+  
   <!-- Loading -->
   <div *ngIf="loading" class="space-y-4">
-    <div *ngFor="let i of [1,2,3]" class="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-      <div class="flex gap-4">
-        <div class="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0"></div>
-        <div class="flex-1 space-y-2">
-          <div class="h-4 w-2/5 rounded bg-gray-200"></div>
-          <div class="h-3 w-3/5 rounded bg-gray-200"></div>
-          <div class="h-3 w-1/4 rounded bg-gray-200"></div>
+    <div *ngFor="let i of [1,2,3]" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+      <div class="flex gap-4 animate-pulse">
+        <div class="w-14 h-14 rounded-xl bg-gray-200"></div>
+        <div class="flex-1 space-y-3">
+          <div class="h-4 w-1/4 rounded bg-gray-200"></div>
+          <div class="h-3 w-3/4 rounded bg-gray-200"></div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Error -->
-  <div *ngIf="error && !loading" class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4 text-sm">
-    ⚠️ {{error}}
-    <button (click)="load(); error=''" class="ml-2 underline">Réessayer</button>
+  <div *ngIf="error && !loading" 
+    class="bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl p-5 mb-6 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-3">
+      <span class="text-xl">⚠️</span>
+      <span class="font-bold">{{error}}</span>
+    </div>
+    <button (click)="load(); error=''" class="px-4 py-2 bg-red-100 rounded-lg hover:bg-red-200 transition-colors font-bold text-xs uppercase tracking-wider">Retry</button>
   </div>
 
   <!-- Empty state -->
   <div *ngIf="!loading && !error && filtered.length === 0"
-    class="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
-    <p class="text-4xl mb-3">🔬</p>
-    <p class="text-gray-500 font-medium">Aucune prescription d'analyse reçue</p>
-    <p class="text-gray-400 text-sm mt-1">Les prescriptions d'analyse des patients apparaîtront ici.</p>
-  </div>
-
-  <!-- Prescription cards -->
-  <div class="space-y-4" *ngIf="!loading">
-    <div *ngFor="let rx of filtered; let i = index"
-      class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-
-      <!-- Card header -->
-      <div class="p-5 flex items-start gap-4 cursor-pointer" (click)="rx.expanded = !rx.expanded">
-
-        <!-- Analysis type icon -->
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl"
-          [style.background]="getAnalysisMeta(rx).bg">
-          {{getAnalysisMeta(rx).icon}}
-        </div>
-
-        <div class="flex-1 min-w-0">
-          <!-- Title row -->
-          <div class="flex flex-wrap items-center gap-2 mb-1">
-            <h3 class="font-bold text-gray-900">Prescription #{{rx.prescriptionID}}</h3>
-            <!-- Analysis type badge -->
-            <span class="px-2.5 py-0.5 text-xs rounded-full font-semibold text-white"
-              [style.background]="getAnalysisMeta(rx).color">
-              {{getAnalysisMeta(rx).icon}} {{getAnalysisMeta(rx).label}}
-            </span>
-            <!-- Status badge -->
-            <span class="px-2.5 py-0.5 text-xs rounded-full font-semibold"
-              [style.background]="STATUS_META[rx.status]?.bg"
-              [style.color]="STATUS_META[rx.status]?.color"
-              [style.border]="'1px solid ' + (STATUS_META[rx.status]?.border ?? '#e5e7eb')">
-              {{STATUS_META[rx.status]?.icon}} {{STATUS_META[rx.status]?.label}}
-            </span>
-          </div>
-
-          <!-- Note -->
-          <p class="text-sm text-gray-600 truncate mb-1.5">{{rx.note || '—'}}</p>
-
-          <!-- Meta row -->
-          <div class="flex flex-wrap gap-3 text-xs text-gray-400">
-            <span>📅 {{rx.date | date: 'dd MMM yyyy'}}</span>
-            <span *ngIf="rx.patientName" class="text-emerald-600 font-medium">👤 {{rx.patientName}}</span>
-            <span *ngIf="!rx.patientName" class="text-orange-400">⚠️ Patient inconnu</span>
-            <span *ngIf="rx.doctorName" class="text-blue-600 font-medium">🩺 Dr. {{rx.doctorName}}</span>
-          </div>
-        </div>
-
-        <!-- Chevron -->
-        <div class="text-gray-400 transition-transform duration-200 mt-1 flex-shrink-0"
-          [class.rotate-180]="rx.expanded">▾</div>
-      </div>
-
-      <!-- Expanded detail panel -->
-      <div *ngIf="rx.expanded" class="border-t border-gray-100 bg-gray-50">
-
-        <!-- Prescription full detail block (inspired by reference image) -->
-        <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          <!-- Doctor info -->
-          <div class="bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100 rounded-xl p-4">
-            <p class="text-xs font-bold text-cyan-500 uppercase tracking-wider mb-2">Prescripteur</p>
-            <p class="font-bold text-gray-900">{{rx.doctorName || 'Médecin inconnu'}}</p>
-            <p class="text-xs text-gray-500 mt-0.5">Date : {{rx.date | date: 'dd/MM/yyyy'}}</p>
-          </div>
-
-          <!-- Patient info -->
-          <div class="bg-gray-100 border border-gray-200 rounded-xl p-4">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Patient</p>
-            <p class="font-bold text-gray-900">{{rx.patientName || 'Patient inconnu'}}</p>
-            <p class="text-xs text-gray-500 mt-0.5">ID: {{rx.patientId || '—'}}</p>
-          </div>
-
-          <!-- Note du médecin -->
-          <div class="md:col-span-2 bg-amber-50 border border-amber-100 rounded-xl p-4">
-            <p class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">📋 Note du médecin</p>
-            <p class="text-sm text-gray-800 leading-relaxed">{{rx.note || 'Aucune note.'}}</p>
-          </div>
-        </div>
-
-        <!-- Action buttons -->
-        <div class="px-5 py-3 border-t border-gray-100 flex flex-wrap gap-2">
-          <button *ngIf="rx.status === 'PENDING'"
-            (click)="updateStatus(rx, 'VALIDATED', $event)"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors flex items-center gap-1.5">
-            ✅ Valider &amp; Préparer
-          </button>
-          <button *ngIf="rx.status === 'VALIDATED'"
-            (click)="updateStatus(rx, 'COMPLETED', $event)"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors flex items-center gap-1.5">
-            🎉 Marquer comme Terminé
-          </button>
-          <button *ngIf="rx.status !== 'CANCELLED' && rx.status !== 'COMPLETED'"
-            (click)="updateStatus(rx, 'CANCELLED', $event)"
-            class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors flex items-center gap-1.5">
-            ❌ Refuser
-          </button>
-          <span *ngIf="rx.status === 'COMPLETED'"
-            class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold flex items-center gap-1.5">
-            🎉 Analyse terminée
-          </span>
-          <span *ngIf="rx.status === 'CANCELLED'"
-            class="px-4 py-2 bg-red-100 text-red-600 rounded-lg text-xs font-bold flex items-center gap-1.5">
-            ❌ Refusée
-          </span>
-        </div>
-      </div>
+    class="bg-white rounded-3xl border-2 border-dashed border-gray-200 p-16 text-center shadow-sm">
+    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+      <span class="text-5xl">🔬</span>
     </div>
+    <h3 class="text-xl font-black text-gray-900 mb-2">No Analysis Prescriptions</h3>
+    <p class="text-gray-500 max-w-sm mx-auto">New analysis requests from doctors will appear here for processing.</p>
   </div>
+
+  <!-- ── List Section (Table) ────────────────────────────────────────────── -->
+  <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden" *ngIf="!loading && filtered.length > 0">
+    <table class="w-full text-left border-collapse">
+      <thead class="bg-gray-50/80 border-b border-gray-100">
+        <tr>
+          <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Prescription</th>
+          <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Patient</th>
+          <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Analysis Type</th>
+          <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
+          <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
+          <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        <ng-container *ngFor="let rx of filtered; let i = index">
+          <!-- Main Row -->
+          <tr class="hover:bg-blue-50/30 transition-colors cursor-pointer group" (click)="rx.expanded = !rx.expanded">
+            <td class="px-6 py-5">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg shadow-sm"
+                  [style.background]="getAnalysisMeta(rx).bg"
+                  [style.color]="getAnalysisMeta(rx).color">
+                  {{getAnalysisMeta(rx).icon}}
+                </div>
+                <span class="font-black text-gray-900 tracking-tight text-sm">#{{rx.prescriptionID}}</span>
+              </div>
+            </td>
+            <td class="px-6 py-5">
+              <div class="flex flex-col">
+                <span class="text-sm font-bold text-gray-800">{{rx.patientName || 'Unknown Patient'}}</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">ID: {{rx.patientId || 'N/A'}}</span>
+              </div>
+            </td>
+            <td class="px-6 py-5">
+              <span class="px-3 py-1 text-[10px] rounded-full font-black uppercase tracking-widest text-white shadow-sm inline-block"
+                [style.background]="getAnalysisMeta(rx).color">
+                {{getAnalysisMeta(rx).label}}
+              </span>
+            </td>
+            <td class="px-6 py-5">
+              <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
+                📅 {{rx.date | date: 'dd MMM yyyy'}}
+              </div>
+            </td>
+            <td class="px-6 py-5 text-center">
+              <span class="px-3 py-1 text-[10px] rounded-full font-black uppercase tracking-widest shadow-sm inline-block"
+                [style.background]="STATUS_META[rx.status]?.bg"
+                [style.color]="STATUS_META[rx.status]?.color">
+                {{STATUS_META[rx.status]?.icon}} {{STATUS_META[rx.status]?.label}}
+              </span>
+            </td>
+            <td class="px-6 py-5 text-right">
+              <button class="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:border-blue-200 group-hover:text-blue-500 transition-all shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-300" [class.rotate-180]="rx.expanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+
+          <!-- Expandable Detail Row -->
+          <tr *ngIf="rx.expanded" class="bg-gray-50/50">
+            <td colspan="6" class="p-0">
+              <div class="p-8 border-t border-gray-100 overflow-hidden" style="animation: slideDown 0.3s ease;">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  
+                  <!-- Left: Clinical Details -->
+                  <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                       <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                       <div class="flex items-center justify-between mb-4">
+                         <h4 class="text-xs font-black text-blue-500 uppercase tracking-widest">Clinical Analysis Context</h4>
+                         <span class="text-[10px] font-bold text-gray-400">Request from Dr. {{rx.doctorName || 'Unknown'}}</span>
+                       </div>
+                       <p class="text-gray-800 leading-relaxed font-medium text-sm bg-gray-50/50 p-4 rounded-xl border border-dashed border-gray-200">
+                         {{rx.note || 'No detailed clinical notes provided for this analysis request.'}}
+                       </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                       <div class="flex items-center justify-between mb-4">
+                         <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest">Fulfillment Pipeline</h4>
+                         <span class="text-xs font-bold" [style.color]="STATUS_META[rx.status]?.color">
+                           Status: {{STATUS_META[rx.status]?.label}}
+                         </span>
+                       </div>
+                       <div class="flex items-center gap-3">
+                         <div class="h-2.5 flex-1 rounded-full bg-gray-100 overflow-hidden shadow-inner">
+                            <div class="h-full rounded-full transition-all duration-1000 shadow-sm" 
+                              [style.width]="rx.status === 'PENDING' ? '25%' : (rx.status === 'VALIDATED' ? '65%' : '100%')"
+                              [style.background]="'linear-gradient(90deg, ' + STATUS_META[rx.status]?.color + ', #60a5fa)'"></div>
+                         </div>
+                         <span class="text-xs font-black text-gray-600">
+                           {{rx.status === 'PENDING' ? '25%' : (rx.status === 'VALIDATED' ? '65%' : '100%')}}
+                         </span>
+                       </div>
+                    </div>
+                  </div>
+
+                  <!-- Right: Control Panel -->
+                  <div class="flex flex-col gap-4">
+                     <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 px-1 flex items-center gap-2">
+                       <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Management Suite
+                     </h4>
+                     
+                     <button *ngIf="rx.status === 'PENDING'"
+                        (click)="updateStatus(rx, 'VALIDATED', $event)"
+                        class="group w-full p-4 bg-white border-2 border-blue-100 rounded-2xl flex items-center justify-between hover:border-blue-500 hover:bg-blue-50 transition-all shadow-sm">
+                        <div class="flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">✅</div>
+                          <div class="text-left">
+                            <p class="text-sm font-black text-blue-600 tracking-tight">Validate & Accept</p>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Mark as lab-ready</p>
+                          </div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                     </button>
+
+                     <button *ngIf="rx.status === 'VALIDATED'"
+                        (click)="updateStatus(rx, 'COMPLETED', $event)"
+                        class="group w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl flex items-center justify-between hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm">
+                        <div class="flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🎉</div>
+                          <div class="text-left">
+                            <p class="text-sm font-black text-emerald-600 tracking-tight">Finalize Analysis</p>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Publish results</p>
+                          </div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                     </button>
+
+                     <button *ngIf="rx.status !== 'CANCELLED' && rx.status !== 'COMPLETED'"
+                        (click)="updateStatus(rx, 'CANCELLED', $event)"
+                        class="w-full p-3 bg-white border border-red-100 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-50 hover:border-red-200 transition-all text-red-500 shadow-sm">
+                        <span class="text-sm font-black uppercase tracking-widest">Decline Order</span>
+                     </button>
+
+                     <!-- Final Status Banners -->
+                     <div *ngIf="rx.status === 'COMPLETED'" 
+                        class="p-5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center gap-4 text-white shadow-lg border-b-4 border-emerald-700">
+                        <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">🏆</div>
+                        <div>
+                          <p class="text-sm font-black uppercase tracking-tight">Analysis Archive</p>
+                          <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest">Transaction secured</p>
+                        </div>
+                     </div>
+
+                     <div *ngIf="rx.status === 'CANCELLED'" 
+                        class="p-5 bg-gray-100 rounded-2xl flex items-center gap-4 text-gray-500 shadow-inner border border-gray-200">
+                        <div class="w-12 h-12 rounded-xl bg-gray-200 flex items-center justify-center text-2xl text-gray-400">🚫</div>
+                        <div>
+                          <p class="text-sm font-black uppercase tracking-tight">Rejected</p>
+                          <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">Process terminated</p>
+                        </div>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
 </div>
+

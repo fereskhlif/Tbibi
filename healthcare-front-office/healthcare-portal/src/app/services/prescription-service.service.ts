@@ -88,11 +88,11 @@ export const STATUS_META: Record<PrescriptionStatus, {
   border: string;
   step: number;
 }> = {
-  PENDING:   { label: 'En attente',  icon: '⏳', color: '#f59e0b', bg: '#fef3c7', border: '#fde68a', step: 0 },
-  VALIDATED: { label: 'Validée',     icon: '✅', color: '#3b82f6', bg: '#dbeafe', border: '#bfdbfe', step: 1 },
-  DISPENSED: { label: 'Délivrée',    icon: '💊', color: '#8b5cf6', bg: '#ede9fe', border: '#ddd6fe', step: 2 },
-  COMPLETED: { label: 'Terminée',    icon: '🎉', color: '#10b981', bg: '#d1fae5', border: '#a7f3d0', step: 3 },
-  CANCELLED: { label: 'Annulée',     icon: '❌', color: '#ef4444', bg: '#fee2e2', border: '#fecaca', step: -1 },
+  PENDING:   { label: 'Pending',    icon: '⏳', color: '#f59e0b', bg: '#fef3c7', border: '#fde68a', step: 0 },
+  VALIDATED: { label: 'Validated',  icon: '✅', color: '#3b82f6', bg: '#dbeafe', border: '#bfdbfe', step: 1 },
+  DISPENSED: { label: 'Dispensed',  icon: '💊', color: '#8b5cf6', bg: '#ede9fe', border: '#ddd6fe', step: 2 },
+  COMPLETED: { label: 'Completed',  icon: '🎉', color: '#10b981', bg: '#d1fae5', border: '#a7f3d0', step: 3 },
+  CANCELLED: { label: 'Cancelled',  icon: '❌', color: '#ef4444', bg: '#fee2e2', border: '#fecaca', step: -1 },
 };
 
 @Injectable({ providedIn: 'root' })
