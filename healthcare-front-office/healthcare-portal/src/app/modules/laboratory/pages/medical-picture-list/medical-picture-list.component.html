@@ -169,6 +169,16 @@
           
           <!-- Actions -->
           <td class="actions">
+            <button class="btn-action ai" (click)="onAnalyzeWithAI(a.picId)" title="Analyze with AI">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </button>
             <button class="btn-action" (click)="openEditForm(a)" title="Edit">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -275,6 +285,14 @@
 
       <!-- Card Footer -->
       <div class="card-footer">
+        <button class="btn-card-action ai" (click)="onAnalyzeWithAI(a.picId)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          Analyze with AI
+        </button>
         <button class="btn-card-action" (click)="openEditForm(a)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -293,6 +311,90 @@
     </div>
   </div>
 
+</div>
+
+<!-- Modal AI Results -->
+<div class="modal-overlay" *ngIf="showAiResultModal" (click)="closeAiResultModal()">
+  <div class="ai-result-modal" (click)="$event.stopPropagation()">
+    
+    <div class="modal-header">
+      <h2>🤖 Résultat de l'Analyse IA</h2>
+      <button class="btn-close" (click)="closeAiResultModal()">×</button>
+    </div>
+
+    <div class="modal-body" *ngIf="aiResult">
+      
+      <!-- Prédiction principale -->
+      <div class="prediction-result" [ngClass]="getPredictionClass(aiResult.prediction)">
+        <div class="prediction-icon">
+          <span *ngIf="aiResult.prediction === 'fracture'">⚠️</span>
+          <span *ngIf="aiResult.prediction === 'no_fracture'">✅</span>
+        </div>
+        <div class="prediction-text">
+          <h3>{{ aiResult.message }}</h3>
+          <p class="confidence-label">Confiance: {{ (aiResult.confidence * 100).toFixed(1) }}%</p>
+        </div>
+      </div>
+
+      <!-- Niveau de confiance -->
+      <div class="confidence-indicator" [ngClass]="getConfidenceClass(aiResult.confidence_level)">
+        <div class="confidence-bar">
+          <div class="confidence-fill" [style.width.%]="aiResult.confidence * 100"></div>
+        </div>
+        <span class="confidence-text">
+          <span *ngIf="aiResult.confidence_level === 'high'">🟢 Haute confiance</span>
+          <span *ngIf="aiResult.confidence_level === 'medium'">🟡 Confiance moyenne</span>
+          <span *ngIf="aiResult.confidence_level === 'low'">🔴 Confiance faible</span>
+        </span>
+      </div>
+
+      <!-- Warning si confiance faible -->
+      <div class="warning-box" *ngIf="aiResult.warning">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <p>{{ aiResult.warning }}</p>
+      </div>
+
+      <!-- Probabilités détaillées -->
+      <div class="probabilities-section">
+        <h4>Probabilités détaillées</h4>
+        <div class="probability-item">
+          <div class="prob-label">
+            <span class="prob-icon fracture">🔴</span>
+            <span>Fracture</span>
+          </div>
+          <div class="prob-bar-container">
+            <div class="prob-bar fracture" [style.width.%]="aiResult.probabilities.fracture * 100"></div>
+          </div>
+          <span class="prob-value">{{ (aiResult.probabilities.fracture * 100).toFixed(1) }}%</span>
+        </div>
+        <div class="probability-item">
+          <div class="prob-label">
+            <span class="prob-icon normal">🟢</span>
+            <span>Normal</span>
+          </div>
+          <div class="prob-bar-container">
+            <div class="prob-bar normal" [style.width.%]="aiResult.probabilities.no_fracture * 100"></div>
+          </div>
+          <span class="prob-value">{{ (aiResult.probabilities.no_fracture * 100).toFixed(1) }}%</span>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="info-box">
+        <p>ℹ️ Cette analyse a été effectuée par un modèle d'intelligence artificielle EfficientNet-B0 entraîné sur des radiographies médicales. Les résultats doivent être validés par un professionnel de santé.</p>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-primary" (click)="closeAiResultModal()">OK</button>
+    </div>
+
+  </div>
 </div>
 
 <!-- Modal Form -->
@@ -316,8 +418,13 @@
           <h3>Basic Information</h3>
           <div class="form-row">
             <div class="form-group">
-              <label>Lab Result ID *</label>
-              <input type="number" [(ngModel)]="formData.laboratoryResultId" name="labId" placeholder="Enter ID" />
+              <label>Lab Result *</label>
+              <select [(ngModel)]="formData.laboratoryResultId" name="labId" required>
+                <option [value]="null">Select a lab result</option>
+                <option *ngFor="let lab of labResults" [value]="lab.labId">
+                  {{ lab.testName }} - {{ lab.nameLabo }} ({{ lab.status }})
+                </option>
+              </select>
             </div>
             <div class="form-group">
               <label>Category</label>

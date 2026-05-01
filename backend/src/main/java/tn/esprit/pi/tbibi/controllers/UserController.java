@@ -95,6 +95,31 @@ public class UserController {
         return ResponseEntity.ok(dto2);
     }
 
+    // ✅ NOUVEAU - Get user by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<UserProfileDTO> getUserById(@PathVariable Integer id) {
+        log.info("=== GET USER BY ID: {} ===", id);
+        
+        User user = userRepository.findById(id).orElse(null);
+        
+        if (user == null) {
+            log.warn("User with ID {} not found", id);
+            return ResponseEntity.status(404).build();
+        }
+
+        UserProfileDTO dto = new UserProfileDTO(
+                user.getUserId(),
+                user.getName(),
+                user.getEmail(),
+                user.getAdresse(),
+                user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null,
+                user.getGender(),
+                user.getProfilePicture(),
+                user.getRole() != null ? user.getRole().getRoleName() : null);
+
+        return ResponseEntity.ok(dto);
+    }
+
     @PostMapping(value = "/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserProfileDTO> uploadProfilePicture(
             @AuthenticationPrincipal UserDetails userDetails,
