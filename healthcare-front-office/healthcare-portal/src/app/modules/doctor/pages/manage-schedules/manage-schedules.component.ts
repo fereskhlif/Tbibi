@@ -349,7 +349,7 @@ export class ManageSchedulesComponent implements OnInit {
   excLoading = false;
   exceptions: DoctorExceptionResponse[] = [];
 
-  private readonly base = 'http://localhost:8088';
+  private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net';
   get doctorId(): number { return Number(localStorage.getItem('userId') || 0); }
 
   constructor(

@@ -17,7 +17,7 @@ export interface UserProfileDTO {
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = 'http://localhost:8088/api/user';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/user';
 
   constructor(private http: HttpClient) { }
 

@@ -68,7 +68,7 @@ export class LaboratoryResultListComponent implements OnInit {
     requestNotes: '' as string // ✅ NOUVEAU
   };
 
-  private apiUrl = 'http://localhost:8088/api';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
 
   constructor(
     private service: LaboratoryResultService,

@@ -53,8 +53,8 @@ export class AiImageAnalysisComponent implements OnInit {
   selectedCategory = 'All';
   activeTab: 'analyses' | 'statistics' = 'analyses';
   
-  private apiUrl = 'http://localhost:8088/api';
-  private imageBaseUrl = 'http://localhost:8088/uploads/medical-pictures/';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
+  private imageBaseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/uploads/medical-pictures/';
 
   categoryOptions = ['All', 'Radio', 'Scanner', 'IRM', 'Echographie'];
 

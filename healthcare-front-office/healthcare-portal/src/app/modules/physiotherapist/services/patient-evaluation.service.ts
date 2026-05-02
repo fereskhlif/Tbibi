@@ -7,7 +7,7 @@ import { PatientEvaluation, PatientEvaluationRequest } from '../models/patient-e
   providedIn: 'root'
 })
 export class PatientEvaluationService {
-  private apiUrl = 'http://localhost:8088/api/patient-evaluation';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/patient-evaluation';
 
   constructor(private http: HttpClient) {}
 

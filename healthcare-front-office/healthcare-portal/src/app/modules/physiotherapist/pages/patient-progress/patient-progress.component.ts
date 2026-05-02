@@ -37,7 +37,7 @@ export class PatientProgressComponent implements OnInit {
   selectedPatient: PatientProgress | null = null;
   showDetailModal: boolean = false;
 
-  private apiUrl = 'http://localhost:8088/api/therapy-session';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/therapy-session';
 
   constructor(private http: HttpClient) {}
 

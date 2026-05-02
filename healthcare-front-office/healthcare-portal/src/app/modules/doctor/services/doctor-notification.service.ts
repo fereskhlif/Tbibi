@@ -24,7 +24,7 @@ export interface NotificationDTO {
 @Injectable({ providedIn: 'root' })
 export class DoctorNotificationService {
     // Fixed: backend path is /api/notifications
-    private readonly base = 'http://localhost:8088/api/notifications';
+    private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/notifications';
 
     /** Emits a signal (true) whenever a new WS notification arrives */
     newNotification$ = new BehaviorSubject<NotificationDTO | null>(null);

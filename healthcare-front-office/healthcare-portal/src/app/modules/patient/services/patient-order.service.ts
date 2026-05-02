@@ -5,7 +5,7 @@ import { OrderRequest, OrderResponse } from '../models/order.model';
 
 @Injectable({ providedIn: 'root' })
 export class PatientOrderService {
-    private apiUrl = 'http://localhost:8088/api/orders';
+    private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/orders';
 
     constructor(private http: HttpClient) { }
 

@@ -14,7 +14,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class ForumService {
-  private apiUrl = 'http://localhost:8088/api/forum';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/forum';
 
   constructor(private http: HttpClient) { }
 

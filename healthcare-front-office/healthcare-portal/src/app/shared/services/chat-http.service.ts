@@ -20,8 +20,8 @@ export interface UserProfile {
 })
 export class ChatHttpService {
 
-  private readonly baseUrl = 'http://localhost:8088/medical-chat';
-  private readonly usersBaseUrl = 'http://localhost:8088/users';
+  private readonly baseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/medical-chat';
+  private readonly usersBaseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/users';
 
   constructor(private http: HttpClient) { }
 

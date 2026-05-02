@@ -22,7 +22,7 @@ export class LabStatisticsComponent implements OnInit {
   isLoading = false;
   currentLabUserId: number = 0;
   
-  private apiUrl = 'http://localhost:8088/api/laboratory-results';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/laboratory-results';
 
   constructor(private http: HttpClient) {}
 

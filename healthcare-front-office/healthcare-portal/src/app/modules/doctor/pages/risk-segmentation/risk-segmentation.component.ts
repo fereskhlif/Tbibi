@@ -213,7 +213,7 @@ export class RiskSegmentationComponent implements OnInit, AfterViewInit, OnDestr
   runAnalysis() {
     this.loading = true;
     this.error = '';
-    this.http.get<SegmentationResponse>('http://localhost:8088/api/risk-segmentation')
+    this.http.get<SegmentationResponse>('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/risk-segmentation')
       .subscribe({
         next: (data) => {
           this.result = data;

@@ -145,7 +145,7 @@ export class AdminApprovalsComponent implements OnInit {
     
     const filename = profilePicture.replace(/^.*[\\/]/, '');
     // Construction de l'URL vers le backend de l'API (généralement sur le port 8088)
-    return `http://localhost:8088/uploads/documents/${filename}`;
+    return `https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/uploads/documents/${filename}`;
   }
 
   openDiploma(user: AdminUser, event: Event): void {
