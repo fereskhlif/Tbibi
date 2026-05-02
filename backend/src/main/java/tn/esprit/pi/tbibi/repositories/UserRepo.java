@@ -68,8 +68,8 @@ public interface UserRepo extends JpaRepository<User, Integer> {
 
         Optional<User> findByPharmacy_PharmacyId(Long pharmacyId);
 
-        /** Find all users with the PHYSIOTHERAPIST role */
-        @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE '%physio%'")
+        /** Find all users with the PHYSIOTHERAPIST/KINE role */
+        @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE '%physio%' OR LOWER(u.role.roleName) LIKE '%kine%'")
         List<User> findAllPhysiotherapists();
 
         /** Find all users with the LABORATORY role */
