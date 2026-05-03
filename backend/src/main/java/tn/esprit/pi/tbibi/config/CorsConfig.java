@@ -13,14 +13,14 @@ public class CorsConfig implements WebMvcConfigurer {
 
         // ✅ API REST
         registry.addMapping("/api/**")
-                .allowedOriginPatterns("http://localhost:4200")  // ✅ allowedOriginPatterns
+                .allowedOriginPatterns("*")  // ✅ allowedOriginPatterns
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
 
         // ✅ WebSocket endpoint
         registry.addMapping("/ws/**")
-                .allowedOriginPatterns("http://localhost:4200")  // ✅ allowedOriginPatterns
+                .allowedOriginPatterns("*")  // ✅ allowedOriginPatterns
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
