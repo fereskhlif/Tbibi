@@ -13,7 +13,7 @@ export class WebSocketService {
     if (this.client && this.connected) return;
 
     this.client = new Client({
-      brokerURL: 'ws://localhost:8088/ws/websocket',
+      brokerURL: 'wss://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/ws/websocket',
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
