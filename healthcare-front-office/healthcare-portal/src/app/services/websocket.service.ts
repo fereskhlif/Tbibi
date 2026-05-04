@@ -1,19 +1,40 @@
-import { Injectable, NgZone } from '@angular/core';
+﻿import { Injectable, NgZone } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
+import { environment } from 'environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class WebSocketService {
   private client: Client | null = null;
   private connected = false;
-  private pendingSubscriptions: Array<{ topic: string; callback: (msg: IMessage) => void; resolve: (sub: StompSubscription) => void }> = [];
+  private pendingSubscriptions: Array<{
+    topic: string;
+    callback: (msg: IMessage) => void;
+    resolve: (sub: StompSubscription) => void
+  }> = [];
 
-  constructor(private ngZone: NgZone) {}
+  // 👇 Add this helper to convert HTTP URL → WebSocket URL
+  private getWebSocketUrl(): string {
+    let url = environment.baseUrl;
+
+    // Convert protocol: http→ws, https→wss
+    if (url.startsWith('https://')) {
+      url = 'wss://' + url.substring(8);
+    } else if (url.startsWith('http://')) {
+      url = 'ws://' + url.substring(7);
+    }
+
+    // Ensure /ws/websocket path is appended (avoid duplicates)
+    return url.replace(/\/+$/, '') + '/ws/websocket';
+  }
+
+  constructor(private ngZone: NgZone) { }
 
   connect(): void {
     if (this.client && this.connected) return;
 
     this.client = new Client({
-      brokerURL: 'ws://localhost:8088/ws/websocket',
+      // 👇 Use dynamic URL instead of hardcoded string
+      brokerURL: this.getWebSocketUrl(),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
@@ -24,9 +45,7 @@ export class WebSocketService {
 
     this.client.onConnect = () => {
       this.connected = true;
-      console.log('[WebSocket] Connected');
-
-      // Process any subscriptions that were requested before connection was ready
+      console.log('[WebSocket] Connected to', this.getWebSocketUrl());
       this.pendingSubscriptions.forEach(({ topic, callback, resolve }) => {
         const sub = this.client!.subscribe(topic, (msg) => {
           this.ngZone.run(() => callback(msg));
@@ -56,7 +75,6 @@ export class WebSocketService {
         });
         resolve(sub);
       } else {
-        // Queue subscription for when connection is ready
         this.pendingSubscriptions.push({ topic, callback, resolve });
       }
     });
@@ -69,4 +87,4 @@ export class WebSocketService {
       this.connected = false;
     }
   }
-}
+} 

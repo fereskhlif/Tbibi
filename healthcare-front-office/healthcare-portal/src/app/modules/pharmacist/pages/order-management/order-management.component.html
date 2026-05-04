@@ -1,39 +1,32 @@
-<div class="min-h-screen bg-[#F8FAFC] p-6 lg:p-10 font-sans">
+<div class="min-h-screen bg-[#F8FAFC] p-6 pt-2 lg:p-10 lg:pt-4 font-sans">
     <div class="max-w-7xl mx-auto flex flex-col gap-6">
 
-        <!-- ═══════════════════════════════════════════════════════
-             HEADER — Gradient banner with KPIs + Refresh
-             ═══════════════════════════════════════════════════════ -->
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-8 lg:p-10">
-            <div class="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-            <div class="absolute bottom-0 left-0 w-56 h-56 bg-indigo-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
-
+        <!-- ─── Page Header ─────────────────────────────────────────────── -->
+        <div class="relative overflow-hidden rounded-3xl bg-white border border-slate-200 p-8 lg:p-10 shadow-sm">
             <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div class="flex items-center gap-5">
-                    <div class="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center shrink-0">
-                        <lucide-icon name="clipboard-list" [size]="28" class="text-blue-300"></lucide-icon>
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-100 ring-4 ring-blue-50 shrink-0">
+                        <lucide-icon name="clipboard-list" [size]="28" class="text-white"></lucide-icon>
                     </div>
                     <div>
-                        <h1 class="text-2xl lg:text-3xl font-black text-white tracking-tight">Order Validation</h1>
-                        <p class="text-sm text-blue-200/80 font-medium mt-1">Review, confirm, and manage patient pharmacy orders</p>
+                        <h1 class="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">Order Validation</h1>
                     </div>
                 </div>
+
 
                 <div class="flex items-center gap-4">
                     <!-- Refresh Button -->
                     <button (click)="refreshOrders()" [disabled]="loading"
-                        class="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all active:scale-90 disabled:opacity-50"
+                        class="w-12 h-12 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-all active:scale-90 disabled:opacity-50"
                         title="Refresh orders">
-                        <lucide-icon name="refresh-cw" [size]="18" class="text-blue-300"
+                        <lucide-icon name="refresh-cw" [size]="18" class="text-slate-600"
                             [class.animate-spin]="loading"></lucide-icon>
                     </button>
                 </div>
             </div>
 
-            <!-- Last refreshed timestamp -->
-            <p *ngIf="lastFetched" class="relative z-10 text-[10px] text-blue-300/50 font-medium mt-4 uppercase tracking-widest">
-                Last updated: {{ getTimeSinceRefresh() }}
-            </p>
+
         </div>
 
         <!-- ═══════════════════════════════════════════════════════
@@ -43,7 +36,8 @@
             <button *ngFor="let tab of tabs" (click)="selectTab(tab.key)"
                 [class]="'flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-2xl text-sm font-bold transition-all duration-200 ' + getTabClass(tab.key)">
                 {{ tab.label }}
-                <span *ngIf="activeTab === tab.key" class="text-[10px] uppercase px-2.5 py-0.5 rounded-full font-black bg-white/20 text-white shadow-sm">
+                <span *ngIf="activeTab === tab.key"
+                    class="text-[10px] uppercase px-2.5 py-0.5 rounded-full font-black bg-white/20 text-white shadow-sm">
                     Active
                 </span>
             </button>
@@ -55,7 +49,8 @@
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <!-- Search -->
             <div class="relative flex-1">
-                <lucide-icon name="search" [size]="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></lucide-icon>
+                <lucide-icon name="search" [size]="18"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></lucide-icon>
                 <input type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()"
                     placeholder="Search by patient name, email, or order ID..."
                     class="w-full pl-11 pr-4 py-3 min-h-[48px] bg-white border border-gray-200 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all" />
@@ -63,7 +58,8 @@
 
             <!-- Sort -->
             <div class="relative shrink-0">
-                <lucide-icon name="arrow-up-down" [size]="16" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></lucide-icon>
+                <lucide-icon name="arrow-up-down" [size]="16"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></lucide-icon>
                 <select [(ngModel)]="sortBy" (change)="onSortChange()"
                     class="pl-10 pr-8 py-3 min-h-[48px] bg-white border border-gray-200 rounded-2xl text-sm text-gray-700 font-semibold appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all">
                     <option value="newest">Newest First</option>
@@ -143,8 +139,7 @@
         <div *ngIf="!loading" class="flex flex-col gap-3">
 
             <!-- Select All (visible on PENDING or ALL tabs) -->
-            <div *ngIf="selectableOrders.length > 0"
-                class="flex items-center gap-3 px-2">
+            <div *ngIf="selectableOrders.length > 0" class="flex items-center gap-3 px-2">
                 <button (click)="toggleSelectAll()"
                     class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer shrink-0"
                     [class]="allSelectableChecked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300 hover:border-blue-400'">
@@ -163,7 +158,8 @@
                 </div>
                 <h3 class="text-xl font-black text-gray-900">No orders found</h3>
                 <p class="text-sm text-gray-500 mt-2 max-w-xs mx-auto">
-                    {{ searchQuery ? 'No results match "' + searchQuery + '". Try a different search.' : 'There are no orders matching this filter.' }}
+                    {{ searchQuery ? 'No results match "' + searchQuery + '". Try a different search.' : 'There are no
+                    orders matching this filter.' }}
                 </p>
                 <button *ngIf="searchQuery" (click)="searchQuery = ''; onSearchChange()"
                     class="mt-4 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-2xl hover:bg-blue-700 transition-all">
@@ -183,55 +179,75 @@
                     <div class="p-5 lg:p-6 flex items-center gap-4">
 
                         <!-- Checkbox (only for PENDING) -->
-                        <button *ngIf="order.orderStatus === 'PENDING'"
-                            (click)="toggleSelectOrder(order.orderId)"
+                        <button *ngIf="order.orderStatus === 'PENDING'" (click)="toggleSelectOrder(order.orderId)"
                             class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer shrink-0"
                             [class]="selectedOrderIds.has(order.orderId) ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300 hover:border-blue-400'">
-                            <lucide-icon *ngIf="selectedOrderIds.has(order.orderId)" name="check" [size]="14" class="text-white"></lucide-icon>
+                            <lucide-icon *ngIf="selectedOrderIds.has(order.orderId)" name="check" [size]="14"
+                                class="text-white"></lucide-icon>
                         </button>
                         <!-- Spacer for non-pending (keeps alignment) -->
                         <div *ngIf="order.orderStatus !== 'PENDING'" class="w-6 shrink-0"></div>
 
                         <!-- Status Icon -->
-                        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 cursor-pointer"
+                        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm"
                             (click)="expandedOrderId = expandedOrderId === order.orderId ? null : order.orderId"
                             [ngClass]="{
-                                'bg-yellow-50': order.orderStatus === 'PENDING',
+                                'bg-yellow-50 ring-4 ring-yellow-500/10 animate-pulse': order.orderStatus === 'PENDING',
                                 'bg-blue-50': order.orderStatus === 'CONFIRMED',
                                 'bg-purple-50': order.orderStatus === 'IN_PROGRESS',
                                 'bg-green-50': order.orderStatus === 'DELIVERED',
-                                'bg-red-50': order.orderStatus === 'REJECTED' || order.orderStatus === 'CANCELLED'
+                                'bg-red-50': order.orderStatus === 'REJECTED',
+                                'bg-gray-50': order.orderStatus === 'CANCELLED'
                             }">
-                            <lucide-icon *ngIf="order.orderStatus === 'PENDING'" name="clock" [size]="20" class="text-yellow-600"></lucide-icon>
-                            <lucide-icon *ngIf="order.orderStatus === 'CONFIRMED'" name="check-circle" [size]="20" class="text-blue-600"></lucide-icon>
-                            <lucide-icon *ngIf="order.orderStatus === 'IN_PROGRESS'" name="truck" [size]="20" class="text-purple-600"></lucide-icon>
-                            <lucide-icon *ngIf="order.orderStatus === 'DELIVERED'" name="package" [size]="20" class="text-green-600"></lucide-icon>
-                            <lucide-icon *ngIf="order.orderStatus === 'REJECTED' || order.orderStatus === 'CANCELLED'" name="x-circle" [size]="20" class="text-red-500"></lucide-icon>
+                            <lucide-icon *ngIf="order.orderStatus === 'PENDING'" name="clock" [size]="20"
+                                class="text-yellow-600"></lucide-icon>
+                            <lucide-icon *ngIf="order.orderStatus === 'CONFIRMED'" name="check-circle" [size]="20"
+                                class="text-blue-600"></lucide-icon>
+                            <lucide-icon *ngIf="order.orderStatus === 'IN_PROGRESS'" name="truck" [size]="20"
+                                class="text-purple-600"></lucide-icon>
+                            <lucide-icon *ngIf="order.orderStatus === 'DELIVERED'" name="package" [size]="20"
+                                class="text-green-600"></lucide-icon>
+                            <lucide-icon *ngIf="order.orderStatus === 'REJECTED'" name="x-circle" [size]="20"
+                                class="text-red-500"></lucide-icon>
+                            <lucide-icon *ngIf="order.orderStatus === 'CANCELLED'" name="ban" [size]="20"
+                                class="text-gray-400"></lucide-icon>
                         </div>
 
                         <!-- Order Info (clickable to expand) -->
-                        <div class="flex-1 min-w-0 cursor-pointer"
+                        <div class="flex-1 min-w-0 cursor-pointer group/info"
                             (click)="expandedOrderId = expandedOrderId === order.orderId ? null : order.orderId">
                             <div class="flex items-center gap-2.5 flex-wrap">
-                                <h3 class="text-sm font-black text-gray-900">#ORD-{{order.orderId}}</h3>
-                                <span [class]="'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(order.orderStatus)">
+                                <h3
+                                    class="text-sm font-black text-gray-900 group-hover/info:text-blue-600 transition-colors">
+                                    #ORD-{{order.orderId}}</h3>
+                                <span
+                                    [class]="'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(order.orderStatus)">
                                     {{order.orderStatus.replace('_', ' ')}}
                                 </span>
                             </div>
                             <div class="flex items-center gap-2 mt-1">
-                                <lucide-icon name="user" [size]="12" class="text-gray-400"></lucide-icon>
-                                <span class="text-xs font-semibold text-gray-700 truncate">{{order.userName}}</span>
+                                <div class="flex items-center gap-1 text-gray-700">
+                                    <lucide-icon name="user" [size]="12" class="text-gray-400"></lucide-icon>
+                                    <span class="text-xs font-bold truncate">{{order.userName}}</span>
+                                </div>
                                 <span class="text-gray-300">·</span>
-                                <lucide-icon name="calendar" [size]="12" class="text-gray-400"></lucide-icon>
-                                <span class="text-xs text-gray-500">{{order.orderDate | date:'MMM d, y'}}</span>
+                                <div class="flex items-center gap-1 text-gray-500">
+                                    <lucide-icon name="calendar" [size]="12" class="text-gray-400"></lucide-icon>
+                                    <span class="text-xs font-medium">{{order.orderDate | date:'MMM d, y'}}</span>
+                                </div>
                                 <span class="text-gray-300 hidden sm:inline">·</span>
-                                <span class="text-xs text-gray-400 hidden sm:inline">{{order.orderLines.length}} item{{order.orderLines.length > 1 ? 's' : ''}}</span>
+                                <div class="hidden sm:flex items-center gap-1 text-gray-400">
+                                    <lucide-icon name="package" [size]="12"></lucide-icon>
+                                    <span class="text-xs font-medium">{{order.orderLines.length}}
+                                        item{{order.orderLines.length > 1 ? 's' : ''}}</span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Amount -->
                         <div class="text-right shrink-0 mr-2">
-                            <p class="text-lg font-black text-gray-900 tabular-nums">{{order.totalAmount | number:'1.2-2'}}
+                            <p class="text-lg font-black text-gray-900 tabular-nums">{{order.totalAmount |
+                                number:'1.2-2'}}
                                 <span class="text-xs font-bold text-gray-400">DT</span>
                             </p>
                         </div>
@@ -245,8 +261,10 @@
                                         [disabled]="updatingOrderId === order.orderId"
                                         class="w-10 h-10 rounded-xl bg-green-50 hover:bg-green-600 text-green-600 hover:text-white flex items-center justify-center transition-all active:scale-90 disabled:opacity-40"
                                         title="Confirm Order">
-                                        <lucide-icon *ngIf="updatingOrderId !== order.orderId" name="check" [size]="18"></lucide-icon>
-                                        <lucide-icon *ngIf="updatingOrderId === order.orderId" name="loader-2" [size]="18" class="animate-spin"></lucide-icon>
+                                        <lucide-icon *ngIf="updatingOrderId !== order.orderId" name="check"
+                                            [size]="18"></lucide-icon>
+                                        <lucide-icon *ngIf="updatingOrderId === order.orderId" name="loader-2"
+                                            [size]="18" class="animate-spin"></lucide-icon>
                                     </button>
                                     <button (click)="quickReject(order.orderId, $event)"
                                         [disabled]="updatingOrderId === order.orderId"
@@ -291,25 +309,32 @@
                     <!-- ── Expanded Content ── -->
                     <div *ngIf="expandedOrderId === order.orderId" class="border-t border-gray-100">
                         <div class="px-6 lg:px-7 py-5 bg-gray-50/60">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <p
+                                class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                                 <lucide-icon name="pill" [size]="14" class="text-gray-400"></lucide-icon>
                                 Order Items ({{order.orderLines.length}})
                             </p>
                             <div class="space-y-2">
                                 <div *ngFor="let line of order.orderLines"
                                     class="flex items-center gap-4 p-3 bg-white rounded-xl border border-gray-100">
-                                    <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs shrink-0">
+                                    <div
+                                        class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs shrink-0">
                                         {{line.quantity}}x
                                     </div>
-                                    <span class="flex-1 text-sm text-gray-900 font-semibold">{{line.medicineName || '—'}}</span>
-                                    <span class="text-xs text-gray-400 font-medium hidden sm:inline">{{line.unitPrice | number:'1.2-2'}} DT / unit</span>
-                                    <span class="text-sm font-black text-gray-900 tabular-nums">{{line.quantity * line.unitPrice | number:'1.2-2'}} DT</span>
+                                    <span class="flex-1 text-sm text-gray-900 font-semibold">{{line.medicineName ||
+                                        '—'}}</span>
+                                    <span class="text-xs text-gray-400 font-medium hidden sm:inline">{{line.unitPrice |
+                                        number:'1.2-2'}} DT / unit</span>
+                                    <span class="text-sm font-black text-gray-900 tabular-nums">{{line.quantity *
+                                        line.unitPrice | number:'1.2-2'}} DT</span>
                                 </div>
                             </div>
                             <!-- Subtotal row -->
                             <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Order Total</span>
-                                <span class="text-base font-black text-gray-900 tabular-nums">{{order.totalAmount | number:'1.2-2'}} DT</span>
+                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Order
+                                    Total</span>
+                                <span class="text-base font-black text-gray-900 tabular-nums">{{order.totalAmount |
+                                    number:'1.2-2'}} DT</span>
                             </div>
                         </div>
                     </div>
@@ -320,7 +345,9 @@
                  PAGINATION
                  ═══════════════════════════════════════════════════════ -->
             <div *ngIf="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between mt-6 px-2 gap-4">
-                <span class="text-sm text-gray-500 font-bold bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">Page {{currentPage}} of {{totalPages}}</span>
+                <span
+                    class="text-sm text-gray-500 font-bold bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">Page
+                    {{currentPage}} of {{totalPages}}</span>
                 <div class="flex items-center gap-2">
                     <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"
                         class="flex items-center gap-2 px-4 min-h-[48px] bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm">
@@ -362,7 +389,8 @@
                     [class]="confirmDialog.newStatus === 'REJECTED' ? 'text-red-500' : 'text-blue-600'"></lucide-icon>
             </div>
             <div>
-                <h3 class="font-black text-gray-900 text-lg">{{ confirmDialog.isBulk ? 'Bulk Action' : 'Confirm Action' }}</h3>
+                <h3 class="font-black text-gray-900 text-lg">{{ confirmDialog.isBulk ? 'Bulk Action' : 'Confirm Action'
+                    }}</h3>
                 <p class="text-sm text-gray-500 mt-1">{{confirmDialog.message}}</p>
             </div>
         </div>
@@ -392,9 +420,11 @@
                 <div class="flex items-center gap-3 mt-2">
                     <div class="flex items-center gap-1.5 text-gray-400">
                         <lucide-icon name="calendar" [size]="14"></lucide-icon>
-                        <p class="text-[10px] font-bold uppercase tracking-widest">{{selectedOrder.orderDate | date:'fullDate'}}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-widest">{{selectedOrder.orderDate |
+                            date:'fullDate'}}</p>
                     </div>
-                    <span [class]="'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(selectedOrder.orderStatus)">
+                    <span
+                        [class]="'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(selectedOrder.orderStatus)">
                         {{selectedOrder.orderStatus.replace('_', ' ')}}
                     </span>
                 </div>
@@ -423,7 +453,45 @@
                     <p class="font-bold text-gray-900">{{selectedOrder.pharmacyName}}</p>
                     <p class="text-xs text-gray-500">ID: {{selectedOrder.pharmacyId}}</p>
                 </div>
+
+                <div class="bg-gray-50 rounded-2xl p-5 space-y-2 border border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <lucide-icon name="truck" [size]="14" class="text-gray-400"></lucide-icon>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Delivery Info</p>
+                    </div>
+                    <p class="font-bold text-gray-900">{{selectedOrder.deliveryMethod === 'DELIVERY' ? 'Home Delivery' :
+                        'Store Pickup'}}</p>
+                    <p *ngIf="selectedOrder.deliveryMethod === 'DELIVERY' && selectedOrder.deliveryAddress"
+                        class="text-xs text-gray-500">{{selectedOrder.deliveryAddress}}</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-5 space-y-2 border border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <lucide-icon name="credit-card" [size]="14" class="text-gray-400"></lucide-icon>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Payment</p>
+                    </div>
+                    <p class="font-bold text-gray-900">{{selectedOrder.paymentMethod === 'CASH_ON_DELIVERY' ? 'Cash on
+                        Delivery' : 'Pay at Pickup'}}</p>
+                </div>
             </div>
+
+            <div *ngIf="selectedOrder.prescriptionImage"
+                class="mt-4 p-5 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                        <lucide-icon name="file-text" [size]="20"></lucide-icon>
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-900 text-sm">Patient Prescription attached</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Please verify before confirming</p>
+                    </div>
+                </div>
+                <a [href]="selectedOrder.prescriptionImage" target="_blank"
+                    class="px-4 py-2 bg-white text-blue-600 border border-blue-200 text-sm font-bold rounded-xl hover:bg-blue-50 transition-colors">
+                    View
+                </a>
+            </div>
+
             <div>
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                     <lucide-icon name="pill" [size]="14" class="text-gray-400"></lucide-icon>
@@ -433,13 +501,16 @@
                     <div *ngFor="let line of selectedOrder.orderLines"
                         class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">{{line.quantity}}x</div>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                {{line.quantity}}x</div>
                             <div>
                                 <p class="font-bold text-gray-900 text-sm">{{line.medicineName}}</p>
                                 <p class="text-xs text-gray-400 mt-0.5">Unit: {{line.unitPrice | number:'1.2-2'}} DT</p>
                             </div>
                         </div>
-                        <span class="font-black text-gray-900 text-sm tabular-nums">{{line.quantity * line.unitPrice | number:'1.2-2'}} DT</span>
+                        <span class="font-black text-gray-900 text-sm tabular-nums">{{line.quantity * line.unitPrice |
+                            number:'1.2-2'}} DT</span>
                     </div>
                 </div>
             </div>

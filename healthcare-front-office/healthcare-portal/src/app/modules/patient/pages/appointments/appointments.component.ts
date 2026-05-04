@@ -85,15 +85,15 @@ import {
             <!-- Date block -->
             <div class="flex items-start gap-4">
               <!-- Left: Date badge + info -->
-              <div class="w-14 h-14 bg-blue-500 rounded-xl flex flex-col items-center justify-center text-white shadow-md flex-shrink-0">
-                <span class="text-xs font-bold uppercase">{{ getMonth(apt.scheduleDate) }}</span>
-                <span class="text-xl font-extrabold">{{ getDay(apt.scheduleDate) }}</span>
+              <div class="w-14 h-14 rounded-xl flex flex-col items-center justify-center text-white shadow-md flex-shrink-0 bg-blue-500">
+                <span class="text-xs font-bold uppercase">{{ (apt.scheduleDate && apt.scheduleDate !== 'null') ? getMonth(apt.scheduleDate) : '---' }}</span>
+                <span class="text-xl font-extrabold">{{ (apt.scheduleDate && apt.scheduleDate !== 'null') ? getDay(apt.scheduleDate) : '?' }}</span>
               </div>
               <div>
                 <h3 class="font-bold text-gray-900 text-lg">{{apt.doctor}}</h3>
                 <p class="text-gray-600">{{apt.specialty}}</p>
                 <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                  <span>🕐 {{formatTime(apt.scheduleTime)}}</span>
+                  <span>🕐 {{ apt.scheduleTime ? formatTime(apt.scheduleTime) : 'Heure à confirmer' }}</span>
                   <span>📋 {{apt.reasonForVisit}}</span>
                 </div>
               </div>

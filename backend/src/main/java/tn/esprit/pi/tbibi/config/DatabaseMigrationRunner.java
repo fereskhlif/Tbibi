@@ -24,48 +24,14 @@ public class DatabaseMigrationRunner {
     @EventListener(ApplicationReadyEvent.class)
     public void applyPatches() {
         log.info("=== [DatabaseMigrationRunner] Applying schema patches ===");
-        fixAppointementAutoIncrement();
-        log.info("=== [DatabaseMigrationRunner] Done ===");
-    }
 
-    /**
-     * Adds AUTO_INCREMENT to appointement.appointement_id.
-     * Detects the actual column type from information_schema to build the correct ALTER.
-     */
-    /**
-     * The 'appointement' table was originally created manually with a column
-     * 'appointement_id' (NOT NULL, no AUTO_INCREMENT, no default).
-     * Hibernate manages 'appointment_id' as the real PK (AUTO_INCREMENT).
-     * To prevent INSERT failures, we make 'appointement_id' nullable.
-     */
-    private void fixAppointementAutoIncrement() {
-        try {
-            // Check if the orphan 'appointement_id' column is still NOT NULL
-            String isNullable = jdbcTemplate.queryForObject(
-                "SELECT IS_NULLABLE FROM information_schema.COLUMNS " +
-                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'appointement' " +
-                "AND COLUMN_NAME = 'appointement_id'",
-                String.class
-            );
-            if ("NO".equals(isNullable)) {
-                // Detect column type first
-                String colType = jdbcTemplate.queryForObject(
-                    "SELECT DATA_TYPE FROM information_schema.COLUMNS " +
-                    "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'appointement' " +
-                    "AND COLUMN_NAME = 'appointement_id'",
-                    String.class
-                );
-                String sqlType = (colType != null && colType.toLowerCase().contains("big")) ? "BIGINT" : "INT";
-                applyAlter(
-                    "ALTER TABLE appointement MODIFY COLUMN appointement_id " + sqlType + " NULL DEFAULT NULL",
-                    "appointement_id → nullable (removes NOT NULL constraint)"
-                );
-            } else {
-                log.info("[PATCH SKIP] appointement_id is already nullable or does not exist.");
-            }
-        } catch (Exception e) {
-            log.warn("[PATCH] Could not inspect appointement_id nullability: {}", e.getMessage());
-        }
+        // Fix missing AUTO_INCREMENT on appointement.appointement_id
+        applyAlter(
+            "ALTER TABLE appointement MODIFY COLUMN appointement_id BIGINT NOT NULL AUTO_INCREMENT",
+            "appointement.appointement_id → AUTO_INCREMENT"
+        );
+
+        log.info("=== [DatabaseMigrationRunner] Done ===");
     }
 
     private void applyAlter(String sql, String description) {
@@ -73,6 +39,7 @@ public class DatabaseMigrationRunner {
             jdbcTemplate.execute(sql);
             log.info("[PATCH OK] {}", description);
         } catch (Exception e) {
+            // Already has AUTO_INCREMENT or table doesn't exist yet — safe to ignore
             log.warn("[PATCH SKIP] {} — {}", description, e.getMessage());
         }
     }

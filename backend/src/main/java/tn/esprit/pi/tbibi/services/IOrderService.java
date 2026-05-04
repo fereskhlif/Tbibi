@@ -7,17 +7,33 @@ import java.util.List;
 
 public interface IOrderService {
     OrderResponse createOrder(OrderRequest request);
-    OrderResponse getOrderById(Long id);
-    List<OrderResponse> getAllOrders();
-    OrderResponse updateOrderStatus(Long id, String status);
-    void deleteOrder(Long id);
-    List<OrderResponse> getOrdersByUser(Integer userId);
-    List<OrderResponse> getPendingOrders();
-    List<OrderResponse> getOrdersByPharmacy(Long pharmacyId);
-    List<OrderResponse> getOrdersByPharmacyAndUserEmail(Long pharmacyId, String email);
-    
-    org.springframework.data.domain.Page<OrderResponse> getOrdersPaginated(Long pharmacyId, String status, String search, String sortType, int page, int size);
-    
-    org.springframework.data.domain.Page<OrderResponse> getUserOrdersPaginated(Integer userId, String status, String search, String sortType, int page, int size);
 
+    OrderResponse getOrderById(Long id);
+
+    List<OrderResponse> getAllOrders();
+
+    OrderResponse updateOrderStatus(Long id, String status);
+
+    void deleteOrder(Long id);
+
+    List<OrderResponse> getOrdersByUser(Integer userId);
+
+    List<OrderResponse> getPendingOrders();
+
+    List<OrderResponse> getOrdersByPharmacy(Long pharmacyId);
+
+    List<OrderResponse> getOrdersByPharmacyAndUserEmail(Long pharmacyId, String email);
+
+    org.springframework.data.domain.Page<OrderResponse> getOrdersPaginated(Long pharmacyId, String status,
+            String search, String sortType, int page, int size);
+
+    org.springframework.data.domain.Page<OrderResponse> getUserOrdersPaginated(Integer userId, String status,
+            String search, String sortType, int page, int size);
+
+    List<tn.esprit.pi.tbibi.DTO.order.PatientSpendingAnalyticsDTO> getPatientSpendingAnalytics(Integer patientId);
+
+    List<tn.esprit.pi.tbibi.DTO.order.MedicinePurchaseHistoryDTO> getMedicinePurchaseHistory(Integer userId,
+            String medicineName);
+
+    List<tn.esprit.pi.tbibi.DTO.order.MedicinePurchaseHistoryDTO> getAllPatientMedicineHistory(Integer userId);
 }

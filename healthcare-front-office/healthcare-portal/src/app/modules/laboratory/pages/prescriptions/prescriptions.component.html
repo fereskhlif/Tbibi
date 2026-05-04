@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-gray-50 p-6 lg:p-8">
-  
+
   <!-- ── Header ────────────────────────────────────────────────────────────── -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
     <div class="flex items-center gap-4">
@@ -82,25 +82,23 @@
 
   <!-- ── Category Tabs ──────────────────────────────────────────────────────── -->
   <div class="flex gap-2 flex-wrap mb-8 pb-2 border-b border-gray-200">
-    <button (click)="activeTypeFilter = 'ALL'"
-      class="px-4 py-2 text-sm font-bold transition-all relative"
-      [class.text-blue-600]="activeTypeFilter === 'ALL'"
-      [class.text-gray-400]="activeTypeFilter !== 'ALL'">
+    <button (click)="activeTypeFilter = 'ALL'" class="px-4 py-2 text-sm font-bold transition-all relative"
+      [class.text-blue-600]="activeTypeFilter === 'ALL'" [class.text-gray-400]="activeTypeFilter !== 'ALL'">
       All Categories
-      <div *ngIf="activeTypeFilter === 'ALL'" class="absolute bottom-[-9px] left-0 right-0 h-1 bg-blue-600 rounded-full"></div>
+      <div *ngIf="activeTypeFilter === 'ALL'"
+        class="absolute bottom-[-9px] left-0 right-0 h-1 bg-blue-600 rounded-full"></div>
     </button>
-    <button *ngFor="let key of analysisTypeKeys"
-      (click)="activeTypeFilter = (activeTypeFilter === key ? 'ALL' : key)"
-      class="px-4 py-2 text-sm font-bold transition-all relative"
-      [class.text-blue-600]="activeTypeFilter === key"
+    <button *ngFor="let key of analysisTypeKeys" (click)="activeTypeFilter = (activeTypeFilter === key ? 'ALL' : key)"
+      class="px-4 py-2 text-sm font-bold transition-all relative" [class.text-blue-600]="activeTypeFilter === key"
       [class.text-gray-400]="activeTypeFilter !== key">
       {{ANALYSIS_TYPE_META[key].icon}} {{ANALYSIS_TYPE_META[key].label}}
-      <div *ngIf="activeTypeFilter === key" class="absolute bottom-[-9px] left-0 right-0 h-1 bg-blue-600 rounded-full"></div>
+      <div *ngIf="activeTypeFilter === key" class="absolute bottom-[-9px] left-0 right-0 h-1 bg-blue-600 rounded-full">
+      </div>
     </button>
   </div>
 
   <!-- ── List Section ───────────────────────────────────────────────────────── -->
-  
+
   <!-- Loading -->
   <div *ngIf="loading" class="space-y-4">
     <div *ngFor="let i of [1,2,3]" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -115,13 +113,14 @@
   </div>
 
   <!-- Error -->
-  <div *ngIf="error && !loading" 
+  <div *ngIf="error && !loading"
     class="bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl p-5 mb-6 flex items-center justify-between shadow-sm">
     <div class="flex items-center gap-3">
       <span class="text-xl">⚠️</span>
       <span class="font-bold">{{error}}</span>
     </div>
-    <button (click)="load(); error=''" class="px-4 py-2 bg-red-100 rounded-lg hover:bg-red-200 transition-colors font-bold text-xs uppercase tracking-wider">Retry</button>
+    <button (click)="load(); error=''"
+      class="px-4 py-2 bg-red-100 rounded-lg hover:bg-red-200 transition-colors font-bold text-xs uppercase tracking-wider">Retry</button>
   </div>
 
   <!-- Empty state -->
@@ -135,7 +134,8 @@
   </div>
 
   <!-- ── List Section (Table) ────────────────────────────────────────────── -->
-  <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden" *ngIf="!loading && filtered.length > 0">
+  <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden"
+    *ngIf="!loading && filtered.length > 0">
     <table class="w-full text-left border-collapse">
       <thead class="bg-gray-50/80 border-b border-gray-100">
         <tr>
@@ -154,8 +154,7 @@
             <td class="px-6 py-5">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg shadow-sm"
-                  [style.background]="getAnalysisMeta(rx).bg"
-                  [style.color]="getAnalysisMeta(rx).color">
+                  [style.background]="getAnalysisMeta(rx).bg" [style.color]="getAnalysisMeta(rx).color">
                   {{getAnalysisMeta(rx).icon}}
                 </div>
                 <span class="font-black text-gray-900 tracking-tight text-sm">#{{rx.prescriptionID}}</span>
@@ -164,11 +163,13 @@
             <td class="px-6 py-5">
               <div class="flex flex-col">
                 <span class="text-sm font-bold text-gray-800">{{rx.patientName || 'Unknown Patient'}}</span>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">ID: {{rx.patientId || 'N/A'}}</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">ID: {{rx.patientId ||
+                  'N/A'}}</span>
               </div>
             </td>
             <td class="px-6 py-5">
-              <span class="px-3 py-1 text-[10px] rounded-full font-black uppercase tracking-widest text-white shadow-sm inline-block"
+              <span
+                class="px-3 py-1 text-[10px] rounded-full font-black uppercase tracking-widest text-white shadow-sm inline-block"
                 [style.background]="getAnalysisMeta(rx).color">
                 {{getAnalysisMeta(rx).label}}
               </span>
@@ -179,15 +180,17 @@
               </div>
             </td>
             <td class="px-6 py-5 text-center">
-              <span class="px-3 py-1 text-[10px] rounded-full font-black uppercase tracking-widest shadow-sm inline-block"
-                [style.background]="STATUS_META[rx.status]?.bg"
-                [style.color]="STATUS_META[rx.status]?.color">
+              <span
+                class="px-3 py-1 text-[10px] rounded-full font-black uppercase tracking-widest shadow-sm inline-block"
+                [style.background]="STATUS_META[rx.status]?.bg" [style.color]="STATUS_META[rx.status]?.color">
                 {{STATUS_META[rx.status]?.icon}} {{STATUS_META[rx.status]?.label}}
               </span>
             </td>
             <td class="px-6 py-5 text-right">
-              <button class="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:border-blue-200 group-hover:text-blue-500 transition-all shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-300" [class.rotate-180]="rx.expanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <button
+                class="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:border-blue-200 group-hover:text-blue-500 transition-all shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-300"
+                  [class.rotate-180]="rx.expanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -199,96 +202,115 @@
             <td colspan="6" class="p-0">
               <div class="p-8 border-t border-gray-100 overflow-hidden" style="animation: slideDown 0.3s ease;">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  
+
                   <!-- Left: Clinical Details -->
                   <div class="lg:col-span-2 space-y-6">
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-                       <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
-                       <div class="flex items-center justify-between mb-4">
-                         <h4 class="text-xs font-black text-blue-500 uppercase tracking-widest">Clinical Analysis Context</h4>
-                         <span class="text-[10px] font-bold text-gray-400">Request from Dr. {{rx.doctorName || 'Unknown'}}</span>
-                       </div>
-                       <p class="text-gray-800 leading-relaxed font-medium text-sm bg-gray-50/50 p-4 rounded-xl border border-dashed border-gray-200">
-                         {{rx.note || 'No detailed clinical notes provided for this analysis request.'}}
-                       </p>
+                      <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                      <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-xs font-black text-blue-500 uppercase tracking-widest">Clinical Analysis Context
+                        </h4>
+                        <span class="text-[10px] font-bold text-gray-400">Request from Dr. {{rx.doctorName ||
+                          'Unknown'}}</span>
+                      </div>
+                      <p
+                        class="text-gray-800 leading-relaxed font-medium text-sm bg-gray-50/50 p-4 rounded-xl border border-dashed border-gray-200">
+                        {{rx.note || 'No detailed clinical notes provided for this analysis request.'}}
+                      </p>
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                       <div class="flex items-center justify-between mb-4">
-                         <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest">Fulfillment Pipeline</h4>
-                         <span class="text-xs font-bold" [style.color]="STATUS_META[rx.status]?.color">
-                           Status: {{STATUS_META[rx.status]?.label}}
-                         </span>
-                       </div>
-                       <div class="flex items-center gap-3">
-                         <div class="h-2.5 flex-1 rounded-full bg-gray-100 overflow-hidden shadow-inner">
-                            <div class="h-full rounded-full transition-all duration-1000 shadow-sm" 
-                              [style.width]="rx.status === 'PENDING' ? '25%' : (rx.status === 'VALIDATED' ? '65%' : '100%')"
-                              [style.background]="'linear-gradient(90deg, ' + STATUS_META[rx.status]?.color + ', #60a5fa)'"></div>
-                         </div>
-                         <span class="text-xs font-black text-gray-600">
-                           {{rx.status === 'PENDING' ? '25%' : (rx.status === 'VALIDATED' ? '65%' : '100%')}}
-                         </span>
-                       </div>
+                      <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest">Fulfillment Pipeline</h4>
+                        <span class="text-xs font-bold" [style.color]="STATUS_META[rx.status]?.color">
+                          Status: {{STATUS_META[rx.status]?.label}}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <div class="h-2.5 flex-1 rounded-full bg-gray-100 overflow-hidden shadow-inner">
+                          <div class="h-full rounded-full transition-all duration-1000 shadow-sm"
+                            [style.width]="rx.status === 'PENDING' ? '25%' : (rx.status === 'VALIDATED' ? '65%' : '100%')"
+                            [style.background]="'linear-gradient(90deg, ' + STATUS_META[rx.status]?.color + ', #60a5fa)'">
+                          </div>
+                        </div>
+                        <span class="text-xs font-black text-gray-600">
+                          {{rx.status === 'PENDING' ? '25%' : (rx.status === 'VALIDATED' ? '65%' : '100%')}}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   <!-- Right: Control Panel -->
                   <div class="flex flex-col gap-4">
-                     <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 px-1 flex items-center gap-2">
-                       <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Management Suite
-                     </h4>
-                     
-                     <button *ngIf="rx.status === 'PENDING'"
-                        (click)="updateStatus(rx, 'VALIDATED', $event)"
-                        class="group w-full p-4 bg-white border-2 border-blue-100 rounded-2xl flex items-center justify-between hover:border-blue-500 hover:bg-blue-50 transition-all shadow-sm">
-                        <div class="flex items-center gap-3">
-                          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">✅</div>
-                          <div class="text-left">
-                            <p class="text-sm font-black text-blue-600 tracking-tight">Validate & Accept</p>
-                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Mark as lab-ready</p>
-                          </div>
-                        </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                     </button>
+                    <h4
+                      class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 px-1 flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Management Suite
+                    </h4>
 
-                     <button *ngIf="rx.status === 'VALIDATED'"
-                        (click)="updateStatus(rx, 'COMPLETED', $event)"
-                        class="group w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl flex items-center justify-between hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm">
-                        <div class="flex items-center gap-3">
-                          <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🎉</div>
-                          <div class="text-left">
-                            <p class="text-sm font-black text-emerald-600 tracking-tight">Finalize Analysis</p>
-                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Publish results</p>
-                          </div>
+                    <button *ngIf="rx.status === 'PENDING'" (click)="updateStatus(rx, 'VALIDATED', $event)"
+                      class="group w-full p-4 bg-white border-2 border-blue-100 rounded-2xl flex items-center justify-between hover:border-blue-500 hover:bg-blue-50 transition-all shadow-sm">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                          ✅</div>
+                        <div class="text-left">
+                          <p class="text-sm font-black text-blue-600 tracking-tight">Validate & Accept</p>
+                          <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Mark as lab-ready</p>
                         </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                     </button>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-300" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </button>
 
-                     <button *ngIf="rx.status !== 'CANCELLED' && rx.status !== 'COMPLETED'"
-                        (click)="updateStatus(rx, 'CANCELLED', $event)"
-                        class="w-full p-3 bg-white border border-red-100 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-50 hover:border-red-200 transition-all text-red-500 shadow-sm">
-                        <span class="text-sm font-black uppercase tracking-widest">Decline Order</span>
-                     </button>
-
-                     <!-- Final Status Banners -->
-                     <div *ngIf="rx.status === 'COMPLETED'" 
-                        class="p-5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center gap-4 text-white shadow-lg border-b-4 border-emerald-700">
-                        <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">🏆</div>
-                        <div>
-                          <p class="text-sm font-black uppercase tracking-tight">Analysis Archive</p>
-                          <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest">Transaction secured</p>
+                    <button *ngIf="rx.status === 'VALIDATED'" (click)="updateStatus(rx, 'COMPLETED', $event)"
+                      class="group w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl flex items-center justify-between hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                          🎉</div>
+                        <div class="text-left">
+                          <p class="text-sm font-black text-emerald-600 tracking-tight">Finalize Analysis</p>
+                          <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Publish results</p>
                         </div>
-                     </div>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-300" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </button>
 
-                     <div *ngIf="rx.status === 'CANCELLED'" 
-                        class="p-5 bg-gray-100 rounded-2xl flex items-center gap-4 text-gray-500 shadow-inner border border-gray-200">
-                        <div class="w-12 h-12 rounded-xl bg-gray-200 flex items-center justify-center text-2xl text-gray-400">🚫</div>
-                        <div>
-                          <p class="text-sm font-black uppercase tracking-tight">Rejected</p>
-                          <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">Process terminated</p>
-                        </div>
-                     </div>
+                    <button *ngIf="rx.status !== 'CANCELLED' && rx.status !== 'COMPLETED'"
+                      (click)="updateStatus(rx, 'CANCELLED', $event)"
+                      class="w-full p-3 bg-white border border-red-100 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-50 hover:border-red-200 transition-all text-red-500 shadow-sm">
+                      <span class="text-sm font-black uppercase tracking-widest">Decline Order</span>
+                    </button>
+
+                    <!-- Final Status Banners -->
+                    <div *ngIf="rx.status === 'COMPLETED'"
+                      class="p-5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center gap-4 text-white shadow-lg border-b-4 border-emerald-700">
+                      <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">🏆</div>
+                      <div>
+                        <p class="text-sm font-black uppercase tracking-tight">Analysis Archive</p>
+                        <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest">Transaction secured</p>
+                      </div>
+                    </div>
+
+                    <div *ngIf="rx.status === 'CANCELLED'"
+                      class="p-5 bg-gray-100 rounded-2xl flex items-center gap-4 text-gray-500 shadow-inner border border-gray-200">
+                      <div
+                        class="w-12 h-12 rounded-xl bg-gray-200 flex items-center justify-center text-2xl text-gray-400">
+                        🚫</div>
+                      <div>
+                        <p class="text-sm font-black uppercase tracking-tight">Rejected</p>
+                        <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">Process terminated</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -300,4 +322,3 @@
   </div>
 
 </div>
-

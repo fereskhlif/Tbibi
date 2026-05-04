@@ -258,10 +258,10 @@ export class PharmacistDashboardComponent implements OnInit {
 
         // Extract true chart data from component state
         const data = [
-          { label: 'Healthy', value: this.donutHealthy.length, color: '#D9F99D' },
-          { label: 'Low Stock', value: this.donutLowStock.length, color: '#99F6E4' },
-          { label: 'Out of Stock', value: this.donutOutOfStock.length, color: '#FBCFE8' },
-          { label: 'Expired', value: this.donutExpired.length, color: '#FECACA' },
+          { label: 'Healthy', value: this.donutHealthy.length, color: '#155dfc' },
+          { label: 'Low Stock', value: this.donutLowStock.length, color: '#60a5fa' },
+          { label: 'Out of Stock', value: this.donutOutOfStock.length, color: '#bfdbfe' },
+          { label: 'Expired', value: this.donutExpired.length, color: '#1e3a8a' },
         ];
 
         const total = data.reduce((sum, d) => sum + d.value, 0);
@@ -373,7 +373,7 @@ export class PharmacistDashboardComponent implements OnInit {
         const leftOffset = 60;
         const barWidth = 50;
         const gap = (600 - leftOffset - 40 - bars.length * barWidth) / (bars.length + 1);
-        const colors = ['#a8e6a3', '#b5aaee', '#f4a7c3', '#f5e17a', '#81d4d0', '#a8e6a3', '#89c4f4'];
+        const colors = ['#eff6ff', '#dbeafe', '#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6', '#155dfc'];
 
         // Draw horizontal grid lines and Y-axis labels (shifted down by 30px)
         ctx.fillStyle = '#64748b';
@@ -761,10 +761,10 @@ export class PharmacistDashboardComponent implements OnInit {
   // ─── HBar Data for Chart Toggle ─────────────────────────
   getHBarData(): Array<{ label: string; count: number; percent: number; color: string }> {
     const data = [
-      { label: 'Healthy', count: this.donutHealthy.length, percent: this.healthyPercent, color: '#D9F99D' },
-      { label: 'Low Stock', count: this.donutLowStock.length, percent: this.lowStockPercent, color: '#99F6E4' },
-      { label: 'Out of Stock', count: this.donutOutOfStock.length, percent: this.outOfStockPercent, color: '#FBCFE8' },
-      { label: 'Expired', count: this.donutExpired.length, percent: this.expiredPercentNum, color: '#FCA5A5' },
+      { label: 'Healthy', count: this.donutHealthy.length, percent: this.healthyPercent, color: '#155dfc' },
+      { label: 'Low Stock', count: this.donutLowStock.length, percent: this.lowStockPercent, color: '#60a5fa' },
+      { label: 'Out of Stock', count: this.donutOutOfStock.length, percent: this.outOfStockPercent, color: '#bfdbfe' },
+      { label: 'Expired', count: this.donutExpired.length, percent: this.expiredPercentNum, color: '#1e3a8a' },
     ];
     return data.filter(d => d.count > 0);
   }
@@ -912,8 +912,8 @@ export class PharmacistDashboardComponent implements OnInit {
 
   getBarColor(index: number): string {
     const colors = [
-      '#A7F3D0', '#6EE7B7', '#F9A8D4', '#FDE68A',
-      '#C4B5FD', '#A7F3D0', '#93C5FD'
+      '#eff6ff', '#dbeafe', '#bfdbfe', '#93c5fd',
+      '#60a5fa', '#3b82f6', '#155dfc'
     ];
     return colors[index % colors.length];
   }
@@ -1028,10 +1028,10 @@ export class PharmacistDashboardComponent implements OnInit {
       currentAngle += angleSpan;
     };
 
-    addLabel(this.donutHealthy.length, 'lbl-green');
-    addLabel(this.donutLowStock.length, 'lbl-teal');
-    addLabel(this.donutOutOfStock.length, 'lbl-pink');
-    addLabel(this.donutExpired.length, 'lbl-red');
+    addLabel(this.donutHealthy.length, 'lbl-blue-600');
+    addLabel(this.donutLowStock.length, 'lbl-blue-400');
+    addLabel(this.donutOutOfStock.length, 'lbl-blue-200');
+    addLabel(this.donutExpired.length, 'lbl-blue-900');
 
     return labels;
   }
@@ -1266,7 +1266,7 @@ export class PharmacistDashboardComponent implements OnInit {
 
   getAvatarColor(name: string): string {
     const colors = [
-      'linear-gradient(135deg, #0D4E4A, #1A8F85)',
+      '#155dfc',
       'linear-gradient(135deg, #3B82F6, #60A5FA)',
       'linear-gradient(135deg, #8B5CF6, #A78BFA)',
       'linear-gradient(135deg, #EC4899, #F472B6)',

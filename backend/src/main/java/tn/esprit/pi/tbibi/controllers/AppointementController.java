@@ -42,17 +42,35 @@ public class AppointementController {
                 .body(appointementService.verifyAndConfirm(request.getVerificationId(), request.getCode()));
     }
 
+    /**
+     * Validate an OTP code without creating an appointment.
+     * Used by the Physio and Lab booking flows: validates the code first,
+     * then the frontend calls /physio-booking or /lab-booking separately.
+     */
+    @PostMapping("/validate-code")
+    public ResponseEntity<Map<String, Object>> validateCode(@RequestBody VerifyConfirmRequest request) {
+        boolean valid = appointementService.validateCode(request.getVerificationId(), request.getCode());
+        if (valid) {
+            return ResponseEntity.ok(Map.of("valid", true));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("valid", false, "message", "Code invalide ou expiré."));
+        }
+    }
+
     /** Get all appointments */
     @GetMapping
     public ResponseEntity<List<AppointmentResponse>> getAll() {
         return ResponseEntity.ok(appointementService.getAll());
     }
 
-    /** Get one appointment by ID
-    @GetMapping("/{id}")
-    public ResponseEntity<AppointmentResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(appointementService.getById(id));
-    }*/
+    /**
+     * Get one appointment by ID
+     * @GetMapping("/{id}")
+     * public ResponseEntity<AppointmentResponse> getById(@PathVariable Long id) {
+     * return ResponseEntity.ok(appointementService.getById(id));
+     * }
+     */
 
     /** Get all appointments for a given schedule slot */
     @GetMapping("/schedule/{scheduleId}")
@@ -114,7 +132,8 @@ public class AppointementController {
         return ResponseEntity.noContent().build();
     }
 
-    // ── JPQL Endpoint ─────────────────────────────────────────────────────────────
+    // ── JPQL Endpoint
+    // ─────────────────────────────────────────────────────────────
     /**
      * Get specialty breakdown for a doctor using the JPQL JOIN query
      */
@@ -123,9 +142,11 @@ public class AppointementController {
         return ResponseEntity.ok(appointementService.getSpecialtyStats(doctorId));
     }
 
-    // ── Keyword Query Endpoint ────────────────────────────────────────────────────
+    // ── Keyword Query Endpoint
+    // ────────────────────────────────────────────────────
     /**
-     * Get filtered appointments for a doctor by date range and status using complex keyword query
+     * Get filtered appointments for a doctor by date range and status using complex
+     * keyword query
      */
     @GetMapping("/doctor/{doctorId}/filtered")
     public ResponseEntity<List<AppointmentResponse>> getFilteredAppointments(
@@ -136,7 +157,8 @@ public class AppointementController {
         return ResponseEntity.ok(appointementService.getFilteredAppointments(doctorId, from, to, status));
     }
 
-    // ── Physiotherapist & Laboratory Public Endpoints ─────────────────────────────
+    // ── Physiotherapist & Laboratory Public Endpoints
+    // ─────────────────────────────
 
     /** Returns all physiotherapist users */
     @GetMapping("/api/public/physiotherapists")

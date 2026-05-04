@@ -26,15 +26,25 @@
             </div>
 
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-50 pt-6">
-                <div class="flex items-center gap-3">
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sort by:</label>
-                    <select (change)="setSort($any($event.target).value)"
-                        class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-700 focus:outline-none cursor-pointer hover:border-gray-300 transition-colors">
-                        <option [selected]="sortBy === 'medicineName'" value="medicineName">Name</option>
-                        <option [selected]="sortBy === 'stock'" value="stock">Stock</option>
-                        <option [selected]="sortBy === 'dateOfExpiration'" value="dateOfExpiration">Expiry</option>
-                        <option [selected]="sortBy === 'price'" value="price">Price</option>
-                    </select>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-3">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sort by:</label>
+                        <select (change)="setSort($any($event.target).value)"
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-700 focus:outline-none cursor-pointer hover:border-gray-300 transition-colors">
+                            <option [selected]="sortBy === 'medicineName'" value="medicineName">Name</option>
+                            <option [selected]="sortBy === 'stock'" value="stock">Stock</option>
+                            <option [selected]="sortBy === 'dateOfExpiration'" value="dateOfExpiration">Expiry</option>
+                            <option [selected]="sortBy === 'price'" value="price">Price</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Category:</label>
+                        <select [(ngModel)]="selectedCategory" (change)="onCategoryFilterChange()"
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-700 focus:outline-none cursor-pointer hover:border-gray-300 transition-colors max-w-[180px]">
+                            <option *ngFor="let cat of categories" [value]="cat.value">{{cat.label}}</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
@@ -121,11 +131,21 @@
                                             class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">Expired</span>
                                         <span *ngIf="med.stock === 0"
                                             style="background-color: #FFE4E6 !important; color: #E11D48 !important; border-radius: 9999px !important; padding: 2px 10px !important; text-transform: none !important;"
-                                            class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">Out of Stock</span>
+                                            class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">Out
+                                            of Stock</span>
                                         <span *ngIf="isLowStock(med) && med.stock > 0"
                                             style="background-color: #FEF3C7 !important; color: #D97706 !important; border-radius: 9999px !important; padding: 2px 10px !important; text-transform: none !important;"
                                             class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">Low
                                             Stock</span>
+                                        <span *ngIf="med.category"
+                                            style="background-color: #F1F5F9 !important; color: #475569 !important; border-radius: 9999px !important; padding: 2px 10px !important; text-transform: none !important;"
+                                            class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">
+                                            {{med.category.replace('_', ' ') | titlecase}}
+                                        </span>
+                                        <span *ngIf="med.prescriptionRequired"
+                                            style="background-color: #FDF2F8 !important; color: #DB2777 !important; border-radius: 9999px !important; padding: 2px 10px !important; text-transform: none !important;"
+                                            class="text-[9px] font-bold tracking-tight border-none shrink-0 inline-block">Prescription
+                                            Required</span>
                                     </div>
                                 </div>
                             </div>
@@ -222,303 +242,153 @@
             </button>
         </div>
 
-        <!-- ─── Mode Selector (Add mode only) ─────────────────────── -->
-        <div *ngIf="activeModal === 'add'" class="mt-6">
+        <div [formGroup]="medicineForm">
 
-            <!-- ── Tab Switcher ────────────────────── -->
-            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                <button type="button" (click)="switchInputMode('scan')"
-                    style="flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 2px solid;"
-                    [style.background-color]="inputMode === 'scan' ? '#2563EB' : '#F3F4F6'"
-                    [style.color]="inputMode === 'scan' ? 'white' : '#6B7280'"
-                    [style.border-color]="inputMode === 'scan' ? '#2563EB' : '#E5E7EB'">
-                    📷 Scan Box (OCR + AI)
-                </button>
-                <button type="button" (click)="switchInputMode('manual')"
-                    style="flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 2px solid;"
-                    [style.background-color]="inputMode === 'manual' ? '#059669' : '#F3F4F6'"
-                    [style.color]="inputMode === 'manual' ? 'white' : '#6B7280'"
-                    [style.border-color]="inputMode === 'manual' ? '#059669' : '#E5E7EB'">
-                    ✏️ Saisie Manuelle
-                </button>
-            </div>
+            <!-- ─── Mode Selector (Add mode only) ─────────────────────── -->
+            <div *ngIf="activeModal === 'add'" class="mt-6">
 
-            <!-- ══ SCAN MODE ══════════════════════════════════════════════ -->
-            <div *ngIf="inputMode === 'scan'" class="rounded-xl border border-blue-100 overflow-visible">
-
-                <!-- Header -->
-                <div
-                    class="bg-gradient-to-r from-blue-600 to-blue-500 px-5 py-3 flex items-center justify-between rounded-t-xl">
-                    <div class="flex items-center gap-2">
-                        <span class="text-white text-sm">📷</span>
-                        <span class="text-white text-xs font-bold uppercase tracking-wider">Smart Scan</span>
-                    </div>
-                    <span class="text-blue-100 text-[10px] font-medium">OCR + Vision AI</span>
+                <!-- ── Tab Switcher ────────────────────── -->
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <button type="button" (click)="switchInputMode('scan')"
+                        style="flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 2px solid;"
+                        [style.background-color]="inputMode === 'scan' ? '#2563EB' : '#F3F4F6'"
+                        [style.color]="inputMode === 'scan' ? 'white' : '#6B7280'"
+                        [style.border-color]="inputMode === 'scan' ? '#2563EB' : '#E5E7EB'">
+                        📷 Scan Box (OCR + AI)
+                    </button>
+                    <button type="button" (click)="switchInputMode('manual')"
+                        style="flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 2px solid;"
+                        [style.background-color]="inputMode === 'manual' ? '#059669' : '#F3F4F6'"
+                        [style.color]="inputMode === 'manual' ? 'white' : '#6B7280'"
+                        [style.border-color]="inputMode === 'manual' ? '#059669' : '#E5E7EB'">
+                        ✏️ Manual Entry
+                    </button>
                 </div>
 
-                <div class="bg-blue-50 p-4 rounded-b-xl">
+                <!-- ══ SCAN MODE ══════════════════════════════════════════════ -->
+                <div *ngIf="inputMode === 'scan'" class="rounded-xl border border-blue-100 overflow-visible">
 
-                    <!-- Scan Button (initial state) -->
-                    <div *ngIf="!showWebcam && !isScanning && !medicineForm.get('medicineName')?.value"
-                        class="text-center py-2">
-                        <p class="text-xs text-gray-500 mb-3 font-medium">
-                            Pointez la caméra sur la boîte pour remplir automatiquement
-                        </p>
-                        <button type="button" (click)="openWebcam()"
-                            style="background-color: #2563EB !important; color: white !important;"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all hover:bg-blue-700 active:scale-95 shadow-sm">
-                            📷 Scanner la boîte
-                        </button>
+                    <!-- Header -->
+                    <div
+                        class="bg-gradient-to-r from-blue-600 to-blue-500 px-5 py-3 flex items-center justify-between rounded-t-xl">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white text-sm">📷</span>
+                            <span class="text-white text-xs font-bold uppercase tracking-wider">Smart Scan</span>
+                        </div>
+                        <span class="text-blue-100 text-[10px] font-medium">OCR + Vision AI</span>
                     </div>
 
-                    <!-- Webcam with guide overlay -->
-                    <div *ngIf="showWebcam && !isScanning">
-                        <div class="text-center mb-2">
-                            <span class="bg-gray-800 text-white text-[10px] font-bold px-3 py-1.5 rounded-full">
-                                📦 Placez la boîte dans le cadre
-                            </span>
+                    <div class="bg-blue-50 p-4 rounded-b-xl">
+
+                        <!-- Scan Button (initial state) -->
+                        <div *ngIf="!showWebcam && !isScanning && !medicineForm.get('medicineName')?.value"
+                            class="text-center py-2">
+                            <p class="text-xs text-gray-500 mb-3 font-medium">
+                                Point the camera at the medicine box to auto-fill the form
+                            </p>
+                            <button type="button" (click)="openWebcam()"
+                                style="background-color: #2563EB !important; color: white !important;"
+                                class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all hover:bg-blue-700 active:scale-95 shadow-sm">
+                                📷 Scan the Box
+                            </button>
                         </div>
-                        <div class="relative">
-                            <webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)" [width]="500"
-                                [height]="340" [imageQuality]="1" [captureImageData]="true" [imageType]="'image/jpeg'"
-                                [mirrorImage]="'never'" class="rounded-lg w-full border border-blue-200 block">
-                            </webcam>
-                            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                                <div class="relative border-2 border-blue-400 border-dashed rounded-lg"
-                                    style="width: 75%; height: 70%;">
-                                    <div
-                                        class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-blue-500 rounded-tl-sm">
-                                    </div>
-                                    <div
-                                        class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-blue-500 rounded-tr-sm">
-                                    </div>
-                                    <div
-                                        class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-blue-500 rounded-bl-sm">
-                                    </div>
-                                    <div
-                                        class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-blue-500 rounded-br-sm">
+
+                        <!-- Webcam with guide overlay -->
+                        <div *ngIf="showWebcam && !isScanning">
+                            <div class="text-center mb-2">
+                                <span class="bg-gray-800 text-white text-[10px] font-bold px-3 py-1.5 rounded-full">
+                                    📦 Place the box in the frame
+                                </span>
+                            </div>
+                            <div class="relative">
+                                <webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)" [width]="500"
+                                    [height]="340" [imageQuality]="1" [captureImageData]="true"
+                                    [imageType]="'image/jpeg'" [mirrorImage]="'never'"
+                                    class="rounded-lg w-full border border-blue-200 block">
+                                </webcam>
+                                <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                    <div class="relative border-2 border-blue-400 border-dashed rounded-lg"
+                                        style="width: 75%; height: 70%;">
+                                        <div
+                                            class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-blue-500 rounded-tl-sm">
+                                        </div>
+                                        <div
+                                            class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-blue-500 rounded-tr-sm">
+                                        </div>
+                                        <div
+                                            class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-blue-500 rounded-bl-sm">
+                                        </div>
+                                        <div
+                                            class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-blue-500 rounded-br-sm">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="flex gap-2 mt-3 justify-center">
-                            <button type="button" (click)="capture()"
-                                style="background-color: #2563EB !important; color: white !important;"
-                                class="px-6 py-2 rounded-lg text-sm font-bold active:scale-95 shadow-sm">
-                                📸 Capturer
-                            </button>
-                            <button type="button" (click)="closeWebcam()"
-                                class="px-4 py-2 rounded-lg text-sm font-bold border border-gray-200 text-gray-500 hover:text-gray-700 bg-white">
-                                Annuler
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Scanning spinner -->
-                    <div *ngIf="isScanning" class="text-center py-6">
-                        <div
-                            class="inline-block w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3">
-                        </div>
-                        <p class="text-sm text-blue-700 font-bold">Analyse de la boîte...</p>
-                        <p class="text-[10px] text-blue-400 mt-1">OCR + Vision AI en cours</p>
-                    </div>
-
-                    <!-- Scan error -->
-                    <div *ngIf="scanError && !isScanning"
-                        class="text-center py-2 bg-red-50 rounded-lg border border-red-100 p-3">
-                        <p class="text-xs text-red-500 font-bold mb-2">❌ {{ scanError }}</p>
-                        <button type="button" (click)="openWebcam()"
-                            style="background-color: #2563EB !important; color: white !important;"
-                            class="px-4 py-1.5 rounded-lg text-xs font-bold">
-                            Réessayer
-                        </button>
-                    </div>
-
-                    <!-- Success state -->
-                    <div *ngIf="!showWebcam && !isScanning && !scanError && medicineForm.get('medicineName')?.value"
-                        class="flex items-center justify-between bg-green-50 rounded-lg border border-green-100 px-4 py-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-green-500 text-lg">✅</span>
-                            <div>
-                                <p class="text-xs text-green-700 font-bold">Médicament détecté !</p>
-                                <p style="font-size: 10px; color: #22C55E;">Vérifiez et complétez le formulaire</p>
+                            <div class="flex gap-2 mt-3 justify-center">
+                                <button type="button" (click)="capture()"
+                                    style="background-color: #2563EB !important; color: white !important;"
+                                    class="px-6 py-2 rounded-lg text-sm font-bold active:scale-95 shadow-sm">
+                                    📸 Capture
+                                </button>
+                                <button type="button" (click)="closeWebcam()"
+                                    class="px-4 py-2 rounded-lg text-sm font-bold border border-gray-200 text-gray-500 hover:text-gray-700 bg-white">
+                                    Cancel
+                                </button>
                             </div>
                         </div>
-                        <button type="button" (click)="openWebcam()"
-                            style="font-size: 12px; color: #2563EB; font-weight: 700; background: none; border: none; cursor: pointer; white-space: nowrap;">
-                            🔄 Rescanner
-                        </button>
-                    </div>
 
-                </div>
-            </div>
-
-            <!-- ══ MANUAL MODE ════════════════════════════════════════════ -->
-            <div *ngIf="inputMode === 'manual'"
-                style="border: 2px solid #D1FAE5; border-radius: 12px; overflow: hidden;">
-                <div
-                    style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #A7F3D0;">
-                    <span style="font-size: 13px;">✏️</span>
-                    <span
-                        style="font-size: 11px; font-weight: 700; color: #065F46; text-transform: uppercase; letter-spacing: 0.05em;">Saisie
-                        Manuelle</span>
-                    <span
-                        style="font-size: 10px; color: #059669; margin-left: auto; font-weight: 600;">Tous les champs
-                        éditables</span>
-                </div>
-                <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; background: #F0FDF4;">
-
-                    <!-- Medicine Name -->
-                    <div>
-                        <label
-                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                            Nom du médicament
-                        </label>
-                        <input formControlName="medicineName" type="text" placeholder="Ex: Amoxicilline 500mg"
-                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827;" />
-                    </div>
-
-                    <!-- Active Ingredient + Form Row -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div>
-                            <label
-                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                                Molécule / DCI
-                            </label>
-                            <input formControlName="activeIngredient" type="text" placeholder="Ex: Amoxicilline"
-                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827;" />
+                        <!-- Scanning spinner -->
+                        <div *ngIf="isScanning" class="text-center py-6">
+                            <div
+                                class="inline-block w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3">
+                            </div>
+                            <p class="text-sm text-blue-700 font-bold">Analyzing box...</p>
+                            <p class="text-[10px] text-blue-400 mt-1">OCR + Vision AI processing</p>
                         </div>
-                        <div>
-                            <label
-                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                                Forme
-                            </label>
-                            <select formControlName="form"
-                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827; cursor: pointer;">
-                                <option value="">-- Sélectionner --</option>
-                                <option value="TABLET">Comprimé</option>
-                                <option value="CAPSULE">Gélule</option>
-                                <option value="SYRUP">Sirop</option>
-                                <option value="INJECTION">Injectable</option>
-                                <option value="CREAM">Crème</option>
-                                <option value="OINTMENT">Pommade</option>
-                                <option value="SUPPOSITORY">Suppositoire</option>
-                                <option value="EYE_DROPS">Collyre</option>
-                                <option value="SPRAY">Spray</option>
-                                <option value="PATCH">Patch</option>
-                                <option value="SACHET">Sachet</option>
-                                <option value="POWDER">Poudre</option>
-                                <option value="OTHER">Autre</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <!-- Dosage -->
-                    <div>
-                        <label
-                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                            Dosage
-                        </label>
-                        <input formControlName="dosage" type="text" placeholder="Ex: 500mg, 250mg/5ml"
-                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827;" />
+                        <!-- Scan error -->
+                        <div *ngIf="scanError && !isScanning"
+                            class="text-center py-2 bg-red-50 rounded-lg border border-red-100 p-3">
+                            <p class="text-xs text-red-500 font-bold mb-2">❌ {{ scanError }}</p>
+                            <button type="button" (click)="openWebcam()"
+                                style="background-color: #2563EB !important; color: white !important;"
+                                class="px-4 py-1.5 rounded-lg text-xs font-bold">
+                                Retry
+                            </button>
+                        </div>
+
+                        <!-- Success state -->
+                        <div *ngIf="!showWebcam && !isScanning && !scanError && medicineForm.get('medicineName')?.value"
+                            class="flex items-center justify-between bg-green-50 rounded-lg border border-green-100 px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-green-500 text-lg">✅</span>
+                                <div>
+                                    <p class="text-xs text-green-700 font-bold">Medicine detected!</p>
+                                    <p style="font-size: 10px; color: #22C55E;">Review and complete the form below</p>
+                                </div>
+                            </div>
+                            <button type="button" (click)="openWebcam()"
+                                style="font-size: 12px; color: #2563EB; font-weight: 700; background: none; border: none; cursor: pointer; white-space: nowrap;">
+                                🔄 Re-scan
+                            </button>
+                        </div>
+
                     </div>
                 </div>
-            </div>
 
-            <!-- ══ Scan mode: editable fields after scan ════════════════ -->
-            <div *ngIf="inputMode === 'scan' && scannedSuccessfully"
-                style="border: 1px solid #E0E7FF; border-radius: 12px; overflow: hidden; margin-top: 12px;">
-                <div
-                    style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E0E7FF;">
-                    <span style="font-size: 13px;">🔍</span>
-                    <span
-                        style="font-size: 11px; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Résultat
-                        du scan — modifiable</span>
-                    <span
-                        style="font-size: 10px; color: #059669; background: #ECFDF5; padding: 2px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #A7F3D0; margin-left: auto;">✓
-                        Rempli</span>
-                </div>
-                <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; background: #F0FDF4;">
-                    <div>
-                        <label
-                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Nom
-                            du médicament</label>
-                        <input formControlName="medicineName" type="text"
-                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534;" />
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div>
-                            <label
-                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Molécule
-                                / DCI</label>
-                            <input formControlName="activeIngredient" type="text"
-                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534;" />
-                        </div>
-                        <div>
-                            <label
-                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Forme</label>
-                            <select formControlName="form"
-                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534; cursor: pointer;">
-                                <option value="">-- Sélectionner --</option>
-                                <option value="TABLET">Comprimé</option>
-                                <option value="CAPSULE">Gélule</option>
-                                <option value="SYRUP">Sirop</option>
-                                <option value="INJECTION">Injectable</option>
-                                <option value="CREAM">Crème</option>
-                                <option value="OINTMENT">Pommade</option>
-                                <option value="SUPPOSITORY">Suppositoire</option>
-                                <option value="EYE_DROPS">Collyre</option>
-                                <option value="SPRAY">Spray</option>
-                                <option value="PATCH">Patch</option>
-                                <option value="SACHET">Sachet</option>
-                                <option value="POWDER">Poudre</option>
-                                <option value="OTHER">Autre</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label
-                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Dosage</label>
-                        <input formControlName="dosage" type="text"
-                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534;" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- ─── Form ──────────────────────────────────────────────────── -->
-        <div style="padding-top: 24px;">
-            <form [formGroup]="medicineForm">
-
-<<<<<<< Updated upstream
-=======
-                <!-- ── Scanned Fields Group ──────────────────────────── -->
-                <div *ngIf="activeModal === 'add'"
-                    style="border: 1px solid #E0E7FF; border-radius: 12px; overflow: hidden; margin-bottom: 20px;">
-
-                    <!-- Group Header -->
+                <!-- ══ MANUAL MODE ════════════════════════════════════════════ -->
+                <div *ngIf="inputMode === 'manual'"
+                    style="border: 2px solid #D1FAE5; border-radius: 12px; overflow: hidden;">
                     <div
-                        style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); padding: 10px 16px; display: flex; align-items: center; justify-content: between; border-bottom: 1px solid #E0E7FF;">
-                        <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
-                            <span style="font-size: 13px;">🔒</span>
-                            <span
-                                style="font-size: 11px; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Auto-filled
-                                by Scan</span>
-                        </div>
-                        <span *ngIf="!scannedSuccessfully"
-                            style="font-size: 10px; color: #6366F1; background: white; padding: 2px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #E0E7FF;">
-                            Scan to fill
-                        </span>
-                        <span *ngIf="scannedSuccessfully"
-                            style="font-size: 10px; color: #059669; background: #ECFDF5; padding: 2px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #A7F3D0;">
-                            ✓ Filled
-                        </span>
+                        style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #A7F3D0;">
+                        <span style="font-size: 13px;">✏️</span>
+                        <span
+                            style="font-size: 11px; font-weight: 700; color: #065F46; text-transform: uppercase; letter-spacing: 0.05em;">Manual
+                            Entry</span>
+                        <span style="font-size: 10px; color: #059669; margin-left: auto; font-weight: 600;">All fields
+                            editable</span>
                     </div>
-
-                    <!-- Scanned Fields Container -->
-                    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;"
-                        [style.background-color]="scannedSuccessfully ? '#F0FDF4' : '#FAFBFF'">
+                    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; background: #F0FDF4;">
 
                         <!-- Medicine Name -->
                         <div>
@@ -526,14 +396,8 @@
                                 style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
                                 Medicine Name
                             </label>
-                            <input formControlName="medicineName" type="text"
-                                placeholder="Will be filled by camera scan"
-                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
-                                [style.background-color]="scannedSuccessfully ? '#DCFCE7' : (hasError('medicineName') ? '#FEF2F2' : '#F3F4F6')"
-                                [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : (hasError('medicineName') ? '1px solid #FECACA' : '1px solid #E5E7EB')"
-                                [style.color]="scannedSuccessfully ? '#166534' : '#111827'" />
-                            <p *ngIf="hasError('medicineName')" class="text-[10px] text-red-500 font-bold mt-1 ml-1">
-                                Name is required (min 2 characters)</p>
+                            <input formControlName="medicineName" type="text" placeholder="e.g. Amoxicillin 500mg"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827;" />
                         </div>
 
                         <!-- Active Ingredient + Form Row -->
@@ -541,14 +405,10 @@
                             <div>
                                 <label
                                     style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                                    Active Ingredient
+                                    Active Ingredient / INN
                                 </label>
-                                <input formControlName="activeIngredient" type="text" placeholder="From scan"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
-                                    [style.background-color]="scannedSuccessfully ? '#DCFCE7' : (hasError('activeIngredient') ? '#FEF2F2' : '#F3F4F6')"
-                                    [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : (hasError('activeIngredient') ? '1px solid #FECACA' : '1px solid #E5E7EB')"
-                                    [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'" />
-                                <p *ngIf="hasError('activeIngredient')" class="text-[10px] text-red-500 font-bold mt-1 ml-1">Active Ingredient is required</p>
+                                <input formControlName="activeIngredient" type="text" placeholder="e.g. Amoxicillin"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827;" />
                             </div>
                             <div>
                                 <label
@@ -556,11 +416,8 @@
                                     Form
                                 </label>
                                 <select formControlName="form"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s; cursor: not-allowed;"
-                                    [style.background-color]="scannedSuccessfully ? '#DCFCE7' : '#F3F4F6'"
-                                    [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : '1px solid #E5E7EB'"
-                                    [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'">
-                                    <option value="">From scan</option>
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827; cursor: pointer;">
+                                    <option value="">-- Select --</option>
                                     <option value="TABLET">Tablet</option>
                                     <option value="CAPSULE">Capsule</option>
                                     <option value="SYRUP">Syrup</option>
@@ -584,25 +441,23 @@
                                 style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
                                 Dosage
                             </label>
-                            <input formControlName="dosage" type="text" placeholder="From scan (e.g. 500mg)"
-                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
-                                [style.background-color]="scannedSuccessfully ? '#DCFCE7' : '#F3F4F6'"
-                                [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : '1px solid #E5E7EB'"
-                                [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'" />
+                            <input formControlName="dosage" type="text" placeholder="e.g. 500mg, 250mg/5ml"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827;" />
                         </div>
-                        <!-- Category — auto filled by scan -->
+
+                        <!-- Category -->
                         <div>
                             <label
                                 style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
                                 Category
                             </label>
                             <select formControlName="category"
-                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;">
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: white; border: 1.5px solid #6EE7B7; color: #111827; cursor: pointer;">
                                 <option value="">-- Select --</option>
-                                <option value="COUGH_AND_COLD">Cough & Cold</option>
+                                <option value="COUGH_AND_COLD">Cough &amp; Cold</option>
                                 <option value="RESPIRATORY">Respiratory</option>
-                                <option value="FEVER_AND_PAIN">Fever & Pain</option>
-                                <option value="MUSCLE_AND_JOINT">Muscle & Joint</option>
+                                <option value="FEVER_AND_PAIN">Fever &amp; Pain</option>
+                                <option value="MUSCLE_AND_JOINT">Muscle &amp; Joint</option>
                                 <option value="ANTIBIOTIC">Antibiotic</option>
                                 <option value="ANTIVIRAL">Antiviral</option>
                                 <option value="ANTIFUNGAL">Antifungal</option>
@@ -610,46 +465,58 @@
                                 <option value="SKIN">Skin</option>
                                 <option value="WOUND_CARE">Wound Care</option>
                                 <option value="ALLERGY">Allergy</option>
-                                <option value="EYE_AND_EAR">Eye & Ear</option>
+                                <option value="EYE_AND_EAR">Eye &amp; Ear</option>
                                 <option value="DIABETES">Diabetes</option>
                                 <option value="HYPERTENSION">Hypertension</option>
                                 <option value="CARDIAC">Cardiac</option>
                                 <option value="THYROID">Thyroid</option>
-                                <option value="ANXIETY_AND_SLEEP">Anxiety & Sleep</option>
+                                <option value="ANXIETY_AND_SLEEP">Anxiety &amp; Sleep</option>
                                 <option value="URINARY">Urinary</option>
-                                <option value="VITAMINS_AND_SUPPLEMENTS">Vitamins & Supplements</option>
-                                <option value="ORAL_AND_DENTAL">Oral & Dental</option>
+                                <option value="VITAMINS_AND_SUPPLEMENTS">Vitamins &amp; Supplements</option>
+                                <option value="ORAL_AND_DENTAL">Oral &amp; Dental</option>
                                 <option value="OTHER">Other</option>
                             </select>
-                            <p *ngIf="hasError('category')" class="text-[10px] text-red-500 font-bold mt-1 ml-1">Category is required</p>
+                            <p *ngIf="hasError('category')" class="text-[10px] text-red-500 font-bold mt-1 ml-1">
+                                Category is required</p>
                         </div>
+
                     </div>
                 </div>
 
->>>>>>> Stashed changes
-                <!-- ── Edit mode: regular fields (no grouping) ───────── -->
-                <ng-container *ngIf="activeModal === 'edit'">
-                    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px;">
+                <!-- ══ Scan mode: editable fields after scan ════════════════ -->
+                <div *ngIf="inputMode === 'scan' && scannedSuccessfully"
+                    style="border: 1px solid #E0E7FF; border-radius: 12px; overflow: hidden; margin-top: 12px;">
+                    <div
+                        style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E0E7FF;">
+                        <span style="font-size: 13px;">🔍</span>
+                        <span
+                            style="font-size: 11px; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Scan
+                            Result — editable</span>
+                        <span
+                            style="font-size: 10px; color: #059669; background: #ECFDF5; padding: 2px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #A7F3D0; margin-left: auto;">✓
+                            Filled</span>
+                    </div>
+                    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; background: #F0FDF4;">
                         <div>
                             <label
-                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Medicine
-                                Name</label>
+                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Nom
+                                du médicament</label>
                             <input formControlName="medicineName" type="text"
-                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534;" />
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <div>
                                 <label
                                     style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Active
-                                    Ingredient</label>
+                                    Ingredient / INN</label>
                                 <input formControlName="activeIngredient" type="text"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534;" />
                             </div>
                             <div>
                                 <label
                                     style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Form</label>
                                 <select formControlName="form"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;">
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534; cursor: pointer;">
                                     <option value="">-- Select --</option>
                                     <option value="TABLET">Tablet</option>
                                     <option value="CAPSULE">Capsule</option>
@@ -670,14 +537,20 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <div>
                                 <label
+                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Dosage</label>
+                                <input formControlName="dosage" type="text"
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534;" />
+                            </div>
+                            <div>
+                                <label
                                     style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Category</label>
                                 <select formControlName="category"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;">
+                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #DCFCE7; border: 1px solid #86EFAC; color: #166534; cursor: pointer;">
                                     <option value="">-- Select --</option>
-                                    <option value="COUGH_AND_COLD">Cough & Cold</option>
+                                    <option value="COUGH_AND_COLD">Cough &amp; Cold</option>
                                     <option value="RESPIRATORY">Respiratory</option>
-                                    <option value="FEVER_AND_PAIN">Fever & Pain</option>
-                                    <option value="MUSCLE_AND_JOINT">Muscle & Joint</option>
+                                    <option value="FEVER_AND_PAIN">Fever &amp; Pain</option>
+                                    <option value="MUSCLE_AND_JOINT">Muscle &amp; Joint</option>
                                     <option value="ANTIBIOTIC">Antibiotic</option>
                                     <option value="ANTIVIRAL">Antiviral</option>
                                     <option value="ANTIFUNGAL">Antifungal</option>
@@ -685,163 +558,407 @@
                                     <option value="SKIN">Skin</option>
                                     <option value="WOUND_CARE">Wound Care</option>
                                     <option value="ALLERGY">Allergy</option>
-                                    <option value="EYE_AND_EAR">Eye & Ear</option>
+                                    <option value="EYE_AND_EAR">Eye &amp; Ear</option>
                                     <option value="DIABETES">Diabetes</option>
                                     <option value="HYPERTENSION">Hypertension</option>
                                     <option value="CARDIAC">Cardiac</option>
                                     <option value="THYROID">Thyroid</option>
-                                    <option value="ANXIETY_AND_SLEEP">Anxiety & Sleep</option>
+                                    <option value="ANXIETY_AND_SLEEP">Anxiety &amp; Sleep</option>
                                     <option value="URINARY">Urinary</option>
-                                    <option value="VITAMINS_AND_SUPPLEMENTS">Vitamins & Supplements</option>
-                                    <option value="ORAL_AND_DENTAL">Oral & Dental</option>
+                                    <option value="VITAMINS_AND_SUPPLEMENTS">Vitamins &amp; Supplements</option>
+                                    <option value="ORAL_AND_DENTAL">Oral &amp; Dental</option>
                                     <option value="OTHER">Other</option>
                                 </select>
                             </div>
-                            <div>
-                                <label
-                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Dosage</label>
-                                <input formControlName="dosage" type="text" placeholder="e.g. 500mg"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
-                            </div>
                         </div>
-                    </div>
-                </ng-container>
 
-                <!-- ── Description ───────────────────────────────────── -->
-                <div style="margin-bottom: 14px;">
-                    <label
-                        style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Description</label>
-                    <textarea formControlName="description" rows="2" placeholder="Optional description..."
-                        style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827; resize: none;"></textarea>
+                    </div>
                 </div>
+            </div>
 
-                <!-- ── Manual Fields Group ───────────────────────────── -->
-                <div style="border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
 
-                    <!-- Group Header -->
-                    <div
-                        style="background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E5E7EB;">
-                        <span style="font-size: 13px;">✏️</span>
-                        <span
-                            style="font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">Inventory
-                            Details</span>
-                        <span style="font-size: 10px; color: #9CA3AF; margin-left: auto; font-weight: 500;">Fill
-                            manually</span>
-                    </div>
+            <!-- ─── Form ──────────────────────────────────────────────────── -->
+            <div style="padding-top: 24px;">
+                <<<<<<< HEAD <form [formGroup]="medicineForm">
 
-                    <!-- Manual Fields Container -->
-                    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; background: #FFFFFF;">
+                    <<<<<<< Updated upstream=======<!-- ── Scanned Fields Group ──────────────────────────── -->
+                        <div *ngIf="activeModal === 'add'"
+                            style="border: 1px solid #E0E7FF; border-radius: 12px; overflow: hidden; margin-bottom: 20px;">
 
-                        <!-- Price & Stock -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div>
-                                <label
-                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                                    Unit Price (DT)
-                                </label>
-                                <input formControlName="price" type="number" step="0.01" min="0" placeholder="0.00"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; transition: all 0.2s;"
-                                    [style.background-color]="hasError('price') ? '#FEF2F2' : '#F9FAFB'"
-                                    [style.border]="hasError('price') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
-                                <p *ngIf="hasError('price') && !medicineForm.get('price')?.hasError('min')"
-                                    class="text-[10px] text-red-500 font-bold mt-1 ml-1">Valid price required (dt)</p>
-                                <p *ngIf="medicineForm.get('price')?.hasError('min')"
-                                    class="text-[10px] text-red-500 font-bold mt-1 ml-1">Price cannot be negative</p>
+                            <!-- Group Header -->
+                            <div
+                                style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); padding: 10px 16px; display: flex; align-items: center; justify-content: between; border-bottom: 1px solid #E0E7FF;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                                    <span style="font-size: 13px;">🔒</span>
+                                    <span
+                                        style="font-size: 11px; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Auto-filled
+                                        by Scan</span>
+                                </div>
+                                <span *ngIf="!scannedSuccessfully"
+                                    style="font-size: 10px; color: #6366F1; background: white; padding: 2px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #E0E7FF;">
+                                    Scan to fill
+                                </span>
+                                <span *ngIf="scannedSuccessfully"
+                                    style="font-size: 10px; color: #059669; background: #ECFDF5; padding: 2px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #A7F3D0;">
+                                    ✓ Filled
+                                </span>
                             </div>
-                            <div *ngIf="activeModal === 'add'">
-                                <label
-                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                                    Stock Quantity
-                                </label>
-                                <input formControlName="stock" type="number" min="0" placeholder="0"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; transition: all 0.2s;"
-                                    [style.background-color]="hasError('stock') ? '#FEF2F2' : '#F9FAFB'"
-                                    [style.border]="hasError('stock') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
-                                <p *ngIf="hasError('stock') && !medicineForm.get('stock')?.hasError('min')"
-                                    class="text-[10px] text-red-500 font-bold mt-1 ml-1">Stock required</p>
-                                <p *ngIf="medicineForm.get('stock')?.hasError('min')"
-                                    class="text-[10px] text-red-500 font-bold mt-1 ml-1">Stock cannot be negative</p>
-                            </div>
-                        </div>
 
-                        <!-- Min Stock & Expiration -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div>
-                                <label
-                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                                    Low Stock Threshold
-                                </label>
-                                <input formControlName="minStockAlert" type="number" min="0"
-                                    style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
-                                <p *ngIf="medicineForm.get('minStockAlert')?.hasError('min')"
-                                    class="text-[10px] text-red-500 font-bold mt-1 ml-1">Threshold cannot be negative
-                                </p>
-                            </div>
-                            <div>
-                                <label
-                                    style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
-                                    Expiration Date
-                                </label>
-                                <div style="position: relative;">
-                                    <input #expDate formControlName="dateOfExpiration" type="date"
-                                        (click)="expDate.showPicker()" [min]="minDate"
-                                        style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s; cursor: pointer;"
-                                        [style.background-color]="hasError('dateOfExpiration') ? '#FEF2F2' : '#F9FAFB'"
-                                        [style.border]="hasError('dateOfExpiration') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
-                                    <p *ngIf="hasError('dateOfExpiration')"
-                                        class="text-[10px] text-red-500 font-bold mt-1 ml-1">Expiry date is required</p>
+                            <!-- Scanned Fields Container -->
+                            <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;"
+                                [style.background-color]="scannedSuccessfully ? '#F0FDF4' : '#FAFBFF'">
+
+                                <!-- Medicine Name -->
+                                <div>
+                                    <label
+                                        style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                        Medicine Name
+                                    </label>
+                                    <input formControlName="medicineName" type="text"
+                                        placeholder="Will be filled by camera scan"
+                                        style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
+                                        [style.background-color]="scannedSuccessfully ? '#DCFCE7' : (hasError('medicineName') ? '#FEF2F2' : '#F3F4F6')"
+                                        [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : (hasError('medicineName') ? '1px solid #FECACA' : '1px solid #E5E7EB')"
+                                        [style.color]="scannedSuccessfully ? '#166534' : '#111827'" />
+                                    <p *ngIf="hasError('medicineName')"
+                                        class="text-[10px] text-red-500 font-bold mt-1 ml-1">
+                                        Name is required (min 2 characters)</p>
+                                </div>
+
+                                <!-- Active Ingredient + Form Row -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                            Active Ingredient
+                                        </label>
+                                        <input formControlName="activeIngredient" type="text" placeholder="From scan"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
+                                            [style.background-color]="scannedSuccessfully ? '#DCFCE7' : (hasError('activeIngredient') ? '#FEF2F2' : '#F3F4F6')"
+                                            [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : (hasError('activeIngredient') ? '1px solid #FECACA' : '1px solid #E5E7EB')"
+                                            [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'" />
+                                        <p *ngIf="hasError('activeIngredient')"
+                                            class="text-[10px] text-red-500 font-bold mt-1 ml-1">Active Ingredient is
+                                            required</p>
+                                    </div>
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                            Form
+                                        </label>
+                                        <select formControlName="form"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s; cursor: not-allowed;"
+                                            [style.background-color]="scannedSuccessfully ? '#DCFCE7' : '#F3F4F6'"
+                                            [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : '1px solid #E5E7EB'"
+                                            [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'">
+                                            <option value="">From scan</option>
+                                            <option value="TABLET">Tablet</option>
+                                            <option value="CAPSULE">Capsule</option>
+                                            <option value="SYRUP">Syrup</option>
+                                            <option value="INJECTION">Injection</option>
+                                            <option value="CREAM">Cream</option>
+                                            <option value="OINTMENT">Ointment</option>
+                                            <option value="SUPPOSITORY">Suppository</option>
+                                            <option value="EYE_DROPS">Eye Drops</option>
+                                            <option value="SPRAY">Spray</option>
+                                            <option value="PATCH">Patch</option>
+                                            <option value="SACHET">Sachet</option>
+                                            <option value="POWDER">Powder</option>
+                                            <option value="OTHER">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Dosage -->
+                                <div>
+                                    <label
+                                        style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                        Dosage
+                                    </label>
+                                    <input formControlName="dosage" type="text" placeholder="From scan (e.g. 500mg)"
+                                        style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s;"
+                                        [style.background-color]="scannedSuccessfully ? '#DCFCE7' : '#F3F4F6'"
+                                        [style.border]="scannedSuccessfully ? '1px solid #86EFAC' : '1px solid #E5E7EB'"
+                                        [style.color]="scannedSuccessfully ? '#166534' : '#9CA3AF'" />
+                                </div>
+                                <!-- Category — auto filled by scan -->
+                                <div>
+                                    <label
+                                        style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                        Category
+                                    </label>
+                                    <select formControlName="category"
+                                        style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;">
+                                        <option value="">-- Select --</option>
+                                        <option value="COUGH_AND_COLD">Cough & Cold</option>
+                                        <option value="RESPIRATORY">Respiratory</option>
+                                        <option value="FEVER_AND_PAIN">Fever & Pain</option>
+                                        <option value="MUSCLE_AND_JOINT">Muscle & Joint</option>
+                                        <option value="ANTIBIOTIC">Antibiotic</option>
+                                        <option value="ANTIVIRAL">Antiviral</option>
+                                        <option value="ANTIFUNGAL">Antifungal</option>
+                                        <option value="DIGESTIVE">Digestive</option>
+                                        <option value="SKIN">Skin</option>
+                                        <option value="WOUND_CARE">Wound Care</option>
+                                        <option value="ALLERGY">Allergy</option>
+                                        <option value="EYE_AND_EAR">Eye & Ear</option>
+                                        <option value="DIABETES">Diabetes</option>
+                                        <option value="HYPERTENSION">Hypertension</option>
+                                        <option value="CARDIAC">Cardiac</option>
+                                        <option value="THYROID">Thyroid</option>
+                                        <option value="ANXIETY_AND_SLEEP">Anxiety & Sleep</option>
+                                        <option value="URINARY">Urinary</option>
+                                        <option value="VITAMINS_AND_SUPPLEMENTS">Vitamins & Supplements</option>
+                                        <option value="ORAL_AND_DENTAL">Oral & Dental</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                    <p *ngIf="hasError('category')"
+                                        class="text-[10px] text-red-500 font-bold mt-1 ml-1">Category is required</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                        =======
+                        >>>>>>> 30833853db9ea239aa64f72be1f0d552245f5b7a
 
-                <style>
-                    input[type="date"]::-webkit-calendar-picker-indicator {
-                        background: transparent;
-                        bottom: 0;
-                        color: transparent;
-                        cursor: pointer;
-                        height: auto;
-                        left: 0;
-                        position: absolute;
-                        right: 0;
-                        top: 0;
-                        width: auto;
-                    }
-                </style>
+                        >>>>>>> Stashed changes
+                        <!-- ── Edit mode: regular fields (no grouping) ───────── -->
+                        <ng-container *ngIf="activeModal === 'edit'">
+                            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px;">
+                                <div>
+                                    <label
+                                        style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Medicine
+                                        Name</label>
+                                    <input formControlName="medicineName" type="text"
+                                        style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Active
+                                            Ingredient</label>
+                                        <input formControlName="activeIngredient" type="text"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                                    </div>
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Form</label>
+                                        <select formControlName="form"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;">
+                                            <option value="">-- Select --</option>
+                                            <option value="TABLET">Tablet</option>
+                                            <option value="CAPSULE">Capsule</option>
+                                            <option value="SYRUP">Syrup</option>
+                                            <option value="INJECTION">Injection</option>
+                                            <option value="CREAM">Cream</option>
+                                            <option value="OINTMENT">Ointment</option>
+                                            <option value="SUPPOSITORY">Suppository</option>
+                                            <option value="EYE_DROPS">Eye Drops</option>
+                                            <option value="SPRAY">Spray</option>
+                                            <option value="PATCH">Patch</option>
+                                            <option value="SACHET">Sachet</option>
+                                            <option value="POWDER">Powder</option>
+                                            <option value="OTHER">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
 
-                <!-- Image Upload (Add mode only) -->
-                <div *ngIf="activeModal === 'add'" style="padding-top: 4px;">
-                    <label
-                        style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 8px;">Upload
-                        Images</label>
-                    <div appFilePicker #addPicker="appFilePicker" [multiple]="true"
-                        (filesChanged)="onFilesChanged($event)"
-                        style="border: 2px dashed #DDE3EE; border-radius: 12px; padding: 24px; background: #F8FAFD; text-align: center; cursor: pointer; transition: all 0.2s; position: relative;">
-                        <lucide-icon name="plus" class="w-8 h-8 text-gray-300 mx-auto mb-2"></lucide-icon>
-                        <p style="font-size: 12px; color: #9CA3AF; font-weight: 500;">Drop images here or click to
-                            browse</p>
-                    </div>
-                    <div *ngIf="filePreviews.length > 0"
-                        style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px;">
-                        <div *ngFor="let prev of filePreviews; let i = index" class="relative group">
-                            <img [src]="prev"
-                                style="width: 56px; height: 56px; object-fit: cover; border-radius: 10px; border: 1px solid #E5E7EB;" />
-                            <button (click)="removeSelectedFile(i)"
-                                style="position: absolute; top: -6px; right: -6px; background: #EF4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; font-size: 10px;">
-                                ✕
-                            </button>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Category</label>
+                                        <select formControlName="category"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;">
+                                            <option value="">-- Select --</option>
+                                            <option value="COUGH_AND_COLD">Cough & Cold</option>
+                                            <option value="RESPIRATORY">Respiratory</option>
+                                            <option value="FEVER_AND_PAIN">Fever & Pain</option>
+                                            <option value="MUSCLE_AND_JOINT">Muscle & Joint</option>
+                                            <option value="ANTIBIOTIC">Antibiotic</option>
+                                            <option value="ANTIVIRAL">Antiviral</option>
+                                            <option value="ANTIFUNGAL">Antifungal</option>
+                                            <option value="DIGESTIVE">Digestive</option>
+                                            <option value="SKIN">Skin</option>
+                                            <option value="WOUND_CARE">Wound Care</option>
+                                            <option value="ALLERGY">Allergy</option>
+                                            <option value="EYE_AND_EAR">Eye & Ear</option>
+                                            <option value="DIABETES">Diabetes</option>
+                                            <option value="HYPERTENSION">Hypertension</option>
+                                            <option value="CARDIAC">Cardiac</option>
+                                            <option value="THYROID">Thyroid</option>
+                                            <option value="ANXIETY_AND_SLEEP">Anxiety & Sleep</option>
+                                            <option value="URINARY">Urinary</option>
+                                            <option value="VITAMINS_AND_SUPPLEMENTS">Vitamins & Supplements</option>
+                                            <option value="ORAL_AND_DENTAL">Oral & Dental</option>
+                                            <option value="OTHER">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Dosage</label>
+                                        <input formControlName="dosage" type="text" placeholder="e.g. 500mg"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-container>
+
+
+
+                        <!-- ── Prescription Toggle (Shared) ────────────────────────── -->
+                        <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px; padding: 14px; background: #FFF1F2; border-radius: 12px; border: 1.5px solid #FECDD3; cursor: pointer; position: relative; z-index: 50;"
+                            (click)="medicineForm.get('prescriptionRequired')?.setValue(!medicineForm.get('prescriptionRequired')?.value)">
+                            <input type="checkbox" formControlName="prescriptionRequired" id="rx_shared"
+                                style="width: 20px; height: 20px; cursor: pointer; accent-color: #E11D48; pointer-events: none;">
+                            <label for="rx_shared"
+                                style="font-size: 13px; font-weight: 800; color: #9F1239; cursor: pointer; display: flex; align-items: center; gap: 8px; pointer-events: none;">
+                                <lucide-icon name="file-text" [size]="16"></lucide-icon>
+                                Requires Prescription to Buy
+                            </label>
                         </div>
-                    </div>
-                </div>
 
-                <div *ngIf="formError"
-                    style="font-size: 11px; color: #EF4444; font-weight: 700; background: #FEF2F2; padding: 10px 14px; border-radius: 8px; border: 1px solid #FECACA; margin-top: 8px;">
-                    {{formError}}
-                </div>
+                        <!-- ── Description ───────────────────────────────────── -->
+                        <div style="margin-bottom: 14px;">
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">Description</label>
+                            <textarea formControlName="description" rows="2" placeholder="Optional description..."
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827; resize: none;"></textarea>
+                        </div>
 
-            </form>
+                        <!-- ── Manual Fields Group ───────────────────────────── -->
+                        <div
+                            style="border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
+
+                            <!-- Group Header -->
+                            <div
+                                style="background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E5E7EB;">
+                                <span style="font-size: 13px;">✏️</span>
+                                <span
+                                    style="font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">Inventory
+                                    Details</span>
+                                <span style="font-size: 10px; color: #9CA3AF; margin-left: auto; font-weight: 500;">Fill
+                                    manually</span>
+                            </div>
+
+                            <!-- Manual Fields Container -->
+                            <div
+                                style="padding: 16px; display: flex; flex-direction: column; gap: 14px; background: #FFFFFF;">
+
+                                <!-- Price & Stock -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                            Unit Price (DT)
+                                        </label>
+                                        <input formControlName="price" type="number" step="0.01" min="0"
+                                            placeholder="0.00"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; transition: all 0.2s;"
+                                            [style.background-color]="hasError('price') ? '#FEF2F2' : '#F9FAFB'"
+                                            [style.border]="hasError('price') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
+                                        <p *ngIf="hasError('price') && !medicineForm.get('price')?.hasError('min')"
+                                            class="text-[10px] text-red-500 font-bold mt-1 ml-1">Valid price required
+                                            (dt)</p>
+                                        <p *ngIf="medicineForm.get('price')?.hasError('min')"
+                                            class="text-[10px] text-red-500 font-bold mt-1 ml-1">Price cannot be
+                                            negative</p>
+                                    </div>
+                                    <div *ngIf="activeModal === 'add'">
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                            Stock Quantity
+                                        </label>
+                                        <input formControlName="stock" type="number" min="0" placeholder="0"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; transition: all 0.2s;"
+                                            [style.background-color]="hasError('stock') ? '#FEF2F2' : '#F9FAFB'"
+                                            [style.border]="hasError('stock') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
+                                        <p *ngIf="hasError('stock') && !medicineForm.get('stock')?.hasError('min')"
+                                            class="text-[10px] text-red-500 font-bold mt-1 ml-1">Stock required</p>
+                                        <p *ngIf="medicineForm.get('stock')?.hasError('min')"
+                                            class="text-[10px] text-red-500 font-bold mt-1 ml-1">Stock cannot be
+                                            negative</p>
+                                    </div>
+                                </div>
+
+                                <!-- Min Stock & Expiration -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                            Low Stock Threshold
+                                        </label>
+                                        <input formControlName="minStockAlert" type="number" min="0"
+                                            style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; outline: none; background: #F9FAFB; border: 1px solid #E5E7EB; color: #111827;" />
+                                        <p *ngIf="medicineForm.get('minStockAlert')?.hasError('min')"
+                                            class="text-[10px] text-red-500 font-bold mt-1 ml-1">Threshold cannot be
+                                            negative
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 5px;">
+                                            Expiration Date
+                                        </label>
+                                        <div style="position: relative;">
+                                            <input #expDate formControlName="dateOfExpiration" type="date"
+                                                (click)="expDate.showPicker()" [min]="minDate"
+                                                style="width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; transition: all 0.2s; cursor: pointer;"
+                                                [style.background-color]="hasError('dateOfExpiration') ? '#FEF2F2' : '#F9FAFB'"
+                                                [style.border]="hasError('dateOfExpiration') ? '1px solid #FECACA' : '1px solid #E5E7EB'" />
+                                            <p *ngIf="hasError('dateOfExpiration')"
+                                                class="text-[10px] text-red-500 font-bold mt-1 ml-1">Expiry date is
+                                                required</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <style>
+                            input[type="date"]::-webkit-calendar-picker-indicator {
+                                background: transparent;
+                                bottom: 0;
+                                color: transparent;
+                                cursor: pointer;
+                                height: auto;
+                                left: 0;
+                                position: absolute;
+                                right: 0;
+                                top: 0;
+                                width: auto;
+                            }
+                        </style>
+
+                        <!-- Image Upload (Add mode only) -->
+                        <div *ngIf="activeModal === 'add'" style="padding-top: 4px;">
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: 0.04em; display: block; margin-bottom: 8px;">Upload
+                                Images</label>
+                            <div appFilePicker #addPicker="appFilePicker" [multiple]="true"
+                                (filesChanged)="onFilesChanged($event)"
+                                style="border: 2px dashed #DDE3EE; border-radius: 12px; padding: 24px; background: #F8FAFD; text-align: center; cursor: pointer; transition: all 0.2s; position: relative;">
+                                <lucide-icon name="plus" class="w-8 h-8 text-gray-300 mx-auto mb-2"></lucide-icon>
+                                <p style="font-size: 12px; color: #9CA3AF; font-weight: 500;">Drop images here or click
+                                    to
+                                    browse</p>
+                            </div>
+                            <div *ngIf="filePreviews.length > 0"
+                                style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px;">
+                                <div *ngFor="let prev of filePreviews; let i = index" class="relative group">
+                                    <img [src]="prev"
+                                        style="width: 56px; height: 56px; object-fit: cover; border-radius: 10px; border: 1px solid #E5E7EB;" />
+                                    <button (click)="removeSelectedFile(i)"
+                                        style="position: absolute; top: -6px; right: -6px; background: #EF4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; font-size: 10px;">
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="formError"
+                            style="font-size: 11px; color: #EF4444; font-weight: 700; background: #FEF2F2; padding: 10px 14px; border-radius: 8px; border: 1px solid #FECACA; margin-top: 8px;">
+                            {{formError}}
+                        </div>
+        </form>
         </div>
 
         <!-- Modal Footer -->

@@ -33,8 +33,8 @@ export class ForumHomeComponent implements OnInit {
 
   // Role Data
   currentRole = 'PATIENT';
-  currentUserId = 3;
-  currentUserName = 'John Patient';
+  currentUserId = 0;
+  currentUserName = 'User';
   expertCategory = '';
 
   paginatedPosts: PostResponse[] = [];
@@ -60,9 +60,9 @@ export class ForumHomeComponent implements OnInit {
       ? this.route.snapshot.data
       : this.route.parent?.snapshot.data || {};
 
-    this.currentRole = data['role'] || 'PATIENT';
-    this.currentUserId = data['userId'] || 3;
-    this.currentUserName = data['userName'] || 'User';
+    this.currentRole = this.normalizeRole(data['role'] || localStorage.getItem('RoleUserConnect') || localStorage.getItem('userRole') || 'PATIENT');
+    this.currentUserId = parseInt(localStorage.getItem('userId') || '0', 10) || data['userId'] || 0;
+    this.currentUserName = localStorage.getItem('UserName') || data['userName'] || 'User';
     this.expertCategory = data['expertCategory'] || '';
 
     this.titleService.setTitle(this.bannerTitle);
@@ -132,26 +132,24 @@ export class ForumHomeComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    forkJoin({
-      categories: this.forumService.getCategories(),
-      postsPage: this.getPostsObservable()
-    }).subscribe({
-      next: ({ categories, postsPage }) => {
+    // We MUST fetch categories first because for professionals, 
+    // the post list depends on the allowed category IDs.
+    this.forumService.getCategories().subscribe({
+      next: (categories) => {
         this.ngZone.run(() => {
           this.categories = categories.filter(c => c.active);
           
           // Sync with URL after loading categories
           const catName = this.route.snapshot.queryParams['cat'];
           this.syncCategoryFromUrl(catName);
-          
-          this.handlePostsPage(postsPage);
-          this.loading = false;
-          this.cdr.detectChanges();
+
+          // Now fetch posts (this will now have the correct allowedCategoryIds)
+          this.loadPostsOnly();
         });
       },
       error: () => {
         this.ngZone.run(() => {
-          this.error = 'Failed to load data. Please try again.';
+          this.error = 'Failed to load categories. Please try again.';
           this.loading = false;
         });
       }
@@ -177,12 +175,19 @@ export class ForumHomeComponent implements OnInit {
     const page0 = this.currentPage - 1;
     const status = this.filterStatus === 'all' ? undefined : this.filterStatus.toUpperCase();
     
+    // Determine allowed categories for filtering (only for professionals)
+    let allowedCategoryIds: number[] | undefined = undefined;
+    if (this.currentRole !== 'PATIENT') {
+      const visible = this.computeVisibleCategories();
+      allowedCategoryIds = visible.map(c => c.categoryId);
+    }
+
     if (this.searchQuery.trim()) {
-      return this.forumService.searchPostsPaginated(this.searchQuery, page0, this.postsPerPage, status, this.sortBy);
+      return this.forumService.searchPostsPaginated(this.searchQuery, page0, this.postsPerPage, status, this.sortBy, allowedCategoryIds);
     } else if (this.selectedCategoryId !== null) {
       return this.forumService.getPostsByCategoryPaginated(this.selectedCategoryId, page0, this.postsPerPage, status, this.sortBy);
     } else {
-      return this.forumService.getPostsPaginated(page0, this.postsPerPage, status, this.sortBy);
+      return this.forumService.getPostsPaginated(page0, this.postsPerPage, status, this.sortBy, allowedCategoryIds);
     }
   }
 
@@ -255,6 +260,15 @@ export class ForumHomeComponent implements OnInit {
   // ═══════════════════════════════════════════════════════════════════
   //  HELPERS
   // ═══════════════════════════════════════════════════════════════════
+
+  private normalizeRole(role: string): string {
+    const r = role ? role.toUpperCase().trim() : 'PATIENT';
+    if (r.includes('DOCTOR') || r.includes('DOCTEUR')) return 'DOCTOR';
+    if (r.includes('PHARMACIST') || r.includes('PHARMASIS')) return 'PHARMACIST';
+    if (r.includes('KINE') || r.includes('PHYSIO')) return 'PHYSIO';
+    if (r.includes('LABORATORY') || r.includes('LAB')) return 'LAB';
+    return 'PATIENT';
+  }
 
   private computeVisibleCategories(): CategoryResponse[] {
     if (this.currentRole === 'PATIENT') {
@@ -478,8 +492,16 @@ export class ForumHomeComponent implements OnInit {
     return colors[categoryName] || 'text-gray-400';
   }
 
-  timeAgo(dateStr: string): string {
-    const date = new Date(dateStr);
+  timeAgo(dateStr: any): string {
+    if (!dateStr) return 'Date unavailable';
+    let date: Date;
+    if (Array.isArray(dateStr)) {
+      const [year, month, day, hour = 0, minute = 0, second = 0] = dateStr;
+      date = new Date(year, month - 1, day, hour, minute, second);
+    } else {
+      date = new Date(dateStr);
+    }
+    if (isNaN(date.getTime())) return 'Date unavailable';
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     if (seconds < 60) return 'just now';

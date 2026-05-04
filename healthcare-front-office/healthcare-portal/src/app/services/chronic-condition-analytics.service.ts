@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-
+import { Observable } from 'rxjs'; import { environment } from 'environments/environment';
 @Injectable({
   providedIn: 'root'
 })
 export class ChronicConditionAnalyticsService {
 
-  private apiUrl = 'http://localhost:8089/api/chronic';
+  private apiUrl = `${environment.analyticsUrl}/api/chronic`;
 
   constructor(private http: HttpClient) { }
 

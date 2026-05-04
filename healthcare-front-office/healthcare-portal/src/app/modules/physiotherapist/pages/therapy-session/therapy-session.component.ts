@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -39,13 +40,13 @@ export class TherapySessionComponent implements OnInit {
     physiotherapistId: null as number | null
   };
 
-  private apiUrl = 'http://localhost:8088/api';
+  private apiUrl = `${environment.baseUrl}/api`;
 
   constructor(
     private service: TherapySessionService,
     private router: Router,
     private http: HttpClient
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Get the logged-in physiotherapist's ID from localStorage
@@ -123,8 +124,8 @@ export class TherapySessionComponent implements OnInit {
 
   onSubmit(): void {
     if (!this.formData.patientId ||
-        !this.formData.scheduledDate || !this.formData.startTime ||
-        !this.formData.endTime || !this.formData.progressNote || !this.formData.evaluationResult) {
+      !this.formData.scheduledDate || !this.formData.startTime ||
+      !this.formData.endTime || !this.formData.progressNote || !this.formData.evaluationResult) {
       this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
       return;
     }
@@ -183,3 +184,4 @@ export class TherapySessionComponent implements OnInit {
     return total > 0 ? `${total} min` : '-';
   }
 }
+

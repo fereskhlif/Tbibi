@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j  // ← AJOUTER CETTE ANNOTATION
+@Slf4j // ← AJOUTER CETTE ANNOTATION
 @RequiredArgsConstructor
 @Service
 public class PrescriptionService implements IPrescriptionService {
@@ -46,7 +46,8 @@ public class PrescriptionService implements IPrescriptionService {
     @jakarta.transaction.Transactional
     public PrescriptionResponse add(PrescriptionRequest request) {
         log.info("=== ADD PRESCRIPTION ===");
-        log.info("Request reçue: note={}, date={}, medicineIds={}", request.getNote(), request.getDate(), request.getMedicineIds());
+        log.info("Request reçue: note={}, date={}, medicineIds={}", request.getNote(), request.getDate(),
+                request.getMedicineIds());
 
         try {
             Prescription prescr = mapper.toEntity(request);
@@ -57,10 +58,11 @@ public class PrescriptionService implements IPrescriptionService {
 
             // Link medicines if provided
             if (request.getMedicineIds() != null && !request.getMedicineIds().isEmpty()) {
-                List<tn.esprit.pi.tbibi.entities.Medicine> meds =
-                    medicineRepository.findAllById(request.getMedicineIds());
+                List<tn.esprit.pi.tbibi.entities.Medicine> meds = medicineRepository
+                        .findAllById(request.getMedicineIds());
                 prescr.setMedicines(meds);
-                log.info("Linked {} medicine(s) to new prescription. Medicine IDs found: {}", meds.size(), meds.stream().map(m -> m.getMedicineId()).collect(Collectors.toList()));
+                log.info("Linked {} medicine(s) to new prescription. Medicine IDs found: {}", meds.size(),
+                        meds.stream().map(m -> m.getMedicineId()).collect(Collectors.toList()));
             } else {
                 log.warn("WARNING: No medicineIds provided in the request payload!");
             }
@@ -95,8 +97,8 @@ public class PrescriptionService implements IPrescriptionService {
 
         // Update medicines if new list is provided; otherwise keep existing
         if (prescription.getMedicineIds() != null && !prescription.getMedicineIds().isEmpty()) {
-            List<tn.esprit.pi.tbibi.entities.Medicine> meds =
-                medicineRepository.findAllById(prescription.getMedicineIds());
+            List<tn.esprit.pi.tbibi.entities.Medicine> meds = medicineRepository
+                    .findAllById(prescription.getMedicineIds());
             updated.setMedicines(meds);
             log.info("Updated {} medicine(s) on prescription {}", meds.size(), id);
         } else {
@@ -105,8 +107,7 @@ public class PrescriptionService implements IPrescriptionService {
 
         // Preserve status unless explicitly provided
         updated.setStatus(
-                prescription.getStatus() != null ? prescription.getStatus() : existing.getStatus()
-        );
+                prescription.getStatus() != null ? prescription.getStatus() : existing.getStatus());
         updated.setStatusUpdatedAt(existing.getStatusUpdatedAt());
 
         Prescription saved = repository.save(updated);
@@ -139,7 +140,8 @@ public class PrescriptionService implements IPrescriptionService {
     public PrescriptionResponse dispensePrescription(int id) {
         log.info("=== DISPENSE PRESCRIPTION ID: {} ===", id);
 
-        // Eagerly load the prescription WITH its medicines to avoid LazyInitializationException
+        // Eagerly load the prescription WITH its medicines to avoid
+        // LazyInitializationException
         Prescription existing = repository.findByIdWithMedicines(id)
                 .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
 
@@ -174,15 +176,17 @@ public class PrescriptionService implements IPrescriptionService {
                 MedicalReccords mr = existing.getActe().getMedicalFile();
 
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy");
-                String dispensedOn  = sdf.format(new Date());
-                String validUntil   = existing.getExpirationDate() != null
-                        ? sdf.format(existing.getExpirationDate()) : "N/A";
+                String dispensedOn = sdf.format(new Date());
+                String validUntil = existing.getExpirationDate() != null
+                        ? sdf.format(existing.getExpirationDate())
+                        : "N/A";
 
                 // Build per-medicine detail lines
                 StringBuilder medDetails = new StringBuilder();
                 if (existing.getMedicines() != null && !existing.getMedicines().isEmpty()) {
                     for (tn.esprit.pi.tbibi.entities.Medicine m : existing.getMedicines()) {
-                        medDetails.append("\n    \u2022 ").append(m.getMedicineName() != null ? m.getMedicineName() : "Unknown");
+                        medDetails.append("\n    \u2022 ")
+                                .append(m.getMedicineName() != null ? m.getMedicineName() : "Unknown");
                         if (m.getDosage() != null && !m.getDosage().isBlank())
                             medDetails.append(" | Dosage: ").append(m.getDosage());
                         if (m.getActiveIngredient() != null && !m.getActiveIngredient().isBlank())
@@ -229,16 +233,16 @@ public class PrescriptionService implements IPrescriptionService {
         log.info("Prescription supprimée avec ID: {}", id);
     }
 
-//    @Override
-//    public PrescriptionResponse getById(int id) {
-//        log.info("=== GET BY ID: {} ===", id);
-//
-//        Prescription prescr = repository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
-//
-//        log.info("Prescription trouvée: {}", prescr);
-//        return mapper.toDto(prescr);
-//    }
+    // @Override
+    // public PrescriptionResponse getById(int id) {
+    // log.info("=== GET BY ID: {} ===", id);
+    //
+    // Prescription prescr = repository.findById(id)
+    // .orElseThrow(() -> new RuntimeException("Prescription not found: " + id));
+    //
+    // log.info("Prescription trouvée: {}", prescr);
+    // return mapper.toDto(prescr);
+    // }
 
     @Override
     @jakarta.transaction.Transactional
@@ -252,7 +256,6 @@ public class PrescriptionService implements IPrescriptionService {
                 .map(p -> enrichWithDoctor(enrichWithPatient(mapper.toDto(p), p), p))
                 .collect(Collectors.toList());
     }
-
 
     // ── Trouver le patient via l'acte ──────────────────────────────────────────
     private User findPatientByActe(Acte acte) {
@@ -316,8 +319,11 @@ public class PrescriptionService implements IPrescriptionService {
 
         checkAndSendImmediateAlert(saved);
 
+        checkAndSendImmediateAlert(saved);
+
         return enrichWithPatient(mapper.toDto(saved), saved);
     }
+
     @Override
     @jakarta.transaction.Transactional
     public PrescriptionResponse getById(int id) {
@@ -328,7 +334,8 @@ public class PrescriptionService implements IPrescriptionService {
     }
 
     private void checkAndSendImmediateAlert(Prescription prescription) {
-        if (prescription.getExpirationDate() == null) return;
+        if (prescription.getExpirationDate() == null)
+            return;
 
         java.time.LocalDate expDate = prescription.getExpirationDate().toInstant()
                 .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
@@ -341,19 +348,23 @@ public class PrescriptionService implements IPrescriptionService {
                 String email = patient.getEmail();
                 String name = patient.getName();
                 String medNames = prescription.getMedicines() != null && !prescription.getMedicines().isEmpty()
-                        ? prescription.getMedicines().stream().map(m -> m.getMedicineName()).collect(Collectors.joining(", "))
+                        ? prescription.getMedicines().stream().map(m -> m.getMedicineName())
+                                .collect(Collectors.joining(", "))
                         : "votre traitement";
                 try {
                     String msg;
                     if (daysRemaining == 0) {
-                        msg = "🛑 Votre prescription (" + medNames + ") expire aujourd'hui. Contactez votre médecin pour la suite.";
+                        msg = "🛑 Votre prescription (" + medNames
+                                + ") expire aujourd'hui. Contactez votre médecin pour la suite.";
                     } else if (daysRemaining <= 3) {
                         msg = "⚠️ Alerte J-" + daysRemaining + " : Votre prescription (" + medNames
-                                + ") expire dans " + daysRemaining + " jour(s). Vous pouvez demander un renouvellement directement sur l'application Tbibi.";
+                                + ") expire dans " + daysRemaining
+                                + " jour(s). Vous pouvez demander un renouvellement directement sur l'application Tbibi.";
                     } else {
                         // 4–7 days
                         msg = "📋 Votre nouvelle prescription (" + medNames
-                                + ") expire dans " + daysRemaining + " jour(s). Pensez à renouveler votre ordonnance à temps.";
+                                + ") expire dans " + daysRemaining
+                                + " jour(s). Pensez à renouveler votre ordonnance à temps.";
                     }
                     emailService.sendPrescriptionAlertMessage(email, name, msg);
                     log.info("[IMMEDIATE ALERT] J-{} email sent to {} for prescription #{}",
@@ -362,7 +373,8 @@ public class PrescriptionService implements IPrescriptionService {
                     log.error("[IMMEDIATE ALERT] Failed to send email to {}: {}", email, e.getMessage(), e);
                 }
             } else {
-                log.warn("[IMMEDIATE ALERT] No patient/email found for prescription #{}", prescription.getPrescriptionID());
+                log.warn("[IMMEDIATE ALERT] No patient/email found for prescription #{}",
+                        prescription.getPrescriptionID());
             }
         }
     }
@@ -371,9 +383,11 @@ public class PrescriptionService implements IPrescriptionService {
 
     /** Récupère le nom du médecin à partir de l'ID stocké dans l'acte. */
     private PrescriptionResponse enrichWithDoctor(PrescriptionResponse dto, Prescription prescription) {
-        if (prescription.getActe() == null) return dto;
+        if (prescription.getActe() == null)
+            return dto;
         Integer doctorId = prescription.getActe().getDoctorId();
-        if (doctorId == null) return dto;
+        if (doctorId == null)
+            return dto;
         userRepository.findById(doctorId).ifPresent(doctor -> {
             dto.setDoctorId(doctor.getUserId());
             dto.setDoctorName(doctor.getName());
@@ -396,15 +410,19 @@ public class PrescriptionService implements IPrescriptionService {
         User patient = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Patient not found: " + email));
 
-        // 2. Collecter toutes les prescriptions via MedicalReccords → Actes → Prescriptions
+        // 2. Collecter toutes les prescriptions via MedicalReccords → Actes →
+        // Prescriptions
         List<PrescriptionResponse> result = new ArrayList<>();
 
-        if (patient.getMedicalFiles() == null) return result;
+        if (patient.getMedicalFiles() == null)
+            return result;
 
         for (MedicalReccords medFile : patient.getMedicalFiles()) {
-            if (medFile.getActes() == null) continue;
+            if (medFile.getActes() == null)
+                continue;
             for (Acte acte : medFile.getActes()) {
-                if (acte.getPrescriptions() == null) continue;
+                if (acte.getPrescriptions() == null)
+                    continue;
                 for (Prescription prescr : acte.getPrescriptions()) {
                     PrescriptionResponse dto = mapper.toDto(prescr);
                     dto.setPatientId(patient.getUserId());
@@ -432,11 +450,11 @@ public class PrescriptionService implements IPrescriptionService {
         log.info("=== GET ANALYSIS PRESCRIPTIONS ===");
 
         // Match all analysis subtypes: ANALYSE_DIAGNOSTIQUE, ANALYSE_MICROBIOLOGIQUE,
-        // EXAMEN_ANATOMOPATHOLOGIQUE, TEST_GENETIQUE, or any value containing "ANALYSE" or "EXAMEN" or "TEST"
+        // EXAMEN_ANATOMOPATHOLOGIQUE, TEST_GENETIQUE, or any value containing "ANALYSE"
+        // or "EXAMEN" or "TEST"
         java.util.Set<String> ANALYSIS_TYPES = new java.util.HashSet<>(java.util.Arrays.asList(
                 "ANALYSE_DIAGNOSTIQUE", "ANALYSE_MICROBIOLOGIQUE",
-                "EXAMEN_ANATOMOPATHOLOGIQUE", "TEST_GENETIQUE", "ANALYSE"
-        ));
+                "EXAMEN_ANATOMOPATHOLOGIQUE", "TEST_GENETIQUE", "ANALYSE"));
 
         List<Prescription> allPrescriptions = repository.findAll();
         List<PrescriptionResponse> result = allPrescriptions.stream()
@@ -460,7 +478,7 @@ public class PrescriptionService implements IPrescriptionService {
 
         Prescription renewal = new Prescription();
         renewal.setActe(existing.getActe());
-        
+
         // Copy medicines
         if (existing.getMedicines() != null) {
             renewal.setMedicines(new ArrayList<>(existing.getMedicines()));
@@ -469,10 +487,10 @@ public class PrescriptionService implements IPrescriptionService {
         renewal.setDate(new Date());
         renewal.setStatus(PrescriptionStatus.PENDING);
         renewal.setStatusUpdatedAt(new Date());
-        
+
         // Let Doctor define new duration
         renewal.setExpirationDate(null);
-        
+
         String oldNote = existing.getNote() != null ? existing.getNote() : "";
         renewal.setNote("🔄 RENEWAL REQUEST - " + oldNote);
 
@@ -493,7 +511,8 @@ public class PrescriptionService implements IPrescriptionService {
                 ? existing.getMedicines().stream().map(m -> m.getMedicineName()).collect(Collectors.joining(", "))
                 : "the prescription";
         String title = patientName + "'s Renewal Request";
-        String content = "The patient wishes to renew: " + medNames + " (Prescription #" + existing.getPrescriptionID() + ")";
+        String content = "The patient wishes to renew: " + medNames + " (Prescription #" + existing.getPrescriptionID()
+                + ")";
 
         java.util.List<User> doctorsToNotify = new java.util.ArrayList<>();
         if (doctorId != null) {
@@ -518,7 +537,8 @@ public class PrescriptionService implements IPrescriptionService {
             notif.setRead(false);
             notif.setCreatedDate(java.time.LocalDateTime.now());
             notificationService.saveAndBroadcast(notif);
-            log.info("[RENEWAL NOTIF] Notification saved and broadcast to doctorId={} ({})", doctor.getUserId(), doctor.getName());
+            log.info("[RENEWAL NOTIF] Notification saved and broadcast to doctorId={} ({})", doctor.getUserId(),
+                    doctor.getName());
         }
         return enrichWithPatient(mapper.toDto(saved), saved);
     }
@@ -538,9 +558,11 @@ public class PrescriptionService implements IPrescriptionService {
         List<Prescription> all = new ArrayList<>();
         if (patient.getMedicalFiles() != null) {
             for (MedicalReccords mf : patient.getMedicalFiles()) {
-                if (mf.getActes() == null) continue;
+                if (mf.getActes() == null)
+                    continue;
                 for (Acte acte : mf.getActes()) {
-                    if (acte.getPrescriptions() == null) continue;
+                    if (acte.getPrescriptions() == null)
+                        continue;
                     all.addAll(acte.getPrescriptions());
                 }
             }
@@ -548,98 +570,100 @@ public class PrescriptionService implements IPrescriptionService {
 
         // Sort by date descending
         all.sort((a, b) -> {
-            if (a.getDate() == null) return 1;
-            if (b.getDate() == null) return -1;
+            if (a.getDate() == null)
+                return 1;
+            if (b.getDate() == null)
+                return -1;
             return b.getDate().compareTo(a.getDate());
         });
 
         // Build enriched DTO list
         List<PrescriptionResponse> rxList = all.stream()
-            .map(p -> {
-                PrescriptionResponse dto = mapper.toDto(p);
-                dto.setPatientId(patient.getUserId());
-                dto.setPatientName(patient.getName());
-                dto.setPatientEmail(patient.getEmail());
-                enrichWithDoctor(dto, p);
+                .map(p -> {
+                    PrescriptionResponse dto = mapper.toDto(p);
+                    dto.setPatientId(patient.getUserId());
+                    dto.setPatientName(patient.getName());
+                    dto.setPatientEmail(patient.getEmail());
+                    enrichWithDoctor(dto, p);
 
-                // Map medicines manually for the dto
-                if (p.getMedicines() != null) {
-                    List<PrescriptionResponse.MedicineInfo> infos = p.getMedicines().stream()
-                        .map(m -> PrescriptionResponse.MedicineInfo.builder()
-                            .medicineId(m.getMedicineId())
-                            .medicineName(m.getMedicineName())
-                            .quantity(m.getQuantity())
-                            .dosage(m.getDosage())
-                            .activeIngredient(m.getActiveIngredient())
-                            .build())
-                        .collect(Collectors.toList());
-                    dto.setMedicines(infos);
-                } else {
-                    dto.setMedicines(java.util.Collections.emptyList());
-                }
+                    // Map medicines manually for the dto
+                    if (p.getMedicines() != null) {
+                        List<PrescriptionResponse.MedicineInfo> infos = p.getMedicines().stream()
+                                .map(m -> PrescriptionResponse.MedicineInfo.builder()
+                                        .medicineId(m.getMedicineId())
+                                        .medicineName(m.getMedicineName())
+                                        .quantity(m.getQuantity())
+                                        .dosage(m.getDosage())
+                                        .activeIngredient(m.getActiveIngredient())
+                                        .build())
+                                .collect(Collectors.toList());
+                        dto.setMedicines(infos);
+                    } else {
+                        dto.setMedicines(java.util.Collections.emptyList());
+                    }
 
-                return dto;
-            })
-            .collect(Collectors.toList());
+                    return dto;
+                })
+                .collect(Collectors.toList());
 
         // Statistics by status
-        long active     = all.stream().filter(p -> PrescriptionStatus.VALIDATED.equals(p.getStatus())).count();
-        long expired    = all.stream().filter(p -> PrescriptionStatus.COMPLETED.equals(p.getStatus())).count();
-        long cancelled  = all.stream().filter(p -> PrescriptionStatus.CANCELLED.equals(p.getStatus())).count();
-        long pending    = all.stream().filter(p -> PrescriptionStatus.PENDING.equals(p.getStatus())).count();
-        long dispensed  = all.stream().filter(p -> PrescriptionStatus.DISPENSED.equals(p.getStatus())).count();
+        long active = all.stream().filter(p -> PrescriptionStatus.VALIDATED.equals(p.getStatus())).count();
+        long expired = all.stream().filter(p -> PrescriptionStatus.COMPLETED.equals(p.getStatus())).count();
+        long cancelled = all.stream().filter(p -> PrescriptionStatus.CANCELLED.equals(p.getStatus())).count();
+        long pending = all.stream().filter(p -> PrescriptionStatus.PENDING.equals(p.getStatus())).count();
+        long dispensed = all.stream().filter(p -> PrescriptionStatus.DISPENSED.equals(p.getStatus())).count();
 
         // Medicine frequency count
         Map<String, long[]> medMap = new java.util.HashMap<>();
         for (Prescription p : all) {
-            if (p.getMedicines() == null) continue;
+            if (p.getMedicines() == null)
+                continue;
             for (tn.esprit.pi.tbibi.entities.Medicine m : p.getMedicines()) {
                 String name = m.getMedicineName() != null ? m.getMedicineName() : "Unknown";
-                medMap.computeIfAbsent(name, k -> new long[]{0})[0]++;
+                medMap.computeIfAbsent(name, k -> new long[] { 0 })[0]++;
             }
         }
 
         List<PatientReportDTO.MedicineFrequency> topMeds = medMap.entrySet().stream()
-            .map(e -> PatientReportDTO.MedicineFrequency.builder()
-                .medicineName(e.getKey())
-                .count((int) e.getValue()[0])
-                .build())
-            .sorted((a, b) -> Long.compare(b.getCount(), a.getCount()))
-            .limit(10)
-            .collect(Collectors.toList());
+                .map(e -> PatientReportDTO.MedicineFrequency.builder()
+                        .medicineName(e.getKey())
+                        .count((int) e.getValue()[0])
+                        .build())
+                .sorted((a, b) -> Long.compare(b.getCount(), a.getCount()))
+                .limit(10)
+                .collect(Collectors.toList());
 
         long totalMeds = all.stream()
-            .mapToLong(p -> p.getMedicines() != null ? p.getMedicines().size() : 0L)
-            .sum();
+                .mapToLong(p -> p.getMedicines() != null ? p.getMedicines().size() : 0L)
+                .sum();
 
         // Monthly breakdown for timeline chart
         Map<String, Long> perMonth = all.stream()
-            .filter(p -> p.getDate() != null)
-            .collect(Collectors.groupingBy(
-                p -> {
-                    java.time.LocalDate d = p.getDate().toInstant()
-                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                    return String.format("%04d-%02d", d.getYear(), d.getMonthValue());
-                },
-                LinkedHashMap::new,
-                Collectors.counting()
-            ));
+                .filter(p -> p.getDate() != null)
+                .collect(Collectors.groupingBy(
+                        p -> {
+                            java.time.LocalDate d = p.getDate().toInstant()
+                                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                            return String.format("%04d-%02d", d.getYear(), d.getMonthValue());
+                        },
+                        LinkedHashMap::new,
+                        Collectors.counting()));
 
         return PatientReportDTO.builder()
-            .patientId(patient.getUserId())
-            .patientName(patient.getName())
-            .patientEmail(patient.getEmail())
-            .totalPrescriptions(all.size())
-            .activePrescriptions((int) active)
-            .expiredPrescriptions((int) expired)
-            .cancelledPrescriptions((int) cancelled)
-            .pendingPrescriptions((int) pending)
-            .dispensedPrescriptions((int) dispensed)
-            .totalMedicinesEverPrescribed((int) totalMeds)
-            .uniqueMedicinesCount(medMap.size())
-            .topMedicines(topMeds)
-            .prescriptions(rxList)
-            .prescriptionsPerMonth(perMonth)
-            .build();
+                .patientId(patient.getUserId())
+                .patientName(patient.getName())
+                .patientEmail(patient.getEmail())
+                .totalPrescriptions(all.size())
+                .activePrescriptions((int) active)
+                .expiredPrescriptions((int) expired)
+                .cancelledPrescriptions((int) cancelled)
+                .pendingPrescriptions((int) pending)
+                .dispensedPrescriptions((int) dispensed)
+                .totalMedicinesEverPrescribed((int) totalMeds)
+                .uniqueMedicinesCount(medMap.size())
+                .topMedicines(topMeds)
+                .prescriptions(rxList)
+                .prescriptionsPerMonth(perMonth)
+                .build();
     }
 }

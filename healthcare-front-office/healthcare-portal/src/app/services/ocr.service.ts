@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface MedicineOcrResult {
   medicineName: string;
@@ -16,7 +17,7 @@ export interface MedicineOcrResult {
 })
 export class OcrService {
 
-  private apiUrl = 'http://localhost:8088/api/ocr/scan';
+  private apiUrl = `${environment.baseUrl}/api/ocr/scan`;
 
   constructor(private http: HttpClient) { }
 

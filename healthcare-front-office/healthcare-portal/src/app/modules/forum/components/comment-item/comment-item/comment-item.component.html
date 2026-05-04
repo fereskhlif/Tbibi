@@ -1,6 +1,5 @@
 <div [class.border-b]="!isLast" [class.border-gray-100]="!isLast"
-    [style.background-color]="comment.isPinned ? '#fffbeb' : ''"
-    class="flex gap-3 px-5 py-4">
+    [style.border-top]="comment.expert ? '3px solid #2563eb' : 'none'" class="flex gap-3 px-5 py-4">
 
     <!-- ─── LEFT COLUMN: Avatar + Thread line ─────────────────────── -->
     <div class="flex flex-col items-center" style="width:32px; flex-shrink:0;">
@@ -28,15 +27,25 @@
     <!-- ─── RIGHT COLUMN: All content ────────────────────────────── -->
     <div class="flex-1 min-w-0 pb-1">
 
-        <!-- Pinned badge -->
-        <div *ngIf="comment.isPinned" class="inline-flex items-center gap-1 mb-2"
+        <!-- Pinned badge (Hidden as pin was removed) -->
+        <!-- <div *ngIf="comment.isPinned" class="inline-flex items-center gap-1 mb-2"
             style="font-size:10px; font-weight:700; color:#92400e; background:#fef3c7; padding:2px 8px; border-radius:9999px;">
             <lucide-icon name="pin" [size]="11" class="text-amber-800 inline-flex fill-amber-500/20 mr-0.5"></lucide-icon> Pinned
-        </div>
+        </div> -->
 
         <!-- Author row -->
         <div class="flex flex-wrap items-center gap-2 mb-1.5">
             <span class="font-semibold text-gray-900" style="font-size:13px;">{{ comment.authorName }}</span>
+            <span *ngIf="comment.expert && comment.roleName" class="expert-verified-badge">
+                ✔ {{ getExpertBadgeLabel(comment.roleName) }}
+            </span>
+            <span *ngIf="!comment.expert" class="patient-badge">
+                Patient
+            </span>
+            <span *ngIf="!comment.expert && isExpertReviewed()" class="reviewed-badge">
+                <lucide-icon name="shield-check" [size]="10"></lucide-icon>
+                Expert Reviewed
+            </span>
             <span *ngIf="comment.roleBadge" class="text-blue-700 bg-blue-50 border border-blue-100"
                 style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px;">
                 {{ comment.roleBadge }}
@@ -54,8 +63,28 @@
         <ng-container *ngIf="!isCollapsed">
 
             <!-- Comment body -->
-            <div class="text-gray-800 mb-2 forum-prose"
-                style="font-size:14px; line-height:1.5;" [innerHTML]="comment.comment | markdown">
+            <div *ngIf="!isEditing" class="text-gray-800 mb-2 forum-prose" style="font-size:14px; line-height:1.5;"
+                [innerHTML]="comment.comment | markdown">
+            </div>
+
+            <!-- Edit mode body -->
+            <div *ngIf="isEditing" class="mb-3">
+                <div
+                    class="bg-gray-50 rounded-xl border border-gray-200 focus-within:bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all overflow-hidden">
+                    <textarea [(ngModel)]="editText" rows="4"
+                        class="w-full px-4 py-3 bg-transparent border-none outline-none text-gray-800"
+                        style="font-size:14px; line-height:1.5;" placeholder="Edit your comment..."></textarea>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                    <button (click)="onSaveEdit()" [disabled]="!editText.trim()"
+                        class="px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                        Save
+                    </button>
+                    <button (click)="onCancelEdit()"
+                        class="px-4 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors">
+                        Cancel
+                    </button>
+                </div>
             </div>
 
             <!-- Action row -->
@@ -71,31 +100,23 @@
                     {{ comment.voteCount || 0 }}
                 </button>
 
-                <!-- Reply -->
-                <button (click)="onStartReply(comment.commentId)"
+                <!-- Reply (Hidden if Locked) -->
+                <button *ngIf="!isLocked" (click)="onStartReply(comment.commentId)"
                     class="inline-flex items-center gap-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     style="font-size:12px; font-weight:600; padding:6px 10px; border:none; cursor:pointer; background:transparent;">
                     <lucide-icon name="corner-down-right" [size]="14"></lucide-icon>
                     Reply
                 </button>
 
-                <!-- Pin (post author only) -->
-                <button *ngIf="isPostAuthor" (click)="onTogglePin()"
-                    class="inline-flex items-center gap-1.5 rounded-lg transition-colors hover:bg-amber-50"
-                    style="font-size:12px; font-weight:600; padding:6px 10px; border:none; cursor:pointer; background:transparent;"
-                    [style.color]="comment.isPinned ? '#d97706' : '#d1d5db'"
-                    [title]="comment.isPinned ? 'Unpin' : 'Pin comment'">
-                    <lucide-icon name="pin" [size]="14" [strokeWidth]="comment.isPinned ? 3 : 2"></lucide-icon>
-                    {{ comment.isPinned ? 'Pinned' : 'Pin' }}
+                <!-- Edit button (author only) -->
+                <button *ngIf="comment.authorId === currentUserId && !isEditing" (click)="onStartEdit()"
+                    class="inline-flex items-center gap-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    style="font-size:12px; font-weight:600; padding:6px 10px; border:none; cursor:pointer; background:transparent;">
+                    <lucide-icon name="edit-3" [size]="14"></lucide-icon>
+                    Edit
                 </button>
 
-                <!-- Report -->
-                <button (click)="reportComment()"
-                    class="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    style="font-size:12px; padding:6px 10px; border:none; cursor:pointer; background:transparent;"
-                    title="Report">
-                    <lucide-icon name="flag" [size]="14"></lucide-icon>
-                </button>
+
             </div>
 
             <!-- ─── Inline reply composer ──────────────────────────────── -->
@@ -125,9 +146,11 @@
                             </button>
                         </div>
                         <!-- Textarea -->
-                        <div [hidden]="replyPreview" class="bg-gray-50 rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all p-1">
+                        <div [hidden]="replyPreview"
+                            class="bg-gray-50 rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all p-1">
                             <textarea #replyInput [value]="replyText"
-                                (input)="onReplyTextChange($any($event.target).value)" rows="3" placeholder="Write a reply…"
+                                (input)="onReplyTextChange($any($event.target).value)" rows="3"
+                                placeholder="Write a reply…"
                                 class="block w-full bg-transparent outline-none resize-y placeholder-gray-400 border-0 focus:ring-0 text-gray-800"
                                 style="font-size:14px; min-height:60px; padding:8px;">
                             </textarea>
@@ -190,9 +213,10 @@
                 <app-comment-item *ngFor="let reply of comment.replies; let last = last" [comment]="reply"
                     [depth]="depth + 1" [currentUserName]="currentUserName" [replyingTo]="replyingTo"
                     [replyText]="replyText" [submittingReply]="submittingReply" [isLast]="last"
-                    [isPostAuthor]="isPostAuthor" (startReplyEvent)="startReplyEvent.emit($event)"
-                    (submitReplyEvent)="submitReplyEvent.emit($event)" (replyTextChange)="replyTextChange.emit($event)"
-                    (toggleVoteEvent)="toggleVoteEvent.emit($event)" (togglePinEvent)="togglePinEvent.emit($event)">
+                    [isPostAuthor]="isPostAuthor" [isLocked]="isLocked" [currentUserId]="currentUserId"
+                    (startReplyEvent)="startReplyEvent.emit($event)" (submitReplyEvent)="submitReplyEvent.emit($event)"
+                    (replyTextChange)="replyTextChange.emit($event)" (toggleVoteEvent)="toggleVoteEvent.emit($event)"
+                    (updateCommentEvent)="updateCommentEvent.emit($event)">
                 </app-comment-item>
             </div>
 

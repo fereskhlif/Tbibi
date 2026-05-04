@@ -36,9 +36,9 @@ public interface UserRepo extends JpaRepository<User, Integer> {
 
         /** Direct join: acte → medical_reccords → users. Bypasses lazy loading. */
         @Query(value = "SELECT u.* FROM users u " +
-                "INNER JOIN medical_reccords mr ON mr.patient_id = u.user_id " +
-                "INNER JOIN acte a ON a.medical_file_id = mr.medicalfile_id " +
-                "WHERE a.acte_id = :acteId", nativeQuery = true)
+                        "INNER JOIN medical_reccords mr ON mr.patient_id = u.user_id " +
+                        "INNER JOIN acte a ON a.medical_file_id = mr.medicalfile_id " +
+                        "WHERE a.acte_id = :acteId", nativeQuery = true)
         Optional<User> findPatientByActeId(@Param("acteId") int acteId);
 
         @Query("SELECT u FROM User u WHERE u.role.roleName = 'PATIENT' AND LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%'))")
@@ -68,8 +68,8 @@ public interface UserRepo extends JpaRepository<User, Integer> {
 
         Optional<User> findByPharmacy_PharmacyId(Long pharmacyId);
 
-        /** Find all users with the PHYSIOTHERAPIST role */
-        @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE '%physio%'")
+        /** Find all users with the PHYSIOTHERAPIST/KINE role */
+        @Query("SELECT u FROM User u WHERE LOWER(u.role.roleName) LIKE '%physio%' OR LOWER(u.role.roleName) LIKE '%kine%'")
         List<User> findAllPhysiotherapists();
 
         /** Find all users with the LABORATORY role */

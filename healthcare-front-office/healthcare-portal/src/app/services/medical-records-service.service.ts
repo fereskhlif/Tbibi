@@ -8,14 +8,14 @@ import { environment } from '../../environments/environment';
 })
 export class MedicalRecordsServiceService {
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ── Public API ────────────────────────────────────────────────────────────
 
   getAll(): Observable<any[]> {
     return this.http.get<any[]>(
       `${environment.baseUrl}/medical-records/getAll`,
-    //  { headers: this.authHeaders() }
+      //  { headers: this.authHeaders() }
     );
   }
 
@@ -78,7 +78,7 @@ export class MedicalRecordsServiceService {
   deletePatientImage(imagePath: string): Observable<any> {
     return this.http.delete<any>(
       `${environment.baseUrl}/medical-records/my/image`,
-      { 
+      {
         params: { path: imagePath }
       }
     );
@@ -93,13 +93,13 @@ export class MedicalRecordsServiceService {
   private buildFormData(data: any, imageFile?: File | null, pdfFile?: File | null): FormData {
     const fd = new FormData();
 
-    if (data.imageLabo        != null) fd.append('imageLabo',        data.imageLabo);
-    if (data.result_ia        != null) fd.append('result_ia',        data.result_ia);
+    if (data.imageLabo != null) fd.append('imageLabo', data.imageLabo);
+    if (data.result_ia != null) fd.append('result_ia', data.result_ia);
     if (data.medical_historuy != null) fd.append('medical_historuy', data.medical_historuy);
-    if (data.chronic_diseas   != null) fd.append('chronic_diseas',   data.chronic_diseas);
+    if (data.chronic_diseas != null) fd.append('chronic_diseas', data.chronic_diseas);
 
-    if (imageFile) fd.append('file',   imageFile, imageFile.name);
-    if (pdfFile)   fd.append('repDoc', pdfFile,   pdfFile.name);
+    if (imageFile) fd.append('file', imageFile, imageFile.name);
+    if (pdfFile) fd.append('repDoc', pdfFile, pdfFile.name);
 
     return fd;
   }

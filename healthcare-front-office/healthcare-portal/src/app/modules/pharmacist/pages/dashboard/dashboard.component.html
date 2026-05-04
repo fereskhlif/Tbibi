@@ -38,9 +38,11 @@
           <div class="kpi-top">
             <div class="kpi-icon-wrap">💰</div>
             <div class="dropdown-anchor">
-              <button class="kpi-menu" (click)="toggleDropdown('stat-sales', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <button class="kpi-menu" (click)="toggleDropdown('stat-sales', $event)"><lucide-icon
+                  name="more-horizontal" [size]="16"></lucide-icon></button>
               <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-sales'" (click)="$event.stopPropagation()">
-                <button *ngFor="let item of menuConfig['stat-sales']" class="dropdown-item" (click)="onMenuAction('stat-sales', item.label, $event)">
+                <button *ngFor="let item of menuConfig['stat-sales']" class="dropdown-item"
+                  (click)="onMenuAction('stat-sales', item.label, $event)">
                   <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
                 </button>
               </div>
@@ -53,13 +55,17 @@
         </div>
 
         <!-- Card 2: Categories -->
-        <div class="kpi-card bg-kpi-2 animate-in" style="animation-delay: 50ms;" (click)="openCardDetails('categories', $event)">
+        <div class="kpi-card bg-kpi-2 animate-in" style="animation-delay: 50ms;"
+          (click)="openCardDetails('categories', $event)">
           <div class="kpi-top">
             <div class="kpi-icon-wrap">🗂️</div>
             <div class="dropdown-anchor">
-              <button class="kpi-menu" (click)="toggleDropdown('stat-categories', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
-              <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-categories'" (click)="$event.stopPropagation()">
-                <button *ngFor="let item of menuConfig['stat-categories']" class="dropdown-item" (click)="onMenuAction('stat-categories', item.label, $event)">
+              <button class="kpi-menu" (click)="toggleDropdown('stat-categories', $event)"><lucide-icon
+                  name="more-horizontal" [size]="16"></lucide-icon></button>
+              <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-categories'"
+                (click)="$event.stopPropagation()">
+                <button *ngFor="let item of menuConfig['stat-categories']" class="dropdown-item"
+                  (click)="onMenuAction('stat-categories', item.label, $event)">
                   <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
                 </button>
               </div>
@@ -72,13 +78,16 @@
         </div>
 
         <!-- Card 3: Expired Medicines -->
-        <div class="kpi-card bg-kpi-3 animate-in" style="animation-delay: 100ms;" (click)="openCardDetails('expired', $event)">
+        <div class="kpi-card bg-kpi-3 animate-in" style="animation-delay: 100ms;"
+          (click)="openCardDetails('expired', $event)">
           <div class="kpi-top">
             <div class="kpi-icon-wrap">⚠️</div>
             <div class="dropdown-anchor">
-              <button class="kpi-menu" (click)="toggleDropdown('stat-expired', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <button class="kpi-menu" (click)="toggleDropdown('stat-expired', $event)"><lucide-icon
+                  name="more-horizontal" [size]="16"></lucide-icon></button>
               <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-expired'" (click)="$event.stopPropagation()">
-                <button *ngFor="let item of menuConfig['stat-expired']" class="dropdown-item" (click)="onMenuAction('stat-expired', item.label, $event)">
+                <button *ngFor="let item of menuConfig['stat-expired']" class="dropdown-item"
+                  (click)="onMenuAction('stat-expired', item.label, $event)">
                   <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
                 </button>
               </div>
@@ -91,13 +100,16 @@
         </div>
 
         <!-- Card 4: Customers -->
-        <div class="kpi-card bg-kpi-4 animate-in" style="animation-delay: 150ms;" (click)="openCardDetails('users', $event)">
+        <div class="kpi-card bg-kpi-4 animate-in" style="animation-delay: 150ms;"
+          (click)="openCardDetails('users', $event)">
           <div class="kpi-top">
             <div class="kpi-icon-wrap">🧑‍⚕️</div>
             <div class="dropdown-anchor">
-              <button class="kpi-menu" (click)="toggleDropdown('stat-users', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <button class="kpi-menu" (click)="toggleDropdown('stat-users', $event)"><lucide-icon
+                  name="more-horizontal" [size]="16"></lucide-icon></button>
               <div class="dropdown-panel" *ngIf="activeDropdown === 'stat-users'" (click)="$event.stopPropagation()">
-                <button *ngFor="let item of menuConfig['stat-users']" class="dropdown-item" (click)="onMenuAction('stat-users', item.label, $event)">
+                <button *ngFor="let item of menuConfig['stat-users']" class="dropdown-item"
+                  (click)="onMenuAction('stat-users', item.label, $event)">
                   <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
                 </button>
               </div>
@@ -112,15 +124,17 @@
 
       <!-- ─── CHARTS ROW ────────────────────────────────────── -->
       <div class="charts-row">
-        
+
         <!-- Graph Report (Donut) -->
         <div class="dash-card graph-report animate-in" style="animation-delay: 200ms;">
           <div class="dash-card-header">
             <h3>Graph Report</h3>
             <div class="dropdown-anchor">
-              <button class="kpi-menu" (click)="toggleDropdown('graph-report', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <button class="kpi-menu" (click)="toggleDropdown('graph-report', $event)"><lucide-icon
+                  name="more-horizontal" [size]="16"></lucide-icon></button>
               <div class="dropdown-panel" *ngIf="activeDropdown === 'graph-report'" (click)="$event.stopPropagation()">
-                <button *ngFor="let item of menuConfig['graph-report']" class="dropdown-item" (click)="onMenuAction('graph-report', item.label, $event)">
+                <button *ngFor="let item of menuConfig['graph-report']" class="dropdown-item"
+                  (click)="onMenuAction('graph-report', item.label, $event)">
                   <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
                 </button>
               </div>
@@ -135,27 +149,26 @@
                   <svg viewBox="0 0 120 120" width="220" height="220">
                     <circle cx="60" cy="60" r="45" fill="none" class="donut-track" stroke-width="20" />
                     <circle *ngIf="donutHealthy.length > 0" cx="60" cy="60" r="45" fill="none"
-                            class="donut-segment green" stroke-width="20"
-                            [attr.stroke-dasharray]="healthyArc + ' ' + (282.74 - healthyArc)"
-                            stroke-dashoffset="70">
+                      class="donut-segment blue-600" stroke-width="20"
+                      [attr.stroke-dasharray]="healthyArc + ' ' + (282.74 - healthyArc)" stroke-dashoffset="0">
                       <title>In Stock / Healthy: {{ healthyPercent }}%</title>
                     </circle>
                     <circle *ngIf="donutLowStock.length > 0" cx="60" cy="60" r="45" fill="none"
-                            class="donut-segment teal" stroke-width="20"
-                            [attr.stroke-dasharray]="lowStockArc + ' ' + (282.74 - lowStockArc)"
-                            [attr.stroke-dashoffset]="70 - healthyArc">
+                      class="donut-segment blue-400" stroke-width="20"
+                      [attr.stroke-dasharray]="lowStockArc + ' ' + (282.74 - lowStockArc)"
+                      [attr.stroke-dashoffset]="-healthyArc">
                       <title>Low Stock: {{ lowStockPercent }}%</title>
                     </circle>
                     <circle *ngIf="donutOutOfStock.length > 0" cx="60" cy="60" r="45" fill="none"
-                            class="donut-segment pink" stroke-width="20"
-                            [attr.stroke-dasharray]="outOfStockArc + ' ' + (282.74 - outOfStockArc)"
-                            [attr.stroke-dashoffset]="70 - healthyArc - lowStockArc">
+                      class="donut-segment blue-200" stroke-width="20"
+                      [attr.stroke-dasharray]="outOfStockArc + ' ' + (282.74 - outOfStockArc)"
+                      [attr.stroke-dashoffset]="-(healthyArc + lowStockArc)">
                       <title>Out of Stock: {{ outOfStockPercent }}%</title>
                     </circle>
                     <circle *ngIf="donutExpired.length > 0" cx="60" cy="60" r="45" fill="none"
-                            class="donut-segment red" stroke-width="20"
-                            [attr.stroke-dasharray]="expiredArc + ' ' + (282.74 - expiredArc)"
-                            [attr.stroke-dashoffset]="70 - healthyArc - lowStockArc - outOfStockArc">
+                      class="donut-segment blue-900" stroke-width="20"
+                      [attr.stroke-dasharray]="expiredArc + ' ' + (282.74 - expiredArc)"
+                      [attr.stroke-dashoffset]="-(healthyArc + lowStockArc + outOfStockArc)">
                       <title>Expired: {{ expiredPercentNum }}%</title>
                     </circle>
                   </svg>
@@ -163,17 +176,16 @@
                     <span class="donut-total-title">Total Base</span>
                     <span class="donut-total-val">{{ totalMedicines }}</span>
                   </div>
-                  <div *ngFor="let label of donutLabels"
-                       class="floating-label" [ngClass]="label.class"
-                       [style.left]="label.left" [style.top]="label.top">
+                  <div *ngFor="let label of donutLabels" class="floating-label" [ngClass]="label.class"
+                    [style.left]="label.left" [style.top]="label.top">
                     {{ label.percent }}%
                   </div>
                 </div>
                 <div class="donut-legend">
-                  <div class="legend-item"><span class="dot green"></span> Healthy</div>
-                  <div class="legend-item"><span class="dot teal"></span> Low Stock</div>
-                  <div class="legend-item"><span class="dot pink"></span> Out of Stock</div>
-                  <div class="legend-item"><span class="dot red"></span> Expired</div>
+                  <div class="legend-item"><span class="dot blue-600"></span> Healthy</div>
+                  <div class="legend-item"><span class="dot blue-400"></span> Low Stock</div>
+                  <div class="legend-item"><span class="dot blue-200"></span> Out of Stock</div>
+                  <div class="legend-item"><span class="dot blue-900"></span> Expired</div>
                 </div>
               </div>
 
@@ -203,12 +215,13 @@
               <span class="date-range-badge">{{ barChartDateLabel }}</span>
             </div>
             <div class="dropdown-anchor">
-              <button class="kpi-menu" (click)="toggleDropdown('total-sales', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <button class="kpi-menu" (click)="toggleDropdown('total-sales', $event)"><lucide-icon
+                  name="more-horizontal" [size]="16"></lucide-icon></button>
               <div class="dropdown-panel" *ngIf="activeDropdown === 'total-sales'" (click)="$event.stopPropagation()">
-                <button *ngFor="let item of menuConfig['total-sales']"
-                        class="dropdown-item" [class.dropdown-disabled]="item.disabled"
-                        [attr.title]="item.disabled ? 'Not enough historical data yet' : null"
-                        (click)="!item.disabled && onMenuAction('total-sales', item.label, $event)">
+                <button *ngFor="let item of menuConfig['total-sales']" class="dropdown-item"
+                  [class.dropdown-disabled]="item.disabled"
+                  [attr.title]="item.disabled ? 'Not enough historical data yet' : null"
+                  (click)="!item.disabled && onMenuAction('total-sales', item.label, $event)">
                   <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
                   <span *ngIf="item.disabled" class="coming-soon-badge">Soon</span>
                 </button>
@@ -216,13 +229,13 @@
             </div>
           </div>
           <div class="dash-card-body">
-            
+
             <div class="bar-chart-container">
               <!-- Y-Axis labels (Dynamic depending on True Max) -->
               <div class="y-axis">
                 <span *ngFor="let lbl of getYAxisLabels()">{{lbl}}</span>
               </div>
-              
+
               <!-- Grid lines -->
               <div class="grid-lines">
                 <div class="grid-line"></div>
@@ -246,12 +259,11 @@
                     <div class="chart-bar-ghost"></div>
                     <!-- Previous period comparison bar -->
                     <div class="chart-bar-fill compare-bar" *ngIf="compareMode && previousPeriodRevenue[i]"
-                         [style.height.%]="getPrevBarHeight(previousPeriodRevenue[i].amount)"
-                         style="background: rgba(0,0,0,0.1); position: absolute; bottom: 0; width: 100%; border-radius: 16px; z-index: 0;">
+                      [style.height.%]="getPrevBarHeight(previousPeriodRevenue[i].amount)"
+                      style="background: rgba(0,0,0,0.1); position: absolute; bottom: 0; width: 100%; border-radius: 16px; z-index: 0;">
                     </div>
-                    <div class="chart-bar-fill"
-                         [style.height.%]="getBarHeight(day.amount)"
-                         [style.background]="getBarColor(i)">
+                    <div class="chart-bar-fill" [style.height.%]="getBarHeight(day.amount)"
+                      [style.background]="getBarColor(i)">
                       <div class="bar-dot"></div>
                     </div>
                   </div>
@@ -271,7 +283,8 @@
           </div>
           <div class="dash-card-body no-pad">
             <div class="alerts-list scroll-container">
-              <div class="alert-item" *ngFor="let item of combinedAlerts" [ngClass]="item.type" (click)="navigateTo('medications')">
+              <div class="alert-item" *ngFor="let item of combinedAlerts" [ngClass]="item.type"
+                (click)="navigateTo('medications')">
                 <div class="alert-icon-wrap" *ngIf="item.type === 'critical'">🔴</div>
                 <div class="alert-icon-wrap" *ngIf="item.type === 'warning'">🟡</div>
                 <div class="alert-icon-wrap" *ngIf="item.type === 'expired'">⛔</div>
@@ -283,7 +296,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="empty-state" *ngIf="combinedAlerts.length === 0">
                 <div class="empty-icon">✅</div>
                 <div class="empty-text">All stock healthy</div>
@@ -296,7 +309,7 @@
 
       <!-- ─── ACTION ROW (Quick Actions & Pipeline) ────────── -->
       <div class="action-row animate-in" style="animation-delay: 180ms;">
-        
+
         <!-- Quick Actions -->
         <div class="dash-card quick-actions-card">
           <div class="dash-card-header">
@@ -315,10 +328,6 @@
               <button class="qa-btn" (click)="navigateTo('prescriptions')">
                 <span class="qa-icon">📜</span>
                 <span class="qa-text">Prescriptions</span>
-              </button>
-              <button class="qa-btn" (click)="navigateTo('availability')">
-                <span class="qa-icon">🔍</span>
-                <span class="qa-text">Check Stock</span>
               </button>
             </div>
           </div>
@@ -363,9 +372,10 @@
           <div class="dash-card-body">
             <div *ngIf="topSellingMedicines?.length === 0" class="text-gray-500">No data available</div>
             <ul class="top-selling-list" style="list-style: none; padding: 0; margin: 0;">
-              <li *ngFor="let item of topSellingMedicines.slice(0, 5)" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+              <li *ngFor="let item of topSellingMedicines.slice(0, 5)"
+                style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
                 <span class="font-medium">{{ item[0] }}</span>
-                <span class="qty-badge" style="background:#d1fae5; color:#065f46;">{{ item[1] }} sold</span>
+                <span class="qty-badge" style="background:#eff6ff; color:#2563eb;">{{ item[1] }} sold</span>
               </li>
             </ul>
           </div>
@@ -377,15 +387,14 @@
       <div class="dash-card full-width-section animate-in" style="animation-delay: 300ms;">
         <div class="dash-card-header py-4">
           <h3>Recent Sales List</h3>
-          
+
           <div class="table-controls">
             <div class="search-box">
               <lucide-icon name="search" [size]="14"></lucide-icon>
-              <input type="text" placeholder="Search..."
-                     [ngModel]="salesSearchTerm"
-                     (ngModelChange)="onSalesSearch($event)" />
+              <input type="text" placeholder="Search..." [ngModel]="salesSearchTerm"
+                (ngModelChange)="onSalesSearch($event)" />
             </div>
-            
+
             <button class="control-btn border-btn">
               <lucide-icon name="filter" [size]="14"></lucide-icon> Filter
             </button>
@@ -393,16 +402,18 @@
               <lucide-icon name="list-ordered" [size]="14"></lucide-icon> Sort By
             </button>
             <div class="dropdown-anchor">
-              <button class="kpi-menu" (click)="toggleDropdown('recent-sales', $event)"><lucide-icon name="more-horizontal" [size]="16"></lucide-icon></button>
+              <button class="kpi-menu" (click)="toggleDropdown('recent-sales', $event)"><lucide-icon
+                  name="more-horizontal" [size]="16"></lucide-icon></button>
               <div class="dropdown-panel" *ngIf="activeDropdown === 'recent-sales'" (click)="$event.stopPropagation()">
-                <button *ngFor="let item of menuConfig['recent-sales']" class="dropdown-item" (click)="onMenuAction('recent-sales', item.label, $event)">
+                <button *ngFor="let item of menuConfig['recent-sales']" class="dropdown-item"
+                  (click)="onMenuAction('recent-sales', item.label, $event)">
                   <span class="dropdown-icon">{{ item.icon }}</span> {{ item.label }}
                 </button>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div class="dash-card-body no-pad">
           <div class="table-responsive">
             <table class="sales-table">
@@ -462,25 +473,25 @@
           <div class="table-footer">
             <div class="pagination">
               <button class="page-btn" (click)="goToSalesPage(salesPage - 1)" [disabled]="salesPage === 1">Prev</button>
-              
+
               <ng-container *ngFor="let p of salesPageNumbers">
-                <button *ngIf="p !== -1" 
-                        class="page-btn num" 
-                        [class.active]="p === salesPage"
-                        (click)="goToSalesPage(p)">
+                <button *ngIf="p !== -1" class="page-btn num" [class.active]="p === salesPage"
+                  (click)="goToSalesPage(p)">
                   {{ p }}
                 </button>
                 <span *ngIf="p === -1" class="page-dots">...</span>
               </ng-container>
 
-              <button class="page-btn" (click)="goToSalesPage(salesPage + 1)" [disabled]="salesPage === salesTotalPages">Next</button>
+              <button class="page-btn" (click)="goToSalesPage(salesPage + 1)"
+                [disabled]="salesPage === salesTotalPages">Next</button>
             </div>
-            
+
             <div class="showing-text">
-              Showing {{ filteredSalesList.length > 0 ? ((salesPage - 1) * salesPageSize) + 1 : 0 }} to 
-              {{ Math.min(salesPage * salesPageSize, filteredSalesList.length) }} of {{ filteredSalesList.length }} Entries
+              Showing {{ filteredSalesList.length > 0 ? ((salesPage - 1) * salesPageSize) + 1 : 0 }} to
+              {{ Math.min(salesPage * salesPageSize, filteredSalesList.length) }} of {{ filteredSalesList.length }}
+              Entries
             </div>
-            
+
             <button class="control-btn border-btn radius-md">
               Show {{ salesPageSize }} <lucide-icon name="chevron-down" [size]="14"></lucide-icon>
             </button>
@@ -504,9 +515,10 @@
       </div>
       <div class="modal-body">
         <!-- Most sold highlight -->
-        <div class="highlight-banner green-bg" *ngIf="mostSoldToday">
+        <div class="highlight-banner blue-bg" *ngIf="mostSoldToday">
           <span class="highlight-icon">🏆</span>
-          <span class="highlight-text">Most sold: <strong>{{ mostSoldToday.name }}</strong> — {{ mostSoldToday.qty }} units</span>
+          <span class="highlight-text">Most sold: <strong>{{ mostSoldToday.name }}</strong> — {{ mostSoldToday.qty }}
+            units</span>
         </div>
 
         <div class="empty-state" *ngIf="todaySalesDetails.length === 0">
@@ -515,12 +527,21 @@
         </div>
 
         <table class="detail-table" *ngIf="todaySalesDetails.length > 0">
-          <thead><tr><th>Patient Name</th><th>Medicine</th><th>Qty</th><th>Price (DT)</th><th>Time</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Patient Name</th>
+              <th>Medicine</th>
+              <th>Qty</th>
+              <th>Price (DT)</th>
+              <th>Time</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let r of todaySalesDetails">
               <td>
                 <div class="user-cell">
-                  <div class="user-avatar" [style.background]="getAvatarColor(r.userName)">{{ getInitials(r.userName) }}</div>
+                  <div class="user-avatar" [style.background]="getAvatarColor(r.userName)">{{ getInitials(r.userName) }}
+                  </div>
                   <div class="user-info-stack">
                     <span class="user-name">{{ r.userName }}</span>
                     <span class="user-email-sub text-xs text-gray-400">{{ r.userEmail }}</span>
@@ -528,7 +549,9 @@
                 </div>
               </td>
               <td class="font-medium">{{ r.medicineName }}</td>
-              <td><div class="qty-badge">{{ r.quantity }}</div></td>
+              <td>
+                <div class="qty-badge">{{ r.quantity }}</div>
+              </td>
               <td class="font-bold">{{ r.totalPrice | number:'1.2-2' }}</td>
               <td class="text-gray-500">{{ r.orderDate | date:'h:mm a' }}</td>
             </tr>
@@ -552,7 +575,13 @@
       </div>
       <div class="modal-body">
         <table class="detail-table">
-          <thead><tr><th>Category Name</th><th>Medicines</th><th>Stock Status</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Category Name</th>
+              <th>Medicines</th>
+              <th>Stock Status</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let c of categoriesWithStatus">
               <td class="font-medium">{{ c.category }}</td>
@@ -574,12 +603,20 @@
       </div>
       <div class="modal-body">
         <!-- Already Expired Section -->
-        <div class="section-label"><span class="section-dot red"></span> Already Expired ({{ expiredItems.length }})</div>
+        <div class="section-label"><span class="section-dot blue-900"></span> Already Expired ({{ expiredItems.length
+          }})</div>
         <div class="empty-state-sm" *ngIf="expiredItems.length === 0">
           <span>✅ No expired medicines found</span>
         </div>
         <table class="detail-table" *ngIf="expiredItems.length > 0">
-          <thead><tr><th>Medicine</th><th>Category</th><th>Expiry Date</th><th>Stock</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Category</th>
+              <th>Expiry Date</th>
+              <th>Stock</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let m of expiredItems">
               <td class="font-medium">{{ m.medicineName }}</td>
@@ -591,12 +628,20 @@
         </table>
 
         <!-- Expiring Soon Section -->
-        <div class="section-label" style="margin-top: 24px;"><span class="section-dot yellow"></span> Expiring Soon — Next 30 Days ({{ expiringSoonItems.length }})</div>
+        <div class="section-label" style="margin-top: 24px;"><span class="section-dot yellow"></span> Expiring Soon —
+          Next 30 Days ({{ expiringSoonItems.length }})</div>
         <div class="empty-state-sm" *ngIf="expiringSoonItems.length === 0">
           <span>✅ No medicines expiring in the next 30 days</span>
         </div>
         <table class="detail-table" *ngIf="expiringSoonItems.length > 0">
-          <thead><tr><th>Medicine</th><th>Category</th><th>Expiry Date</th><th>Days Left</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Category</th>
+              <th>Expiry Date</th>
+              <th>Days Left</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let item of expiringSoonItems">
               <td class="font-medium">{{ item.name }}</td>
@@ -625,7 +670,14 @@
           <div class="empty-text">No customers found</div>
         </div>
         <table class="detail-table" *ngIf="customerDetails.length > 0">
-          <thead><tr><th>Name</th><th>Email</th><th>Total Orders</th><th>Last Order Date</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Total Orders</th>
+              <th>Last Order Date</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let c of customerDetails">
               <td>
@@ -635,7 +687,9 @@
                 </div>
               </td>
               <td class="text-gray-500 text-sm font-mono">{{ c.email }}</td>
-              <td><div class="qty-badge">{{ c.totalOrders }}</div></td>
+              <td>
+                <div class="qty-badge">{{ c.totalOrders }}</div>
+              </td>
               <td class="text-gray-500">{{ c.lastOrderDate | date:'MMM d, y, h:mm a' }}</td>
             </tr>
           </tbody>
@@ -653,13 +707,26 @@
       </div>
       <div class="modal-body">
         <div class="report-summary-grid">
-          <div class="report-stat green-bg"><span class="stat-num">{{ donutHealthy.length }}</span><span class="stat-lbl">Healthy</span></div>
-          <div class="report-stat teal-bg"><span class="stat-num">{{ donutLowStock.length }}</span><span class="stat-lbl">Low Stock</span></div>
-          <div class="report-stat pink-bg"><span class="stat-num">{{ donutOutOfStock.length }}</span><span class="stat-lbl">Out of Stock</span></div>
-          <div class="report-stat red-bg"><span class="stat-num">{{ donutExpired.length }}</span><span class="stat-lbl">Expired</span></div>
+          <div class="report-stat blue-600-bg"><span class="stat-num">{{ donutHealthy.length }}</span><span
+              class="stat-lbl">Healthy</span></div>
+          <div class="report-stat blue-400-bg"><span class="stat-num">{{ donutLowStock.length }}</span><span
+              class="stat-lbl">Low Stock</span></div>
+          <div class="report-stat blue-200-bg"><span class="stat-num">{{ donutOutOfStock.length }}</span><span
+              class="stat-lbl">Out of Stock</span></div>
+          <div class="report-stat blue-900-bg"><span class="stat-num">{{ donutExpired.length }}</span><span
+              class="stat-lbl">Expired</span></div>
         </div>
         <table class="detail-table">
-          <thead><tr><th>Medicine</th><th>Category</th><th>Stock</th><th>Min Stock</th><th>Expiry</th><th>Status</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Category</th>
+              <th>Stock</th>
+              <th>Min Stock</th>
+              <th>Expiry</th>
+              <th>Status</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let m of allMedicines">
               <td class="font-medium">{{ m.medicineName }}</td>
@@ -688,7 +755,13 @@
       </div>
       <div class="modal-body">
         <table class="detail-table">
-          <thead><tr><th>Day</th><th>Revenue (DT)</th><th>Orders</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Revenue (DT)</th>
+              <th>Orders</th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let d of dailyRevenue">
               <td>{{ d.day }}</td>
@@ -763,7 +836,7 @@
         </div>
         <div class="category-chips">
           <button *ngFor="let c of getFilteredCategoryCounts()" class="category-chip"
-                  (click)="categoryFilter = c.category; applyCategoryFilter()">
+            (click)="categoryFilter = c.category; applyCategoryFilter()">
             {{ c.category }} <span class="chip-count">{{ c.count }}</span>
           </button>
         </div>

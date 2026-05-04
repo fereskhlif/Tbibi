@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import {
   Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef
 } from '@angular/core';
@@ -213,7 +214,7 @@ export class RiskSegmentationComponent implements OnInit, AfterViewInit, OnDestr
   runAnalysis() {
     this.loading = true;
     this.error = '';
-    this.http.get<SegmentationResponse>('http://localhost:8088/api/risk-segmentation')
+    this.http.get<SegmentationResponse>(`${environment.baseUrl}/api/risk-segmentation`)
       .subscribe({
         next: (data) => {
           this.result = data;

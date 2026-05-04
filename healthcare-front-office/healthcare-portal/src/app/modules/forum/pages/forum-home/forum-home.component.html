@@ -4,8 +4,12 @@
   <div
     style="background: linear-gradient(135deg, #1d4ed8, #2563eb, #60a5fa); border-radius: 20px; padding: 36px 40px; margin-bottom: 28px; position: relative; overflow: hidden; min-height: 140px; box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.4);">
     <!-- Glassmorphism decorative circles -->
-    <div style="position:absolute; top:-40px; right:-20px; w:200px; height:200px; background:linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0)); border-radius:50%; filter: blur(30px);"></div>
-    <div style="position:absolute; bottom:-60px; right:120px; w:160px; height:160px; background:linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0)); border-radius:50%; filter: blur(20px);"></div>
+    <div
+      style="position:absolute; top:-40px; right:-20px; w:200px; height:200px; background:linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0)); border-radius:50%; filter: blur(30px);">
+    </div>
+    <div
+      style="position:absolute; bottom:-60px; right:120px; w:160px; height:160px; background:linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0)); border-radius:50%; filter: blur(20px);">
+    </div>
 
     <div style="position: relative; z-index: 10;">
       <div style="display:flex; align-items:center; gap:16px; margin-bottom:10px;">
@@ -51,16 +55,20 @@
           Experts available:
         </span>
         <div class="flex items-center gap-2">
-          <span class="px-2.5 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10 flex items-center gap-1.5">
+          <span
+            class="px-2.5 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10 flex items-center gap-1.5">
             <lucide-icon name="stethoscope" [size]="12"></lucide-icon> Doctors
           </span>
-          <span class="px-2.5 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10 flex items-center gap-1.5">
+          <span
+            class="px-2.5 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10 flex items-center gap-1.5">
             <lucide-icon name="pill" [size]="12"></lucide-icon> Pharmacists
           </span>
-          <span class="px-2.5 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10 flex items-center gap-1.5">
+          <span
+            class="px-2.5 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10 flex items-center gap-1.5">
             <lucide-icon name="flask-conical" [size]="12"></lucide-icon> Lab Staff
           </span>
-          <span class="px-2.5 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10 flex items-center gap-1.5">
+          <span
+            class="px-2.5 py-1 bg-white/10 text-white text-[10px] font-bold rounded-full border border-white/10 flex items-center gap-1.5">
             <lucide-icon name="activity" [size]="12"></lucide-icon> Physios
           </span>
         </div>
@@ -68,11 +76,11 @@
 
       <div style="display:flex; align-items:center; gap:16px; margin-top: 12px;">
         <span style="color:#93c5fd; font-size:12px; display:flex; align-items:center; gap:4px;">
-           <lucide-icon name="message-square" [size]="12"></lucide-icon> {{ totalElements }} discussions
+          <lucide-icon name="message-square" [size]="12"></lucide-icon> {{ totalElements }} discussions
         </span>
         <span style="color:#93c5fd; font-size:12px;">·</span>
         <span style="color:#93c5fd; font-size:12px; display:flex; align-items:center; gap:4px;">
-           <lucide-icon name="tag" [size]="12"></lucide-icon> {{ visibleCategories.length }} categories
+          <lucide-icon name="tag" [size]="12"></lucide-icon> {{ visibleCategories.length }} categories
         </span>
       </div>
     </div>
@@ -104,16 +112,17 @@
     <!-- ═══════ Search + Filters + New Post ═══════ -->
     <div class="flex items-center gap-4 mb-8 w-full">
       <!-- Search -->
-      <div style="flex: 1;" class="relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden flex items-center focus-within:bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all shadow-sm">
+      <div style="flex: 1;"
+        class="relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden flex items-center focus-within:bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all shadow-sm">
         <lucide-icon name="search" class="absolute text-gray-400" style="left: 1rem;" [size]="18"></lucide-icon>
-        <input [ngModel]="searchQuery" (input)="onSearch($any($event.target).value)"
-          style="padding-left: 2.75rem;"
+        <input [ngModel]="searchQuery" (input)="onSearch($any($event.target).value)" style="padding-left: 2.75rem;"
           class="w-full pr-4 py-3 bg-transparent border-none text-sm focus:outline-none focus:ring-0 transition-all h-full outline-none placeholder:text-gray-400"
           placeholder="Search discussions..." />
       </div>
 
       <!-- Sort -->
-      <div class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center hover:border-gray-300 transition-colors">
+      <div
+        class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center hover:border-gray-300 transition-colors">
         <select [ngModel]="sortBy" (change)="onSortChange($event)"
           class="appearance-none bg-transparent pl-4 pr-10 py-3 border-none text-sm font-medium text-gray-700 cursor-pointer focus:outline-none focus:ring-0 transition-all w-full outline-none">
           <option value="latest">Latest activity</option>
@@ -125,7 +134,8 @@
       </div>
 
       <!-- Filter -->
-      <div class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center hover:border-gray-300 transition-colors">
+      <div
+        class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center hover:border-gray-300 transition-colors">
         <select [ngModel]="filterStatus" (change)="onFilterChange($event)"
           class="appearance-none bg-transparent pl-4 pr-10 py-3 border-none text-sm font-medium text-gray-700 cursor-pointer focus:outline-none focus:ring-0 transition-all w-full outline-none">
           <option value="all">All</option>
@@ -158,85 +168,80 @@
           <!-- Sidebar content container -->
           <div class="relative py-2">
             <!-- Sliding Indicator -->
-            <div class="sidebar-indicator" 
-                 [style.top.px]="getSelectedIndex() * 40 + 8" 
-                 [style.height.px]="32"></div>
+            <div class="sidebar-indicator" [style.top.px]="getSelectedIndex() * 40 + 8" [style.height.px]="32"></div>
 
             <!-- View all -->
-            <div (click)="selectCategory(null)"
-              style="justify-content: space-between;"
+            <div (click)="selectCategory(null)" style="justify-content: space-between;"
               class="flex items-center px-4 py-3 cursor-pointer transition-all relative z-20"
               [ngClass]="selectedCategoryId === null ? 'bg-blue-50/80 border-l-2 border-blue-600' : 'hover:bg-gray-50/80 border-l-2 border-transparent'"
               [style.padding-left]="selectedCategoryId === null ? '14px' : '16px'">
 
-            <div class="flex items-center" style="gap: 12px;">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center bg-gray-100 transition-colors"
-                [class.bg-blue-100]="selectedCategoryId === null">
-                <lucide-icon name="layout-grid" [size]="16" class="text-gray-500"
-                  [class.text-blue-600]="selectedCategoryId === null">
-                </lucide-icon>
+              <div class="flex items-center" style="gap: 12px;">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center bg-gray-100 transition-colors"
+                  [class.bg-blue-100]="selectedCategoryId === null">
+                  <lucide-icon name="layout-grid" [size]="16" class="text-gray-500"
+                    [class.text-blue-600]="selectedCategoryId === null">
+                  </lucide-icon>
+                </div>
+                <span class="text-[14px] font-semibold transition-colors"
+                  [class.text-blue-700]="selectedCategoryId === null"
+                  [class.text-gray-700]="selectedCategoryId !== null">
+                  View all
+                </span>
               </div>
-              <span class="text-[14px] font-semibold transition-colors" [class.text-blue-700]="selectedCategoryId === null"
-                [class.text-gray-700]="selectedCategoryId !== null">
-                View all
+              <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0 transition-colors"
+                [class.bg-blue-600]="selectedCategoryId === null" [class.text-white]="selectedCategoryId === null"
+                [class.bg-gray-100]="selectedCategoryId !== null" [class.text-gray-500]="selectedCategoryId !== null">
+                {{ globalTotalPosts }}
               </span>
             </div>
-            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0 transition-colors"
-              [class.bg-blue-600]="selectedCategoryId === null" [class.text-white]="selectedCategoryId === null"
-              [class.bg-gray-100]="selectedCategoryId !== null" [class.text-gray-500]="selectedCategoryId !== null">
-              {{ globalTotalPosts }}
-            </span>
-          </div>
 
             <!-- Divider -->
             <div class="h-px bg-gray-100 mx-4 my-2"></div>
 
             <!-- Category items -->
-            <div *ngFor="let cat of filteredCategories; let i = index; trackBy: trackByCat" 
+            <div *ngFor="let cat of filteredCategories; let i = index; trackBy: trackByCat"
               (click)="selectCategory(cat.categoryName)"
-              class="transition-all cursor-pointer relative z-20 animate-fade-in-up stagger-item"
-              [style.--index]="i">
+              class="transition-all cursor-pointer relative z-20 animate-fade-in-up stagger-item" [style.--index]="i">
 
-              <div class="flex items-center px-4 py-3 border-l-2 transition-all"
-                style="justify-content: space-between;"
+              <div class="flex items-center px-4 py-3 border-l-2 transition-all" style="justify-content: space-between;"
                 [ngClass]="{
                   'bg-amber-50/30 border-transparent': cat.categoryName === expertCategory && isProfessional && selectedCategoryId !== cat.categoryId,
                   'bg-blue-50/80 border-blue-600': selectedCategoryId === cat.categoryId,
                   'hover:bg-gray-50/80 border-transparent': selectedCategoryId !== cat.categoryId && !(cat.categoryName === expertCategory && isProfessional)
-                }"
-                [style.padding-left]="selectedCategoryId === cat.categoryId ? '14px' : '16px'">
-              <div class="flex items-center pr-2 overflow-hidden" style="gap: 12px;">
-                <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                  [ngClass]="getCategoryIconBg(cat.categoryName)">
-                  <lucide-icon [name]="getCategoryIcon(cat.categoryName)" [size]="16"
-                    [ngClass]="getCategoryIconColor(cat.categoryName)">
-                  </lucide-icon>
+                }" [style.padding-left]="selectedCategoryId === cat.categoryId ? '14px' : '16px'">
+                <div class="flex items-center pr-2 overflow-hidden" style="gap: 12px;">
+                  <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+                    [ngClass]="getCategoryIconBg(cat.categoryName)">
+                    <lucide-icon [name]="getCategoryIcon(cat.categoryName)" [size]="16"
+                      [ngClass]="getCategoryIconColor(cat.categoryName)">
+                    </lucide-icon>
+                  </div>
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-[14px] truncate transition-colors"
+                      [class.text-amber-800]="cat.categoryName === expertCategory && isProfessional"
+                      [class.text-blue-700]="selectedCategoryId === cat.categoryId"
+                      [class.font-semibold]="selectedCategoryId === cat.categoryId"
+                      [class.text-gray-700]="selectedCategoryId !== cat.categoryId"
+                      [class.font-medium]="selectedCategoryId !== cat.categoryId">
+                      {{ cat.categoryName }}
+                    </span>
+                    <lucide-icon *ngIf="cat.categoryName === expertCategory && isProfessional" name="star" [size]="14"
+                      class="text-amber-400 shrink-0 fill-amber-400/20" title="Your Expertise"></lucide-icon>
+                  </div>
                 </div>
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-[14px] truncate transition-colors"
-                    [class.text-amber-800]="cat.categoryName === expertCategory && isProfessional"
-                    [class.text-blue-700]="selectedCategoryId === cat.categoryId"
-                    [class.font-semibold]="selectedCategoryId === cat.categoryId"
-                    [class.text-gray-700]="selectedCategoryId !== cat.categoryId"
-                    [class.font-medium]="selectedCategoryId !== cat.categoryId">
-                    {{ cat.categoryName }}
-                  </span>
-                  <lucide-icon *ngIf="cat.categoryName === expertCategory && isProfessional"
-                    name="star" [size]="14" class="text-amber-400 shrink-0 fill-amber-400/20" title="Your Expertise"></lucide-icon>
-                </div>
+
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0 transition-colors"
+                  [class.bg-blue-100]="selectedCategoryId === cat.categoryId"
+                  [class.text-blue-700]="selectedCategoryId === cat.categoryId"
+                  [class.bg-gray-100]="selectedCategoryId !== cat.categoryId"
+                  [class.text-gray-500]="selectedCategoryId !== cat.categoryId">
+                  {{ cat.postCount || 0 }}
+                </span>
               </div>
-
-              <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0 transition-colors"
-                [class.bg-blue-100]="selectedCategoryId === cat.categoryId"
-                [class.text-blue-700]="selectedCategoryId === cat.categoryId"
-                [class.bg-gray-100]="selectedCategoryId !== cat.categoryId"
-                [class.text-gray-500]="selectedCategoryId !== cat.categoryId">
-                {{ cat.postCount || 0 }}
-              </span>
             </div>
-          </div>
 
-          <div class="h-2"></div>
+            <div class="h-2"></div>
           </div> <!-- End relative py-2 -->
         </div> <!-- End card -->
       </div> <!-- End sidebar -->
@@ -292,7 +297,6 @@
               <h3
                 class="text-[16px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors leading-snug mb-2 truncate"
                 style="letter-spacing:-0.02em;">
-                <lucide-icon *ngIf="post.isPinned" name="pin" [size]="14" class="text-amber-500 inline-block mr-1 fill-amber-500/20"></lucide-icon>
                 {{ post.title }}
               </h3>
               <span *ngIf="needsAnswer(post)"

@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
@@ -314,7 +315,7 @@ export class DiseaseRiskComponent implements OnInit {
     const token = localStorage.getItem('TokenUserConnect') || localStorage.getItem('token');
     if (!token) return;
 
-    this.http.get<any>('http://localhost:8088/api/users/profile', {
+    this.http.get<any>(`${environment.baseUrl}/api/users/profile`, {
       headers: { Authorization: `Bearer ${token}` }
     }).subscribe({
       next: (profile) => {
@@ -345,7 +346,7 @@ export class DiseaseRiskComponent implements OnInit {
       return;
     }
 
-    this.http.get<any[]>(`http://localhost:8088/api/chronic/patient/${patientId}`)
+    this.http.get<any[]>(`${environment.baseUrl}/api/chronic/patient/${patientId}`)
       .subscribe({
         next: (records) => {
           this.computeAverages(records || []);
@@ -403,7 +404,7 @@ export class DiseaseRiskComponent implements OnInit {
     };
 
     this.http.post<PredictionResponse>(
-      'http://localhost:8088/api/disease-risk/predict', body
+      `${environment.baseUrl}/api/disease-risk/predict`, body
     ).subscribe({
       next: r => { this.result = r; this.predicting = false; },
       error: e => {
@@ -425,9 +426,9 @@ export class DiseaseRiskComponent implements OnInit {
   overallBannerClass(): string {
     const base = 'rounded-2xl border p-5 ';
     return base + ({
-      HIGH:   'bg-red-950/60 border-red-500/60 text-red-200',
+      HIGH: 'bg-red-950/60 border-red-500/60 text-red-200',
       MEDIUM: 'bg-yellow-950/50 border-yellow-500/50 text-yellow-200',
-      LOW:    'bg-green-950/50 border-green-600/50 text-green-200',
+      LOW: 'bg-green-950/50 border-green-600/50 text-green-200',
     } as any)[this.result?.overallRisk ?? 'LOW'];
   }
 
@@ -449,8 +450,8 @@ export class DiseaseRiskComponent implements OnInit {
 
   riskBadgeClass(prob: number): string {
     return ({
-      LOW:      'bg-green-900/50 border border-green-600/50 text-green-300',
-      WARNING:  'bg-yellow-900/60 border border-yellow-500/60 text-yellow-300',
+      LOW: 'bg-green-900/50 border border-green-600/50 text-green-300',
+      WARNING: 'bg-yellow-900/60 border border-yellow-500/60 text-yellow-300',
       CRITICAL: 'bg-red-900/60 border border-red-500/60 text-red-300',
     })[this._tier(prob)];
   }
@@ -465,8 +466,8 @@ export class DiseaseRiskComponent implements OnInit {
 
   cardClass(prob: number): string {
     return ({
-      LOW:      'bg-slate-800/60 border-slate-700',
-      WARNING:  'bg-yellow-950/30 border-yellow-700/40',
+      LOW: 'bg-slate-800/60 border-slate-700',
+      WARNING: 'bg-yellow-950/30 border-yellow-700/40',
       CRITICAL: 'bg-red-950/30 border-red-700/40',
     })[this._tier(prob)];
   }

@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -6,33 +7,33 @@ import { AppointmentResponse, ScheduleSlot } from '../../patient/services/appoin
 export interface UnavailabilityWindow { from: string; to: string; }
 
 export interface WorkScheduleRequest {
-  doctorId: number;
-  workStart: string;
-  workEnd: string;
-  consultationMinutes: number;
-  restDays: string[];
-  unavailableWindows: UnavailabilityWindow[];
+    doctorId: number;
+    workStart: string;
+    workEnd: string;
+    consultationMinutes: number;
+    restDays: string[];
+    unavailableWindows: UnavailabilityWindow[];
 }
 
 export interface DoctorExceptionRequest {
-  doctorId: number;
-  date: string;       // "yyyy-MM-dd"
-  fromTime?: string;  // "HH:mm" — omit for whole day
-  toTime?: string;
+    doctorId: number;
+    date: string;       // "yyyy-MM-dd"
+    fromTime?: string;  // "HH:mm" — omit for whole day
+    toTime?: string;
 }
 
 export interface DoctorExceptionResponse {
-  id: number;
-  doctorId: number;
-  date: string;
-  fromTime: string | null;
-  toTime: string | null;
-  wholeDay: boolean;
+    id: number;
+    doctorId: number;
+    date: string;
+    fromTime: string | null;
+    toTime: string | null;
+    wholeDay: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
 export class DoctorAppointmentService {
-    private readonly base = 'http://localhost:8088';
+    private readonly base = `${environment.baseUrl}`;
 
     constructor(private http: HttpClient) { }
 

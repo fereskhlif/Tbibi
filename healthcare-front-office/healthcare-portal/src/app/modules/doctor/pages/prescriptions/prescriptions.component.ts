@@ -90,10 +90,13 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
       .pipe(switchMap(() => this.prescriptionService.getAll()))
       .subscribe({
         next: (data) => {
-          this.prescriptions = data.map(rx => ({
-            ...rx,
-            expanded: this.prescriptions.find(p => p.prescriptionID === rx.prescriptionID)?.expanded ?? false
-          }));
+          this.prescriptions = data.map(rx => {
+            const processed = this.processPrescription(rx);
+            return {
+              ...processed,
+              expanded: this.prescriptions.find(p => p.prescriptionID === processed.prescriptionID)?.expanded ?? false
+            };
+          });
           if (this.detailRx) {
             const updated = this.prescriptions.find(p => p.prescriptionID === this.detailRx!.prescriptionID);
             if (updated) this.detailRx = updated;
@@ -111,7 +114,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.error = '';
     this.prescriptionService.getAll().subscribe({
       next: (data) => {
-        this.prescriptions = data.map(rx => ({ ...rx, expanded: false }));
+        this.prescriptions = data.map(rx => ({ ...this.processPrescription(rx), expanded: false }));
         this.loading = false;
       },
       error: () => {
@@ -199,7 +202,6 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
       color: color,
       bgLabel: bgLabel
     });
-
     return cards;
   }
 
@@ -217,6 +219,33 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
 
   stepOf(status: PrescriptionStatus): number {
     return this.STEPS.indexOf(status);
+  }
+
+  private processPrescription(rx: any): any {
+    const processed = { ...rx };
+    if (!processed.note) return processed;
+    const marker = 'Médicaments prescrits (non gérés en base locale) :';
+    const idx = processed.note.indexOf(marker);
+    if (idx !== -1) {
+      const medsText = processed.note.substring(idx + marker.length).trim();
+      const lines = medsText.split('\n');
+      const parsedMeds = [];
+      for (const line of lines) {
+        const tLine = line.trim();
+        if (tLine.startsWith('- ')) {
+          parsedMeds.push({
+            medicineId: null,
+            medicineName: tLine.substring(2).trim(),
+            quantity: 1,
+            dosage: '',
+            activeIngredient: 'IA / Hors-stock'
+          });
+        }
+      }
+      processed.note = processed.note.substring(0, idx).trim();
+      processed.medicines = [...(processed.medicines || []), ...parsedMeds];
+    }
+    return processed;
   }
 
   openDetail(rx: PrescriptionResponse, event?: Event): void {
@@ -266,7 +295,6 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     // Use local formatted date for the HTML datetime-local input
     const localDateTime = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: localDateTime, duration: null, expirationDate: null, rxOriginalDate: null };
-
     // Reset AI state
     this.addedMedicines = [];
     this.medicineInput = '';
@@ -276,7 +304,6 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.medicineCheckStatus = '';
     this.predictedClassResponse = null;
     this.predictedClassError = '';
-
     console.log('📅 Date envoyée:', isoString);
     this.showModal = true;
   }
@@ -489,7 +516,6 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
       expirationDate: rx.expirationDate || null,
       rxOriginalDate: rx.date
     };
-
     // Reset AI state & populate if needed
     // Assuming UI display only, we map the medicines back if editing
     this.addedMedicines = rx.medicines ? rx.medicines.map((m: any) => ({ name: m.medicineName, id: m.medicineId ?? null })) : [];

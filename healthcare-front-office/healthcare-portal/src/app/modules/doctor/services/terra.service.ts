@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from 'environments/environment';
 
-const API = 'http://localhost:8088/api/terra';
+const API = `${environment.baseUrl}/api/terra`;
 
 export interface TerraVitals {
   patientId: number;
@@ -27,7 +28,7 @@ export interface TerraWidget {
 
 @Injectable({ providedIn: 'root' })
 export class TerraService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /** Get latest vitals for a patient (call every 3s during monitoring) */
   getVitals(patientId: number): Observable<TerraVitals> {

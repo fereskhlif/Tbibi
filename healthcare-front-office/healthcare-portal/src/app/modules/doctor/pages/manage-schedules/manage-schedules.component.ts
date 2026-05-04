@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
@@ -16,8 +17,8 @@ interface ScheduleSlot {
   isAvailable: boolean;
 }
 
-const DAYS_OF_WEEK = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
-const DAY_LABELS   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS_OF_WEEK = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 @Component({
   selector: 'app-manage-schedules',
@@ -349,13 +350,13 @@ export class ManageSchedulesComponent implements OnInit {
   excLoading = false;
   exceptions: DoctorExceptionResponse[] = [];
 
-  private readonly base = 'http://localhost:8088';
+  private readonly base = `${environment.baseUrl}`;
   get doctorId(): number { return Number(localStorage.getItem('userId') || 0); }
 
   constructor(
     private http: HttpClient,
     private svc: DoctorAppointmentService
-  ) {}
+  ) { }
 
   ngOnInit() { this.loadSlots(); }
 
@@ -371,7 +372,7 @@ export class ManageSchedulesComponent implements OnInit {
   }
 
   get availableCount() { return this.slots.filter(s => s.isAvailable).length; }
-  get bookedCount()    { return this.slots.filter(s => !s.isAvailable).length; }
+  get bookedCount() { return this.slots.filter(s => !s.isAvailable).length; }
 
   get groupedSlots(): { date: string; slots: ScheduleSlot[]; availableCount: number }[] {
     const map = new Map<string, ScheduleSlot[]>();
@@ -508,7 +509,7 @@ export class ManageSchedulesComponent implements OnInit {
       doctorId: this.doctorId,
       date: this.exc.date,
       fromTime: this.exc.wholeDay ? undefined : this.exc.fromTime,
-      toTime:   this.exc.wholeDay ? undefined : this.exc.toTime
+      toTime: this.exc.wholeDay ? undefined : this.exc.toTime
     }).subscribe({
       next: (e) => {
         this.exceptions.unshift(e);
@@ -547,7 +548,7 @@ export class ManageSchedulesComponent implements OnInit {
 
   formatTime(time: any): string {
     if (!time) return '';
-    if (Array.isArray(time)) return `${String(time[0]).padStart(2,'0')}:${String(time[1]).padStart(2,'0')}`;
+    if (Array.isArray(time)) return `${String(time[0]).padStart(2, '0')}:${String(time[1]).padStart(2, '0')}`;
     return String(time).substring(0, 5);
   }
 }

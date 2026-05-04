@@ -73,9 +73,11 @@ public class AppointementService implements IAppointementService {
         if (schedule.getDoctor() != null) {
             String patientName = saved.getUser() != null ? saved.getUser().getName() : "A patient";
             String specialty = saved.getSpecialty() != null ? saved.getSpecialty() : "a consultation";
-            String msg = "New appointment request from " + patientName + " for " + specialty + ". Please accept or refuse.";
+            String msg = "New appointment request from " + patientName + " for " + specialty
+                    + ". Please accept or refuse.";
 
-            // 1️⃣ Save to appointment notification table (for Doctor Notifications page accept/refuse)
+            // 1️⃣ Save to appointment notification table (for Doctor Notifications page
+            // accept/refuse)
             Notification notif = Notification.builder()
                     .message(msg)
                     .read(false)
@@ -85,14 +87,14 @@ public class AppointementService implements IAppointementService {
                     .build();
             notificationRepo.save(notif);
 
-            // 2️⃣ Also send via e-pharmacy notification system so it appears in the bell icon
-            //    This saves to NotificationRepository and pushes proper JSON via WebSocket
+            // 2️⃣ Also send via e-pharmacy notification system so it appears in the bell
+            // icon
+            // This saves to NotificationRepository and pushes proper JSON via WebSocket
             notificationService.createAndSend(
                     schedule.getDoctor(),
                     msg,
                     NotificationType.APPOINTMENT,
-                    "/doctor/notifications"
-            );
+                    "/doctor/notifications");
         }
 
         return mapper.toResponse(saved);
@@ -155,11 +157,13 @@ public class AppointementService implements IAppointementService {
         if (saved.getUser() != null) {
             String doctorName = (newSchedule.getDoctor() != null) ? newSchedule.getDoctor().getName() : "your doctor";
             String newDate = newSchedule.getDate() != null ? newSchedule.getDate().toString() : "";
-            String newTime = newSchedule.getStartTime() != null ? newSchedule.getStartTime().toString().substring(0, 5) : "";
+            String newTime = newSchedule.getStartTime() != null ? newSchedule.getStartTime().toString().substring(0, 5)
+                    : "";
             String msg = "Dr. " + doctorName + " has proposed a new time for your " + saved.getSpecialty()
                     + " appointment: " + newDate + " at " + newTime
                     + ". Please accept or choose a different slot.";
-            notificationService.createAndSend(saved.getUser(), msg, NotificationType.APPOINTMENT, "/patient/appointments");
+            notificationService.createAndSend(saved.getUser(), msg, NotificationType.APPOINTMENT,
+                    "/patient/appointments");
         }
 
         return mapper.toResponse(saved);
@@ -184,14 +188,18 @@ public class AppointementService implements IAppointementService {
             try {
                 Schedule schedule = saved.getSchedule();
                 String dateStr = (schedule != null && schedule.getDate() != null)
-                        ? schedule.getDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+                        ? schedule.getDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                        : "";
                 String timeStr = (schedule != null && schedule.getStartTime() != null)
-                        ? schedule.getStartTime().toString().substring(0, 5) : "";
+                        ? schedule.getStartTime().toString().substring(0, 5)
+                        : "";
                 String doctorName = (schedule != null && schedule.getDoctor() != null)
-                        ? schedule.getDoctor().getName() : saved.getDoctor();
+                        ? schedule.getDoctor().getName()
+                        : saved.getDoctor();
                 String location = (schedule != null && schedule.getDoctor() != null
                         && schedule.getDoctor().getAdresse() != null)
-                        ? schedule.getDoctor().getAdresse() : "";
+                                ? schedule.getDoctor().getAdresse()
+                                : "";
                 String patientName = saved.getPatientName() != null ? saved.getPatientName()
                         : (saved.getUser() != null ? saved.getUser().getName() : "Patient");
                 String meetingLink = saved.getMeetingLink() != null ? saved.getMeetingLink() : "";
@@ -202,14 +210,14 @@ public class AppointementService implements IAppointementService {
                 System.err.println("[ACCEPT_RESCHEDULE] Failed to send email: " + e.getMessage());
             }
         }
-        
+
         // Notify doctor that patient accepted
         if (saved.getSchedule() != null && saved.getSchedule().getDoctor() != null) {
             String patientName = saved.getPatientName() != null ? saved.getPatientName()
                     : (saved.getUser() != null ? saved.getUser().getName() : "A patient");
-            
+
             String msg = patientName + " has accepted the rescheduled appointment for " + saved.getSpecialty() + ".";
-            
+
             Notification notif = Notification.builder()
                     .message(msg)
                     .read(false)
@@ -223,8 +231,7 @@ public class AppointementService implements IAppointementService {
                     saved.getSchedule().getDoctor(),
                     msg,
                     NotificationType.APPOINTMENT,
-                    "/doctor/notifications"
-            );
+                    "/doctor/notifications");
         }
 
         return mapper.toResponse(saved);
@@ -242,13 +249,14 @@ public class AppointementService implements IAppointementService {
             Schedule proposed = appointment.getSchedule();
             proposed.setIsAvailable(true);
             scheduleRepository.save(proposed);
-            
+
             // Notify doctor that patient rejected
             if (proposed.getDoctor() != null) {
                 String patientName = appointment.getPatientName() != null ? appointment.getPatientName()
                         : (appointment.getUser() != null ? appointment.getUser().getName() : "A patient");
-                String msg = patientName + " has requested a different time for their " + appointment.getSpecialty() + " appointment.";
-                
+                String msg = patientName + " has requested a different time for their " + appointment.getSpecialty()
+                        + " appointment.";
+
                 Notification notif = Notification.builder()
                         .message(msg)
                         .read(false)
@@ -262,8 +270,7 @@ public class AppointementService implements IAppointementService {
                         proposed.getDoctor(),
                         msg,
                         NotificationType.APPOINTMENT,
-                        "/doctor/notifications"
-                );
+                        "/doctor/notifications");
             }
         }
         appointment.setStatusAppointement(StatusAppointement.CANCELLED);
@@ -349,21 +356,48 @@ public class AppointementService implements IAppointementService {
         return verificationService.createVerification(request);
     }
 
-    /** Create a physiotherapy appointment (no schedule slot required) */
+    /**
+     * Validates an OTP code and consumes it.
+     * Used by Physio/Lab flows — returns true if valid, false otherwise.
+     * Does NOT create an appointment (unlike verifyAndConfirm).
+     */
+    public boolean validateCode(String verificationId, String code) {
+        try {
+            verificationService.consume(verificationId, code);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Create a physiotherapy appointment — links the chosen schedule slot so
+     * date/time appear on the card
+     */
     @Transactional
     public AppointmentResponse createPhysioBooking(tn.esprit.pi.tbibi.DTO.PhysioBookingRequest request) {
         User physiotherapist = userRepo.findById(request.getPhysiotherapistId())
-                .orElseThrow(() -> new EntityNotFoundException("Physiotherapist not found: " + request.getPhysiotherapistId()));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Physiotherapist not found: " + request.getPhysiotherapistId()));
 
         Appointment appointment = new Appointment();
-        appointment.setSchedule(null); // no slot
         appointment.setStatusAppointement(StatusAppointement.PENDING);
         appointment.setService(request.getTherapyType());
-        appointment.setSpecialty(physiotherapist.getSpecialty() != null ? physiotherapist.getSpecialty() : "Kinésithérapie");
+        appointment.setSpecialty(
+                physiotherapist.getSpecialty() != null ? physiotherapist.getSpecialty() : "Kinésithérapie");
         appointment.setDoctor(physiotherapist.getName());
         appointment.setReasonForVisit(request.getReasonForVisit());
         appointment.setPatientEmail(request.getPatientEmail());
         appointment.setPatientName(request.getPatientName());
+
+        // Link the schedule slot so that date/time are stored properly
+        if (request.getScheduleId() != null) {
+            scheduleRepository.findById(request.getScheduleId()).ifPresent(slot -> {
+                slot.setIsAvailable(false);
+                scheduleRepository.save(slot);
+                appointment.setSchedule(slot);
+            });
+        }
 
         if (request.getPatientId() != null && request.getPatientId() > 0) {
             userRepo.findById(request.getPatientId()).ifPresent(p -> {
@@ -378,22 +412,27 @@ public class AppointementService implements IAppointementService {
 
         // Notify physiotherapist
         String patientName = saved.getPatientName() != null ? saved.getPatientName() : "Un patient";
+        String dateInfo = (saved.getSchedule() != null && saved.getSchedule().getDate() != null)
+                ? " — le " + saved.getSchedule().getDate()
+                : (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
         String msg = "Nouvelle demande de séance de " + request.getTherapyType()
-                + " de la part de " + patientName
-                + (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
-        notificationService.createAndSend(physiotherapist, msg, NotificationType.APPOINTMENT, "/physiotherapist/dashboard");
+                + " de la part de " + patientName + dateInfo;
+        notificationService.createAndSend(physiotherapist, msg, NotificationType.APPOINTMENT,
+                "/physiotherapist/dashboard");
 
         return mapper.toResponse(saved);
     }
 
-    /** Create a laboratory analysis booking (no schedule slot required) */
+    /**
+     * Create a laboratory analysis booking — links the chosen schedule slot so
+     * date/time appear on the card
+     */
     @Transactional
     public AppointmentResponse createLabBooking(tn.esprit.pi.tbibi.DTO.LabBookingRequest request) {
         User laboratory = userRepo.findById(request.getLaboratoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Laboratory not found: " + request.getLaboratoryId()));
 
         Appointment appointment = new Appointment();
-        appointment.setSchedule(null); // no slot
         appointment.setStatusAppointement(StatusAppointement.PENDING);
         appointment.setService(request.getAnalysisType());
         appointment.setSpecialty("Laboratoire");
@@ -401,6 +440,15 @@ public class AppointementService implements IAppointementService {
         appointment.setReasonForVisit(request.getNotes());
         appointment.setPatientEmail(request.getPatientEmail());
         appointment.setPatientName(request.getPatientName());
+
+        // Link the schedule slot so that date/time are stored properly
+        if (request.getScheduleId() != null) {
+            scheduleRepository.findById(request.getScheduleId()).ifPresent(slot -> {
+                slot.setIsAvailable(false);
+                scheduleRepository.save(slot);
+                appointment.setSchedule(slot);
+            });
+        }
 
         if (request.getPatientId() != null && request.getPatientId() > 0) {
             userRepo.findById(request.getPatientId()).ifPresent(p -> {
@@ -415,19 +463,22 @@ public class AppointementService implements IAppointementService {
 
         // Notify laboratory
         String patientName = saved.getPatientName() != null ? saved.getPatientName() : "Un patient";
+        String dateInfo = (saved.getSchedule() != null && saved.getSchedule().getDate() != null)
+                ? " — le " + saved.getSchedule().getDate()
+                : (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
         String msg = "Nouvelle demande d'analyse " + request.getAnalysisType()
-                + " de la part de " + patientName
-                + (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
+                + " de la part de " + patientName + dateInfo;
         notificationService.createAndSend(laboratory, msg, NotificationType.APPOINTMENT, "/laboratory/dashboard");
 
         return mapper.toResponse(saved);
     }
 
-
-    // ── JPQL query ────────────────────────────────────────────────────────────────
+    // ── JPQL query
+    // ────────────────────────────────────────────────────────────────
     /**
      * Specialty appointment breakdown for a doctor — backed by a JPQL JOIN query.
-     * Converts raw Object[] rows to a list of maps { doctorName, specialty, count }.
+     * Converts raw Object[] rows to a list of maps { doctorName, specialty, count
+     * }.
      */
     @Override
     @Transactional
@@ -436,17 +487,19 @@ public class AppointementService implements IAppointementService {
         java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
         for (Object[] row : rows) {
             java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
-            map.put("doctorName",  row[0] != null ? row[0].toString() : "");
-            map.put("specialty",   row[1] != null ? row[1].toString() : "");
-            map.put("count",       row[2]);
+            map.put("doctorName", row[0] != null ? row[0].toString() : "");
+            map.put("specialty", row[1] != null ? row[1].toString() : "");
+            map.put("count", row[2]);
             result.add(map);
         }
         return result;
     }
 
-    // ── Keyword query ─────────────────────────────────────────────────────────────
+    // ── Keyword query
+    // ─────────────────────────────────────────────────────────────
     /**
-     * Filtered appointments by date range + status + doctor — multi-table keyword query.
+     * Filtered appointments by date range + status + doctor — multi-table keyword
+     * query.
      * Touches: Appointment, Schedule, User(doctor).
      */
     @Override
@@ -456,13 +509,15 @@ public class AppointementService implements IAppointementService {
             java.time.LocalDate from,
             java.time.LocalDate to,
             tn.esprit.pi.tbibi.entities.StatusAppointement status) {
-        java.util.List<Appointment> appts =
-                appointmentRepository.findByScheduleDateBetweenAndStatusAppointementAndScheduleDoctorUserId(
+        java.util.List<Appointment> appts = appointmentRepository
+                .findByScheduleDateBetweenAndStatusAppointementAndScheduleDoctorUserId(
                         from, to, status, doctorId);
         return mapper.toResponseList(appts);
     }
 
-    /** Verify code and create appointment — email is sent later when doctor accepts */
+    /**
+     * Verify code and create appointment — email is sent later when doctor accepts
+     */
     public AppointmentResponse verifyAndConfirm(String verificationId, String code) {
         var pv = verificationService.consume(verificationId, code);
         var req = pv.request();
@@ -490,7 +545,8 @@ public class AppointementService implements IAppointementService {
                 .build();
         AppointmentResponse response = create(apptReq);
 
-        // Persist the meeting link, patient name AND patient email on the saved appointment.
+        // Persist the meeting link, patient name AND patient email on the saved
+        // appointment.
         final String patientNameFromForm = req.getPatientName() != null ? req.getPatientName() : "";
         final String patientEmailFromForm = req.getPatientEmail() != null ? req.getPatientEmail() : "";
         appointmentRepository.findById(response.getAppointmentId()).ifPresent(a -> {
@@ -509,10 +565,12 @@ public class AppointementService implements IAppointementService {
         });
 
         // ✅ Email is intentionally NOT sent here.
-        // The confirmation email with the meeting link will be sent when the doctor ACCEPTS the appointment.
+        // The confirmation email with the meeting link will be sent when the doctor
+        // ACCEPTS the appointment.
 
         return response;
     }
+
     /**
      * Doctor-initiated appointment:
      * 1. Creates a new schedule slot for the doctor at the chosen date/time.
@@ -535,16 +593,15 @@ public class AppointementService implements IAppointementService {
                         "Patient not found: " + req.getPatientId()));
 
         // ── 3. Create schedule slot on-the-fly ───────────────────────────────
-        java.time.LocalDate  date      = java.time.LocalDate.parse(req.getDate());
-        java.time.LocalTime  startTime = java.time.LocalTime.parse(req.getStartTime());
+        java.time.LocalDate date = java.time.LocalDate.parse(req.getDate());
+        java.time.LocalTime startTime = java.time.LocalTime.parse(req.getStartTime());
 
-        tn.esprit.pi.tbibi.entities.Schedule slot =
-                tn.esprit.pi.tbibi.entities.Schedule.builder()
-                        .doctor(doctor)
-                        .date(date)
-                        .startTime(startTime)
-                        .isAvailable(false)   // immediately booked
-                        .build();
+        tn.esprit.pi.tbibi.entities.Schedule slot = tn.esprit.pi.tbibi.entities.Schedule.builder()
+                .doctor(doctor)
+                .date(date)
+                .startTime(startTime)
+                .isAvailable(false) // immediately booked
+                .build();
         slot = scheduleRepository.save(slot);
 
         // ── 4. Build and save appointment ────────────────────────────────────
@@ -568,8 +625,8 @@ public class AppointementService implements IAppointementService {
         String patientEmail = patient.getEmail();
         if (patientEmail != null && !patientEmail.isBlank()) {
             try {
-                String dateStr  = date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                String timeStr  = startTime.toString().substring(0, 5);
+                String dateStr = date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                String timeStr = startTime.toString().substring(0, 5);
                 String location = doctor.getAdresse() != null ? doctor.getAdresse() : "";
                 emailService.sendAppointmentConfirmation(
                         patientEmail, patient.getName(), doctor.getName(),

@@ -18,12 +18,15 @@ public class AiModerationService {
     @Data
     static class SanitizeRequest {
         private String text;
-        public SanitizeRequest(String text) { this.text = text; }
+
+        public SanitizeRequest(String text) {
+            this.text = text;
+        }
     }
 
     // DTO for response
     @Data
-    static class SanitizeResponse {
+    public static class SanitizeResponse {
         private String original;
         private String cleaned;
         @JsonProperty("is_toxic")
@@ -33,12 +36,17 @@ public class AiModerationService {
 
     /**
      * Sends text to Python AI service.
-     * Returns the cleaned version (bad words hidden with ****)
-     * If AI service is down, returns original text (fail safe)
+     * Returns the full response including cleaned text and original toxicity score.
      */
-    public String sanitizeText(String text) {
+    public SanitizeResponse sanitizeAndScore(String text) {
+        SanitizeResponse fallback = new SanitizeResponse();
+        fallback.setOriginal(text);
+        fallback.setCleaned(text);
+        fallback.setToxic(false);
+        fallback.setConfidence(-1.0);
+
         if (text == null || text.trim().isEmpty()) {
-            return text;
+            return fallback;
         }
         try {
             SanitizeResponse response = webClient.post()
@@ -49,12 +57,11 @@ public class AiModerationService {
                     .block(); // synchronous call
 
             if (response != null) {
-                return response.getCleaned(); // return cleaned text
+                return response;
             }
         } catch (Exception e) {
-            // If AI service is down, don't crash — just save original
             log.warn("AI moderation service unavailable: {}", e.getMessage());
         }
-        return text; // fallback: return original
+        return fallback;
     }
 }

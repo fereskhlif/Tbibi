@@ -127,7 +127,7 @@ export class PrescriptionReceivingComponent implements OnInit {
       alert("Prescription expirée, dispensation impossible.");
       return;
     }
-    
+
     this.prescriptionService.dispensePrescription(rx.prescriptionID).subscribe({
       next: (updatedRx) => {
         const index = this.allPrescriptions.findIndex(p => p.prescriptionID === updatedRx.prescriptionID);

@@ -49,10 +49,13 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
       .pipe(switchMap(() => this.prescriptionService.getMyPrescriptions()))
       .subscribe({
         next: (data) => {
-          this.prescriptions = data.map(rx => ({
-            ...rx,
-            expanded: this.prescriptions.find(p => p.prescriptionID === rx.prescriptionID)?.expanded ?? false
-          }));
+          this.prescriptions = data.map(rx => {
+            const processed = this.processPrescription(rx);
+            return {
+              ...processed,
+              expanded: this.prescriptions.find(p => p.prescriptionID === processed.prescriptionID)?.expanded ?? false
+            };
+          });
           if (this.detailRx) {
             const updated = this.prescriptions.find(p => p.prescriptionID === this.detailRx!.prescriptionID);
             if (updated) this.detailRx = updated;
@@ -75,7 +78,7 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
     // Load prescriptions
     this.prescriptionService.getMyPrescriptions().subscribe({
       next: (data) => {
-        this.prescriptions = data.map(rx => ({ ...rx, expanded: false }));
+        this.prescriptions = data.map(rx => ({ ...this.processPrescription(rx), expanded: false }));
         this.loading = false;
       },
       error: () => {
@@ -222,6 +225,33 @@ export class PrescriptionsComponent implements OnInit, OnDestroy {
 
   stepOf(status: PrescriptionStatus): number {
     return this.STEPS.indexOf(status);
+  }
+
+  private processPrescription(rx: any): any {
+    const processed = { ...rx };
+    if (!processed.note) return processed;
+    const marker = 'Médicaments prescrits (non gérés en base locale) :';
+    const idx = processed.note.indexOf(marker);
+    if (idx !== -1) {
+      const medsText = processed.note.substring(idx + marker.length).trim();
+      const lines = medsText.split('\n');
+      const parsedMeds = [];
+      for (const line of lines) {
+        const tLine = line.trim();
+        if (tLine.startsWith('- ')) {
+          parsedMeds.push({
+            medicineId: null,
+            medicineName: tLine.substring(2).trim(),
+            quantity: 1,
+            dosage: '',
+            activeIngredient: 'IA / Hors-stock'
+          });
+        }
+      }
+      processed.note = processed.note.substring(0, idx).trim();
+      processed.medicines = [...(processed.medicines || []), ...parsedMeds];
+    }
+    return processed;
   }
 
   // ── Detail modal ──────────────────────────────────────────────────────────

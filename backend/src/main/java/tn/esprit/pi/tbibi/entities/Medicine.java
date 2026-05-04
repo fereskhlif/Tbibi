@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-@ToString(exclude = {"prescriptions"})
+@ToString(exclude = { "prescriptions" })
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -32,20 +32,19 @@ public class Medicine {
     String activeIngredient;
 
     @Builder.Default
+    boolean prescriptionRequired = false;
+
+    @Builder.Default
     @Column(name = "quantity", columnDefinition = "integer default 0")
     int quantity = 0;
 
-
     @ElementCollection
-    @CollectionTable(name = "medicine_images",
-            joinColumns = @JoinColumn(name = "medicine_id"))
+    @CollectionTable(name = "medicine_images", joinColumns = @JoinColumn(name = "medicine_id"))
     @Column(name = "image_url")
     List<String> imageUrls; //
 
-
-
     @ManyToMany(mappedBy = "medicines")
-    List<Prescription> prescriptions;  // Added back-reference
+    List<Prescription> prescriptions; // Added back-reference
 
     @ManyToOne
     @JsonIgnore

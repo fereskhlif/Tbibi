@@ -45,13 +45,39 @@ public class TwilioSmsService {
             Message message = Message.creator(
                     new PhoneNumber(to),
                     new PhoneNumber(fromNumber),
-                    body
-            ).create();
-            
-            log.info("[Twilio] SMS sent to {} - SID: {}", to, message.getSid());
+                    body).create();
+
+            // Check message status for delivery issues
+            if (message.getErrorCode() != null) {
+                log.error("[Twilio] SMS to {} FAILED with Twilio error code {} - {}", to, message.getErrorCode(),
+                        message.getErrorMessage());
+                throw new RuntimeException("Twilio error " + message.getErrorCode() + ": " + message.getErrorMessage());
+            }
+            log.info("[Twilio] SMS sent to {} - SID: {} - Status: {}", to, message.getSid(), message.getStatus());
+        } catch (com.twilio.exception.ApiException e) {
+            // Twilio API error with specific error code
+            log.error("[Twilio] API Error {} sending SMS to {}: {} — Hint: {}",
+                    e.getCode(), to, e.getMessage(), getTwilioErrorHint(e.getCode()));
+            throw new RuntimeException("Twilio error " + e.getCode() + ": " + e.getMessage() + " | Hint: "
+                    + getTwilioErrorHint(e.getCode()), e);
+        } catch (RuntimeException e) {
+            // Re-throw if already a RuntimeException (from error code check above)
+            throw e;
         } catch (Exception e) {
-            log.error("[Twilio] Failed to send SMS to {}: {}", to, e.getMessage());
+            log.error("[Twilio] Unexpected error sending SMS to {}: {}", to, e.getMessage(), e);
             throw new RuntimeException("Twilio SMS sending failed: " + e.getMessage(), e);
         }
+    }
+
+    private String getTwilioErrorHint(int code) {
+        return switch (code) {
+            case 21608 -> "TRIAL ACCOUNT: Add the destination number as a Verified Caller ID at console.twilio.com";
+            case 21211 -> "Invalid 'To' phone number. Use E.164 format: +21612345678";
+            case 21212 -> "Invalid 'From' number. Check twilio.phone-number in application.properties";
+            case 21606 -> "Twilio 'From' number cannot send SMS. Verify SMS capability in Twilio Console";
+            case 20003 -> "Authentication failed. Check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN";
+            case 21614 -> "'To' phone number is not mobile or cannot receive SMS";
+            default -> "See https://www.twilio.com/docs/errors/" + code;
+        };
     }
 }

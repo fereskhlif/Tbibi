@@ -116,7 +116,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
   selectedPrescription: PrescriptionResponse | null = null;
   loadingPrescription = false;
 
-  constructor(private http: HttpClient, private prescriptionService: PrescriptionService) {}
+  constructor(private http: HttpClient, private prescriptionService: PrescriptionService) { }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -270,14 +270,14 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
   // ── Validation formulaire ──────────────────────────────────────────────────
   formIsValid(): boolean {
     const hasVitals = this.vitals.tensionSys !== null || this.vitals.poids !== null ||
-                      this.vitals.glycemie !== null || this.vitals.temperature !== null;
+      this.vitals.glycemie !== null || this.vitals.temperature !== null;
     return !!(
       hasVitals ||
-      (this.form.visitNote      || '').trim() ||
+      (this.form.visitNote || '').trim() ||
       (this.form.analyseSanguine || '').trim() ||
-      this.form.vaccines?.length > 0           ||
-      this.form.prescriptions?.length > 0      ||
-      (this.form.autre          || '').trim() ||
+      this.form.vaccines?.length > 0 ||
+      this.form.prescriptions?.length > 0 ||
+      (this.form.autre || '').trim() ||
       (this.form.appareilUrinaire || '').trim() ||
       this.form.urinaryExams?.length > 0
     );
@@ -287,7 +287,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
   tensionState(): 'normal' | 'warn' | 'danger' {
     const s = this.vitals.tensionSys, d = this.vitals.tensionDia;
     if (s !== null && s >= 14) return 'danger';
-    if (d !== null && d >= 9)  return 'danger';
+    if (d !== null && d >= 9) return 'danger';
     if (s !== null && s >= 13) return 'warn';
     return 'normal';
   }
@@ -296,7 +296,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
     const t = this.vitals.temperature;
     if (t === null) return 'normal';
     if (t >= 39.5) return 'danger';
-    if (t >= 38)   return 'warn';
+    if (t >= 38) return 'warn';
     return 'normal';
   }
 
@@ -331,19 +331,19 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
             hour: '2-digit', minute: '2-digit'
           });
           let built = `─── Visit on ${ts} ───`;
-          if (this.form.filiere)         built += `\nCategory      : ${this.form.filiere}`;
+          if (this.form.filiere) built += `\nCategory      : ${this.form.filiere}`;
           // Include vitals summary
           const v = this.vitals;
           const vParts: string[] = [];
           if (v.tensionSys !== null || v.tensionDia !== null) vParts.push(`BP: ${v.tensionSys ?? '?'}/${v.tensionDia ?? '?'} mmHg`);
-          if (v.poids       !== null) vParts.push(`Weight: ${v.poids} kg`);
-          if (v.glycemie    !== null) vParts.push(`Glucose: ${v.glycemie} g/L`);
+          if (v.poids !== null) vParts.push(`Weight: ${v.poids} kg`);
+          if (v.glycemie !== null) vParts.push(`Glucose: ${v.glycemie} g/L`);
           if (v.temperature !== null) vParts.push(`Temp: ${v.temperature} °C`);
           if (vParts.length > 0) built += `\nVitals        : ${vParts.join(' | ')}`;
-          if (this.form.visitNote)       built += `\nNotes         : ${this.form.visitNote}`;
+          if (this.form.visitNote) built += `\nNotes         : ${this.form.visitNote}`;
           if (this.form.analyseSanguine) built += `\nBlood Test    : ${this.form.analyseSanguine}`;
           if (this.form.prescriptions?.length) built += `\nPrescriptions : ${this.form.prescriptions.join(' | ')}`;
-          if (this.form.autre)           built += `\nReport        : ${this.form.autre}`;
+          if (this.form.autre) built += `\nReport        : ${this.form.autre}`;
           this.sel.medicalHistory = this.sel.medicalHistory
             ? this.sel.medicalHistory + '\n\n' + built
             : built;
@@ -397,7 +397,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
 
   getHealthScore(): number {
     if (!this.fullRecord) return 0;
-    
+
     const disease = this.fullRecord.chronic_diseas || '';
     if (!disease || ['none', 'none.', 'pas de maladies chroniques', 'no chronic diseases', '—', 'nothing'].includes(disease.toLowerCase().trim())) {
       return 100;
@@ -406,7 +406,7 @@ export class PatientRecordsComponent implements OnInit, OnDestroy {
     let score = 100;
     // Split by common separators
     const list = disease.split(/[,;|\n]+/).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 2);
-    
+
     if (list.length === 0) return 100;
 
     // Penalty per disease

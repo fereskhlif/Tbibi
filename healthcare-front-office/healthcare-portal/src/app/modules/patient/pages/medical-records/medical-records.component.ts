@@ -4,7 +4,7 @@ import { MedicalRecordsServiceService } from '../../../../services/medical-recor
 import { PrescriptionService, PrescriptionResponse, MedicineDTO } from '../../../../services/prescription-service.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from 'environments/environment';
 
 @Component({
   selector: 'app-medical-records',
@@ -50,14 +50,14 @@ export class MedicalRecordsComponent implements OnInit {
 
   formMedicalRecord = new FormGroup({
     medical_historuy: new FormControl('', [Validators.required, Validators.minLength(4)]),
-    chronic_diseas:   new FormControl(''),
+    chronic_diseas: new FormControl(''),
   });
 
   constructor(
     private service: MedicalRecordsServiceService,
     private prescriptionService: PrescriptionService,
     private http: HttpClient
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadRecords();
@@ -69,10 +69,10 @@ export class MedicalRecordsComponent implements OnInit {
 
   /** A human-readable label map for condition types coming from the chronic module */
   private readonly CONDITION_LABELS: Record<string, string> = {
-    BLOOD_SUGAR:         'Diabetes / Blood Sugar Disorder',
-    BLOOD_PRESSURE:      'Hypertension / Blood Pressure Disorder',
-    OXYGEN_SATURATION:   'Respiratory / Oxygen Deficiency',
-    HEART_RATE:          'Cardiac / Heart Rate Disorder',
+    BLOOD_SUGAR: 'Diabetes / Blood Sugar Disorder',
+    BLOOD_PRESSURE: 'Hypertension / Blood Pressure Disorder',
+    OXYGEN_SATURATION: 'Respiratory / Oxygen Deficiency',
+    HEART_RATE: 'Cardiac / Heart Rate Disorder',
   };
 
   loadChronicConditions(): void {
@@ -108,17 +108,17 @@ export class MedicalRecordsComponent implements OnInit {
         const dataArray = data ? (Array.isArray(data) ? data : [data]) : [];
         this.records = dataArray.map(r => ({
           ...r,
-          icon:        r.icon        ?? '🏥',
-          bgColor:     r.bgColor     ?? 'bg-blue-50',
-          status:      r.status      ?? 'Active',
+          icon: r.icon ?? '🏥',
+          bgColor: r.bgColor ?? 'bg-blue-50',
+          status: r.status ?? 'Active',
           statusClass: r.statusClass ?? 'bg-blue-100 text-blue-700',
-          type:        r.type        ?? r.category ?? 'Unknown',
+          type: r.type ?? r.category ?? 'Unknown',
           healthScore: r.healthScore ?? this.computeHealthScore(r),
         }));
-        
+
         // Sort newest first
         this.records.sort((a, b) => (b.medicalfile_id || 0) - (a.medicalfile_id || 0));
-        
+
         this.calculateMetrics();
         this.buildCloudItems();
       },
@@ -139,7 +139,7 @@ export class MedicalRecordsComponent implements OnInit {
       this.unifiedMedicalHistory = '';
       return;
     }
-    
+
     let totalScore = 0;
     const diseasesSet = new Set<string>();
     let histories: string[] = [];
@@ -190,7 +190,7 @@ export class MedicalRecordsComponent implements OnInit {
 
   buildCloudItems(): void {
     const items: any[] = [];
-    
+
     // Map Prescriptions
     this.prescriptions.forEach(rx => {
       items.push({
@@ -211,11 +211,11 @@ export class MedicalRecordsComponent implements OnInit {
     this.records.forEach(rec => {
       let folder = 'Consultations';
       const typeStr = (rec.type || rec.category || '').toLowerCase();
-      
+
       if (typeStr.includes('lab') || (rec.imageLabo && rec.imageLabo.toLowerCase().includes('lab'))) {
-         folder = 'Lab Results';
+        folder = 'Lab Results';
       } else if (typeStr.includes('imag') || rec.imageUrl) {
-         folder = 'Imaging';
+        folder = 'Imaging';
       }
 
       items.push({
@@ -244,7 +244,7 @@ export class MedicalRecordsComponent implements OnInit {
   computeHealthScore(record: any): number {
     let score = 100;
     if (record.chronic_diseas && record.chronic_diseas.trim().length > 0) score -= 20;
-    if (record.medical_historuy && record.medical_historuy.length > 50)    score -= 10;
+    if (record.medical_historuy && record.medical_historuy.length > 50) score -= 10;
     if (record.result_ia && /abnormal|positive|high|risk/i.test(record.result_ia)) score -= 30;
     return Math.max(0, Math.min(100, score));
   }
@@ -275,45 +275,45 @@ export class MedicalRecordsComponent implements OnInit {
   }
 
   openAddForm(): void {
-    this.isEditing         = false;
-    this.editIndex         = null;
-    this.editId            = null;
-    this.selectedFile      = null;
+    this.isEditing = false;
+    this.editIndex = null;
+    this.editId = null;
+    this.selectedFile = null;
     this.selectedImageFile = null;
-    this.imagePreviewUrl   = null;
+    this.imagePreviewUrl = null;
     this.formMedicalRecord.reset();
     this.showForm = true;
   }
 
   openEditForm(record: any): void {
-    this.isEditing         = true;
-    this.editIndex         = null;
-    this.editId            = record.medicalfile_id;
-    this.selectedFile      = null;
+    this.isEditing = true;
+    this.editIndex = null;
+    this.editId = record.medicalfile_id;
+    this.selectedFile = null;
     this.selectedImageFile = null;
-    this.imagePreviewUrl   = record.imageUrl ?? null;
+    this.imagePreviewUrl = record.imageUrl ?? null;
 
     this.formMedicalRecord.patchValue({
       medical_historuy: record.medical_historuy,
-      chronic_diseas:   record.chronic_diseas,
+      chronic_diseas: record.chronic_diseas,
     });
 
     this.showForm = true;
   }
 
   cancelForm(): void {
-    this.showForm          = false;
-    this.isEditing         = false;
-    this.editIndex         = null;
-    this.editId            = null;
-    this.selectedFile      = null;
+    this.showForm = false;
+    this.isEditing = false;
+    this.editIndex = null;
+    this.editId = null;
+    this.selectedFile = null;
     this.selectedImageFile = null;
-    this.imagePreviewUrl   = null;
+    this.imagePreviewUrl = null;
     this.formMedicalRecord.reset();
   }
   onImageChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file  = input.files?.[0];
+    const file = input.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
 
     this.selectedImageFile = file;
@@ -325,7 +325,7 @@ export class MedicalRecordsComponent implements OnInit {
 
   onFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file  = input.files?.[0];
+    const file = input.files?.[0];
     if (file && file.type === 'application/pdf') {
       this.selectedFile = file;
     }
@@ -352,8 +352,8 @@ export class MedicalRecordsComponent implements OnInit {
           this.buildCloudItems();
           // Update selected item if we were viewing it
           if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && this.selectedCloudItem.originalRef.medicalfile_id === this.editId) {
-             const updatedItem = this.cloudItems.find(i => i.originalRef.medicalfile_id === this.editId);
-             if (updatedItem) this.selectedCloudItem = updatedItem;
+            const updatedItem = this.cloudItems.find(i => i.originalRef.medicalfile_id === this.editId);
+            if (updatedItem) this.selectedCloudItem = updatedItem;
           }
           this.cancelForm();
         },
@@ -377,153 +377,153 @@ export class MedicalRecordsComponent implements OnInit {
     const merged = { ...serverData, ...formData };
     return {
       ...merged,
-      imageUrl:    this.imagePreviewUrl ?? serverData.imageUrl ?? null,
-      icon:        '🏥',
-      bgColor:     'bg-blue-50',
-      status:      'Active',
+      imageUrl: this.imagePreviewUrl ?? serverData.imageUrl ?? null,
+      icon: '🏥',
+      bgColor: 'bg-blue-50',
+      status: 'Active',
       statusClass: 'bg-blue-100 text-blue-700',
-      type:        serverData.type ?? 'Lab Reports',
+      type: serverData.type ?? 'Lab Reports',
       healthScore: this.computeHealthScore(merged),
     };
   }
   openAddActeForm(record: any): void {
-  this.selectedRecordForActe = record;
-  this.acteForm = {
-    description: '',
-    typeOfActe: '',
-    date: new Date().toISOString().slice(0, 16)
-  };
-  this.showActeForm = true;
-}
+    this.selectedRecordForActe = record;
+    this.acteForm = {
+      description: '',
+      typeOfActe: '',
+      date: new Date().toISOString().slice(0, 16)
+    };
+    this.showActeForm = true;
+  }
 
-cancelActeForm(): void {
-  this.showActeForm = false;
-  this.selectedRecordForActe = null;
-  this.acteForm = { description: '', typeOfActe: '', date: '' };
-}
+  cancelActeForm(): void {
+    this.showActeForm = false;
+    this.selectedRecordForActe = null;
+    this.acteForm = { description: '', typeOfActe: '', date: '' };
+  }
 
-saveActe(): void {
-  if (!this.selectedRecordForActe) return;
-  const medicalFileId = this.selectedRecordForActe.medicalfile_id;
-  const payload = {
-    description: this.acteForm.description,
-    typeOfActe:  this.acteForm.typeOfActe,
-    date:        new Date(this.acteForm.date).toISOString()
-  };
- this.http.post(`${environment.baseUrl}/medical-records/${medicalFileId}/actes`, payload)
-    .subscribe({
-      next: () => {
-        alert('✅ Procedure added successfully!');
-        this.cancelActeForm();
+  saveActe(): void {
+    if (!this.selectedRecordForActe) return;
+    const medicalFileId = this.selectedRecordForActe.medicalfile_id;
+    const payload = {
+      description: this.acteForm.description,
+      typeOfActe: this.acteForm.typeOfActe,
+      date: new Date(this.acteForm.date).toISOString()
+    };
+    this.http.post(`${environment.baseUrl}/medical-records/${medicalFileId}/actes`, payload)
+      .subscribe({
+        next: () => {
+          alert('✅ Procedure added successfully!');
+          this.cancelActeForm();
+        },
+        error: (err) => {
+          console.error('Error adding procedure:', err);
+          alert('❌ Error adding the procedure.');
+        }
+      });
+  }
+
+  @ViewChild('imageFileInput') imageFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('pdfFileInput') pdfFileInput!: ElementRef<HTMLInputElement>;
+
+
+  removeImage(event: MouseEvent): void {
+    event.stopPropagation(); // ne pas rouvrir le file picker
+    this.selectedImageFile = null;
+    this.imagePreviewUrl = null;
+    if (this.imageFileInput) {
+      this.imageFileInput.nativeElement.value = '';
+    }
+  }
+
+  triggerImageInput(): void {
+    this.imageFileInput.nativeElement.click();
+  }
+
+  triggerPdfInput(): void {
+    this.pdfFileInput.nativeElement.click();
+  }
+
+  // ── Patient Images / Gallery ────────────────────────────────────────────────
+  isUploadingPatientImage = false;
+  patientImagesLoading = false;
+
+  onPatientImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      Array.from(input.files).forEach(file => this.uploadPatientImage(file));
+    }
+    if (input) {
+      input.value = ''; // Reset the input to allow selecting the same file again
+    }
+  }
+
+
+  uploadPatientImage(file: File): void {
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
+    if (!allowed.includes(file.type)) {
+      alert('Unsupported format. Use: JPG, PNG, GIF, WEBP, PDF');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File too large. Maximum 10 MB.');
+      return;
+    }
+
+    this.isUploadingPatientImage = true;
+    this.service.uploadPatientImage(file).subscribe({
+      next: (data: any) => {
+        this.isUploadingPatientImage = false;
+        // If we're currently viewing the record, update it immediately
+        if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && data.medicalfile_id === this.selectedCloudItem.originalRef.medicalfile_id) {
+          this.selectedCloudItem.originalRef.patientImages = data.patientImages;
+        }
+        alert('Image added successfully!');
       },
       error: (err) => {
-        console.error('Error adding procedure:', err);
-        alert('❌ Error adding the procedure.');
+        this.isUploadingPatientImage = false;
+        console.error('Image upload error:', err);
+        alert('Error uploading the image.');
       }
     });
   }
 
-@ViewChild('imageFileInput') imageFileInput!: ElementRef<HTMLInputElement>;
-@ViewChild('pdfFileInput') pdfFileInput!: ElementRef<HTMLInputElement>;
+  deletePatientImage(imagePath: string, event: Event): void {
+    event.stopPropagation();
+    if (!confirm('Are you sure you want to delete this document?')) return;
 
-
-removeImage(event: MouseEvent): void {
-  event.stopPropagation(); // ne pas rouvrir le file picker
-  this.selectedImageFile = null;
-  this.imagePreviewUrl   = null;
-  if (this.imageFileInput) {
-    this.imageFileInput.nativeElement.value = '';
-  }
-}
-
-triggerImageInput(): void {
-  this.imageFileInput.nativeElement.click();
-}
-
-triggerPdfInput(): void {
-  this.pdfFileInput.nativeElement.click();
-}
-
-// ── Patient Images / Gallery ────────────────────────────────────────────────
-isUploadingPatientImage = false;
-patientImagesLoading = false;
-
-onPatientImageSelected(event: Event): void {
-  const input = event.target as HTMLInputElement;
-  if (input.files && input.files.length > 0) {
-    Array.from(input.files).forEach(file => this.uploadPatientImage(file));
-  }
-  if (input) {
-      input.value = ''; // Reset the input to allow selecting the same file again
-  }
-}
-
-
-uploadPatientImage(file: File): void {
-  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
-  if (!allowed.includes(file.type)) {
-    alert('Unsupported format. Use: JPG, PNG, GIF, WEBP, PDF');
-    return;
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    alert('File too large. Maximum 10 MB.');
-    return;
-  }
-
-  this.isUploadingPatientImage = true;
-  this.service.uploadPatientImage(file).subscribe({
-    next: (data: any) => {
-      this.isUploadingPatientImage = false;
-      // If we're currently viewing the record, update it immediately
-      if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && data.medicalfile_id === this.selectedCloudItem.originalRef.medicalfile_id) {
-        this.selectedCloudItem.originalRef.patientImages = data.patientImages;
+    this.service.deletePatientImage(imagePath).subscribe({
+      next: () => {
+        if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && this.selectedCloudItem.originalRef.patientImages) {
+          this.selectedCloudItem.originalRef.patientImages = this.selectedCloudItem.originalRef.patientImages.filter((p: string) => p !== imagePath);
+        }
+        alert('Document deleted successfully.');
+      },
+      error: (err) => {
+        console.error('Document deletion error:', err);
+        alert('Error deleting the document.');
       }
-      alert('Image added successfully!');
-    },
-    error: (err) => {
-      this.isUploadingPatientImage = false;
-      console.error('Image upload error:', err);
-      alert('Error uploading the image.');
-    }
-  });
-}
+    });
+  }
 
-deletePatientImage(imagePath: string, event: Event): void {
-  event.stopPropagation();
-  if (!confirm('Are you sure you want to delete this document?')) return;
+  isPdf(path: string): boolean {
+    return path.toLowerCase().endsWith('.pdf');
+  }
 
-  this.service.deletePatientImage(imagePath).subscribe({
-    next: () => {
-      if (this.selectedCloudItem && this.selectedCloudItem.previewType !== 'prescription' && this.selectedCloudItem.originalRef.patientImages) {
-        this.selectedCloudItem.originalRef.patientImages = this.selectedCloudItem.originalRef.patientImages.filter((p: string) => p !== imagePath);
-      }
-      alert('Document deleted successfully.');
-    },
-    error: (err) => {
-      console.error('Document deletion error:', err);
-      alert('Error deleting the document.');
-    }
-  });
-}
+  getFileName(path: string): string {
+    return path.split('/').pop() || path;
+  }
 
-isPdf(path: string): boolean {
-  return path.toLowerCase().endsWith('.pdf');
-}
+  getFileLabel(path: string): string {
+    const name = this.getFileName(path);
+    return name.length > 30 ? name.substring(0, 27) + '...' : name;
+  }
 
-getFileName(path: string): string {
-  return path.split('/').pop() || path;
-}
-
-getFileLabel(path: string): string {
-  const name = this.getFileName(path);
-  return name.length > 30 ? name.substring(0, 27) + '...' : name;
-}
-
-getImageUrl(path: string): string {
-  if (!path) return '';
-  if (path.startsWith('http')) return path;
-  return `${environment.baseUrl}${path}`;
-}
+  getImageUrl(path: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${environment.baseUrl}${path}`;
+  }
 
   deleteRecord(record: any): void {
     if (!confirm('Are you sure you want to delete this record?')) return;

@@ -10,7 +10,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = {"medicalFiles", "orders", "appointements"})
+@ToString(exclude = { "medicalFiles", "orders", "appointements" })
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -55,11 +55,11 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private List<Appointment> appointements;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")
     private List<Teleconsultation> consultationRooms;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "pharmacy_id")
     private Pharmacy pharmacy;
 
@@ -70,4 +70,8 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
     @JsonIgnore
     private List<Comment> comments;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "doctor", orphanRemoval = true)
+    @JsonIgnore
+    private List<Schedule> schedules;
 }

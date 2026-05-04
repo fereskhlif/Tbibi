@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -76,7 +77,7 @@ export class DashboardComponent implements OnInit {
     { icon: '💬', title: 'AI Health Assistant', description: 'Chat with our AI assistant', route: '/patient/ai-chat' },
     { icon: '📋', title: 'Medical Records', description: 'View your health records', route: '/patient/medical-records' },
     { icon: '💊', title: 'Prescriptions', description: 'View your prescriptions', route: '/patient/prescriptions' },
-    { icon: '🛍️', title: 'Pharmacy Shop', description: 'Order medications online', route: '/patient/pharmacy-shop' },
+    { icon: '🛍️', title: 'Pharmacy Shop', description: 'Order medications online', route: '/patient/medicine-catalog' },
     { icon: '🔬', title: 'Lab Results', description: 'Check your lab results', route: '/patient/lab-results' }
   ];
 
@@ -210,7 +211,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.http.get<any[]>(`http://localhost:8088/api/chronic/patient/${patientId}`).subscribe({
+    this.http.get<any[]>(`${environment.baseUrl}/api/chronic/patient/${patientId}`).subscribe({
       next: (records) => {
         records = records || [];
         if (records.length === 0) {
@@ -240,7 +241,7 @@ export class DashboardComponent implements OnInit {
           cholesterol: 190,
         };
 
-        this.http.post<any>('http://localhost:8088/api/disease-risk/predict', body).subscribe({
+        this.http.post<any>(`${environment.baseUrl}/api/disease-risk/predict`, body).subscribe({
           next: (r) => {
             const stat = this.getStat('health');
             if (stat) {

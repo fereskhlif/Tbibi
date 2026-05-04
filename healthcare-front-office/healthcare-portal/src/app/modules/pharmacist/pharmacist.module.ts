@@ -7,7 +7,7 @@ import { PharmacistProfileComponent } from './pages/profile/profile.component';
 import { OrderValidationComponent } from './pages/order-validation/order-validation.component';
 import { MedicationManagementComponent } from './pages/medication-management/medication-management.component';
 import { PrescriptionReceivingComponent } from './pages/prescription-receiving/prescription-receiving.component';
-import { DrugAvailabilityComponent } from './pages/drug-availability/drug-availability.component';
+
 import { SharedModule } from '../../shared/shared.module';
 import { OrderManagementComponent } from './pages/order-management/order-management.component';
 import { InventoryManagementComponent } from './pages/inventory-management/inventory-management.component';
@@ -62,7 +62,6 @@ import { WebcamModule } from 'ngx-webcam';
         OrderValidationComponent,
         MedicationManagementComponent,
         PrescriptionReceivingComponent,
-        DrugAvailabilityComponent,
         OrderManagementComponent,
         InventoryManagementComponent
     ],

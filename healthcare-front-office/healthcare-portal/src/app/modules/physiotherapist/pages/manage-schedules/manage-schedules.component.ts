@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
@@ -11,8 +12,8 @@ interface ScheduleSlot {
 
 interface UnavailabilityWindow { from: string; to: string; }
 
-const DAYS_OF_WEEK = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
-const DAY_LABELS   = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const DAYS_OF_WEEK = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
 @Component({
   selector: 'app-physio-manage-schedules',
@@ -199,10 +200,10 @@ export class PhysioManageSchedulesComponent implements OnInit {
   allDays = DAYS_OF_WEEK;
   dayLabels = DAY_LABELS;
 
-  private readonly base = 'http://localhost:8088';
+  private readonly base = `${environment.baseUrl}`;
   get physioId(): number { return Number(localStorage.getItem('userId') || 0); }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit() { this.loadSlots(); }
 
@@ -213,7 +214,7 @@ export class PhysioManageSchedulesComponent implements OnInit {
   }
 
   get availableCount() { return this.slots.filter(s => s.isAvailable).length; }
-  get bookedCount()    { return this.slots.filter(s => !s.isAvailable).length; }
+  get bookedCount() { return this.slots.filter(s => !s.isAvailable).length; }
 
   get groupedSlots(): { date: string; slots: ScheduleSlot[]; availableCount: number }[] {
     const map = new Map<string, ScheduleSlot[]>();

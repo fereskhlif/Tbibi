@@ -38,7 +38,6 @@ public interface Laboratory_ResultRepository extends JpaRepository<Laboratory_Re
     // ✅ KEYWORD METHOD 2 - Pour le scheduler - résultats par statut avant une date
     List<Laboratory_Result> findByStatusAndCreatedAtBefore(String status, LocalDateTime dateTime);
     
-    // ✅ JPQL COMPLEXE 1 - Statistiques des résultats par patient avec JOIN et GROUP BY
     @Query("SELECT lr.patient.userId as patientId, " +
            "lr.patient.name as patientName, " +
            "lr.patient.email as patientEmail, " +
@@ -48,10 +47,9 @@ public interface Laboratory_ResultRepository extends JpaRepository<Laboratory_Re
            "SUM(CASE WHEN lr.priority = 'Urgent' OR lr.priority = 'Critical' THEN 1 ELSE 0 END) as urgentTests " +
            "FROM Laboratory_Result lr " +
            "JOIN lr.patient p " +
-           "WHERE lr.laboratoryUser.userId = :labUserId " +
            "GROUP BY lr.patient.userId, lr.patient.name, lr.patient.email " +
            "ORDER BY totalTests DESC")
-    List<Object[]> getPatientStatisticsByLaboratory(@Param("labUserId") Integer labUserId);
+    List<Object[]> getAllPatientStatistics();
     
     // ✅ JPQL COMPLEXE 2 - Résultats avec détails complets (patient + médecin + labo) avec LEFT JOIN FETCH
     @Query("SELECT lr FROM Laboratory_Result lr " +

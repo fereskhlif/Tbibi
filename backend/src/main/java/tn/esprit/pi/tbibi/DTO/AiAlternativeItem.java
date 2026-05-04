@@ -1,7 +1,6 @@
 package tn.esprit.pi.tbibi.DTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,12 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class AiAlternativeItem {
-    @JsonProperty("id")
-    private Long medicineId;
-
     private String nom;
+    private Long medicineId;
 
     /**
      * Normalized clinical relevance score — float 0.0 to 1.0.

@@ -92,8 +92,6 @@ public class PrescriptionAiService {
 
             return response.getBody();
         } catch (Exception e) {
-            System.err.println("CRITICAL AI SERVICE ERROR: " + e.getClass().getName() + " - " + e.getMessage());
-            e.printStackTrace();
             log.error("Failed to fetch alternatives from AI service: {}", e.getMessage(), e);
             return AiAlternativeResponse.builder()
                     .message("The AI service is unavailable. Reason: " + e.getMessage())

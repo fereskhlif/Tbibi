@@ -10,7 +10,7 @@
       <p class="text-sm text-gray-500">Track and manage the questions you've asked the medical community</p>
     </div>
 
-    <button (click)="goBack()" 
+    <button (click)="goBack()"
       class="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95">
       <lucide-icon name="arrow-left" [size]="16"></lucide-icon>
       Back to Forum
@@ -35,34 +35,39 @@
 
   <!-- ═══════ MAIN CONTENT ═══════ -->
   <div *ngIf="!loading && !error">
-    
+
     <!-- Balanced Search & Filter Toolbar -->
     <div class="flex flex-col xl:flex-row items-center gap-4 mb-8">
       <!-- Search Bar (Gains more space) -->
       <div class="relative group w-full" style="flex: 3;">
         <div class="absolute inset-y-0 flex items-center pointer-events-none" style="left: 1rem;">
-          <lucide-icon name="search" class="text-gray-400 group-focus-within:text-blue-500 transition-colors" [size]="18"></lucide-icon>
+          <lucide-icon name="search" class="text-gray-400 group-focus-within:text-blue-500 transition-colors"
+            [size]="18"></lucide-icon>
         </div>
-        <input [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()"
-          style="padding-left: 2.75rem;"
+        <input [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()" style="padding-left: 2.75rem;"
           class="block w-full pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all shadow-sm"
           placeholder="Search by title or content..." />
       </div>
 
-      <div class="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0" style="gap: 12px; display: flex;">
+      <div class="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0"
+        style="gap: 12px; display: flex;">
         <!-- Category Filter (New) -->
-        <div class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center flex-1 xl:flex-none xl:min-w-[160px] group">
+        <div
+          class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center flex-1 xl:flex-none xl:min-w-[160px] group">
           <select [(ngModel)]="filterCategory" (ngModelChange)="onFilterChange()"
             style="padding: 0.75rem 1rem; padding-right: 2.5rem;"
             class="appearance-none bg-transparent border-none text-sm font-bold text-gray-700 cursor-pointer focus:outline-none focus:ring-0 transition-all outline-none w-full">
             <option value="all">All Categories</option>
             <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
           </select>
-          <lucide-icon name="filter" [size]="14" class="absolute text-gray-400 group-hover:text-blue-500 transition-colors pointer-events-none" style="right: 1rem;"></lucide-icon>
+          <lucide-icon name="filter" [size]="14"
+            class="absolute text-gray-400 group-hover:text-blue-500 transition-colors pointer-events-none"
+            style="right: 1rem;"></lucide-icon>
         </div>
 
         <!-- Status Filter -->
-        <div class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center flex-1 xl:flex-none xl:min-w-[150px] group">
+        <div
+          class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center flex-1 xl:flex-none xl:min-w-[150px] group">
           <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()"
             style="padding: 0.75rem 1rem; padding-right: 2.5rem;"
             class="appearance-none bg-transparent border-none text-sm font-bold text-gray-700 cursor-pointer focus:outline-none focus:ring-0 transition-all outline-none w-full">
@@ -71,11 +76,14 @@
             <option value="RESOLVED">Resolved</option>
             <option value="CLOSED">Closed</option>
           </select>
-          <lucide-icon name="chevron-down" [size]="14" class="absolute text-gray-400 group-hover:text-blue-500 transition-colors pointer-events-none" style="right: 1rem;"></lucide-icon>
+          <lucide-icon name="chevron-down" [size]="14"
+            class="absolute text-gray-400 group-hover:text-blue-500 transition-colors pointer-events-none"
+            style="right: 1rem;"></lucide-icon>
         </div>
 
         <!-- Sort By -->
-        <div class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center flex-1 xl:flex-none xl:min-w-[150px] group">
+        <div
+          class="relative bg-white border border-gray-200 rounded-xl shadow-sm flex items-center flex-1 xl:flex-none xl:min-w-[150px] group">
           <select [(ngModel)]="sortBy" (ngModelChange)="onFilterChange()"
             style="padding: 0.75rem 1rem; padding-right: 2.5rem;"
             class="appearance-none bg-transparent border-none text-sm font-bold text-gray-700 cursor-pointer focus:outline-none focus:ring-0 transition-all outline-none w-full">
@@ -83,13 +91,16 @@
             <option value="oldest">Oldest</option>
             <option value="most_voted">Popular</option>
           </select>
-          <lucide-icon name="sort-asc" [size]="14" class="absolute text-gray-400 group-hover:text-blue-500 transition-colors pointer-events-none" style="right: 1rem;"></lucide-icon>
+          <lucide-icon name="sort-asc" [size]="14"
+            class="absolute text-gray-400 group-hover:text-blue-500 transition-colors pointer-events-none"
+            style="right: 1rem;"></lucide-icon>
         </div>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="filteredPosts.length === 0" class="bg-white rounded-2xl border border-gray-50 shadow-sm p-20 text-center">
+    <div *ngIf="filteredPosts.length === 0"
+      class="bg-white rounded-2xl border border-gray-50 shadow-sm p-20 text-center">
       <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
         <lucide-icon name="message-square" [size]="32" class="text-blue-200"></lucide-icon>
       </div>
@@ -103,97 +114,138 @@
 
     <!-- Refined Posts List -->
     <div *ngIf="filteredPosts.length > 0" class="flex flex-col gap-5"> <!-- Professional gap (gap-5) -->
-        <div *ngFor="let post of paginatedPosts" (click)="openPost(post.postId)"
-          style="box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);"
-          class="bg-white rounded-2xl border border-gray-100 p-6 hover:border-blue-400/50 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden flex items-stretch">
-          
-          <!-- Hover accent bar -->
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 transform scale-y-0 group-hover:scale-y-100 transition-transform origin-top"></div>
-  
-          <!-- Main Content Section (RESTORED) -->
-          <div class="flex-1 min-w-0 pr-8">
-            <div class="flex items-center gap-4 mb-3 flex-wrap">
-              <span class="px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm"
-                [ngClass]="getCategoryColor(post.categoryName)">
-                {{ post.categoryName }}
-              </span>
-              
-              <div class="flex items-center text-gray-400" style="gap: 16px;">
-                <div class="flex items-center font-bold" style="gap: 6px; font-size: 13px;">
-                  <lucide-icon name="arrow-up" [size]="14"></lucide-icon>
-                  {{ post.voteCount }}
-                </div>
-                <div class="flex items-center font-bold" style="gap: 6px; font-size: 13px;">
-                  <lucide-icon name="message-circle" [size]="14"></lucide-icon>
-                  {{ post.commentCount }}
-                </div>
-                <div class="flex items-center font-bold" style="gap: 6px; font-size: 13px;">
-                  <lucide-icon name="eye" [size]="14"></lucide-icon>
-                  {{ post.views }}
-                </div>
+      <div *ngFor="let post of paginatedPosts" (click)="openPost(post.postId)"
+        style="box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);"
+        class="bg-white rounded-2xl border border-gray-100 p-6 hover:border-blue-400/50 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden flex items-stretch">
+
+        <!-- Hover accent bar -->
+        <div
+          class="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 transform scale-y-0 group-hover:scale-y-100 transition-transform origin-top">
+        </div>
+
+        <!-- Main Content Section (RESTORED) -->
+        <div class="flex-1 min-w-0 pr-8">
+          <div class="flex items-center gap-4 mb-3 flex-wrap">
+            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm"
+              [ngClass]="getCategoryColor(post.categoryName)">
+              {{ post.categoryName }}
+            </span>
+
+            <div class="flex items-center text-gray-400" style="gap: 16px;">
+              <div class="flex items-center font-bold" style="gap: 6px; font-size: 13px;">
+                <lucide-icon name="arrow-up" [size]="14"></lucide-icon>
+                {{ post.voteCount }}
+              </div>
+              <div class="flex items-center font-bold" style="gap: 6px; font-size: 13px;">
+                <lucide-icon name="message-circle" [size]="14"></lucide-icon>
+                {{ post.commentCount }}
+              </div>
+              <div class="flex items-center font-bold" style="gap: 6px; font-size: 13px;">
+                <lucide-icon name="eye" [size]="14"></lucide-icon>
+                {{ post.views }}
               </div>
             </div>
-  
-            <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors leading-tight mb-3">
-              {{ post.title }}
-            </h3>
-            
-            <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed">
-              {{ post.content }}
-            </p>
           </div>
 
-          <!-- REFINED RIGHT SECTION (Repositioned trash icon to top) -->
-          <div class="shrink-0 flex flex-col items-end justify-between border-l border-gray-50 pl-8 min-w-[140px] text-right">
-            
-            <!-- Delete Button (Top of column, much better visibility) -->
-            <button (click)="deletePost(post.postId, $event)" 
-              style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"
-              class="text-gray-400 hover:text-white hover:bg-red-500 rounded-xl transition-all"
-              title="Delete this discussion">
-              <lucide-icon name="trash-2" [size]="18"></lucide-icon>
+          <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors leading-tight mb-3">
+            {{ post.title }}
+          </h3>
+
+          <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed">
+            {{ post.content }}
+          </p>
+        </div>
+
+        <!-- REFINED RIGHT SECTION (Repositioned trash icon to top) -->
+        <div
+          class="shrink-0 flex flex-col items-end justify-between border-l border-gray-50 pl-8 min-w-[140px] text-right">
+
+          <!-- Delete Button (Top of column, much better visibility) -->
+          <button (click)="confirmDelete(post.postId, $event)"
+            style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"
+            class="text-gray-400 hover:text-white hover:bg-red-500 rounded-xl transition-all"
+            title="Delete this discussion">
+            <lucide-icon name="trash-2" [size]="18"></lucide-icon>
+          </button>
+
+          <div class="flex flex-col items-end gap-3 mt-auto">
+            <span class="px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-sm"
+              [ngClass]="post.postStatus === 'OPEN' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : post.postStatus === 'RESOLVED' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-gray-50 text-gray-500 border border-gray-100'">
+              {{ post.postStatus }}
+            </span>
+
+            <div class="flex flex-col items-end opacity-60">
+              <span class="text-sm font-bold text-gray-700">{{ timeAgo(post.createdDate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPACT CENTERED PAGINATION -->
+      <div *ngIf="totalPages > 1" class="flex flex-col items-center gap-4 py-10">
+        <div class="flex items-center gap-2">
+          <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1"
+            class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-blue-600 hover:text-blue-600 transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-sm active:scale-95">
+            <lucide-icon name="chevron-left" [size]="18"></lucide-icon>
+          </button>
+
+          <div class="flex items-center gap-1.5 mx-2">
+            <button *ngFor="let p of pageNumbers" (click)="changePage(p)"
+              class="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-xl transition-all active:scale-90 border"
+              [ngClass]="p === currentPage ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white border-transparent text-gray-400 hover:text-blue-600'">
+              {{ p }}
             </button>
-
-            <div class="flex flex-col items-end gap-3 mt-auto">
-              <span class="px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-sm"
-                [ngClass]="post.postStatus === 'OPEN' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : post.postStatus === 'RESOLVED' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-gray-50 text-gray-500 border border-gray-100'">
-                {{ post.postStatus }}
-              </span>
-              
-              <div class="flex flex-col items-end opacity-60">
-                <span class="text-sm font-bold text-gray-700">{{ timeAgo(post.createdDate) }}</span>
-              </div>
-            </div>
           </div>
+
+          <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages"
+            class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-blue-600 hover:text-blue-600 transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-sm active:scale-95">
+            <lucide-icon name="chevron-right" [size]="18"></lucide-icon>
+          </button>
         </div>
 
-        <!-- COMPACT CENTERED PAGINATION -->
-        <div *ngIf="totalPages > 1" class="flex flex-col items-center gap-4 py-10">
-            <div class="flex items-center gap-2">
-              <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-blue-600 hover:text-blue-600 transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-sm active:scale-95">
-                <lucide-icon name="chevron-left" [size]="18"></lucide-icon>
-              </button>
-
-              <div class="flex items-center gap-1.5 mx-2">
-                <button *ngFor="let p of pageNumbers" (click)="changePage(p)"
-                  class="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-xl transition-all active:scale-90 border"
-                  [ngClass]="p === currentPage ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white border-transparent text-gray-400 hover:text-blue-600'">
-                  {{ p }}
-                </button>
-              </div>
-
-              <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-blue-600 hover:text-blue-600 transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-sm active:scale-95">
-                <lucide-icon name="chevron-right" [size]="18"></lucide-icon>
-              </button>
-            </div>
-            
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-              Viewing page {{ currentPage }} of {{ totalPages }}
-            </p>
-        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+          Viewing page {{ currentPage }} of {{ totalPages }}
+        </p>
+      </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ═══════ CUSTOM DELETE MODAL ═══════ -->
+<div *ngIf="showDeleteModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  <!-- Backdrop with blur -->
+  <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" (click)="cancelDelete()"></div>
+
+  <!-- Modal Content -->
+  <div
+    class="relative bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 transform transition-all scale-100">
+    <div class="p-8 text-center">
+      <!-- Warning Icon -->
+      <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+        <div class="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-25"></div>
+        <lucide-icon name="alert-triangle" [size]="40" class="text-red-500 relative z-10"></lucide-icon>
+      </div>
+
+      <h3 class="text-2xl font-bold text-gray-900 mb-2">Delete Discussion?</h3>
+      <p class="text-gray-500 font-medium mb-8 leading-relaxed px-6">
+        Are you sure you want to permanently delete this discussion? This action <span
+          class="text-red-500 font-bold">cannot be undone</span>.
+      </p>
+
+      <div class="flex flex-col gap-3">
+        <button (click)="deletePost()" [disabled]="deletingPost"
+          class="w-full py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-600/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
+          <div *ngIf="deletingPost"
+            class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          {{ deletingPost ? 'Deleting...' : 'Yes, Delete Post' }}
+        </button>
+
+        <button (click)="cancelDelete()" [disabled]="deletingPost"
+          class="w-full py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl hover:bg-gray-200 transition-all active:scale-[0.98]">
+          Cancel
+        </button>
+      </div>
+    </div>
   </div>
 </div>

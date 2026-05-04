@@ -224,7 +224,7 @@ class ForumControllerTest {
     @Test
     void testGetPostById_Success() throws Exception {
         Long postId = 1L;
-        when(forumService.getPostById(postId)).thenReturn(postResponse);
+        when(forumService.getPostById(postId, null)).thenReturn(postResponse);
 
         mockMvc.perform(get("/api/forum/posts/{id}", postId))
                 .andExpect(status().isOk())
@@ -232,7 +232,7 @@ class ForumControllerTest {
                 .andExpect(jsonPath("$.title").value("How to stay healthy?"))
                 .andExpect(jsonPath("$.views").value(10));
 
-        verify(forumService, times(1)).getPostById(postId);
+        verify(forumService, times(1)).getPostById(postId, null);
     }
 
     @Test

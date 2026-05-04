@@ -19,18 +19,18 @@ import { LabManageSchedulesComponent } from './pages/manage-schedules/manage-sch
 const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   // Routes existantes (inchangées)
-  { path: 'dashboard',  component: LabDashboardComponent },
-  { path: 'profile',    component: LabProfileComponent },
+  { path: 'dashboard', component: LabDashboardComponent },
+  { path: 'profile', component: LabProfileComponent },
   { path: 'prescriptions', component: LabPrescriptionsComponent },
-  { path: 'samples',    component: SampleManagementComponent },
-  { path: 'results',    component: TestResultsComponent },
-  { path: 'equipment',  component: EquipmentManagementComponent },
-  { path: 'quality',    component: QualityControlComponent },
+  { path: 'samples', component: SampleManagementComponent },
+  { path: 'results', component: TestResultsComponent },
+  { path: 'equipment', component: EquipmentManagementComponent },
+  { path: 'quality', component: QualityControlComponent },
   // ✅ Nouvelles routes CRUD (Lemin-pi)
-  { path: 'lab-results',      component: LaboratoryResultListComponent },
+  { path: 'lab-results', component: LaboratoryResultListComponent },
   { path: 'medical-pictures', component: MedicalPictureListComponent },
-  { path: 'statistics',       component: LabStatisticsComponent },
-  { path: 'my-schedule',      component: LabManageSchedulesComponent },
+  { path: 'statistics', component: LabStatisticsComponent },
+  { path: 'my-schedule', component: LabManageSchedulesComponent },
   // ✅ Forum route (main)
   {
     path: 'forum',

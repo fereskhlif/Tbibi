@@ -12,8 +12,10 @@ export class AdminUsersComponent implements OnInit {
   error = '';
   roleFilter = 'ALL';
   statusFilter = 'ALL';
+  confirmingDeleteId: number | null = null;
+  private deleteTimeout: any;
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService) { }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -46,7 +48,6 @@ export class AdminUsersComponent implements OnInit {
   }
 
   updateStatus(userId: number, status: 'PENDING' | 'ACTIVE' | 'BLOCKED' | 'REJECTED'): void {
-    if (!confirm(`Voulez-vous vraiment changer le statut à ${status} ?`)) return;
     this.adminService.updateUserStatus(userId, status).subscribe({
       next: () => this.loadUsers(),
       error: (err) => {
@@ -59,13 +60,19 @@ export class AdminUsersComponent implements OnInit {
   }
 
   deleteUser(userId: number): void {
-    if (!confirm('Suppression définitive de ce compte. Continuer ?')) return;
+    if (this.confirmingDeleteId !== userId) {
+      this.confirmingDeleteId = userId;
+      if (this.deleteTimeout) clearTimeout(this.deleteTimeout);
+      this.deleteTimeout = setTimeout(() => this.confirmingDeleteId = null, 4000);
+      return;
+    }
+
+    this.confirmingDeleteId = null;
     this.adminService.deleteUser(userId).subscribe({
       next: () => this.loadUsers(),
       error: (err) => {
         console.error('Delete error:', err);
-        // Optimistic UI update
-        this.users = this.users.filter(u => u.userId !== userId);
+        this.error = 'Unable to delete this user (data constraint).';
       }
     });
   }

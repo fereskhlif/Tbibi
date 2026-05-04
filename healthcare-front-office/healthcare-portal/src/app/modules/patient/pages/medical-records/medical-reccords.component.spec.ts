@@ -8,45 +8,45 @@ import { MedicalRecordsServiceService } from '../../../../services/medical-recor
 
 // ─── Mock du service ──────────────────────────────────────────────────────────
 const mockService = {
-  getMyRecord:        jasmine.createSpy('getMyRecord').and.returnValue(of([])),
-  add:                jasmine.createSpy('add'),
-  update:             jasmine.createSpy('update'),
-  delete:             jasmine.createSpy('delete'),
+  getMyRecord: jasmine.createSpy('getMyRecord').and.returnValue(of([])),
+  add: jasmine.createSpy('add'),
+  update: jasmine.createSpy('update'),
+  delete: jasmine.createSpy('delete'),
   uploadPatientImage: jasmine.createSpy('uploadPatientImage'),
   deletePatientImage: jasmine.createSpy('deletePatientImage'),
 };
 
 // ─── Données de test ──────────────────────────────────────────────────────────
 const mockRecord = {
-  medicalfile_id:   1,
-  imageLabo:        'Labo Central',
-  result_ia:        'Normal',
+  medicalfile_id: 1,
+  imageLabo: 'Labo Central',
+  result_ia: 'Normal',
   medical_historuy: 'Historique court',
-  chronic_diseas:   'Diabète',
-  imageUrl:         null,
-  patientImages:    [],
-  rep_doc:          '',
-  icon:             '🏥',
-  bgColor:          'bg-blue-50',
-  status:           'Active',
-  statusClass:      'bg-blue-100 text-blue-700',
-  type:             'Lab Reports',
-  healthScore:      80,
+  chronic_diseas: 'Diabète',
+  imageUrl: null,
+  patientImages: [],
+  rep_doc: '',
+  icon: '🏥',
+  bgColor: 'bg-blue-50',
+  status: 'Active',
+  statusClass: 'bg-blue-100 text-blue-700',
+  type: 'Lab Reports',
+  healthScore: 80,
 };
 
 const mockRecordAbnormal = {
   ...mockRecord,
-  medicalfile_id:   2,
-  result_ia:        'abnormal result',
-  chronic_diseas:   'Asthme',
+  medicalfile_id: 2,
+  result_ia: 'abnormal result',
+  chronic_diseas: 'Asthme',
   medical_historuy: 'Un historique très long qui dépasse les cinquante caractères pour tester la pénalité',
-  healthScore:      40,
+  healthScore: 40,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('MedicalRecordsComponent', () => {
   let component: MedicalRecordsComponent;
-  let fixture:   ComponentFixture<MedicalRecordsComponent>;
+  let fixture: ComponentFixture<MedicalRecordsComponent>;
 
   beforeEach(async () => {
     mockService.getMyRecord.calls.reset();
@@ -64,7 +64,7 @@ describe('MedicalRecordsComponent', () => {
       providers: [{ provide: MedicalRecordsServiceService, useValue: mockService }]
     }).compileComponents();
 
-    fixture   = TestBed.createComponent(MedicalRecordsComponent);
+    fixture = TestBed.createComponent(MedicalRecordsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -167,9 +167,9 @@ describe('MedicalRecordsComponent', () => {
 
     it('doit cumuler les pénalités (chronique −20, historique long −10, abnormal −30) = 40', () => {
       const score = component.computeHealthScore({
-        chronic_diseas:   'Asthme',
+        chronic_diseas: 'Asthme',
         medical_historuy: 'Historique très long qui dépasse bien les cinquante caractères',
-        result_ia:        'abnormal'
+        result_ia: 'abnormal'
       });
       expect(score).toBe(40);
       expect(score).toBeGreaterThanOrEqual(0);
@@ -177,9 +177,9 @@ describe('MedicalRecordsComponent', () => {
 
     it('ne doit jamais descendre sous 0', () => {
       const score = component.computeHealthScore({
-        chronic_diseas:   'Diabète',
+        chronic_diseas: 'Diabète',
         medical_historuy: 'Historique très long qui dépasse bien les cinquante caractères ici',
-        result_ia:        'abnormal positive risque élevé'
+        result_ia: 'abnormal positive risque élevé'
       });
       expect(score).toBeGreaterThanOrEqual(0);
     });
@@ -286,9 +286,9 @@ describe('MedicalRecordsComponent', () => {
     });
 
     it('doit réinitialiser tous les champs d\'état', () => {
-      component.imagePreviewUrl   = 'data:image/png;base64,abc';
+      component.imagePreviewUrl = 'data:image/png;base64,abc';
       component.selectedImageFile = new File([''], 'test.png');
-      component.editId            = 42;
+      component.editId = 42;
       component.openAddForm();
       expect(component.imagePreviewUrl).toBeNull();
       expect(component.selectedImageFile).toBeNull();
@@ -444,9 +444,9 @@ describe('MedicalRecordsComponent', () => {
 
     beforeEach(() => {
       component.isEditing = true;
-      component.editId    = 1;
+      component.editId = 1;
       component.editIndex = null; // plus utilisé dans cette version
-      component.records   = [{ ...mockRecord }];
+      component.records = [{ ...mockRecord }];
       component.formMedicalRecord.patchValue({
         medical_historuy: 'Historique modifié', chronic_diseas: ''
       });
@@ -532,7 +532,7 @@ describe('MedicalRecordsComponent', () => {
   describe('removeImage()', () => {
 
     it('doit vider imagePreviewUrl et selectedImageFile', () => {
-      component.imagePreviewUrl   = 'data:image/png;base64,abc';
+      component.imagePreviewUrl = 'data:image/png;base64,abc';
       component.selectedImageFile = new File([''], 'test.png');
       const event = new MouseEvent('click');
       spyOn(event, 'stopPropagation');
@@ -546,7 +546,7 @@ describe('MedicalRecordsComponent', () => {
   describe('onImageChange()', () => {
 
     it('doit ignorer un fichier non-image', () => {
-      const file  = new File([''], 'doc.pdf', { type: 'application/pdf' });
+      const file = new File([''], 'doc.pdf', { type: 'application/pdf' });
       const event = { target: { files: [file] } as unknown as HTMLInputElement } as unknown as Event;
       component.onImageChange(event);
       expect(component.selectedImageFile).toBeNull();
@@ -554,7 +554,7 @@ describe('MedicalRecordsComponent', () => {
     });
 
     it('doit accepter un fichier image et l\'affecter à selectedImageFile', () => {
-      const file  = new File(['content'], 'photo.png', { type: 'image/png' });
+      const file = new File(['content'], 'photo.png', { type: 'image/png' });
       const event = { target: { files: [file] } as unknown as HTMLInputElement } as unknown as Event;
       component.onImageChange(event);
       expect(component.selectedImageFile).toBe(file);

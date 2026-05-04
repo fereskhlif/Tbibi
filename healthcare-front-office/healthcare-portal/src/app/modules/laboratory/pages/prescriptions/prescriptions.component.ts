@@ -7,11 +7,11 @@ import {
 } from '../../../../services/prescription-service.service';
 
 const ANALYSIS_TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  ANALYSE_DIAGNOSTIQUE:    { label: 'Diagnostic Medical Analysis',   icon: '🔬', color: '#3b82f6', bg: '#dbeafe' },
-  ANALYSE_MICROBIOLOGIQUE: { label: 'Microbiological Analysis',       icon: '🦠', color: '#8b5cf6', bg: '#ede9fe' },
-  EXAMEN_ANATOMOPATHOLOGIQUE: { label: 'Anatomopathological Exam',    icon: '🧬', color: '#10b981', bg: '#d1fae5' },
-  TEST_GENETIQUE:          { label: 'Genetic Testing',               icon: '🧪', color: '#f59e0b', bg: '#fef3c7' },
-  ANALYSE:                 { label: 'Analysis',                      icon: '🔬', color: '#3b82f6', bg: '#dbeafe' },
+  ANALYSE_DIAGNOSTIQUE: { label: 'Diagnostic Medical Analysis', icon: '🔬', color: '#3b82f6', bg: '#dbeafe' },
+  ANALYSE_MICROBIOLOGIQUE: { label: 'Microbiological Analysis', icon: '🦠', color: '#8b5cf6', bg: '#ede9fe' },
+  EXAMEN_ANATOMOPATHOLOGIQUE: { label: 'Anatomopathological Exam', icon: '🧬', color: '#10b981', bg: '#d1fae5' },
+  TEST_GENETIQUE: { label: 'Genetic Testing', icon: '🧪', color: '#f59e0b', bg: '#fef3c7' },
+  ANALYSE: { label: 'Analysis', icon: '🔬', color: '#3b82f6', bg: '#dbeafe' },
 };
 
 @Component({
@@ -33,7 +33,7 @@ export class LabPrescriptionsComponent implements OnInit {
   readonly statusKeys: PrescriptionStatus[] = ['PENDING', 'VALIDATED', 'COMPLETED', 'CANCELLED'];
   readonly analysisTypeKeys = Object.keys(ANALYSIS_TYPE_META).filter(k => k !== 'ANALYSE');
 
-  constructor(private prescriptionService: PrescriptionService) {}
+  constructor(private prescriptionService: PrescriptionService) { }
 
   ngOnInit(): void { this.load(); }
 

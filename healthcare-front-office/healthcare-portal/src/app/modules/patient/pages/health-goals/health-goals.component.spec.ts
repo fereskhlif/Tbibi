@@ -8,7 +8,7 @@ describe('HealthGoalsComponent', () => {
   let component: HealthGoalsComponent;
   let fixture: ComponentFixture<HealthGoalsComponent>;
   let httpMock: HttpTestingController;
-  const baseUrl = 'http://localhost:8088/api/health-goals';
+  const baseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/health-goals';
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -19,7 +19,7 @@ describe('HealthGoalsComponent', () => {
     fixture = TestBed.createComponent(HealthGoalsComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    
+
     // Mock localStorage
     localStorage.setItem('userId', '123');
   });
@@ -30,7 +30,7 @@ describe('HealthGoalsComponent', () => {
   });
 
   // ========== INITIALIZATION TESTS ==========
-  
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -85,9 +85,9 @@ describe('HealthGoalsComponent', () => {
   it('should reset form to initial state', () => {
     component.newGoal.goalTitle = 'Test Goal';
     component.newGoal.targetValue = 100;
-    
+
     component.resetForm();
-    
+
     expect(component.newGoal.goalTitle).toBe('');
     expect(component.newGoal.targetValue).toBeUndefined();
     expect(component.newGoal.goalType).toBe('NUMERIC');
@@ -98,9 +98,9 @@ describe('HealthGoalsComponent', () => {
   it('should not create goal with empty title', () => {
     component.newGoal.goalTitle = '';
     const httpSpy = spyOn(component['http'], 'post').and.callThrough();
-    
+
     component.createGoal();
-    
+
     expect(httpSpy).not.toHaveBeenCalled();
   });
 
@@ -223,7 +223,7 @@ describe('HealthGoalsComponent', () => {
 
   it('should open progress modal', () => {
     const goal = { id: 1, goalTitle: 'Test', goalDescription: 'Test', goalType: 'NUMERIC' as const, category: 'Test', currentProgress: 50 };
-    
+
     component.openProgressModal(goal);
 
     expect(component.selectedGoal).toEqual(goal);
@@ -232,7 +232,7 @@ describe('HealthGoalsComponent', () => {
 
   it('should open progress modal with 0 if no current progress', () => {
     const goal = { id: 1, goalTitle: 'Test', goalDescription: 'Test', goalType: 'NUMERIC' as const, category: 'Test' };
-    
+
     component.openProgressModal(goal);
 
     expect(component.progressValue).toBe(0);
@@ -240,7 +240,7 @@ describe('HealthGoalsComponent', () => {
 
   it('should close modal by setting selectedGoal to null', () => {
     component.selectedGoal = { id: 1, goalTitle: 'Test', goalDescription: 'Test', goalType: 'NUMERIC', category: 'Test' };
-    
+
     component.selectedGoal = null;
 
     expect(component.selectedGoal).toBeNull();

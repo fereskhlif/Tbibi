@@ -341,7 +341,7 @@ class ForumServiceTest {
         when(postMapper.toDto(any(Post.class))).thenReturn(expectedResponse);
 
         // WHEN
-        PostResponse result = forumService.getPostById(postId);
+        PostResponse result = forumService.getPostById(postId, 1);
 
         // THEN
         assertNotNull(result);
@@ -358,7 +358,7 @@ class ForumServiceTest {
 
         // WHEN & THEN
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            forumService.getPostById(invalidId);
+            forumService.getPostById(invalidId, 1);
         });
 
         assertEquals("Post not found with id: 999", exception.getMessage());

@@ -16,17 +16,24 @@ export class CommentItemComponent {
   @Input() submittingReply: boolean = false;
   @Input() isLast = false;
   @Input() isPostAuthor = false;
+  @Input() isLocked = false;
+  @Input() currentUserId: number = 0;
 
   @Output() startReplyEvent = new EventEmitter<number>();
   @Output() submitReplyEvent = new EventEmitter<{ commentId: number, text: string }>();
+  @Output() updateCommentEvent = new EventEmitter<{ commentId: number, text: string }>();
   @Output() replyTextChange = new EventEmitter<string>();
   @Output() toggleVoteEvent = new EventEmitter<CommentResponse>();
-  @Output() togglePinEvent = new EventEmitter<number>();
 
   isCollapsed: boolean = false;
   isHoveringLine: boolean = false;
   isHoveringShowMore: boolean = false;
   replyPreview = false;
+
+  // Edit Comment
+  isEditing: boolean = false;
+  editText: string = '';
+
   readonly codeBlockPrefix = '\n```\n';
   readonly codeBlockSuffix = '\n```\n';
 
@@ -39,8 +46,16 @@ export class CommentItemComponent {
     return colors[Math.abs(h) % colors.length];
   }
 
-  timeAgo(dateStr: string): string {
-    const date = new Date(dateStr);
+  timeAgo(dateStr: any): string {
+    if (!dateStr) return 'Date unavailable';
+    let date: Date;
+    if (Array.isArray(dateStr)) {
+      const [year, month, day, hour = 0, minute = 0, second = 0] = dateStr;
+      date = new Date(year, month - 1, day, hour, minute, second);
+    } else {
+      date = new Date(dateStr);
+    }
+    if (isNaN(date.getTime())) return 'Date unavailable';
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     if (seconds < 60) return 'just now';
@@ -57,10 +72,6 @@ export class CommentItemComponent {
     this.toggleVoteEvent.emit(comment);
   }
 
-  onTogglePin(): void {
-    this.togglePinEvent.emit(this.comment.commentId);
-  }
-
   toggleCollapse(): void {
     this.isCollapsed = !this.isCollapsed;
   }
@@ -71,6 +82,31 @@ export class CommentItemComponent {
 
   onReplyTextChange(text: string): void {
     this.replyTextChange.emit(text);
+  }
+
+  // ─── Edit Comment ─────────────────────────────────────────────────────────
+
+  onStartEdit(): void {
+    this.isEditing = true;
+    this.editText = this.comment.comment;
+  }
+
+  onCancelEdit(): void {
+    this.isEditing = false;
+  }
+
+  onSaveEdit(): void {
+    if (!this.editText.trim()) return;
+    this.updateCommentEvent.emit({ commentId: this.comment.commentId, text: this.editText });
+    this.isEditing = false;
+  }
+
+  isExpertReviewed(): boolean {
+    if (!this.comment.replies || this.comment.replies.length === 0) return false;
+    const check = (replies: CommentResponse[]): boolean => {
+      return replies.some(r => r.expert || (r.replies && check(r.replies)));
+    };
+    return check(this.comment.replies);
   }
 
   hasRepliesOrReplying(): boolean {
@@ -86,11 +122,17 @@ export class CommentItemComponent {
     return count(this.comment.replies);
   }
 
-  reportComment(): void {
-    if (confirm('Report this comment to moderators?')) {
-      // TODO: wire to service
-    }
+  getExpertBadgeLabel(roleName: string): string {
+    const map: { [k: string]: string } = {
+      'DOCTOR': 'Verified Doctor',
+      'PHARMACIST': 'Verified Pharmacist',
+      'LABORATORY': 'Verified Lab Staff',
+      'PHYSIOTHERAPIST': 'Verified Physiotherapist'
+    };
+    return map[roleName] || 'Verified Expert';
   }
+
+
 
   // Single markdown helper for reply editor
   insertReplyMarkdown(prefix: string, suffix: string, textarea?: HTMLTextAreaElement): void {
@@ -138,4 +180,6 @@ export class CommentItemComponent {
     this.onReplyTextChange(newText);
     requestAnimationFrame(() => { el.focus(); el.setSelectionRange(cs, ce); });
   }
+
+
 }

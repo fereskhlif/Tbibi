@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-@ToString
+@ToString(exclude = "pharmacists")
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -21,5 +21,8 @@ public class Pharmacy {
     String pharmacyName;
     String pharmacyAddress;
     String pharmacyPhone;
+
+    @OneToMany(mappedBy = "pharmacy")
+    List<User> pharmacists;
 
 }

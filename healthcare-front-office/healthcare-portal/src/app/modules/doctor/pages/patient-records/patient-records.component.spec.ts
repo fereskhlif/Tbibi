@@ -16,35 +16,35 @@ import { environment } from '../../../../../environments/environment';
 
 const mockPrescription: PrescriptionMinimalDTO = {
   prescriptionId: 10,
-  note:           'Doliprane 500mg',
-  date:           '2026-01-15',
-  status:         'PENDING',
+  note: 'Doliprane 500mg',
+  date: '2026-01-15',
+  status: 'PENDING',
 };
 
 const mockPatient: PatientRecordDTO = {
-  medicalFileId:         1,
-  patientName:           'Ali Ben Salah',
-  patientEmail:          'ali@example.com',
-  medicalHistory:        '',
-  chronicDisease:        'Diabète',
-  repDoc:                '',
+  medicalFileId: 1,
+  patientName: 'Ali Ben Salah',
+  patientEmail: 'ali@example.com',
+  medicalHistory: '',
+  chronicDisease: 'Diabète',
+  repDoc: '',
   existingPrescriptions: [mockPrescription],
 };
 
 const mockPatient2: PatientRecordDTO = {
-  medicalFileId:   2,
-  patientName:     'Fatma Trabelsi',
-  patientEmail:    'fatma@example.com',
-  medicalHistory:  '─── Visite du 01/01/2026 10:00 ───\nNotes         : Visite de contrôle',
-  chronicDisease:  '',
-  repDoc:          '',
+  medicalFileId: 2,
+  patientName: 'Fatma Trabelsi',
+  patientEmail: 'fatma@example.com',
+  medicalHistory: '─── Visite du 01/01/2026 10:00 ───\nNotes         : Visite de contrôle',
+  chronicDisease: '',
+  repDoc: '',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('PatientRecordsComponent', () => {
   let component: PatientRecordsComponent;
-  let fixture:   ComponentFixture<PatientRecordsComponent>;
-  let httpMock:  HttpTestingController;
+  let fixture: ComponentFixture<PatientRecordsComponent>;
+  let httpMock: HttpTestingController;
 
   const apiBase = `${environment.baseUrl}/medical-records`;
 
@@ -54,7 +54,7 @@ describe('PatientRecordsComponent', () => {
       imports: [FormsModule, HttpClientTestingModule],
     }).compileComponents();
 
-    fixture   = TestBed.createComponent(PatientRecordsComponent);
+    fixture = TestBed.createComponent(PatientRecordsComponent);
     component = fixture.componentInstance;
 
     // On intercepte le premier appel fetch('') déclenché par ngOnInit
@@ -180,7 +180,7 @@ describe('PatientRecordsComponent', () => {
 
     it('doit réinitialiser le formulaire à chaque ouverture', () => {
       component.form.visitNote = 'Note précédente';
-      component.form.vaccines  = [{ nom: 'BCG', type: 'A', observation: '' }];
+      component.form.vaccines = [{ nom: 'BCG', type: 'A', observation: '' }];
       component.openForm(mockPatient);
       expect(component.form.visitNote).toBe('');
       expect(component.form.vaccines).toEqual([]);
@@ -209,7 +209,7 @@ describe('PatientRecordsComponent', () => {
 
     it('doit réinitialiser saveSuccess et saveError', () => {
       component.saveSuccess = true;
-      component.saveError   = 'Erreur précédente';
+      component.saveError = 'Erreur précédente';
       component.openForm(JSON.parse(JSON.stringify(mockPatient)));
       expect(component.saveSuccess).toBeFalse();
       expect(component.saveError).toBe('');

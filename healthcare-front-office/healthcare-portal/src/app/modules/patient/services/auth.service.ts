@@ -1,7 +1,6 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';import { environment } from 'environments/environment';import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -9,7 +8,7 @@ import { Router } from '@angular/router';
 })
 export class AuthService {
 
-  private apiUrl = 'http://localhost:8088/auth';
+  private apiUrl = `${environment.baseUrl}/auth`;
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -82,7 +81,7 @@ export class AuthService {
         return id;
       }
     }
-    
+
     // ✅ Fallback: try to parse from token (though it won't have userId)
     const token = this.getToken();
     if (!token) return 0;

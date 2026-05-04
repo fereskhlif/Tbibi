@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -18,7 +19,7 @@ export interface OrderLineResponse {
 
 @Injectable({ providedIn: 'root' })
 export class OrderLineService {
-    private apiUrl = 'http://localhost:8089/api/orderlines';
+    private apiUrl = `${environment.analyticsUrl}/api/orderlines`;
 
     constructor(private http: HttpClient) { }
 

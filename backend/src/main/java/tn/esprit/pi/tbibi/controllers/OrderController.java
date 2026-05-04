@@ -21,7 +21,7 @@ public class OrderController {
         return orderService.createOrder(request);
     }
 
-    @GetMapping("/pharmacy/{pharmacyId}")  // ✅ added - before /{id}
+    @GetMapping("/pharmacy/{pharmacyId}") // ✅ added - before /{id}
 
     public List<OrderResponse> getOrdersByPharmacy(@PathVariable("pharmacyId") Long pharmacyId) {
         return orderService.getOrdersByPharmacy(pharmacyId);
@@ -29,7 +29,7 @@ public class OrderController {
 
     @GetMapping("/pharmacy/{pharmacyId}/user/{email}")
     public List<OrderResponse> getOrdersByPharmacyAndUserEmail(
-            @PathVariable("pharmacyId") Long pharmacyId, 
+            @PathVariable("pharmacyId") Long pharmacyId,
             @PathVariable("email") String email) {
         return orderService.getOrdersByPharmacyAndUserEmail(pharmacyId, email);
     }
@@ -84,5 +84,24 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return orderService.getUserOrdersPaginated(userId, status, search, sortType, page, size);
+    }
+
+    @GetMapping("/patient/{userId}/analytics")
+    public List<tn.esprit.pi.tbibi.DTO.order.PatientSpendingAnalyticsDTO> getPatientSpendingAnalytics(
+            @PathVariable("userId") Integer userId) {
+        return orderService.getPatientSpendingAnalytics(userId);
+    }
+
+    @GetMapping("/patient/{userId}/medicine-history")
+    public List<tn.esprit.pi.tbibi.DTO.order.MedicinePurchaseHistoryDTO> getMedicineHistory(
+            @PathVariable("userId") Integer userId,
+            @RequestParam("medicineName") String medicineName) {
+        return orderService.getMedicinePurchaseHistory(userId, medicineName);
+    }
+
+    @GetMapping("/patient/{userId}/medicine-history/all")
+    public List<tn.esprit.pi.tbibi.DTO.order.MedicinePurchaseHistoryDTO> getFullMedicineHistory(
+            @PathVariable("userId") Integer userId) {
+        return orderService.getAllPatientMedicineHistory(userId);
     }
 }

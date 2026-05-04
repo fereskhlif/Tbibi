@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { environment } from 'environments/environment';
 
 export interface AdminUser {
   userId: number;
@@ -28,7 +28,7 @@ export interface AdminStats {
 export class AdminService {
   private apiUrl = `${environment.baseUrl}/admin`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getDashboardStats(): Observable<AdminStats> {
     return this.http.get<AdminStats>(`${this.apiUrl}/stats`);

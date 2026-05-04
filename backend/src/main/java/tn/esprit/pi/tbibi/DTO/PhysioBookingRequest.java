@@ -10,9 +10,10 @@ import lombok.*;
 public class PhysioBookingRequest {
     private Integer patientId;
     private Integer physiotherapistId;
+    private Long scheduleId; // the chosen slot — links date/time to the appointment
     private String therapyType;
     private String reasonForVisit;
-    private String preferredDate;  // e.g. "2026-06-01"
+    private String preferredDate; // fallback date string e.g. "2026-06-01"
     private String patientName;
     private String patientEmail;
     private String patientPhone;

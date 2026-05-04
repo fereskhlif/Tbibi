@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { TreatmentPlanService } from '../../services/treatment-plan.service';
 import { TreatmentPlan, TreatmentPlanRequest } from '../../models/treatment-plan.model';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface Patient {
   userId: number;
@@ -19,24 +20,24 @@ export class TreatmentPlanComponent implements OnInit {
   filteredPlans: TreatmentPlan[] = [];
   patients: Patient[] = [];
   currentPhysioId: number = 0; // Will be set from localStorage
-  
+
   filterStatus: string = 'all';
   searchTerm: string = '';
-  
+
   showCreateModal: boolean = false;
   showEditModal: boolean = false;
   showDetailModal: boolean = false;
   selectedPlan: TreatmentPlan | null = null;
-  
+
   newPlan: TreatmentPlanRequest = this.getEmptyPlan();
   editPlan: TreatmentPlanRequest = this.getEmptyPlan();
 
-  private apiUrl = 'http://localhost:8088/api';
+  private apiUrl = `${environment.baseUrl}/api`;
 
   constructor(
     private treatmentPlanService: TreatmentPlanService,
     private http: HttpClient
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Get the logged-in physiotherapist's ID from localStorage
@@ -73,11 +74,11 @@ export class TreatmentPlanComponent implements OnInit {
   applyFilters(): void {
     this.filteredPlans = this.plans.filter(plan => {
       const matchesStatus = this.filterStatus === 'all' || plan.status === this.filterStatus;
-      const matchesSearch = !this.searchTerm || 
+      const matchesSearch = !this.searchTerm ||
         plan.planName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         plan.patientName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         plan.diagnosis?.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
+
       return matchesStatus && matchesSearch;
     });
   }
@@ -129,7 +130,6 @@ export class TreatmentPlanComponent implements OnInit {
 
   createPlan(): void {
     if (!this.validatePlan(this.newPlan)) return;
-    
     this.treatmentPlanService.create(this.newPlan).subscribe({
       next: () => {
         this.loadPlans();
@@ -145,7 +145,6 @@ export class TreatmentPlanComponent implements OnInit {
 
   updatePlan(): void {
     if (!this.selectedPlan || !this.validatePlan(this.editPlan)) return;
-    
     this.treatmentPlanService.update(this.selectedPlan.planId!, this.editPlan).subscribe({
       next: () => {
         this.loadPlans();
@@ -161,7 +160,6 @@ export class TreatmentPlanComponent implements OnInit {
 
   updateStatus(planId: number, status: string): void {
     if (!confirm(`Voulez-vous vraiment changer le statut à "${status}"?`)) return;
-    
     this.treatmentPlanService.updateStatus(planId, status).subscribe({
       next: () => {
         this.loadPlans();
@@ -176,7 +174,6 @@ export class TreatmentPlanComponent implements OnInit {
 
   deletePlan(planId: number): void {
     if (!confirm('Voulez-vous vraiment supprimer ce plan de traitement?')) return;
-    
     this.treatmentPlanService.delete(planId).subscribe({
       next: () => {
         this.loadPlans();
@@ -190,8 +187,8 @@ export class TreatmentPlanComponent implements OnInit {
   }
 
   validatePlan(plan: TreatmentPlanRequest): boolean {
-    if (!plan.patientId || !plan.planName || !plan.diagnosis || !plan.therapeuticGoals || 
-        !plan.exercises || !plan.durationWeeks || !plan.startDate) {
+    if (!plan.patientId || !plan.planName || !plan.diagnosis || !plan.therapeuticGoals ||
+      !plan.exercises || !plan.durationWeeks || !plan.startDate) {
       alert('Veuillez remplir tous les champs obligatoires');
       return false;
     }

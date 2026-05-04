@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Client, StompSubscription, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface MedicalChatDto {
   id?: number;
@@ -27,7 +28,6 @@ export class ChatWebSocketService {
   private typingSubject = new Subject<MedicalChatDto>();
   private connectedStatus = new BehaviorSubject<boolean>(false);
   private currentSubscription?: StompSubscription;
-  
   public messages$ = this.messageSubject.asObservable();
   public typing$ = this.typingSubject.asObservable();
   public isConnected$ = this.connectedStatus.asObservable();
@@ -36,11 +36,12 @@ export class ChatWebSocketService {
     // Get token and clean it for use
     let token = localStorage.getItem('TokenUserConnect') || localStorage.getItem('token') || '';
     token = token.replace(/^"|"$/g, '').trim();
-    
+
     // Build WebSocket URL with token as query parameter (fallback for SockJS)
-    const wsUrl = token 
-      ? `http://localhost:8088/ws?Authorization=Bearer%20${encodeURIComponent(token)}` 
-      : 'http://localhost:8088/ws';
+    const baseUrl = environment.baseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+    const wsUrl = token
+      ? `${baseUrl}/ws?Authorization=Bearer%20${encodeURIComponent(token)}`
+      : `${baseUrl}/ws`;
 
     this.stompClient = new Client({
       debug: (msg: string) => console.log('STOMP: ' + msg),
@@ -70,10 +71,10 @@ export class ChatWebSocketService {
 
         // Subscribe to typing indicator queue
         this.stompClient.subscribe(`/topic/typing/${userId}`, (message: IMessage) => {
-            if (message.body) {
-              const parsed = JSON.parse(message.body) as MedicalChatDto;
-              this.typingSubject.next(parsed);
-            }
+          if (message.body) {
+            const parsed = JSON.parse(message.body) as MedicalChatDto;
+            this.typingSubject.next(parsed);
+          }
         });
       }
     };
@@ -95,10 +96,9 @@ export class ChatWebSocketService {
 
     let token = localStorage.getItem('TokenUserConnect') || localStorage.getItem('token');
     if (!token) {
-        console.warn('⚠️ No token available for WebSocket connection');
-        return;
+      console.warn('⚠️ No token available for WebSocket connection');
+      return;
     }
-    
     // Clean token
     token = token.replace(/^"|"$/g, '').trim();
 
@@ -126,7 +126,7 @@ export class ChatWebSocketService {
         body: JSON.stringify(chatDto)
       });
     } else {
-        console.error("STOMP connection not active. Cannot send message.");
+      console.error("STOMP connection not active. Cannot send message.");
     }
   }
 

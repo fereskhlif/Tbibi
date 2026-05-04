@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService, AdminUser } from '../../../../services/admin.service';
-import { environment } from '../../../../../environments/environment';
+import { environment } from 'environments/environment';
 
 @Component({
   selector: 'app-admin-approvals',
@@ -20,7 +20,6 @@ import { environment } from '../../../../../environments/environment';
 
     <!-- Cards Grid -->
     <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      
       <!-- User Card -->
       <div *ngFor="let user of pendingUsers" class="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
         <div class="absolute top-0 right-0 p-4">
@@ -28,7 +27,6 @@ import { environment } from '../../../../../environments/environment';
             {{user.role.roleName}}
           </span>
         </div>
-        
         <div class="flex items-center gap-4 mb-5">
           <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 border-2 border-white shadow-sm flex items-center justify-center text-xl font-bold text-gray-600">
             {{user.name.charAt(0).toUpperCase()}}
@@ -83,7 +81,7 @@ export class AdminApprovalsComponent implements OnInit {
   loading = false;
   error = '';
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService) { }
 
   ngOnInit(): void {
     this.loadPending();
@@ -101,7 +99,6 @@ export class AdminApprovalsComponent implements OnInit {
         console.error(err);
         this.error = "Erreur de connexion (Mock data injectée).";
         this.loading = false;
-        
         // Mock data for UI development
         this.pendingUsers = [
           { userId: 2, name: 'Dr. Karim Mansouri', email: 'karim@clinic.tn', role: { roleName: 'DOCTOR' }, accountStatus: 'PENDING', gender: 'Male', enabled: true, dateOfBirth: '1985-06-12' },
@@ -142,10 +139,10 @@ export class AdminApprovalsComponent implements OnInit {
   getDiplomaUrl(profilePicture: string): string {
     if (!profilePicture) return '';
     if (profilePicture.startsWith('http')) return profilePicture;
-    
+
     const filename = profilePicture.replace(/^.*[\\/]/, '');
     // Construction de l'URL vers le backend de l'API (généralement sur le port 8088)
-    return `http://localhost:8088/uploads/documents/${filename}`;
+    return `${environment.baseUrl}/uploads/documents/${filename}`;
   }
 
   openDiploma(user: AdminUser, event: Event): void {

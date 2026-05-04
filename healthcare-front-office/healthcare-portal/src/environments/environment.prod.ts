@@ -1,1 +1,5 @@
-export const environment = {  production: true,  baseUrl: 'http://localhost:8088'};
+export const environment = {
+  production: true,
+  baseUrl: 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net',
+  analyticsUrl: 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net'
+};

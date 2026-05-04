@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PharmacistOrder, OrderStatus } from '../../models/pharmacist-order.model';
 import { PharmacistOrderService, Page } from '../../services/pharmacist-order.service';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MainLayoutComponent } from '../../../../shared/layouts/main-layout/main-layout.component';
 
 @Component({
@@ -34,7 +35,7 @@ export class OrderManagementComponent implements OnInit {
     // Pagination
     currentPage = 1;
     readonly pageSize = 10;
-    
+
     get pageNumbers(): number[] {
         const total = this.totalPages;
         if (total === 0) return [];
@@ -62,18 +63,30 @@ export class OrderManagementComponent implements OnInit {
         { key: 'IN_PROGRESS', label: 'In Progress' },
         { key: 'DELIVERED', label: 'Delivered' },
         { key: 'REJECTED', label: 'Rejected' },
+        { key: 'CANCELLED', label: 'Cancelled' },
     ];
 
-    constructor(private orderService: PharmacistOrderService) { }
+    constructor(
+        private orderService: PharmacistOrderService,
+        private route: ActivatedRoute,
+        private router: Router
+    ) { }
 
     ngOnInit(): void {
-        this.fetchOrders();
+        // Read status from URL query params
+        this.route.queryParams.subscribe(params => {
+            const status = params['status'];
+            if (status && (this.tabs.some(t => t.key === status) || status === 'ALL')) {
+                this.activeTab = status;
+            }
+            this.fetchOrders();
+        });
     }
 
     fetchOrders(): void {
         this.loading = true;
         this.error = '';
-        
+
         this.orderService.getOrdersPaginated(
             this.PHARMACY_ID,
             this.activeTab,
@@ -100,7 +113,13 @@ export class OrderManagementComponent implements OnInit {
         this.activeTab = tab;
         this.currentPage = 1;
         this.selectedOrderIds.clear();
-        this.fetchOrders();
+
+        // Update URL query params
+        this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { status: tab === 'ALL' ? null : tab },
+            queryParamsHandling: 'merge'
+        });
     }
 
     onSearchChange(): void {
@@ -212,7 +231,7 @@ export class OrderManagementComponent implements OnInit {
             next: () => {
                 this.updatingOrderId = null;
                 this.selectedOrderIds.delete(orderId);
-                
+
                 const msgs: Partial<Record<OrderStatus, string>> = {
                     CONFIRMED: 'Order confirmed successfully.',
                     REJECTED: 'Order rejected.',
@@ -290,6 +309,7 @@ export class OrderManagementComponent implements OnInit {
             IN_PROGRESS: active ? 'bg-purple-600 text-white' : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200',
             DELIVERED: active ? 'bg-green-600 text-white' : 'bg-white text-green-600 hover:bg-green-50 border border-green-200',
             REJECTED: active ? 'bg-red-600 text-white' : 'bg-white text-red-600 hover:bg-red-50 border border-red-200',
+            CANCELLED: active ? 'bg-gray-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200',
         };
         return colorMap[tab] || 'bg-white text-gray-600';
     }

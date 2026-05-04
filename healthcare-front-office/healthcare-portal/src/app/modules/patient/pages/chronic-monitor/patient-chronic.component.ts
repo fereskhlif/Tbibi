@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import {
   Component, OnInit, OnDestroy, AfterViewInit,
   ElementRef, ViewChild, ViewChildren, QueryList, ChangeDetectorRef
@@ -489,7 +490,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
       notes: `Simulator · scenario=${this.scenario}`,
       recordedAt: new Date().toISOString()
     };
-    this.http.post('http://localhost:8088/api/chronic', body)
+    this.http.post(`${environment.baseUrl}/api/chronic`, body)
       .subscribe({ error: () => { } });   // fire-and-forget
   }
 
@@ -567,7 +568,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
     if (!this.patientEmail) return;
     const display = v.type === 'BLOOD_PRESSURE' && val2 ? `${val}/${val2} ${v.unit}` : `${val} ${v.unit}`;
     const msg = this.alertMsg(v.type, val);
-    this.http.post('http://localhost:8088/api/chronic/warn-email', {
+    this.http.post(`${environment.baseUrl}/api/chronic/warn-email`, {
       to: this.patientEmail, patientName: this.patientName,
       vitalType: v.label, value: display, message: msg
     }).subscribe({ error: () => { } });
@@ -672,7 +673,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
   loadHistory() {
     if (!this.patientId) return;
     this.historyLoading = true;
-    this.http.get<any[]>(`http://localhost:8088/api/chronic/patient/${this.patientId}`)
+    this.http.get<any[]>(`${environment.baseUrl}/api/chronic/patient/${this.patientId}`)
       .subscribe({
         next: (data) => {
           // Sort oldest→newest for chart display
@@ -698,7 +699,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
       const labels = rows.map(r => {
         const d = this.parseRecordedAt(r.recordedAt);
         if (!d || isNaN(d.getTime())) return '??:??';
-        const day  = d.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+        const day = d.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
         const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         return `${day} ${time}`;
       });
@@ -725,12 +726,12 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
           animation: { duration: 300 },
           plugins: {
             legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: (ctx: any) => ` ${ctx.parsed.y} ${v.unit}`,
-                  title: (items: any) => labels[items[0].dataIndex]
-                }
+            tooltip: {
+              callbacks: {
+                label: (ctx: any) => ` ${ctx.parsed.y} ${v.unit}`,
+                title: (items: any) => labels[items[0].dataIndex]
               }
+            }
           },
           scales: {
             x: {
@@ -757,7 +758,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
   deleteAllHistory() {
     if (!this.patientId) return;
     if (!confirm('Delete ALL history readings from the database? This cannot be undone.')) return;
-    this.http.delete(`http://localhost:8088/api/chronic/patient/${this.patientId}`)
+    this.http.delete(`${environment.baseUrl}/api/chronic/patient/${this.patientId}`)
       .subscribe({
         next: () => {
           // Clear local state
@@ -775,7 +776,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
     const canvas = document.getElementById('hist-chart-' + type) as HTMLCanvasElement;
     if (!canvas) return;
     const link = document.createElement('a');
-    link.download = `tbibi-${type.toLowerCase()}-history-${new Date().toISOString().slice(0,10)}.png`;
+    link.download = `tbibi-${type.toLowerCase()}-history-${new Date().toISOString().slice(0, 10)}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   }

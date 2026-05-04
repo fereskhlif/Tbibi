@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
@@ -47,18 +48,17 @@ export class AiImageAnalysisComponent implements OnInit {
   analyses: MedicalPictureAnalysis[] = [];
   filteredAnalyses: MedicalPictureAnalysis[] = [];
   statistics: Statistics | null = null;
-  
   isLoading = false;
   searchTerm = '';
   selectedCategory = 'All';
   activeTab: 'analyses' | 'statistics' = 'analyses';
-  
-  private apiUrl = 'http://localhost:8088/api';
-  private imageBaseUrl = 'http://localhost:8088/uploads/medical-pictures/';
+
+  private apiUrl = `${environment.baseUrl}/api`;
+  private imageBaseUrl = `${environment.baseUrl}/uploads/medical-pictures/`;
 
   categoryOptions = ['All', 'Radio', 'Scanner', 'IRM', 'Echographie'];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
     this.loadPatientsWithAnalyses();
@@ -67,16 +67,16 @@ export class AiImageAnalysisComponent implements OnInit {
 
   loadPatientsWithAnalyses(): void {
     this.isLoading = true;
-    
+
     this.http.get<MedicalPictureAnalysis[]>(`${this.apiUrl}/medical-picture-analysis`)
       .subscribe({
         next: (analyses) => {
-          this.analyses = analyses.filter(a => 
-            a.analysisResult && 
-            a.confidenceScore && 
+          this.analyses = analyses.filter(a =>
+            a.analysisResult &&
+            a.confidenceScore &&
             a.status === 'Completed'
           );
-          
+
           this.extractUniquePatients();
           this.isLoading = false;
         },
@@ -99,7 +99,6 @@ export class AiImageAnalysisComponent implements OnInit {
         .subscribe({
           next: (labResults) => {
             const uniquePatients = new Map<number, Patient>();
-            
             labResults.forEach(lr => {
               if (lr.patientId && lr.patientName) {
                 uniquePatients.set(lr.patientId, {
@@ -109,7 +108,6 @@ export class AiImageAnalysisComponent implements OnInit {
                 });
               }
             });
-            
             this.patients = Array.from(uniquePatients.values());
           },
           error: (err) => console.error('Error loading patients:', err)
@@ -134,11 +132,11 @@ export class AiImageAnalysisComponent implements OnInit {
           const patientLabIds = labResults
             .filter(lr => lr.patientId === this.selectedPatient!.userId)
             .map(lr => lr.labId);
-          
-          this.filteredAnalyses = this.analyses.filter(a => 
+
+          this.filteredAnalyses = this.analyses.filter(a =>
             patientLabIds.includes(a.laboratoryResultId)
           );
-          
+
           this.applyFilters();
         },
         error: (err) => console.error('Error filtering analyses:', err)
@@ -194,10 +192,10 @@ export class AiImageAnalysisComponent implements OnInit {
   formatDate(dateString: string): string {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
     });
   }
 

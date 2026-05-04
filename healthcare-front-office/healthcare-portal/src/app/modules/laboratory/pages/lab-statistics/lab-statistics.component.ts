@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface PatientStatistics {
   patientId: number;
@@ -21,10 +22,10 @@ export class LabStatisticsComponent implements OnInit {
   statistics: PatientStatistics[] = [];
   isLoading = false;
   currentLabUserId: number = 0;
-  
-  private apiUrl = 'http://localhost:8088/api/laboratory-results';
 
-  constructor(private http: HttpClient) {}
+  private apiUrl = `${environment.baseUrl}/api/laboratory-results`;
+
+  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
     this.currentLabUserId = Number(localStorage.getItem('userId') || '0');

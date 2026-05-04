@@ -24,5 +24,9 @@ public class OrderResponse {
     String userName;
     String userEmail;
     Integer userId;
+    String deliveryMethod;
+    String deliveryAddress;
+    String paymentMethod;
+    String prescriptionImage;
     List<OrderLineResponse> orderLines;
 }

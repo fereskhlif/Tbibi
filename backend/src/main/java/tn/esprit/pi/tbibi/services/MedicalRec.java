@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j  // ← AJOUTER CETTE ANNOTATION
+@Slf4j // ← AJOUTER CETTE ANNOTATION
 @RequiredArgsConstructor
 @Service
 public class MedicalRec implements IMedicalReccordsService {
@@ -46,13 +46,14 @@ public class MedicalRec implements IMedicalReccordsService {
             String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             Path path = Paths.get(UPLOAD_DIR + fileName);
             Files.write(path, file.getBytes());
-            log.info("Fichier sauvegardé: {}", fileName);  // ← AJOUTER LOG
+            log.info("Fichier sauvegardé: {}", fileName); // ← AJOUTER LOG
             return fileName;
         } catch (Exception e) {
-            log.error("Erreur upload: {}", e.getMessage());  // ← AJOUTER LOG
+            log.error("Erreur upload: {}", e.getMessage()); // ← AJOUTER LOG
             throw new RuntimeException("Erreur upload : " + e.getMessage());
         }
     }
+
     @Override
     public MdicalReccordsResponse addActe(int recordId, ActeRequest request) {
         log.info("=== ADD ACTE TO RECORD {} ===", recordId);
@@ -81,8 +82,8 @@ public class MedicalRec implements IMedicalReccordsService {
 
     @Override
     public MdicalReccordsResponse add(MdicalReccordsRequest request, MultipartFile file) {
-        log.info("=== ADD WITH FILE ===");  // ← AJOUTER LOG
-        log.info("Request: {}", request);    // ← AJOUTER LOG
+        log.info("=== ADD WITH FILE ==="); // ← AJOUTER LOG
+        log.info("Request: {}", request); // ← AJOUTER LOG
 
         MedicalReccords entity = mapper.toEntity(request);
         if (file != null && !file.isEmpty()) {
@@ -91,10 +92,11 @@ public class MedicalRec implements IMedicalReccordsService {
         entity.setImageUrl(request.getImageUrl());
 
         MedicalReccords saved = repository.save(entity);
-        log.info("Record sauvegardé avec ID: {}", saved.getMedicalfile_id());  // ← AJOUTER LOG
+        log.info("Record sauvegardé avec ID: {}", saved.getMedicalfile_id()); // ← AJOUTER LOG
 
         return mapper.toResponse(saved);
     }
+
     @Override
     public MdicalReccordsResponse add(MdicalReccordsRequest request) {
         log.info("=== ADD WITH JSON ===");
@@ -126,14 +128,15 @@ public class MedicalRec implements IMedicalReccordsService {
             }
             patient.getMedicalFiles().add(saved);
 
-            // Append patient's note to the Master Record (get(0)) so the Doctor automatically sees it in "History"
+            // Append patient's note to the Master Record (get(0)) so the Doctor
+            // automatically sees it in "History"
             if (patient.getMedicalFiles().size() > 1) {
                 MedicalReccords master = patient.getMedicalFiles().get(0);
                 String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-                
+
                 StringBuilder sb = new StringBuilder();
                 sb.append("─── Visit on ").append(timestamp).append(" (Patient Note) ───");
-                
+
                 if (request.getMedical_historuy() != null && !request.getMedical_historuy().isBlank()) {
                     sb.append("\nNotes         : ").append(request.getMedical_historuy());
                 }
@@ -142,7 +145,8 @@ public class MedicalRec implements IMedicalReccordsService {
                 }
 
                 String existing = master.getMedical_historuy();
-                master.setMedical_historuy(existing == null || existing.isBlank() ? sb.toString() : existing + "\n\n" + sb.toString());
+                master.setMedical_historuy(
+                        existing == null || existing.isBlank() ? sb.toString() : existing + "\n\n" + sb.toString());
                 repository.save(master);
             }
 
@@ -172,34 +176,37 @@ public class MedicalRec implements IMedicalReccordsService {
 
         return mapper.toResponse(saved);
     }
+
     @Override
     public void delete(int id) {
-        log.info("=== DELETE ID: {} ===", id);  // ← AJOUTER LOG
+        log.info("=== DELETE ID: {} ===", id); // ← AJOUTER LOG
         repository.deleteById(id);
-        log.info("Record supprimé avec ID: {}", id);  // ← AJOUTER LOG
+        log.info("Record supprimé avec ID: {}", id); // ← AJOUTER LOG
     }
+
     @Override
     public MdicalReccordsResponse getById(int id) {
-        log.info("=== GET BY ID: {} ===", id);  // ← AJOUTER LOG
+        log.info("=== GET BY ID: {} ===", id); // ← AJOUTER LOG
 
         MedicalReccords entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Record not found with id: " + id));
 
         MdicalReccordsResponse response = mapper.toResponse(entity);
-        log.info("Record trouvé: {}", response);  // ← AJOUTER LOG
+        log.info("Record trouvé: {}", response); // ← AJOUTER LOG
 
         return response;
     }
+
     @Override
     public List<MdicalReccordsResponse> getAll() {
-        log.info("=== SERVICE GET ALL ===");  // ← MAINTENANT log FONCTIONNE
+        log.info("=== SERVICE GET ALL ==="); // ← MAINTENANT log FONCTIONNE
         List<MedicalReccords> entities = repository.findAll();
         log.info("Entities trouvées: {}", entities.size());
 
         List<MdicalReccordsResponse> responses = new ArrayList<>();
         for (MedicalReccords entity : entities) {
             MdicalReccordsResponse response = mapper.toResponse(entity);
-            log.debug("Response convertie: {}", response);  // ← AJOUTER LOG (debug)
+            log.debug("Response convertie: {}", response); // ← AJOUTER LOG (debug)
             responses.add(response);
         }
 
@@ -238,7 +245,8 @@ public class MedicalRec implements IMedicalReccordsService {
                         String docName = "Inconnu";
                         if (acte.getDoctorId() != null) {
                             User doc = userRepo.findById(acte.getDoctorId()).orElse(null);
-                            if (doc != null) docName = doc.getName();
+                            if (doc != null)
+                                docName = doc.getName();
                         }
                         final String finalDocName = docName;
                         acte.getPrescriptions().forEach(p -> {
@@ -247,8 +255,7 @@ public class MedicalRec implements IMedicalReccordsService {
                                     p.getNote(),
                                     p.getDate(),
                                     p.getStatus(),
-                                    finalDocName
-                            ));
+                                    finalDocName));
                         });
                     }
                 });
@@ -338,12 +345,15 @@ public class MedicalRec implements IMedicalReccordsService {
         // Créer l'Acte correspondant à la visite
         Acte newVisitActe = new Acte();
         newVisitActe.setDate(new java.util.Date());
-        newVisitActe.setTypeOfActe(request.getFiliere() != null && !request.getFiliere().isBlank() ? request.getFiliere() : "Medical Visit");
+        newVisitActe
+                .setTypeOfActe(request.getFiliere() != null && !request.getFiliere().isBlank() ? request.getFiliere()
+                        : "Medical Visit");
         newVisitActe.setDescription(request.getVisitNote() != null ? request.getVisitNote() : "New visit");
         newVisitActe.setMedicalFile(record);
         if (doctorEmail != null) {
             User doc = userRepo.findByEmail(doctorEmail).orElse(null);
-            if (doc != null) newVisitActe.setDoctorId(doc.getUserId());
+            if (doc != null)
+                newVisitActe.setDoctorId(doc.getUserId());
         }
 
         // Lier l'acte aux prescriptions s'il y en a
@@ -383,7 +393,9 @@ public class MedicalRec implements IMedicalReccordsService {
 
     private static final String PATIENT_IMAGE_DIR = "uploads/patient-images/";
 
-    /** Returns (or auto-creates) the medical record for the authenticated patient. */
+    /**
+     * Returns (or auto-creates) the medical record for the authenticated patient.
+     */
     @Override
     public List<MdicalReccordsResponse> getMyRecord(String email) {
         log.info("=== GET MY RECORD for email: {} ===", email);
@@ -404,7 +416,8 @@ public class MedicalRec implements IMedicalReccordsService {
     /** Saves one image file and appends its serving URL to the patient's record. */
     @Override
     @org.springframework.transaction.annotation.Transactional
-    public MdicalReccordsResponse uploadPatientImage(String email, org.springframework.web.multipart.MultipartFile file) {
+    public MdicalReccordsResponse uploadPatientImage(String email,
+            org.springframework.web.multipart.MultipartFile file) {
         log.info("=== UPLOAD PATIENT IMAGE for email: {} ===", email);
         User patient = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found: " + email));
@@ -415,7 +428,8 @@ public class MedicalRec implements IMedicalReccordsService {
         } else {
             record = new MedicalReccords();
             record = repository.save(record);
-            if (patient.getMedicalFiles() == null) patient.setMedicalFiles(new ArrayList<>());
+            if (patient.getMedicalFiles() == null)
+                patient.setMedicalFiles(new ArrayList<>());
             patient.getMedicalFiles().add(record);
             userRepo.save(patient);
         }
@@ -426,7 +440,8 @@ public class MedicalRec implements IMedicalReccordsService {
             java.nio.file.Path path = java.nio.file.Paths.get(PATIENT_IMAGE_DIR + fileName);
             java.nio.file.Files.write(path, file.getBytes());
             String imageUrl = "/uploads/patient-images/" + fileName;
-            if (record.getPatientImages() == null) record.setPatientImages(new ArrayList<>());
+            if (record.getPatientImages() == null)
+                record.setPatientImages(new ArrayList<>());
             record.getPatientImages().add(imageUrl);
             MedicalReccords saved = repository.save(record);
             log.info("Image patient sauvegardée: {}", imageUrl);
@@ -451,16 +466,19 @@ public class MedicalRec implements IMedicalReccordsService {
         } else {
             record = new MedicalReccords();
             record = repository.save(record);
-            if (patient.getMedicalFiles() == null) patient.setMedicalFiles(new ArrayList<>());
+            if (patient.getMedicalFiles() == null)
+                patient.setMedicalFiles(new ArrayList<>());
             patient.getMedicalFiles().add(record);
             userRepo.save(patient);
         }
 
         if (request.getMedical_historuy() != null) {
             String existing = record.getMedical_historuy();
-            // Append instead of overwrite to protect any doctor notes if this is the master record
+            // Append instead of overwrite to protect any doctor notes if this is the master
+            // record
             if (existing != null && existing.contains("─── Visit on")) {
-                record.setMedical_historuy(existing + "\n\n─── Patient Modification ───\n" + request.getMedical_historuy());
+                record.setMedical_historuy(
+                        existing + "\n\n─── Patient Modification ───\n" + request.getMedical_historuy());
             } else {
                 record.setMedical_historuy(request.getMedical_historuy());
             }

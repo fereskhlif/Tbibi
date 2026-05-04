@@ -34,9 +34,9 @@ export interface MedicineDTO {
 export interface PrescriptionResponse {
   acteId?: number;
   acteType?: string;  // typeOfActe of the linked Acte (e.g. ANALYSE_DIAGNOSTIQUE)
-patientId?: number;
-patientName?: string;
-patientEmail?: string;
+  patientId?: number;
+  patientName?: string;
+  patientEmail?: string;
   doctorId?: number;
   doctorName?: string;
   prescriptionID: number;
@@ -88,11 +88,11 @@ export const STATUS_META: Record<PrescriptionStatus, {
   border: string;
   step: number;
 }> = {
-  PENDING:   { label: 'Pending',    icon: '⏳', color: '#f59e0b', bg: '#fef3c7', border: '#fde68a', step: 0 },
-  VALIDATED: { label: 'Validated',  icon: '✅', color: '#3b82f6', bg: '#dbeafe', border: '#bfdbfe', step: 1 },
-  DISPENSED: { label: 'Dispensed',  icon: '💊', color: '#8b5cf6', bg: '#ede9fe', border: '#ddd6fe', step: 2 },
-  COMPLETED: { label: 'Completed',  icon: '🎉', color: '#10b981', bg: '#d1fae5', border: '#a7f3d0', step: 3 },
-  CANCELLED: { label: 'Cancelled',  icon: '❌', color: '#ef4444', bg: '#fee2e2', border: '#fecaca', step: -1 },
+  PENDING: { label: 'Pending', icon: '⏳', color: '#f59e0b', bg: '#fef3c7', border: '#fde68a', step: 0 },
+  VALIDATED: { label: 'Validated', icon: '✅', color: '#3b82f6', bg: '#dbeafe', border: '#bfdbfe', step: 1 },
+  DISPENSED: { label: 'Dispensed', icon: '💊', color: '#8b5cf6', bg: '#ede9fe', border: '#ddd6fe', step: 2 },
+  COMPLETED: { label: 'Completed', icon: '🎉', color: '#10b981', bg: '#d1fae5', border: '#a7f3d0', step: 3 },
+  CANCELLED: { label: 'Cancelled', icon: '❌', color: '#ef4444', bg: '#fee2e2', border: '#fecaca', step: -1 },
 };
 
 @Injectable({ providedIn: 'root' })
@@ -100,7 +100,7 @@ export class PrescriptionService {
 
   private apiUrl = `${environment.baseUrl}/prescriptions`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getAll(): Observable<PrescriptionResponse[]> {
     return this.http.get<PrescriptionResponse[]>(`${this.apiUrl}/all`);
@@ -139,15 +139,15 @@ export class PrescriptionService {
     return this.http.delete<void>(`${this.apiUrl}/delete/${id}`);
   }
   assignActe(prescriptionId: number, acteId: number): Observable<PrescriptionResponse> {
-  return this.http.patch<PrescriptionResponse>(
-    `${this.apiUrl}/${prescriptionId}/assign-acte`,
-    { acteId }
-  );
-}
+    return this.http.patch<PrescriptionResponse>(
+      `${this.apiUrl}/${prescriptionId}/assign-acte`,
+      { acteId }
+    );
+  }
 
-getAllActes(): Observable<ActeDTO[]> {
-  return this.http.get<ActeDTO[]>(`${environment.baseUrl}/actes/all`);
-}
+  getAllActes(): Observable<ActeDTO[]> {
+    return this.http.get<ActeDTO[]>(`${environment.baseUrl}/actes/all`);
+  }
 
   /** Returns only the actes for the currently authenticated patient (enriched with doctor info). */
   getMyActes(): Observable<ActeDTO[]> {
@@ -193,4 +193,4 @@ getAllActes(): Observable<ActeDTO[]> {
   syncAi(): Observable<any> {
     return this.http.post<any>(`${environment.baseUrl}/api/medicines/sync-ai`, {});
   }
-}
+}

@@ -22,6 +22,32 @@ export class MedicationManagementComponent implements OnInit {
   error = '';
   searchQuery = '';
   activeTab: FilterTab = 'all';
+  selectedCategory: string = 'all';
+
+  categories = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'COUGH_AND_COLD', label: 'Cough & Cold' },
+    { value: 'RESPIRATORY', label: 'Respiratory' },
+    { value: 'FEVER_AND_PAIN', label: 'Fever & Pain' },
+    { value: 'MUSCLE_AND_JOINT', label: 'Muscle & Joint' },
+    { value: 'ANTIBIOTIC', label: 'Antibiotics' },
+    { value: 'ANTIVIRAL', label: 'Antivirals' },
+    { value: 'ANTIFUNGAL', label: 'Antifungals' },
+    { value: 'DIGESTIVE', label: 'Digestive' },
+    { value: 'SKIN', label: 'Skin & Dermatology' },
+    { value: 'WOUND_CARE', label: 'Wound Care' },
+    { value: 'ALLERGY', label: 'Allergy' },
+    { value: 'EYE_AND_EAR', label: 'Eye & Ear' },
+    { value: 'DIABETES', label: 'Diabetes' },
+    { value: 'HYPERTENSION', label: 'Hypertension' },
+    { value: 'CARDIAC', label: 'Cardiac' },
+    { value: 'THYROID', label: 'Thyroid' },
+    { value: 'ANXIETY_AND_SLEEP', label: 'Anxiety & Sleep' },
+    { value: 'URINARY', label: 'Urinary' },
+    { value: 'VITAMINS_AND_SUPPLEMENTS', label: 'Vitamins & Supplements' },
+    { value: 'ORAL_AND_DENTAL', label: 'Oral & Dental' },
+    { value: 'OTHER', label: 'Other' }
+  ];
 
   // Sorting
   sortBy: 'medicineName' | 'stock' | 'dateOfExpiration' | 'price' = 'medicineName';
@@ -99,7 +125,7 @@ export class MedicationManagementComponent implements OnInit {
 
   private buildForms(): void {
     this.medicineForm = this.fb.group({
-      medicineName: [''],
+      medicineName: ['', Validators.required],
       description: [''],
       dosage: [''],
       price: [null, [Validators.required, Validators.min(0)]],
@@ -107,8 +133,9 @@ export class MedicationManagementComponent implements OnInit {
       minStockAlert: [10, [Validators.required, Validators.min(0)]],
       dateOfExpiration: ['', Validators.required],
       form: ['', Validators.required],
-      activeIngredient: ['', Validators.required],
-      category: ['', Validators.required]
+      activeIngredient: [''],
+      category: ['', Validators.required],
+      prescriptionRequired: [false]
     });
 
     this.restockForm = this.fb.group({
@@ -146,6 +173,10 @@ export class MedicationManagementComponent implements OnInit {
       list = list.filter(m => m.stock < m.minStockAlert);
     } else if (this.activeTab === 'expired') {
       list = list.filter(m => this.isExpired(m));
+    }
+
+    if (this.selectedCategory !== 'all') {
+      list = list.filter(m => m.category === this.selectedCategory);
     }
 
     if (this.searchQuery.trim()) {
@@ -223,57 +254,51 @@ export class MedicationManagementComponent implements OnInit {
 
     this.ocrService.scanMedicine(file).subscribe({
       next: (result) => {
-        this.isScanning = false;
-        this.scannedSuccessfully = true;
-        // Enable fields before patching so values are accepted
-        this.medicineForm.get('medicineName')?.enable();
-        this.medicineForm.get('dosage')?.enable();
-        this.medicineForm.get('form')?.enable();
-        this.medicineForm.get('activeIngredient')?.enable();
-        this.medicineForm.patchValue({
-          medicineName: result.medicineName || '',
-          dosage: result.dosage || '',
-          description: result.description || '',
-          form: (result.form || '').toUpperCase(),
-          activeIngredient: result.activeIngredient || '',
-          category: result.category || ''
+        this.ngZone.run(() => {
+          this.isScanning = false;
+          this.scannedSuccessfully = true;
+
+          // Use setTimeout to ensure Angular has rendered the *ngIf blocks
+          setTimeout(() => {
+            // Enable fields before patching so values are accepted
+            this.medicineForm.get('medicineName')?.enable();
+            this.medicineForm.get('dosage')?.enable();
+            this.medicineForm.get('form')?.enable();
+            this.medicineForm.get('activeIngredient')?.enable();
+            this.medicineForm.get('category')?.enable();
+
+            this.medicineForm.patchValue({
+              medicineName: result.medicineName || '',
+              dosage: result.dosage || '',
+              description: result.description || '',
+              form: result.form || '',
+              activeIngredient: result.activeIngredient || '',
+              category: result.category || ''
+            });
+
+            // Lock only the fields that were successfully extracted by the AI
+            if (result.medicineName) this.medicineForm.get('medicineName')?.disable();
+            if (result.dosage) this.medicineForm.get('dosage')?.disable();
+            if (result.form) this.medicineForm.get('form')?.disable();
+            if (result.activeIngredient) this.medicineForm.get('activeIngredient')?.disable();
+            if (result.category) this.medicineForm.get('category')?.disable();
+
+            this.scannedForm = result.form || '';
+            this.scannedActiveIngredient = result.activeIngredient || '';
+          }, 50);
         });
-
-        // Enable ALL scan fields first so user can fill any the OCR missed
-        this.medicineForm.get('medicineName')?.enable();
-        this.medicineForm.get('dosage')?.enable();
-        this.medicineForm.get('form')?.enable();
-        this.medicineForm.get('activeIngredient')?.enable();
-        this.medicineForm.get('category')?.enable();
-
-        // Then lock only the ones OCR successfully filled
-        if (result.medicineName) {
-          this.medicineForm.get('medicineName')?.disable();
-        }
-        if (result.dosage) {
-          this.medicineForm.get('dosage')?.disable();
-        }
-        if (result.form) {
-          this.medicineForm.get('form')?.disable();
-        }
-        if (result.activeIngredient) {
-          this.medicineForm.get('activeIngredient')?.disable();
-        }
-        if (result.category) {
-          this.medicineForm.get('category')?.disable();
-        }
-        this.scannedForm = result.form || '';
-        this.scannedActiveIngredient = result.activeIngredient || '';
       },
-      error: () => {
-        this.isScanning = false;
-        this.scanError = 'Scan failed. Please try again or fill manually.';
-        // Enable all fields so user can fill manually
-        this.medicineForm.get('medicineName')?.enable();
-        this.medicineForm.get('dosage')?.enable();
-        this.medicineForm.get('form')?.enable();
-        this.medicineForm.get('activeIngredient')?.enable();
-        this.medicineForm.get('category')?.enable();
+      error: (err) => {
+        this.ngZone.run(() => {
+          console.error('Scan Error:', err);
+          this.isScanning = false;
+          this.scanError = 'Scan failed. Please try again or fill manually.';
+          this.medicineForm.get('medicineName')?.enable();
+          this.medicineForm.get('dosage')?.enable();
+          this.medicineForm.get('form')?.enable();
+          this.medicineForm.get('activeIngredient')?.enable();
+          this.medicineForm.get('category')?.enable();
+        });
       }
     });
   }
@@ -307,6 +332,7 @@ export class MedicationManagementComponent implements OnInit {
   clearSearch(): void { this.searchQuery = ''; this.currentPage = 1; }
   onSearchChange(): void { this.currentPage = 1; }
   onTabChange(tab: FilterTab): void { this.activeTab = tab; this.currentPage = 1; }
+  onCategoryFilterChange(): void { this.currentPage = 1; }
 
   setSort(field: 'medicineName' | 'stock' | 'dateOfExpiration'): void {
     if (this.sortBy === field) {
@@ -383,7 +409,7 @@ export class MedicationManagementComponent implements OnInit {
     this.medicineForm.reset({
       medicineName: '', description: '', dosage: '',
       price: null, stock: null, minStockAlert: 10, dateOfExpiration: '',
-      form: '', activeIngredient: ''
+      form: '', activeIngredient: '', prescriptionRequired: false
     });
     this.medicineForm.markAsUntouched();
     this.medicineForm.markAsPristine();
@@ -412,10 +438,11 @@ export class MedicationManagementComponent implements OnInit {
       this.medicineForm.get('dosage')?.enable();
       this.medicineForm.get('form')?.enable();
       this.medicineForm.get('activeIngredient')?.enable();
+      this.medicineForm.get('category')?.enable();
       this.medicineForm.reset({
         medicineName: '', description: '', dosage: '',
         price: null, stock: null, minStockAlert: 10, dateOfExpiration: '',
-        form: '', activeIngredient: ''
+        form: '', activeIngredient: '', category: ''
       });
       this.medicineForm.markAsUntouched();
     } else {
@@ -424,10 +451,11 @@ export class MedicationManagementComponent implements OnInit {
       this.medicineForm.get('dosage')?.enable();
       this.medicineForm.get('form')?.enable();
       this.medicineForm.get('activeIngredient')?.enable();
+      this.medicineForm.get('category')?.enable();
       this.medicineForm.reset({
         medicineName: '', description: '', dosage: '',
         price: null, stock: null, minStockAlert: 10, dateOfExpiration: '',
-        form: '', activeIngredient: ''
+        form: '', activeIngredient: '', category: ''
       });
       this.medicineForm.markAsUntouched();
       this.lockScanFields();
@@ -439,6 +467,7 @@ export class MedicationManagementComponent implements OnInit {
     this.medicineForm.get('dosage')?.disable();
     this.medicineForm.get('form')?.disable();
     this.medicineForm.get('activeIngredient')?.disable();
+    this.medicineForm.get('category')?.disable();
   }
 
   openEditModal(med: Medicine): void {
@@ -462,7 +491,8 @@ export class MedicationManagementComponent implements OnInit {
       dateOfExpiration: expDate,
       form: med.form || '',
       activeIngredient: med.activeIngredient || '',
-      category: med.category || ''
+      category: med.category || '',
+      prescriptionRequired: med.prescriptionRequired || false
     });
     this.medicineForm.markAsUntouched();
     this.medicineForm.markAsPristine();
@@ -555,7 +585,7 @@ export class MedicationManagementComponent implements OnInit {
       return;
     }
 
-    if (this.activeModal === 'add' && this.selectedFiles.length === 0) {
+    if (this.activeModal === 'add' && this.inputMode === 'manual' && this.selectedFiles.length === 0) {
       this.formError = 'Please select at least one image for the new medicine.';
       return;
     }
@@ -599,7 +629,8 @@ export class MedicationManagementComponent implements OnInit {
       activeIngredient: raw.activeIngredient || null,
       form: raw.form ? raw.form.toUpperCase() : null,
       category: raw.category || null,
-      pharmacyId: parseInt(localStorage.getItem('pharmacyId') || '1', 10) // Link to pharmacy to prevent 500 error
+      prescriptionRequired: raw.prescriptionRequired || false,
+      pharmacyId: parseInt(localStorage.getItem('pharmacyId') || '1', 10)
     };
 
     console.log('Sending medicine payload:', JSON.stringify(payload, null, 2));
@@ -660,6 +691,7 @@ export class MedicationManagementComponent implements OnInit {
       form: existing.form || null,
       activeIngredient: existing.activeIngredient || '',
       category: existing.category || null,
+      prescriptionRequired: existing.prescriptionRequired || false,
       pharmacyId: 1
     };
 
@@ -701,6 +733,7 @@ export class MedicationManagementComponent implements OnInit {
       activeIngredient: med.activeIngredient || '',
       form: med.form || null,
       category: med.category || null,
+      prescriptionRequired: med.prescriptionRequired || false,
       pharmacyId: 1
     };
 

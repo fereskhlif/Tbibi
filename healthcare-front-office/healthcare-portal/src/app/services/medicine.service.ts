@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface MedicineRequest {
   medicineName: string;
@@ -19,7 +20,7 @@ export interface MedicineRequest {
 })
 export class MedicineService {
 
-  private apiUrl = 'http://localhost:8088/api/medicines'; // ← FIX PORT
+  private apiUrl = `${environment.baseUrl}/api/medicines`;
 
   constructor(private http: HttpClient) { }
 

@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -5,7 +6,7 @@ import { OrderRequest, OrderResponse } from '../models/order.model';
 
 @Injectable({ providedIn: 'root' })
 export class PatientOrderService {
-    private apiUrl = 'http://localhost:8088/api/orders';
+    private apiUrl = `${environment.baseUrl}/api/orders`;
 
     constructor(private http: HttpClient) { }
 
@@ -49,6 +50,18 @@ export class PatientOrderService {
         if (sortType) params += `&sortType=${sortType}`;
 
         return this.http.get<Page<OrderResponse>>(`${this.apiUrl}/user/${userId}/paged${params}`, { headers: this.getHeaders() });
+    }
+
+    getPatientSpendingAnalytics(userId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/patient/${userId}/analytics`, { headers: this.getHeaders() });
+    }
+
+    getMedicineHistory(userId: number, medicineName: string): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/patient/${userId}/medicine-history?medicineName=${encodeURIComponent(medicineName)}`, { headers: this.getHeaders() });
+    }
+
+    getFullMedicineHistory(userId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/patient/${userId}/medicine-history/all`, { headers: this.getHeaders() });
     }
 }
 

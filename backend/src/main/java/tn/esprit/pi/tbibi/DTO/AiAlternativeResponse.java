@@ -8,13 +8,10 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class AiAlternativeResponse {
     private List<AiAlternativeItem> alternatives;
     private List<String> logs;

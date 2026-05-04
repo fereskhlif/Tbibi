@@ -285,9 +285,7 @@ export class MedicineCatalogComponent implements OnInit {
         }
     }
 
-    goBack(): void {
-        this.router.navigate(['/patient/pharmacy-list']);
-    }
+
 
     getFirstImage(med: Medicine): string {
         return med.imageUrls && med.imageUrls.length > 0

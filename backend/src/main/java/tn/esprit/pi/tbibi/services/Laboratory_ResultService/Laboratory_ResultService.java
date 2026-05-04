@@ -365,17 +365,17 @@ public class Laboratory_ResultService implements ILaboratory_ResultService {
     // ✅ JPQL COMPLEXE - Statistiques par patient pour un laboratoire
     @Override
     public List<PatientLabStatisticsDTO> getPatientStatistics(Integer labUserId) {
-        List<Object[]> results = labRepo.getPatientStatisticsByLaboratory(labUserId);
+        List<Object[]> results = labRepo.getAllPatientStatistics();
         
         return results.stream()
                 .map(row -> {
                     Integer patientId = (Integer) row[0];
                     String patientName = (String) row[1];
                     String patientEmail = (String) row[2];
-                    Long totalTests = (Long) row[3];
-                    Long completedTests = (Long) row[4];
-                    Long pendingTests = (Long) row[5];
-                    Long urgentTests = (Long) row[6];
+                    Long totalTests = row[3] != null ? ((Number) row[3]).longValue() : 0L;
+                    Long completedTests = row[4] != null ? ((Number) row[4]).longValue() : 0L;
+                    Long pendingTests = row[5] != null ? ((Number) row[5]).longValue() : 0L;
+                    Long urgentTests = row[6] != null ? ((Number) row[6]).longValue() : 0L;
                     
                     // Calculer le taux de complétion
                     Double completionRate = totalTests > 0 

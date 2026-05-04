@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface LabResult {
   labId: number;
@@ -25,7 +26,6 @@ export class DoctorLabResultsComponent implements OnInit {
   loading = true;
   searchTerm = '';
   selectedStatus = 'all';
-  
   // Modal de prescription
   showPrescribeModal = false;
   submitting = false;
@@ -36,13 +36,13 @@ export class DoctorLabResultsComponent implements OnInit {
     priority: 'Normal',
     requestNotes: ''
   };
-  
-  private apiUrl = 'http://localhost:8088/api';
+
+  private apiUrl = `${environment.baseUrl}/api`;
   private get doctorId(): number {
     return Number(localStorage.getItem('userId') || 0);
   }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
     this.loadResults();
@@ -80,7 +80,7 @@ export class DoctorLabResultsComponent implements OnInit {
   filterResults(): void {
     this.filteredResults = this.results.filter(result => {
       const matchesSearch = result.testName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                           result.patientName.toLowerCase().includes(this.searchTerm.toLowerCase());
+        result.patientName.toLowerCase().includes(this.searchTerm.toLowerCase());
       const matchesStatus = this.selectedStatus === 'all' || result.status === this.selectedStatus;
       return matchesSearch && matchesStatus;
     });
@@ -111,10 +111,10 @@ export class DoctorLabResultsComponent implements OnInit {
   formatDate(dateString: string): string {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   }
 

@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface PaymentRequest {
     paymentDate: string;
@@ -19,7 +20,7 @@ export interface PaymentResponse {
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-    private apiUrl = 'http://localhost:8089/api/payments';
+    private apiUrl = `${environment.baseUrl}/api/payments`;
 
     constructor(private http: HttpClient) { }
 
@@ -41,5 +42,9 @@ export class PaymentService {
 
     delete(id: number): Observable<void> {
         return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    }
+
+    createCheckoutSession(request: any): Observable<{ sessionUrl: string }> {
+        return this.http.post<{ sessionUrl: string }>(`${this.apiUrl}/create-checkout-session`, request);
     }
 }

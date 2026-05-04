@@ -79,6 +79,13 @@ export class BookAppointmentComponent implements OnInit {
   physioWeekStart: Date | null = null;
   physioSelectedDate = '';
   physioShowAllSlots = false;
+  // Physio verification (OTP)
+  physioVerificationId = '';
+  physioVerificationCode = '';
+  physioSendingCode = false;
+  physioVerificationError = '';
+  physioConfirming = false;
+  physioConfirmError = '';
 
   readonly therapyTypes = [
     'Kinésithérapie générale',
@@ -106,6 +113,13 @@ export class BookAppointmentComponent implements OnInit {
   labWeekStart: Date | null = null;
   labSelectedDate = '';
   labShowAllSlots = false;
+  // Lab verification (OTP)
+  labVerificationId = '';
+  labVerificationCode = '';
+  labSendingCode = false;
+  labVerificationError = '';
+  labConfirming = false;
+  labConfirmError = '';
 
   readonly analysisTypes = [
     'Bilan sanguin complet',
@@ -209,14 +223,14 @@ export class BookAppointmentComponent implements OnInit {
     this.labAnalysisTypesList = stored ? JSON.parse(stored) : this.analysisTypes;
   }
 
-  private _initWeek(grouped: {date:string}[], setDate: (d:string)=>void, setWeek: (w:Date)=>void) {
+  private _initWeek(grouped: { date: string }[], setDate: (d: string) => void, setWeek: (w: Date) => void) {
     if (!grouped.length) return;
     setDate(grouped[0].date);
     const first = new Date(grouped[0].date + 'T00:00:00');
     const day = first.getDay();
     const diff = first.getDate() - day + (day === 0 ? -6 : 1);
     const weekStart = new Date(first.getFullYear(), first.getMonth(), diff);
-    const today = new Date(); today.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     setWeek(weekStart < today ? today : weekStart);
   }
 
@@ -232,42 +246,42 @@ export class BookAppointmentComponent implements OnInit {
     const map = new Map<string, ScheduleSlot[]>();
     for (const s of slots) { const a = map.get(s.date) ?? []; a.push(s); map.set(s.date, a); }
     return Array.from(map.entries())
-      .sort(([a],[b]) => a.localeCompare(b))
-      .map(([date, ss]) => ({ date, slots: ss.sort((x,y) => this.slotTime(x).localeCompare(this.slotTime(y))) }));
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, ss]) => ({ date, slots: ss.sort((x, y) => this.slotTime(x).localeCompare(this.slotTime(y))) }));
   }
 
-  weekDaysFor(weekStart: Date | null, grouped: {date:string;slots:ScheduleSlot[]}[]) {
+  weekDaysFor(weekStart: Date | null, grouped: { date: string; slots: ScheduleSlot[] }[]) {
     if (!weekStart) return [];
     const days = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i);
-      const ds = [d.getFullYear(), (d.getMonth()+1).toString().padStart(2,'0'), d.getDate().toString().padStart(2,'0')].join('-');
+      const ds = [d.getFullYear(), (d.getMonth() + 1).toString().padStart(2, '0'), d.getDate().toString().padStart(2, '0')].join('-');
       const g = grouped.find(x => x.date === ds);
       days.push({ date: ds, hasSlots: !!g, slots: g ? g.slots : [] });
     }
     return days;
   }
 
-  shiftWeek(weekStart: Date | null, dir: 1|-1): Date | null {
+  shiftWeek(weekStart: Date | null, dir: 1 | -1): Date | null {
     if (!weekStart) return null;
     const d = new Date(weekStart);
     d.setDate(d.getDate() + dir * 7);
-    if (dir === -1) { const t = new Date(); t.setHours(0,0,0,0); return d < t ? t : d; }
+    if (dir === -1) { const t = new Date(); t.setHours(0, 0, 0, 0); return d < t ? t : d; }
     return d;
   }
 
   canGoPrevFor(weekStart: Date | null): boolean {
     if (!weekStart) return false;
-    const t = new Date(); t.setHours(0,0,0,0);
+    const t = new Date(); t.setHours(0, 0, 0, 0);
     return weekStart > t;
   }
 
   monthYearFor(weekStart: Date | null, selDate: string): string {
     const target = selDate || (weekStart ? weekStart.toISOString().split('T')[0] : null);
-    if (!target) { const n = new Date(); return n.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}); }
+    if (!target) { const n = new Date(); return n.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }); }
     const d = new Date(target + 'T00:00:00');
-    const m = d.toLocaleDateString('fr-FR',{month:'long'}); 
-    return m.charAt(0).toUpperCase()+m.slice(1)+' '+d.getFullYear();
+    const m = d.toLocaleDateString('fr-FR', { month: 'long' });
+    return m.charAt(0).toUpperCase() + m.slice(1) + ' ' + d.getFullYear();
   }
 
   submitPhysioBooking() {
@@ -277,6 +291,7 @@ export class BookAppointmentComponent implements OnInit {
     this.svc.bookPhysio({
       patientId: this.patientId,
       physiotherapistId: this.selectedPhysio.userId,
+      scheduleId: this.selectedPhysioSlot.scheduleId,
       therapyType: this.selectedTherapyType,
       reasonForVisit: this.physioReason,
       preferredDate: this.selectedPhysioSlot.date,
@@ -289,6 +304,56 @@ export class BookAppointmentComponent implements OnInit {
     });
   }
 
+  /** Step 1→2: send OTP for physio verification */
+  sendPhysioVerificationCode() {
+    if (!this.selectedPhysio || !this.selectedPhysioSlot || !this.patientName.trim() || !this.patientEmail.trim()) return;
+    this.physioSendingCode = true;
+    this.physioVerificationError = '';
+    const req = {
+      userId: this.patientId,
+      patientName: this.patientName.trim(),
+      patientEmail: this.patientEmail.trim(),
+      patientPhone: this.patientPhone.trim(),
+      scheduleId: this.selectedPhysioSlot.scheduleId,
+      doctor: this.selectedPhysio.name,
+      specialty: this.selectedPhysio.specialty || 'Kinésithérapie',
+      reasonForVisit: this.selectedTherapyType
+    };
+    this.svc.sendVerification(req).subscribe({
+      next: r => {
+        this.physioVerificationId = r.verificationId;
+        this.physioStep = 2;
+        this.physioSendingCode = false;
+        this.physioVerificationCode = '';
+        this.physioConfirmError = '';
+      },
+      error: e => {
+        this.physioVerificationError = e?.error?.message || 'Erreur lors de l\'envoi du code.';
+        this.physioSendingCode = false;
+      }
+    });
+  }
+
+  /** Step 2→3: validate OTP then book physio */
+  validatePhysioCode() {
+    if (!this.physioVerificationCode || this.physioVerificationCode.length !== 4) {
+      this.physioConfirmError = 'Veuillez saisir le code à 4 chiffres.';
+      return;
+    }
+    this.physioConfirming = true;
+    this.physioConfirmError = '';
+    this.svc.validateCode(this.physioVerificationId, this.physioVerificationCode).subscribe({
+      next: () => {
+        this.physioConfirming = false;
+        this.submitPhysioBooking();
+      },
+      error: e => {
+        this.physioConfirmError = e?.error?.message || 'Code invalide ou expiré.';
+        this.physioConfirming = false;
+      }
+    });
+  }
+
   submitLabBooking() {
     if (!this.selectedLab || !this.selectedAnalysisType || !this.selectedLabSlot) return;
     this.labSaving = true;
@@ -296,6 +361,7 @@ export class BookAppointmentComponent implements OnInit {
     this.svc.bookLab({
       patientId: this.patientId,
       laboratoryId: this.selectedLab.userId,
+      scheduleId: this.selectedLabSlot.scheduleId,
       analysisType: this.selectedAnalysisType,
       notes: this.labNotes,
       preferredDate: this.selectedLabSlot.date,
@@ -305,6 +371,56 @@ export class BookAppointmentComponent implements OnInit {
     }).subscribe({
       next: res => { this.labSuccess = res; this.labSaving = false; this.labStep = 3; },
       error: err => { this.labError = err?.error?.message || 'Erreur lors de la réservation.'; this.labSaving = false; }
+    });
+  }
+
+  /** Step 1→2: send OTP for lab verification */
+  sendLabVerificationCode() {
+    if (!this.selectedLab || !this.selectedLabSlot || !this.patientName.trim() || !this.patientEmail.trim()) return;
+    this.labSendingCode = true;
+    this.labVerificationError = '';
+    const req = {
+      userId: this.patientId,
+      patientName: this.patientName.trim(),
+      patientEmail: this.patientEmail.trim(),
+      patientPhone: this.patientPhone.trim(),
+      scheduleId: this.selectedLabSlot.scheduleId,
+      doctor: this.selectedLab.name,
+      specialty: 'Laboratoire',
+      reasonForVisit: this.selectedAnalysisType
+    };
+    this.svc.sendVerification(req).subscribe({
+      next: r => {
+        this.labVerificationId = r.verificationId;
+        this.labStep = 2;
+        this.labSendingCode = false;
+        this.labVerificationCode = '';
+        this.labConfirmError = '';
+      },
+      error: e => {
+        this.labVerificationError = e?.error?.message || 'Erreur lors de l\'envoi du code.';
+        this.labSendingCode = false;
+      }
+    });
+  }
+
+  /** Step 2→3: validate OTP then book lab */
+  validateLabCode() {
+    if (!this.labVerificationCode || this.labVerificationCode.length !== 4) {
+      this.labConfirmError = 'Veuillez saisir le code à 4 chiffres.';
+      return;
+    }
+    this.labConfirming = true;
+    this.labConfirmError = '';
+    this.svc.validateCode(this.labVerificationId, this.labVerificationCode).subscribe({
+      next: () => {
+        this.labConfirming = false;
+        this.submitLabBooking();
+      },
+      error: e => {
+        this.labConfirmError = e?.error?.message || 'Code invalide ou expiré.';
+        this.labConfirming = false;
+      }
     });
   }
 

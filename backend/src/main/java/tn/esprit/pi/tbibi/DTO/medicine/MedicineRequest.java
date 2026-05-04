@@ -46,4 +46,6 @@ public class MedicineRequest {
     String activeIngredient;
 
     MedicineCategory category;
+
+    boolean prescriptionRequired;
 }

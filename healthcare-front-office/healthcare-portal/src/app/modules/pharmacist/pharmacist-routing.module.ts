@@ -6,7 +6,7 @@ import { OrderValidationComponent } from './pages/order-validation/order-validat
 import { MedicationManagementComponent } from './pages/medication-management/medication-management.component';
 import { InventoryManagementComponent } from './pages/inventory-management/inventory-management.component';
 import { PrescriptionReceivingComponent } from './pages/prescription-receiving/prescription-receiving.component';
-import { DrugAvailabilityComponent } from './pages/drug-availability/drug-availability.component';
+
 import { OrderManagementComponent } from './pages/order-management/order-management.component';
 
 const routes: Routes = [
@@ -16,7 +16,6 @@ const routes: Routes = [
     { path: 'orders', component: OrderManagementComponent },
     { path: 'medications', component: MedicationManagementComponent },
     { path: 'prescriptions', component: PrescriptionReceivingComponent },
-    { path: 'availability', component: DrugAvailabilityComponent },
     { path: 'inventory', component: InventoryManagementComponent },
     {
         path: 'forum',

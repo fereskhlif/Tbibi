@@ -10,7 +10,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CommentResponse {
-
+    private boolean expert;
+    private String roleName;
     private Long commentId;
     private String comment;
     private LocalDateTime commentDate;

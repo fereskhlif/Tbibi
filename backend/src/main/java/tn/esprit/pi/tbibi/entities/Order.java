@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"orderLines", "pharmacy", "user"})  // Exclude relationships
+@ToString(exclude = { "orderLines", "pharmacy", "user" }) // Exclude relationships
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "orders")
 public class Order {
@@ -22,6 +22,12 @@ public class Order {
     Long orderId;
     Date deliveryDate;
     float totalAmount;
+    String deliveryMethod;
+    String deliveryAddress;
+    String paymentMethod;
+
+    @Column(columnDefinition = "LONGTEXT")
+    String prescriptionImage;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", length = 20)

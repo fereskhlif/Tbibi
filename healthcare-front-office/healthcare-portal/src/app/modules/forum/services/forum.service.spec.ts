@@ -15,7 +15,7 @@ describe('ForumService', () => {
     let service: ForumService;
     let httpMock: HttpTestingController;
 
-    const apiUrl = 'http://localhost:8088/api/forum';
+    const apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/forum';
 
     // ══════════════════════════════════════════════════════════════════
     // MOCK DATA

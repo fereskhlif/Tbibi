@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -14,7 +15,7 @@ export interface PaymentHistoryResponse {
 
 @Injectable({ providedIn: 'root' })
 export class PaymentHistoryService {
-    private apiUrl = 'http://localhost:8089/api/payment-histories';
+    private apiUrl = `${environment.analyticsUrl}/api/payment-histories`;
 
     constructor(private http: HttpClient) { }
 

@@ -1,3 +1,4 @@
+import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { DoctorAppointmentService } from '../../services/doctor-appointment.service';
 import { HttpClient } from '@angular/common/http';
@@ -544,7 +545,7 @@ export class DoctorAllAppointmentsComponent implements OnInit {
     // Fetch doctor specialty if not yet loaded
     if (!this.doctorSpecialty) {
       const token = localStorage.getItem('token') || localStorage.getItem('TokenUserConnect') || '';
-      this.http.get<any>('http://localhost:8088/api/users/profile', {
+      this.http.get<any>(`${environment.baseUrl}/api/users/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       }).subscribe({
         next: profile => {
@@ -563,7 +564,7 @@ export class DoctorAllAppointmentsComponent implements OnInit {
     if (this.patientSearch.trim().length < 2) { this.patientResults = []; return; }
     this.searchTimer = setTimeout(() => {
       this.http.get<any[]>(
-        `http://localhost:8088/api/users/patients/search?name=${encodeURIComponent(this.patientSearch)}`
+        `${environment.baseUrl}/api/users/patients/search?name=${encodeURIComponent(this.patientSearch)}`
       ).subscribe({
         next: res => {
           this.patientResults = res.map(u => ({
@@ -595,18 +596,18 @@ export class DoctorAllAppointmentsComponent implements OnInit {
     this.newApptError = '';
 
     const payload = {
-      doctorId:      this.doctorId,
-      patientId:     this.selectedPatient.userId,
-      date:          this.newApptDate,
-      startTime:     this.newApptTime,
-      specialty:     this.doctorSpecialty || '',
+      doctorId: this.doctorId,
+      patientId: this.selectedPatient.userId,
+      date: this.newApptDate,
+      startTime: this.newApptTime,
+      specialty: this.doctorSpecialty || '',
       reasonForVisit: this.newApptReason
     };
 
     console.log('[NewAppt] Submitting payload:', payload);
 
     this.http.post<AppointmentResponse>(
-      'http://localhost:8088/appointement/doctor-initiated', payload
+      `${environment.baseUrl}/appointement/doctor-initiated`, payload
     ).subscribe({
       next: created => {
         console.log('[NewAppt] Created:', created);
