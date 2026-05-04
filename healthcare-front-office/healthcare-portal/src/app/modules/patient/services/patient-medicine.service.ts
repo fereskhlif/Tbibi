@@ -1,13 +1,14 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 import { Medicine, Page } from '../models/medicine.model';
 import { Pharmacy } from '../models/pharmacy.model';
 
 @Injectable({ providedIn: 'root' })
 export class PatientMedicineService {
-    private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/medicines';
-    private pharmacyUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/pharmacies';
+    private apiUrl = `${environment.baseUrl}/api/medicines`;
+    private pharmacyUrl = `${environment.baseUrl}/api/pharmacies`;
 
     constructor(private http: HttpClient) { }
 

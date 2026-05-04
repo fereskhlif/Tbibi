@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
@@ -314,7 +315,7 @@ export class DiseaseRiskComponent implements OnInit {
     const token = localStorage.getItem('TokenUserConnect') || localStorage.getItem('token');
     if (!token) return;
 
-    this.http.get<any>('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/users/profile', {
+    this.http.get<any>(`${environment.baseUrl}/api/users/profile`, {
       headers: { Authorization: `Bearer ${token}` }
     }).subscribe({
       next: (profile) => {
@@ -345,7 +346,7 @@ export class DiseaseRiskComponent implements OnInit {
       return;
     }
 
-    this.http.get<any[]>(`https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic/patient/${patientId}`)
+    this.http.get<any[]>(`${environment.baseUrl}/api/chronic/patient/${patientId}`)
       .subscribe({
         next: (records) => {
           this.computeAverages(records || []);
@@ -403,7 +404,7 @@ export class DiseaseRiskComponent implements OnInit {
     };
 
     this.http.post<PredictionResponse>(
-      'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/disease-risk/predict', body
+      `${environment.baseUrl}/api/disease-risk/predict`, body
     ).subscribe({
       next: r => { this.result = r; this.predicting = false; },
       error: e => {

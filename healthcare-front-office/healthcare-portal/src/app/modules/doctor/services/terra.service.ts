@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from 'environments/environment';
 
-const API = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/terra';
+const API = `${environment.baseUrl}/api/terra`;
 
 export interface TerraVitals {
   patientId: number;

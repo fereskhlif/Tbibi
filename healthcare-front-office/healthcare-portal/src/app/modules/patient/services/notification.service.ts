@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface NotificationDTO {
   patientId: number;
@@ -33,7 +34,7 @@ export interface Notification {
 })
 export class NotificationService {
 
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/notifications';
+  private apiUrl = `${environment.baseUrl}/api/notifications`;
   private stompClient!: Client;
   private notificationSubject = new Subject<NotificationDTO>();
   public notifications$ = this.notificationSubject.asObservable();
@@ -75,7 +76,7 @@ export class NotificationService {
   // ✅ WebSocket (temps réel)
   connect(patientId: number): void {
     this.stompClient = new Client({
-      webSocketFactory: () => new SockJS('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/ws'),
+      webSocketFactory: () => new SockJS(`${environment.baseUrl}/ws`),
       reconnectDelay: 5000,
       onConnect: () => {
         console.log('✅ WebSocket connecté pour patient:', patientId);

@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface LoginRequest {
   email: string;
@@ -25,7 +26,7 @@ export interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly baseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/auth';
+  private readonly baseUrl = `${environment.baseUrl}/auth`;
 
   constructor(private http: HttpClient) { }
 

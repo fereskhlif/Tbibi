@@ -46,7 +46,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'appointments', icon: 'calendar', label: 'Appointments' },
     //{ path: 'doctor-schedules', icon: 'users', label: 'Doctor Schedules' },
     { path: 'prescriptions', icon: 'pill', label: 'Prescriptions' },
-    { path: 'medicine-catalog', icon: 'shopping-bag', label: 'Pharmacy Store' },
+    { path: 'pharmacy-list', icon: 'shopping-bag', label: 'Pharmacy Stores' },
     { path: 'my-orders', icon: 'package', label: 'My Orders' },
     { path: 'lab-results', icon: 'microscope', label: 'Lab Results' },
     { path: 'reminders', icon: 'clock', label: 'Reminders' },
@@ -94,6 +94,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { path: 'orders', icon: 'shopping-bag', label: 'Order Validation' },
     { path: 'medications', icon: 'pill', label: 'Medication Management' },
     { path: 'prescriptions', icon: 'file-text', label: 'Prescription Receiving' },
+    { path: 'availability', icon: 'search', label: 'Drug Availability' },
     { path: 'forum', icon: 'users', label: 'Community Forum' }
   ];
 
@@ -113,11 +114,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   ];
 
   private adminNav: NavItem[] = [
-    { path: 'dashboard', icon: 'layout-dashboard', label: 'Admin Dashboard' },
-    { path: 'users', icon: 'users', label: 'Users' },
-    { path: 'approvals', icon: 'check-circle', label: 'Approvals' },
+    { path: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard Admin' },
+    { path: 'users', icon: 'users', label: 'Utilisateurs' },
+    { path: 'approvals', icon: 'check-circle', label: 'Approbations' },
     { path: 'monitoring', icon: 'activity', label: 'Monitoring' },
-    { path: 'forum', icon: 'message-square', label: 'Forum Moderation' }
+    //{ path: 'settings', icon: 'settings', label: 'Configuration' }
   ];
 
   constructor(
@@ -233,7 +234,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         break;
       case 'admin':
         this.navItems = this.adminNav;
-        this.floatingButton = { path: 'approvals', bgClass: 'bg-green-600 hover:bg-green-700', title: 'Pending', count: 5 };
+        this.floatingButton = { path: 'approvals', bgClass: 'bg-emerald-600 hover:bg-emerald-700', title: 'En Attente', count: 5 };
         break;
     }
   }

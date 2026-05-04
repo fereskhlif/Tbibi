@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit, NgZone } from '@angular/core';
 import { UserService, UserProfileDTO } from '../../../../services/user.service';
 import { AuthService } from '../../../../shared/services/auth.service';
@@ -145,7 +146,7 @@ import { DoctorAppointmentService } from '../../services/doctor-appointment.serv
                   <div class="form-group">
                     <label>New Password</label>
                     <input type="password" [(ngModel)]="newPassword" placeholder="Enter new password" />
-                    
+
                     <!-- Strength Meter -->
                     <div class="strength-meter" *ngIf="newPassword">
                       <div class="strength-bar" [style.width.%]="getPasswordStrength()" [style.background-color]="getStrengthColor()"></div>
@@ -355,7 +356,7 @@ export class DoctorProfileComponent implements OnInit {
     const pic = this.profile?.profilePicture;
     if (!pic) return '';
     if (pic.startsWith('http')) return pic;
-    return 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/' + pic;
+    return `${environment.baseUrl}/` + pic;
   }
 
   loadProfile() {

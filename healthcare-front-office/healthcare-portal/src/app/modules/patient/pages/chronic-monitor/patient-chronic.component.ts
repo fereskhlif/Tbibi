@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import {
   Component, OnInit, OnDestroy, AfterViewInit,
   ElementRef, ViewChild, ViewChildren, QueryList, ChangeDetectorRef
@@ -489,7 +490,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
       notes: `Simulator · scenario=${this.scenario}`,
       recordedAt: new Date().toISOString()
     };
-    this.http.post('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic', body)
+    this.http.post(`${environment.baseUrl}/api/chronic`, body)
       .subscribe({ error: () => { } });   // fire-and-forget
   }
 
@@ -567,7 +568,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
     if (!this.patientEmail) return;
     const display = v.type === 'BLOOD_PRESSURE' && val2 ? `${val}/${val2} ${v.unit}` : `${val} ${v.unit}`;
     const msg = this.alertMsg(v.type, val);
-    this.http.post('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic/warn-email', {
+    this.http.post(`${environment.baseUrl}/api/chronic/warn-email`, {
       to: this.patientEmail, patientName: this.patientName,
       vitalType: v.label, value: display, message: msg
     }).subscribe({ error: () => { } });
@@ -672,7 +673,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
   loadHistory() {
     if (!this.patientId) return;
     this.historyLoading = true;
-    this.http.get<any[]>(`https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic/patient/${this.patientId}`)
+    this.http.get<any[]>(`${environment.baseUrl}/api/chronic/patient/${this.patientId}`)
       .subscribe({
         next: (data) => {
           // Sort oldest→newest for chart display
@@ -757,7 +758,7 @@ export class PatientChronicComponent implements OnInit, OnDestroy, AfterViewInit
   deleteAllHistory() {
     if (!this.patientId) return;
     if (!confirm('Delete ALL history readings from the database? This cannot be undone.')) return;
-    this.http.delete(`https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic/patient/${this.patientId}`)
+    this.http.delete(`${environment.baseUrl}/api/chronic/patient/${this.patientId}`)
       .subscribe({
         next: () => {
           // Clear local state

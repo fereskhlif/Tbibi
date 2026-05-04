@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { LaboratoryResultResponse, LaboratoryResultRequest } from '../../models/laboratory-result.model';
@@ -49,7 +50,7 @@ export class LaboratoryResultListComponent implements OnInit {
 
   statusOptions = ['Draft', 'Pending', 'In Progress', 'Completed', 'Validated'];
   allStatuses = ['All', 'Draft', 'Pending', 'In Progress', 'Completed', 'Validated']; // ← pour le ngFor du template
-  
+
   // ✅ NOUVEAU - Options de priorité
   priorityOptions = ['Normal', 'Urgent', 'Critical'];
   allPriorities = ['All', 'Normal', 'Urgent', 'Critical'];
@@ -68,7 +69,7 @@ export class LaboratoryResultListComponent implements OnInit {
     requestNotes: '' as string // ✅ NOUVEAU
   };
 
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
+  private apiUrl = `${environment.baseUrl}/api`;
 
   constructor(
     private service: LaboratoryResultService,
@@ -154,7 +155,7 @@ export class LaboratoryResultListComponent implements OnInit {
 
     // ✅ NOUVEAU - Filtre "Urgent Only"
     if (this.showUrgentOnly) {
-      list = list.filter(r => 
+      list = list.filter(r =>
         r.priority === 'Urgent' || r.priority === 'Critical'
       );
     }
@@ -187,21 +188,21 @@ export class LaboratoryResultListComponent implements OnInit {
       const priorityOrder = { 'Critical': 3, 'Urgent': 2, 'Normal': 1 };
       const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
       const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
-      
+
       if (bPriority !== aPriority) {
         return bPriority - aPriority;
       }
-      
+
       // Si même priorité, trier par date de demande (plus récent en premier)
       if (a.requestedAt && b.requestedAt) {
         return new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime();
       }
-      
+
       // Si pas de requestedAt, utiliser testDate
       if (a.testDate && b.testDate) {
         return new Date(b.testDate).getTime() - new Date(a.testDate).getTime();
       }
-      
+
       return 0;
     });
   }
@@ -281,7 +282,7 @@ export class LaboratoryResultListComponent implements OnInit {
 
   private saveResult(isDraft: boolean): void {
     const { testName, location, nameLabo, resultValue, status, testDate, laboratoryUserId } = this.formData;
-    
+
     // ✅ For draft, only require basic info
     if (isDraft) {
       if (!testName || !nameLabo) {
@@ -297,7 +298,7 @@ export class LaboratoryResultListComponent implements OnInit {
         return;
       }
     }
-    
+
     // ✅ Ensure laboratoryUserId is set (should be automatic, but double-check)
     if (!laboratoryUserId) {
       this.formData.laboratoryUserId = this.authService.getCurrentUserId();
@@ -331,8 +332,8 @@ export class LaboratoryResultListComponent implements OnInit {
 
     req$.subscribe({
       next: (_: LaboratoryResultResponse) => {
-        this.successMessage = isDraft 
-          ? 'Draft saved successfully!' 
+        this.successMessage = isDraft
+          ? 'Draft saved successfully!'
           : (this.isEditMode ? 'Result updated!' : 'Result created!');
         this.isSaving = false;
         this.showForm = false;
@@ -402,7 +403,7 @@ export class LaboratoryResultListComponent implements OnInit {
     const reportHtml = this.generateReportHtml(result);
     printWindow.document.write(reportHtml);
     printWindow.document.close();
-    
+
     // Auto print after a short delay
     setTimeout(() => {
       printWindow.print();
@@ -410,15 +411,15 @@ export class LaboratoryResultListComponent implements OnInit {
   }
 
   private generateReportHtml(result: LaboratoryResultResponse): string {
-    const currentDate = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', month: 'long', day: 'numeric' 
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric'
     });
-    
+
     // Parse result value to check for abnormal values
     const resultLines = result.resultValue?.split('\n') || [];
     const formattedResults = resultLines.map(line => {
-      const isAbnormal = line.toLowerCase().includes('high') || 
-                        line.toLowerCase().includes('low') || 
+      const isAbnormal = line.toLowerCase().includes('high') ||
+                        line.toLowerCase().includes('low') ||
                         line.toLowerCase().includes('abnormal');
       return `<div class="${isAbnormal ? 'abnormal' : 'normal'}">${line}</div>`;
     }).join('');

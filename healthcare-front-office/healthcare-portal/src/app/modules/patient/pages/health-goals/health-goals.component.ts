@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface HealthGoal {
   id?: number;
@@ -221,7 +222,7 @@ export class HealthGoalsComponent implements OnInit {
     frequencyPerWeek: undefined
   };
 
-  private readonly baseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/health-goals';
+  private readonly baseUrl = `${environment.baseUrl}/api/health-goals`;
 
   private get userId(): number {
     return Number(localStorage.getItem('userId') || 1);
@@ -244,7 +245,7 @@ export class HealthGoalsComponent implements OnInit {
 
   createGoal() {
     if (!this.newGoal.goalTitle.trim()) return;
-    
+
     // Create a strict payload
     const payload: any = { ...this.newGoal, userId: this.userId };
     if (!payload.targetDate) {

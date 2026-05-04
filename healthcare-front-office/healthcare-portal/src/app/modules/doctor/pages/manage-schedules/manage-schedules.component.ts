@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
@@ -349,7 +350,7 @@ export class ManageSchedulesComponent implements OnInit {
   excLoading = false;
   exceptions: DoctorExceptionResponse[] = [];
 
-  private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net';
+  private readonly base = `${environment.baseUrl}`;
   get doctorId(): number { return Number(localStorage.getItem('userId') || 0); }
 
   constructor(

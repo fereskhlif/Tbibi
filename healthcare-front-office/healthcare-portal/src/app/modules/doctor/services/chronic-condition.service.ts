@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface ChronicConditionRequest {
   patientId?: number;
@@ -30,7 +31,7 @@ export interface ChronicConditionResponse {
 
 @Injectable({ providedIn: 'root' })
 export class ChronicConditionService {
-  private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic';
+  private readonly base = `${environment.baseUrl}/api/chronic`;
 
   constructor(private http: HttpClient) {}
 

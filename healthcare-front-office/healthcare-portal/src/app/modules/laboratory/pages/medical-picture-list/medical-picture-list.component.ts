@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MedicalPictureAnalysisResponse, MedicalPictureAnalysisRequest } from '../../models/medical-picture-analysis.model';
@@ -42,8 +43,8 @@ export class MedicalPictureListComponent implements OnInit {
 
   selectedFile: File | null = null;
 
-  private readonly IMAGE_BASE_URL = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/uploads/medical-pictures/';
-  private readonly API_URL = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
+  private readonly IMAGE_BASE_URL = `${environment.baseUrl}/uploads/medical-pictures/`;
+  private readonly API_URL = `${environment.baseUrl}/api`;
 
   categoryOptions = ['Radio', 'Scanner', 'IRM', 'Echographie'];
   statusOptions = ['Pending', 'In Progress', 'Completed', 'Validated', 'Rejected'];
@@ -69,7 +70,7 @@ export class MedicalPictureListComponent implements OnInit {
     private http: HttpClient
   ) {}
 
-  ngOnInit(): void { 
+  ngOnInit(): void {
     this.loadAll();
     this.loadLabResults(); // ✅ NOUVEAU - Charger les résultats de laboratoire
   }
@@ -168,9 +169,9 @@ export class MedicalPictureListComponent implements OnInit {
     document.body.style.overflow = 'hidden';
   }
 
-  closeForm(): void { 
-    this.showForm = false; 
-    this.resetForm(); 
+  closeForm(): void {
+    this.showForm = false;
+    this.resetForm();
     document.body.style.overflow = 'auto';
   }
 
@@ -290,7 +291,7 @@ export class MedicalPictureListComponent implements OnInit {
           this.aiResult = result;
           this.showAiResultModal = true;
           this.isAnalyzing = false;
-          
+
           // Recharger les données
           this.loadAll();
         },
@@ -298,7 +299,7 @@ export class MedicalPictureListComponent implements OnInit {
           console.error('Error during AI analysis:', err);
           this.errorMessage = 'Erreur lors de l\'analyse IA. Vérifiez que le service Python est démarré.';
           this.isAnalyzing = false;
-          
+
           if (analysis) {
             this.loadAll();
           }

@@ -1,13 +1,14 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AppointmentAnalyticsService {
 
-  private apiUrl = 'http://localhost:8089/appointement';
+  private apiUrl = `${environment.analyticsUrl}/appointement`;
 
   constructor(private http: HttpClient) { }
 
@@ -22,7 +23,7 @@ export class AppointmentAnalyticsService {
       .set('from', from)
       .set('to', to)
       .set('status', status);
-      
+
     return this.http.get<any[]>(`${this.apiUrl}/doctor/${doctorId}/filtered`, { params });
   }
 }

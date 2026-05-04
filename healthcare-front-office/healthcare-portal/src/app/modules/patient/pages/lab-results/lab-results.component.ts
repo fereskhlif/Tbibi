@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface LabResult {
   labId: number;
@@ -22,8 +23,8 @@ interface LabResult {
 export class LabResultsComponent implements OnInit {
   results: LabResult[] = [];
   loading = true;
-  
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
+
+  private apiUrl = `${environment.baseUrl}/api`;
   private get patientId(): number {
     return Number(localStorage.getItem('userId') || 0);
   }
@@ -99,10 +100,10 @@ export class LabResultsComponent implements OnInit {
   formatDate(dateString: string): string {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   }
 }

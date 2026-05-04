@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface PatientStatistics {
   patientId: number;
@@ -21,8 +22,8 @@ export class LabStatisticsComponent implements OnInit {
   statistics: PatientStatistics[] = [];
   isLoading = false;
   currentLabUserId: number = 0;
-  
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/laboratory-results';
+
+  private apiUrl = `${environment.baseUrl}/api/laboratory-results`;
 
   constructor(private http: HttpClient) {}
 

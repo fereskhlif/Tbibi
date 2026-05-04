@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit, NgZone } from '@angular/core';
 import { UserService, UserProfileDTO } from '../../../../services/user.service';
 
@@ -87,7 +88,7 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
 
               <div class="section-block" style="margin-top: 2rem;">
                 <div class="section-header"><div class="section-bar bar-amber"></div><h3>Change Password</h3></div>
-                
+
                 <div class="form-group">
                   <label>Current Password</label>
                   <input type="password" [(ngModel)]="passwords.oldPassword" placeholder="Enter current password" />
@@ -96,7 +97,7 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
                 <div class="form-group">
                   <label>New Password</label>
                   <input type="password" [(ngModel)]="passwords.newPassword" placeholder="Enter new password" />
-                  
+
                   <!-- Strength Meter -->
                   <div class="strength-meter" *ngIf="passwords.newPassword">
                     <div class="strength-bar" [style.width.%]="getPasswordStrength()" [style.background-color]="getStrengthColor()"></div>
@@ -200,7 +201,7 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
 })
 export class ProfileComponent implements OnInit {
 
-  private readonly API_BASE = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net';
+  private readonly API_BASE = `${environment.baseUrl}`;
 
   userProfile: UserProfileDTO | null = null;
   loading = true;

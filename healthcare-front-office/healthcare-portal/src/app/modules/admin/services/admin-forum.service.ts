@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AdminForumService {
-  private readonly baseUrl = 'http://localhost:8088';
+  private readonly baseUrl = environment.baseUrl;
 
   constructor(private http: HttpClient) {}
 

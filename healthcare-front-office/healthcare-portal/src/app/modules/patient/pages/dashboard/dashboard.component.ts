@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -210,7 +211,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.http.get<any[]>(`https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic/patient/${patientId}`).subscribe({
+    this.http.get<any[]>(`${environment.baseUrl}/api/chronic/patient/${patientId}`).subscribe({
       next: (records) => {
         records = records || [];
         if (records.length === 0) {
@@ -240,7 +241,7 @@ export class DashboardComponent implements OnInit {
           cholesterol: 190,
         };
 
-        this.http.post<any>('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/disease-risk/predict', body).subscribe({
+        this.http.post<any>(`${environment.baseUrl}/api/disease-risk/predict`, body).subscribe({
           next: (r) => {
             const stat = this.getStat('health');
             if (stat) {

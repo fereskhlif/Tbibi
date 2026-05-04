@@ -1,10 +1,10 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+﻿import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MedicalRecordsServiceService } from '../../../../services/medical-records-service.service';
 import { PrescriptionService, PrescriptionResponse, MedicineDTO } from '../../../../services/prescription-service.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from 'environments/environment';
 
 @Component({
   selector: 'app-medical-records',

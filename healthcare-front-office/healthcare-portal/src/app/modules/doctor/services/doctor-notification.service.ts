@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -24,7 +25,7 @@ export interface NotificationDTO {
 @Injectable({ providedIn: 'root' })
 export class DoctorNotificationService {
     // Fixed: backend path is /api/notifications
-    private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/notifications';
+    private readonly base = `${environment.baseUrl}/api/notifications`;
 
     /** Emits a signal (true) whenever a new WS notification arrives */
     newNotification$ = new BehaviorSubject<NotificationDTO | null>(null);

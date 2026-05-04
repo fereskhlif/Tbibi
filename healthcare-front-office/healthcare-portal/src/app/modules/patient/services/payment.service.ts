@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface PaymentRequest {
     paymentDate: string;
@@ -19,7 +20,7 @@ export interface PaymentResponse {
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-    private apiUrl = 'http://localhost:8088/api/payments'; // Fixed port to 8088
+    private apiUrl = `${environment.baseUrl}/api/payments`;
 
     constructor(private http: HttpClient) { }
 

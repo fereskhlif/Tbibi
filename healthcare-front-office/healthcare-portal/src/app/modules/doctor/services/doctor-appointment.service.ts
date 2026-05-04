@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -32,7 +33,7 @@ export interface DoctorExceptionResponse {
 
 @Injectable({ providedIn: 'root' })
 export class DoctorAppointmentService {
-    private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net';
+    private readonly base = `${environment.baseUrl}`;
 
     constructor(private http: HttpClient) { }
 

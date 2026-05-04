@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { PatientEvaluationService } from '../../services/patient-evaluation.service';
 import { PatientEvaluation, PatientEvaluationRequest } from '../../models/patient-evaluation.model';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface Patient {
   userId: number;
@@ -19,16 +20,16 @@ export class PatientEvaluationComponent implements OnInit {
   filteredEvaluations: PatientEvaluation[] = [];
   patients: Patient[] = [];
   currentPhysioId: number = 0; // Will be set from localStorage
-  
+
   searchTerm: string = '';
-  
+
   showCreateModal: boolean = false;
   showDetailModal: boolean = false;
   selectedEvaluation: PatientEvaluation | null = null;
-  
+
   newEvaluation: PatientEvaluationRequest = this.getEmptyEvaluation();
 
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
+  private apiUrl = `${environment.baseUrl}/api`;
 
   constructor(
     private evaluationService: PatientEvaluationService,
@@ -69,10 +70,10 @@ export class PatientEvaluationComponent implements OnInit {
 
   applyFilters(): void {
     this.filteredEvaluations = this.evaluations.filter(evaluation => {
-      const matchesSearch = !this.searchTerm || 
+      const matchesSearch = !this.searchTerm ||
         evaluation.patientName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         evaluation.jointLocation?.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
+
       return matchesSearch;
     });
   }
@@ -102,7 +103,7 @@ export class PatientEvaluationComponent implements OnInit {
 
   createEvaluation(): void {
     if (!this.validateEvaluation(this.newEvaluation)) return;
-    
+
     this.evaluationService.create(this.newEvaluation).subscribe({
       next: () => {
         this.loadEvaluations();
@@ -118,7 +119,7 @@ export class PatientEvaluationComponent implements OnInit {
 
   deleteEvaluation(evaluationId: number): void {
     if (!confirm('Voulez-vous vraiment supprimer cette évaluation?')) return;
-    
+
     this.evaluationService.delete(evaluationId).subscribe({
       next: () => {
         this.loadEvaluations();
@@ -132,7 +133,7 @@ export class PatientEvaluationComponent implements OnInit {
   }
 
   validateEvaluation(evaluation: PatientEvaluationRequest): boolean {
-    if (!evaluation.patientId || !evaluation.evaluationDate || 
+    if (!evaluation.patientId || !evaluation.evaluationDate ||
         evaluation.painScale === null || evaluation.painScale === undefined ||
         !evaluation.painDescription || !evaluation.jointLocation ||
         !evaluation.functionalLimitations) {

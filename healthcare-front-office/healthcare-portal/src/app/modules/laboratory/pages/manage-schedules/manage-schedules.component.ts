@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
@@ -245,7 +246,7 @@ export class LabManageSchedulesComponent implements OnInit {
   analysisTypes: string[] = [];
   newAnalysisName = '';
 
-  private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net';
+  private readonly base = `${environment.baseUrl}`;
   get labId(): number { return Number(localStorage.getItem('userId') || 0); }
 
   constructor(private http: HttpClient) {}

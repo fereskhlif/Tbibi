@@ -1,12 +1,13 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 import { NotificationResponse } from '../models/notification.model';
 import { WebSocketService } from './websocket.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/notifications';
+  private apiUrl = `${environment.baseUrl}/api/notifications`;
 
   notifications$ = new BehaviorSubject<NotificationResponse[]>([]);
   unreadCount$ = new BehaviorSubject<number>(0);
@@ -51,7 +52,7 @@ export class NotificationService {
       this.notifications$.next([notification, ...current]);
       // Increment unread count
       this.unreadCount$.next(this.unreadCount$.value + 1);
-      
+
       // 🔊 Play sound effect
       this.playNotificationSound();
     });

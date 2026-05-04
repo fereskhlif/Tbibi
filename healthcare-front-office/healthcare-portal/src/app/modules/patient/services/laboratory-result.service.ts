@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 // ✅ Interface Response — ce que le backend retourne
 export interface LaboratoryResult {
@@ -40,7 +41,7 @@ export interface LaboratoryResultRequest {
 })
 export class LaboratoryResultService {
 
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/laboratory-results';
+  private apiUrl = `${environment.baseUrl}/api/laboratory-results`;
 
   constructor(private http: HttpClient) {}
 

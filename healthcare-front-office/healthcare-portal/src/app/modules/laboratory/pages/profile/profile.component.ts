@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit, NgZone } from '@angular/core';
 import { UserService, UserProfileDTO } from '../../../../services/user.service';
 
@@ -63,7 +64,7 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
               </div>
               <div class="section-block" style="margin-top: 2rem;">
                 <div class="section-header"><div class="section-bar bar-amber"></div><h3>Change Password</h3></div>
-                
+
                 <div class="form-group">
                   <label>Current Password</label>
                   <input type="password" [(ngModel)]="oldPassword" placeholder="Enter current password" />
@@ -72,7 +73,7 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
                 <div class="form-group">
                   <label>New Password</label>
                   <input type="password" [(ngModel)]="newPassword" placeholder="Enter new password" />
-                  
+
                   <!-- Strength Meter -->
                   <div class="strength-meter" *ngIf="newPassword">
                     <div class="strength-bar" [style.width.%]="getPasswordStrength()" [style.background-color]="getStrengthColor()"></div>
@@ -193,7 +194,7 @@ export class LabProfileComponent implements OnInit {
     const pic = this.profile?.profilePicture;
     if (!pic) return '';
     if (pic.startsWith('http')) return pic;
-    return 'http://localhost:8088/' + pic;
+    return `${environment.baseUrl}/` + pic;
   }
 
   triggerFileInput(): void {

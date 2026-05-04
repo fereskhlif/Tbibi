@@ -1,13 +1,14 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 import { MedicalPictureAnalysisRequest, MedicalPictureAnalysisResponse } from '../models/medical-picture-analysis.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MedicalPictureAnalysisService {
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/medical-picture-analysis';
+  private apiUrl = `${environment.baseUrl}/api/medical-picture-analysis`;
 
   constructor(private http: HttpClient) {}
 

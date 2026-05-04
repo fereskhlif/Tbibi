@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 import { MedicalChatDto } from './chat-websocket.service';
 
 export interface UserProfile {
@@ -20,8 +21,8 @@ export interface UserProfile {
 })
 export class ChatHttpService {
 
-  private readonly baseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/medical-chat';
-  private readonly usersBaseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/users';
+  private readonly baseUrl = `${environment.baseUrl}/medical-chat`;
+  private readonly usersBaseUrl = `${environment.baseUrl}/users`;
 
   constructor(private http: HttpClient) { }
 
@@ -34,9 +35,9 @@ export class ChatHttpService {
   public getConversationHistory(senderId: number, receiverId: number): Observable<MedicalChatDto[]> {
     return this.http.get<MedicalChatDto[]>(`${this.baseUrl}/conversation`, {
       headers: this.authHeaders(),
-      params: { 
-        senderId: senderId.toString(), 
-        receiverId: receiverId.toString() 
+      params: {
+        senderId: senderId.toString(),
+        receiverId: receiverId.toString()
       }
     });
   }

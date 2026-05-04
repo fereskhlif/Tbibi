@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -39,7 +40,7 @@ export class TherapySessionComponent implements OnInit {
     physiotherapistId: null as number | null
   };
 
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
+  private apiUrl = `${environment.baseUrl}/api`;
 
   constructor(
     private service: TherapySessionService,

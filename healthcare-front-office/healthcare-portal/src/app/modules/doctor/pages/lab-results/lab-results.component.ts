@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface LabResult {
   labId: number;
@@ -25,7 +26,7 @@ export class DoctorLabResultsComponent implements OnInit {
   loading = true;
   searchTerm = '';
   selectedStatus = 'all';
-  
+
   // Modal de prescription
   showPrescribeModal = false;
   submitting = false;
@@ -36,8 +37,8 @@ export class DoctorLabResultsComponent implements OnInit {
     priority: 'Normal',
     requestNotes: ''
   };
-  
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
+
+  private apiUrl = `${environment.baseUrl}/api`;
   private get doctorId(): number {
     return Number(localStorage.getItem('userId') || 0);
   }
@@ -111,10 +112,10 @@ export class DoctorLabResultsComponent implements OnInit {
   formatDate(dateString: string): string {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   }
 

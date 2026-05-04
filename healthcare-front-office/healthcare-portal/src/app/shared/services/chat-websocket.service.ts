@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { Client, StompSubscription, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface MedicalChatDto {
   id?: number;
@@ -27,7 +28,7 @@ export class ChatWebSocketService {
   private typingSubject = new Subject<MedicalChatDto>();
   private connectedStatus = new BehaviorSubject<boolean>(false);
   private currentSubscription?: StompSubscription;
-  
+
   public messages$ = this.messageSubject.asObservable();
   public typing$ = this.typingSubject.asObservable();
   public isConnected$ = this.connectedStatus.asObservable();
@@ -36,11 +37,12 @@ export class ChatWebSocketService {
     // Get token and clean it for use
     let token = localStorage.getItem('TokenUserConnect') || localStorage.getItem('token') || '';
     token = token.replace(/^"|"$/g, '').trim();
-    
+
     // Build WebSocket URL with token as query parameter (fallback for SockJS)
-    const wsUrl = token 
-      ? `https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/ws?Authorization=Bearer%20${encodeURIComponent(token)}` 
-      : 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/ws';
+    const baseUrl = environment.baseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+    const wsUrl = token
+      ? `${baseUrl}/ws?Authorization=Bearer%20${encodeURIComponent(token)}`
+      : `${baseUrl}/ws`;
 
     this.stompClient = new Client({
       debug: (msg: string) => console.log('STOMP: ' + msg),
@@ -98,7 +100,7 @@ export class ChatWebSocketService {
         console.warn('⚠️ No token available for WebSocket connection');
         return;
     }
-    
+
     // Clean token
     token = token.replace(/^"|"$/g, '').trim();
 

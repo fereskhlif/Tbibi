@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 import {
   CategoryResponse,
   PostResponse,
@@ -14,7 +15,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class ForumService {
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/forum';
+  private apiUrl = `${environment.baseUrl}/api/forum`;
 
   constructor(private http: HttpClient) { }
 

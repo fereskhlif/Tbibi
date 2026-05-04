@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 import { LaboratoryResultRequest, LaboratoryResultResponse } from '../models/laboratory-result.model';
 
 @Injectable({
@@ -9,7 +10,7 @@ import { LaboratoryResultRequest, LaboratoryResultResponse } from '../models/lab
 export class LaboratoryResultService {
 
   // ✅ URL corrigée — "laboratory-results" avec un s
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/laboratory-results';
+  private apiUrl = `${environment.baseUrl}/api/laboratory-results`;
 
   constructor(private http: HttpClient) {}
 

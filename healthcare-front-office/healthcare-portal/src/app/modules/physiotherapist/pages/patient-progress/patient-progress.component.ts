@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 interface PatientProgress {
   patientId: number;
@@ -29,15 +30,15 @@ export class PatientProgressComponent implements OnInit {
   patients: PatientProgress[] = [];
   filteredPatients: PatientProgress[] = [];
   currentPhysioId: number = 0; // Will be set from localStorage
-  
+
   filterStatus: string = 'all';
   searchTerm: string = '';
   sortBy: string = 'progress'; // progress, name, sessions
-  
+
   selectedPatient: PatientProgress | null = null;
   showDetailModal: boolean = false;
 
-  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/therapy-session';
+  private apiUrl = `${environment.baseUrl}/api/therapy-session`;
 
   constructor(private http: HttpClient) {}
 
@@ -67,10 +68,10 @@ export class PatientProgressComponent implements OnInit {
   applyFilters(): void {
     this.filteredPatients = this.patients.filter(patient => {
       const matchesStatus = this.filterStatus === 'all' || patient.status === this.filterStatus;
-      const matchesSearch = !this.searchTerm || 
+      const matchesSearch = !this.searchTerm ||
         patient.patientName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         patient.currentTherapyType.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
+
       return matchesStatus && matchesSearch;
     });
 

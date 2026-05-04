@@ -1,3 +1,4 @@
+﻿import { environment } from 'environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, forkJoin } from 'rxjs';
@@ -5,7 +6,7 @@ import { Medicine, MedicineUpdateRequest } from '../models/medicine.model';
 
 @Injectable({ providedIn: 'root' })
 export class PharmacistMedicineService {
-    private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/medicines';
+    private apiUrl = `${environment.baseUrl}/api/medicines`;
 
     constructor(private http: HttpClient) { }
 

@@ -50,6 +50,13 @@ public class VerificationService {
         String phone = request.getPatientPhone();
         if (phone != null && !phone.isBlank()) {
             try {
+                // Normalize phone number for Twilio (remove spaces, ensure country code)
+                phone = phone.replaceAll("\\s+", "");
+                if (!phone.startsWith("+")) {
+                    // Default to +216 if not provided
+                    phone = "+216" + phone;
+                }
+                
                 String smsMessage = "Tbibi — Votre code de vérification est : " + code + ". Valable 10 minutes.";
                 twilioSmsService.sendSms(phone, smsMessage);
                 log.info("Verification code sent by SMS to phone {}", phone);

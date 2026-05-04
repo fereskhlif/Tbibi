@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from 'environments/environment';
 import { debounceTime, Subject, interval, Subscription } from 'rxjs';
 import { PrescriptionService, PrescriptionResponse } from '../../../../services/prescription-service.service';
 
