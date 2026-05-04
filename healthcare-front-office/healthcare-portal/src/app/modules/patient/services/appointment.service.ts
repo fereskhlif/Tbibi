@@ -111,6 +111,11 @@ export class AppointmentService {
         return this.http.post<AppointmentResponse>(`${this.base}/appointement/verify-and-confirm`, { verificationId, code });
     }
 
+    /** Validate OTP code only (for Physio/Lab flows — does NOT create an appointment) */
+    validateCode(verificationId: string, code: string): Observable<{ valid: boolean }> {
+        return this.http.post<{ valid: boolean }>(`${this.base}/appointement/validate-code`, { verificationId, code });
+    }
+
     /** Cancels an appointment (sets status to CANCELLED) */
     cancelAppointment(appointmentId: number): Observable<AppointmentResponse> {
         return this.http.patch<AppointmentResponse>(
@@ -163,19 +168,19 @@ export class AppointmentService {
         return this.http.get<Doctor[]>(`${this.base}/appointement/api/public/laboratories`);
     }
 
-    /** Books a physiotherapy session (no schedule slot) */
+    /** Books a physiotherapy session */
     bookPhysio(req: {
-        patientId: number; physiotherapistId: number; therapyType: string;
-        reasonForVisit: string; preferredDate: string;
+        patientId: number; physiotherapistId: number; scheduleId: number;
+        therapyType: string; reasonForVisit: string; preferredDate: string;
         patientName: string; patientEmail: string; patientPhone: string;
     }): Observable<AppointmentResponse> {
         return this.http.post<AppointmentResponse>(`${this.base}/appointement/physio-booking`, req);
     }
 
-    /** Books a laboratory analysis (no schedule slot) */
+    /** Books a laboratory analysis */
     bookLab(req: {
-        patientId: number; laboratoryId: number; analysisType: string;
-        notes: string; preferredDate: string;
+        patientId: number; laboratoryId: number; scheduleId: number;
+        analysisType: string; notes: string; preferredDate: string;
         patientName: string; patientEmail: string; patientPhone: string;
     }): Observable<AppointmentResponse> {
         return this.http.post<AppointmentResponse>(`${this.base}/appointement/lab-booking`, req);

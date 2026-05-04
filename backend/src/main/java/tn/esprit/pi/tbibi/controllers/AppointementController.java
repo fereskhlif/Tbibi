@@ -42,6 +42,22 @@ public class AppointementController {
                 .body(appointementService.verifyAndConfirm(request.getVerificationId(), request.getCode()));
     }
 
+    /**
+     * Validate an OTP code without creating an appointment.
+     * Used by the Physio and Lab booking flows: validates the code first,
+     * then the frontend calls /physio-booking or /lab-booking separately.
+     */
+    @PostMapping("/validate-code")
+    public ResponseEntity<Map<String, Object>> validateCode(@RequestBody VerifyConfirmRequest request) {
+        boolean valid = appointementService.validateCode(request.getVerificationId(), request.getCode());
+        if (valid) {
+            return ResponseEntity.ok(Map.of("valid", true));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("valid", false, "message", "Code invalide ou expiré."));
+        }
+    }
+
     /** Get all appointments */
     @GetMapping
     public ResponseEntity<List<AppointmentResponse>> getAll() {

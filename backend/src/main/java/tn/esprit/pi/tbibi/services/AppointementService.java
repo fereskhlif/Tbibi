@@ -349,14 +349,27 @@ public class AppointementService implements IAppointementService {
         return verificationService.createVerification(request);
     }
 
-    /** Create a physiotherapy appointment (no schedule slot required) */
+    /**
+     * Validates an OTP code and consumes it.
+     * Used by Physio/Lab flows — returns true if valid, false otherwise.
+     * Does NOT create an appointment (unlike verifyAndConfirm).
+     */
+    public boolean validateCode(String verificationId, String code) {
+        try {
+            verificationService.consume(verificationId, code);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Create a physiotherapy appointment — links the chosen schedule slot so date/time appear on the card */
     @Transactional
     public AppointmentResponse createPhysioBooking(tn.esprit.pi.tbibi.DTO.PhysioBookingRequest request) {
         User physiotherapist = userRepo.findById(request.getPhysiotherapistId())
                 .orElseThrow(() -> new EntityNotFoundException("Physiotherapist not found: " + request.getPhysiotherapistId()));
 
         Appointment appointment = new Appointment();
-        appointment.setSchedule(null); // no slot
         appointment.setStatusAppointement(StatusAppointement.PENDING);
         appointment.setService(request.getTherapyType());
         appointment.setSpecialty(physiotherapist.getSpecialty() != null ? physiotherapist.getSpecialty() : "Kinésithérapie");
@@ -364,6 +377,15 @@ public class AppointementService implements IAppointementService {
         appointment.setReasonForVisit(request.getReasonForVisit());
         appointment.setPatientEmail(request.getPatientEmail());
         appointment.setPatientName(request.getPatientName());
+
+        // Link the schedule slot so that date/time are stored properly
+        if (request.getScheduleId() != null) {
+            scheduleRepository.findById(request.getScheduleId()).ifPresent(slot -> {
+                slot.setIsAvailable(false);
+                scheduleRepository.save(slot);
+                appointment.setSchedule(slot);
+            });
+        }
 
         if (request.getPatientId() != null && request.getPatientId() > 0) {
             userRepo.findById(request.getPatientId()).ifPresent(p -> {
@@ -378,22 +400,23 @@ public class AppointementService implements IAppointementService {
 
         // Notify physiotherapist
         String patientName = saved.getPatientName() != null ? saved.getPatientName() : "Un patient";
+        String dateInfo = (saved.getSchedule() != null && saved.getSchedule().getDate() != null)
+                ? " — le " + saved.getSchedule().getDate()
+                : (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
         String msg = "Nouvelle demande de séance de " + request.getTherapyType()
-                + " de la part de " + patientName
-                + (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
+                + " de la part de " + patientName + dateInfo;
         notificationService.createAndSend(physiotherapist, msg, NotificationType.APPOINTMENT, "/physiotherapist/dashboard");
 
         return mapper.toResponse(saved);
     }
 
-    /** Create a laboratory analysis booking (no schedule slot required) */
+    /** Create a laboratory analysis booking — links the chosen schedule slot so date/time appear on the card */
     @Transactional
     public AppointmentResponse createLabBooking(tn.esprit.pi.tbibi.DTO.LabBookingRequest request) {
         User laboratory = userRepo.findById(request.getLaboratoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Laboratory not found: " + request.getLaboratoryId()));
 
         Appointment appointment = new Appointment();
-        appointment.setSchedule(null); // no slot
         appointment.setStatusAppointement(StatusAppointement.PENDING);
         appointment.setService(request.getAnalysisType());
         appointment.setSpecialty("Laboratoire");
@@ -401,6 +424,15 @@ public class AppointementService implements IAppointementService {
         appointment.setReasonForVisit(request.getNotes());
         appointment.setPatientEmail(request.getPatientEmail());
         appointment.setPatientName(request.getPatientName());
+
+        // Link the schedule slot so that date/time are stored properly
+        if (request.getScheduleId() != null) {
+            scheduleRepository.findById(request.getScheduleId()).ifPresent(slot -> {
+                slot.setIsAvailable(false);
+                scheduleRepository.save(slot);
+                appointment.setSchedule(slot);
+            });
+        }
 
         if (request.getPatientId() != null && request.getPatientId() > 0) {
             userRepo.findById(request.getPatientId()).ifPresent(p -> {
@@ -415,9 +447,11 @@ public class AppointementService implements IAppointementService {
 
         // Notify laboratory
         String patientName = saved.getPatientName() != null ? saved.getPatientName() : "Un patient";
+        String dateInfo = (saved.getSchedule() != null && saved.getSchedule().getDate() != null)
+                ? " — le " + saved.getSchedule().getDate()
+                : (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
         String msg = "Nouvelle demande d'analyse " + request.getAnalysisType()
-                + " de la part de " + patientName
-                + (request.getPreferredDate() != null ? " — date souhaitée: " + request.getPreferredDate() : "");
+                + " de la part de " + patientName + dateInfo;
         notificationService.createAndSend(laboratory, msg, NotificationType.APPOINTMENT, "/laboratory/dashboard");
 
         return mapper.toResponse(saved);
