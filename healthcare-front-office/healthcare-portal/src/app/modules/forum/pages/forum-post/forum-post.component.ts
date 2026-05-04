@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ForumService } from '../../services/forum.service';
 import { PostResponse, CommentResponse } from '../../models/forum.models';
@@ -7,7 +7,8 @@ import { StompSubscription } from '@stomp/stompjs';
 
 @Component({
   selector: 'app-forum-post',
-  templateUrl: './forum-post.component.html'
+  templateUrl: './forum-post.component.html',
+  styleUrls: ['./forum-post.component.css']
 })
 export class ForumPostComponent implements OnInit, OnDestroy {
 
@@ -20,12 +21,13 @@ export class ForumPostComponent implements OnInit, OnDestroy {
   // User
   currentRole = 'PATIENT';
   roleBadge = '';
-  currentUserId = 1;
-  currentUserName = 'Dr. Karim';
+  currentUserId = 0;
+  currentUserName = 'User';
 
   // Vote
   hasVoted = false;
   voteCount = 0;
+  votingInProgress = false;
   votedCommentIds: number[] = [];
   commentSortOrder: 'newest' | 'oldest' = 'oldest';
 
@@ -44,9 +46,23 @@ export class ForumPostComponent implements OnInit, OnDestroy {
   isBookmarked = false;
   showCopied = false;
 
+  // Edit Post
+  isEditingPost = false;
+  editTitle = '';
+  editContent = '';
+  savingEdit = false;
+
+  // ─── AI Summarization ───────────────────────────────────────────────────────
+  aiSummary: string | null = null;
+  displayedSummary: string = '';
+  isSummarizing = false;
+
   // Files
   selectedFiles: File[] = [];
   filePreviews: string[] = [];
+
+  // Related Posts
+  relatedPosts: any[] = [];
 
   // WebSocket subscriptions
   private commentSub: StompSubscription | null = null;
@@ -61,19 +77,29 @@ export class ForumPostComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private forumService: ForumService,
-    private wsService: WebSocketService
+    private wsService: WebSocketService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
     const data = this.route.snapshot.data['role']
       ? this.route.snapshot.data
       : (this.route.parent?.snapshot.data || {});
-    this.currentRole = data['role'] || 'PATIENT';
-    this.currentUserId = data['userId'] || 3;
-    this.currentUserName = data['userName'] || 'User';
+    this.currentRole = this.normalizeRole(data['role'] || localStorage.getItem('RoleUserConnect') || localStorage.getItem('userRole') || 'PATIENT');
+    this.currentUserId = parseInt(localStorage.getItem('userId') || '0', 10) || data['userId'] || 0;
+    this.currentUserName = localStorage.getItem('UserName') || data['userName'] || 'User';
     this.roleBadge = this.getRoleBadge(this.currentRole);
     this.postId = Number(this.route.snapshot.paramMap.get('id'));
     this.loadPost();
+  }
+
+  private normalizeRole(role: string): string {
+    const r = role ? role.toUpperCase().trim() : 'PATIENT';
+    if (r.includes('DOCTOR') || r.includes('DOCTEUR')) return 'DOCTOR';
+    if (r.includes('PHARMACIST') || r.includes('PHARMASIS')) return 'PHARMACIST';
+    if (r.includes('KINE') || r.includes('PHYSIO')) return 'PHYSIO';
+    if (r.includes('LABORATORY') || r.includes('LAB')) return 'LAB';
+    return 'PATIENT';
   }
 
   getRoleBadge(role: string): string {
@@ -90,19 +116,38 @@ export class ForumPostComponent implements OnInit, OnDestroy {
   loadPost(): void {
     this.loading = true;
     this.error = '';
-    this.forumService.getPostById(this.postId).subscribe({
+    this.forumService.getPostById(this.postId, this.currentUserId).subscribe({
       next: (post) => {
+        // Check if professional user has access to this category
+        if (this.currentRole !== 'PATIENT' && !this.canProfessionalAccess(this.currentRole, post.categoryName)) {
+          this.error = 'You do not have the required expertise to access posts in this category.';
+          this.loading = false;
+          return;
+        }
+
         this.post = post;
         this.voteCount = post.voteCount || 0;
         this.loading = false;
         this.loadComments();
         this.checkUserVote();
+        this.loadRelatedPosts();
       },
       error: () => {
         this.error = 'Failed to load this post.';
         this.loading = false;
       }
     });
+  }
+
+  private canProfessionalAccess(role: string, categoryName: string): boolean {
+    const map: { [key: string]: string[] } = {
+      'DOCTOR': ['Ask a Doctor', 'General Health', 'Mental Health', 'Chronic Diseases', 'First Aid & Emergencies', 'Children Health', 'Women Health'],
+      'PHARMACIST': ['Ask a Pharmacist', 'General Health', 'Medications & Side Effects', 'Nutrition & Diet'],
+      'LAB': ['Ask a Lab', 'General Health', 'Chronic Diseases'],
+      'PHYSIO': ['Ask a Physiotherapist', 'General Health', 'Fitness & Wellness', 'Healthy Lifestyle']
+    };
+    const allowed = map[role] || [];
+    return allowed.includes(categoryName);
   }
 
   private subscribeToRealTimeUpdates(): void {
@@ -160,13 +205,7 @@ export class ForumPostComponent implements OnInit, OnDestroy {
     return /\.(mp4|mov|webm|mkv)$/i.test(url) || url.includes('video');
   }
 
-  // Report stub
-  reportPost(): void {
-    if (confirm('Report this post to moderators?')) {
-      // TODO: wire to this.forumService.reportPost(this.postId, this.currentUserId)...
-      alert('Thank you. Our moderation team will review this post.');
-    }
-  }
+
 
   // Smooth scroll to comments
   scrollToComments(): void {
@@ -218,22 +257,6 @@ export class ForumPostComponent implements OnInit, OnDestroy {
     }
   }
 
-  onTogglePin(commentId: number): void {
-    if (this.currentUserId <= 0) return;
-
-    this.forumService.togglePinComment(commentId, this.currentUserId).subscribe({
-      next: () => {
-        // Reload comments to reflect new positions and states
-        this.loadComments();
-      },
-      error: (err) => {
-        // Show the backend error message (e.g. "Maximum 3 pinned comments reached")
-        const msg = err.error?.message || err.message || 'Failed to toggle pin.';
-        alert(msg);
-      }
-    });
-  }
-
   applyVotedComments(comments: CommentResponse[], votedIds: number[]): void {
     if (!comments || !votedIds) return;
     comments.forEach(c => {
@@ -268,13 +291,30 @@ export class ForumPostComponent implements OnInit, OnDestroy {
   }
 
   toggleVote(): void {
+    if (this.votingInProgress) return;
+    this.votingInProgress = true;
+
     if (this.hasVoted) {
       this.forumService.unvote(this.currentUserId, this.postId).subscribe({
-        next: () => { this.hasVoted = false; this.voteCount--; }
+        next: () => {
+          this.hasVoted = false;
+          this.forumService.getVoteCount(this.postId).subscribe({
+            next: (count) => { this.voteCount = count; this.votingInProgress = false; },
+            error: () => { this.voteCount--; this.votingInProgress = false; }
+          });
+        },
+        error: () => { this.votingInProgress = false; }
       });
     } else {
       this.forumService.vote({ userId: this.currentUserId, postId: this.postId }).subscribe({
-        next: () => { this.hasVoted = true; this.voteCount++; }
+        next: () => {
+          this.hasVoted = true;
+          this.forumService.getVoteCount(this.postId).subscribe({
+            next: (count) => { this.voteCount = count; this.votingInProgress = false; },
+            error: () => { this.voteCount++; this.votingInProgress = false; }
+          });
+        },
+        error: () => { this.votingInProgress = false; }
       });
     }
   }
@@ -343,11 +383,9 @@ export class ForumPostComponent implements OnInit, OnDestroy {
   }
 
   clearContent(): void {
-    if (confirm('Clear your comment?')) {
-      this.newComment = '';
-      this.selectedFiles = [];
-      this.filePreviews = [];
-    }
+    this.newComment = '';
+    this.selectedFiles = [];
+    this.filePreviews = [];
   }
 
   onFilesChanged(files: FileList | null): void {
@@ -409,20 +447,96 @@ export class ForumPostComponent implements OnInit, OnDestroy {
   }
 
   changeStatus(newStatus: string): void {
-    if (!confirm('Change post status?')) return;
     this.changingStatus = true;
     this.forumService.updatePostStatus(this.postId, newStatus).subscribe({
-      next: (p) => { this.post = p; this.changingStatus = false; },
-      error: () => this.changingStatus = false
+      next: (p) => { 
+        this.post = p; 
+        this.changingStatus = false;
+      },
+      error: () => {
+        this.changingStatus = false;
+      }
     });
+  }
+
+  // ─── Edit Post ────────────────────────────────────────────────────────────
+
+  startEditPost(): void {
+    if (!this.post) return;
+    this.isEditingPost = true;
+    this.editTitle = this.post.title;
+    this.editContent = this.post.content;
+  }
+
+  cancelEditPost(): void {
+    this.isEditingPost = false;
+  }
+
+  saveEditPost(): void {
+    if (!this.post || !this.editTitle.trim() || !this.editContent.trim()) return;
+    this.savingEdit = true;
+    this.forumService.updatePost(this.postId, {
+      title: this.editTitle,
+      content: this.editContent,
+      categoryId: this.post.categoryId,
+      authorId: this.post.authorId
+    }).subscribe({
+      next: (updated) => {
+        this.post = updated;
+        this.isEditingPost = false;
+        this.savingEdit = false;
+      },
+      error: () => this.savingEdit = false
+    });
+  }
+
+  updateComment(event: { commentId: number, text: string }): void {
+    this.forumService.updateComment(event.commentId, event.text).subscribe({
+      next: () => {
+        this.loadComments();
+      },
+      error: () => { }
+    });
+  }
+
+  // ─── Expert/Community Comment Helpers ─────────────────────────────────────
+  hasExpertComments(): boolean {
+    return this.comments.some(c => c.expert === true);
+  }
+
+  hasCommunityComments(): boolean {
+    return this.comments.some(c => !c.expert);
+  }
+
+  isLastExpert(index: number): boolean {
+    for (let i = this.comments.length - 1; i >= 0; i--) {
+      if (this.comments[i].expert === true) return i === index;
+    }
+    return false;
+  }
+
+  isLastCommunity(index: number): boolean {
+    for (let i = this.comments.length - 1; i >= 0; i--) {
+      if (!this.comments[i].expert) return i === index;
+    }
+    return false;
   }
 
   get isPostAuthor(): boolean { return this.post?.authorId === this.currentUserId; }
 
   goBack(): void { this.router.navigate(['../..'], { relativeTo: this.route }); }
 
-  timeAgo(dateStr: string): string {
-    const date = new Date(dateStr), now = new Date();
+  timeAgo(dateStr: any): string {
+    if (!dateStr) return 'Date unavailable';
+    let date: Date;
+    if (Array.isArray(dateStr)) {
+      const [year, month, day, hour = 0, minute = 0, second = 0] = dateStr;
+      date = new Date(year, month - 1, day, hour, minute, second);
+    } else {
+      date = new Date(dateStr);
+    }
+    if (isNaN(date.getTime())) return 'Date unavailable';
+    const now = new Date();
     const s = Math.floor((now.getTime() - date.getTime()) / 1000);
     if (s < 60) return 'just now';
     const m = Math.floor(s / 60);
@@ -432,5 +546,61 @@ export class ForumPostComponent implements OnInit, OnDestroy {
     const d = Math.floor(h / 24);
     if (d < 30) return `${d}d ago`;
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ─── Related Posts ──────────────────────────────────────────────────────────
+
+  loadRelatedPosts(): void {
+    this.forumService.getRelatedPosts(this.postId).subscribe({
+      next: (data: any[]) => this.relatedPosts = data || [],
+      error: () => this.relatedPosts = []
+    });
+  }
+
+  navigateToRelated(postId: number): void {
+    this.router.navigate(['/forum/post', postId]);
+  }
+
+  getContentPreview(content: string): string {
+    if (!content) return '';
+    return content.length > 100 ? content.substring(0, 100) + '…' : content;
+  }
+
+  fetchSummary(): void {
+    if (this.isSummarizing) return;
+
+    this.isSummarizing = true;
+    this.aiSummary = null;
+    this.displayedSummary = '';
+    this.cdr.detectChanges();
+
+    // Use the proven, working non-streaming endpoint
+    this.forumService.summarizePost(this.postId).subscribe({
+      next: (summary) => {
+        this.aiSummary = summary;
+        // Animate the text appearing character by character
+        let index = 0;
+        const speed = 15; // ms per chunk
+        const interval = setInterval(() => {
+          if (index < summary.length) {
+            const end = Math.min(index + 3, summary.length);
+            this.displayedSummary = summary.substring(0, end);
+            index = end;
+            this.cdr.detectChanges();
+          } else {
+            clearInterval(interval);
+            this.isSummarizing = false;
+            this.displayedSummary = summary;
+            this.cdr.detectChanges();
+          }
+        }, speed);
+      },
+      error: (err) => {
+        this.isSummarizing = false;
+        this.aiSummary = 'Unable to generate summary. Please try again later.';
+        this.displayedSummary = this.aiSummary;
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

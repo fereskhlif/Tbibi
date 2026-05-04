@@ -32,6 +32,9 @@ public class Medicine {
     String activeIngredient;
 
     @Builder.Default
+    boolean prescriptionRequired = false;
+
+    @Builder.Default
     @Column(name = "quantity", columnDefinition = "integer default 0")
     int quantity = 0;
 

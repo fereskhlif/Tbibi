@@ -36,3 +36,22 @@ export interface TherapySessionResponse {
   actualEndTime?: string;
   actualDurationMinutes?: number;
 }
+
+export interface PatientProgressDTO {
+  patientId: number;
+  patientName: string;
+  patientEmail: string;
+  currentTherapyType: string;
+  totalSessions: number;
+  completedSessions: number;
+  scheduledSessions: number;
+  cancelledSessions: number;
+  progressPercentage: number;
+  lastSessionDate: string;
+  lastSessionType: string;
+  lastSessionNote: string;
+  nextSessionDate: string;
+  nextSessionTime: string;
+  nextSessionType: string;
+  status: string;
+}

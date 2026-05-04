@@ -50,6 +50,18 @@ export class PatientOrderService {
 
         return this.http.get<Page<OrderResponse>>(`${this.apiUrl}/user/${userId}/paged${params}`, { headers: this.getHeaders() });
     }
+
+    getPatientSpendingAnalytics(userId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/patient/${userId}/analytics`, { headers: this.getHeaders() });
+    }
+
+    getMedicineHistory(userId: number, medicineName: string): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/patient/${userId}/medicine-history?medicineName=${encodeURIComponent(medicineName)}`, { headers: this.getHeaders() });
+    }
+
+    getFullMedicineHistory(userId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/patient/${userId}/medicine-history/all`, { headers: this.getHeaders() });
+    }
 }
 
 export interface Page<T> {

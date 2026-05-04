@@ -16,5 +16,9 @@ import java.util.List;
 public class OrderRequest {
     Long pharmacyId;
     Integer userId;
+    String deliveryMethod;
+    String deliveryAddress;
+    String paymentMethod;
+    String prescriptionImage;
     List<OrderLineRequest> orderLines;
 }

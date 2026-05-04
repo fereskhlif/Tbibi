@@ -88,13 +88,19 @@
             {{user.gender === 'Female' ? '♀ Féminin' : (user.gender === 'Male' ? '♂ Masculin' : '—')}}
           </td>
           <td style="display:flex; gap:0.5rem; align-items:center;">
-            <button *ngIf="user.accountStatus !== 'BLOCKED'" class="btn-warn"
+            <button *ngIf="user.accountStatus !== 'BLOCKED' && user.email !== 'admin@tbibi.tn'" class="btn-warn"
               (click)="updateStatus(user.userId, 'BLOCKED')" title="Bloquer">🚫</button>
-            <button *ngIf="user.accountStatus === 'BLOCKED'" class="btn-ok"
+            <button *ngIf="user.accountStatus === 'BLOCKED' && user.email !== 'admin@tbibi.tn'" class="btn-ok"
               (click)="updateStatus(user.userId, 'ACTIVE')" title="Débloquer">✅</button>
             <button *ngIf="user.accountStatus === 'PENDING'" class="btn-ok"
               (click)="updateStatus(user.userId, 'ACTIVE')" title="Approuver">✔ Approuver</button>
-            <button class="btn-danger" (click)="deleteUser(user.userId)" title="Supprimer">🗑️</button>
+            <button *ngIf="user.email !== 'admin@tbibi.tn'" 
+                    class="btn-danger" 
+                    [class.confirming]="confirmingDeleteId === user.userId"
+                    (click)="deleteUser(user.userId)" 
+                    [title]="confirmingDeleteId === user.userId ? 'Confirm Delete' : 'Supprimer'">
+              {{ confirmingDeleteId === user.userId ? 'CONFIRMER ?' : '🗑️' }}
+            </button>
           </td>
         </tr>
       </tbody>

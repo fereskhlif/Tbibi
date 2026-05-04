@@ -112,8 +112,12 @@ public class MedicineController {
     }
 
     @GetMapping("/search")
-    public List<MedicineResponse> search(@RequestParam("name") String name) {
-        return medicineService.searchByName(name);
+    public List<MedicineResponse> search(
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "pharmacyId", required = false) Long pharmacyId,
+            @RequestParam(name = "category", required = false) MedicineCategory category,
+            @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly) {
+        return medicineService.filterMedicines(name, pharmacyId, category, inStockOnly);
     }
 
     @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

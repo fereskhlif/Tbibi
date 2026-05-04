@@ -35,7 +35,6 @@ public class IAuthServiceImp implements IAuthService {
     private final UserRepo userRepository;
     private final RoleRepo roleRepository;
     private final TokenRepo tokenRepository;
-    private final PharmacyRepository pharmacyRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
@@ -184,26 +183,12 @@ public class IAuthServiceImp implements IAuthService {
 
         if (roleNameUpper.equals("PHARMACIEN") || roleNameUpper.equals("PHARMASIS")
                 || roleNameUpper.equals("PHARMACIST")) {
-            if (req.pharmacyName() == null || req.pharmacyName().isBlank()) {
-                throw new IllegalArgumentException("Pharmacy name is required for pharmacists");
-            }
-            if (req.pharmacyAddress() == null || req.pharmacyAddress().isBlank()) {
-                throw new IllegalArgumentException("Pharmacy address is required for pharmacists");
-            }
             if (req.phone() == null || req.phone().isBlank()) {
                 throw new IllegalArgumentException("Phone number is required");
             }
             if (!req.phone().trim().matches("^\\+\\d+$")) {
                 throw new IllegalArgumentException("Phone number must start with a '+' and contain only numbers");
             }
-
-            Pharmacy pharmacy = new Pharmacy();
-            pharmacy.setPharmacyName(req.pharmacyName());
-            pharmacy.setPharmacyAddress(req.pharmacyAddress());
-            pharmacy.setPharmacyPhone(req.phone().trim());
-            Pharmacy savedPharmacy = pharmacyRepository.save(pharmacy);
-
-            userBuilder.pharmacy(savedPharmacy);
         }
 
         User user = userBuilder.build();

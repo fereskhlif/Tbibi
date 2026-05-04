@@ -18,19 +18,26 @@ export class RoleGuard implements CanActivate {
 
     if (!userRole) return this.router.parseUrl('/login');
 
-    // Nettoyer les guillemets ajoutés par JSON.stringify
-    userRole = userRole.replace(/"/g, '');
-
-    if (userRole === expectedRole) return true;
-
-    // Rediriger vers la bonne page selon le rôle réel
-    switch (userRole) {
-      case 'ROLE_PATIENT': return this.router.parseUrl('/patient');
-      case 'ROLE_DOCTOR': return this.router.parseUrl('/doctor');
-      case 'ROLE_PHARMACIST': return this.router.parseUrl('/pharmacist');
-      case 'ROLE_PHYSIOTHERAPIST': return this.router.parseUrl('/physio');
-      case 'ROLE_LABORATORY': return this.router.parseUrl('/laboratory');
-      default: return this.router.parseUrl('/login');
+    // Normalize user role (remove quotes and ROLE_ prefix)
+    userRole = userRole.replace(/"/g, '').toUpperCase();
+    if (userRole.startsWith('ROLE_')) {
+      userRole = userRole.substring(5);
     }
+
+    // Check if user has the expected role
+    if (userRole === expectedRole.toUpperCase()) return true;
+
+    // Redirection Map for incorrect access attempts
+    const routeMap: Record<string, string> = {
+      'PATIENT': '/patient',
+      'DOCTEUR': '/doctor',
+      'PHARMASIS': '/pharmacist',
+      'KINE': '/physio',
+      'LABORATORY': '/laboratory',
+      'ADMIN': '/admin/dashboard'
+    };
+
+    const destination = routeMap[userRole] || '/login';
+    return this.router.parseUrl(destination);
   }
 };

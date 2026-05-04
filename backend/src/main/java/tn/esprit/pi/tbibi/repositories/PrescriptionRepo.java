@@ -21,6 +21,19 @@ public interface PrescriptionRepo extends JpaRepository<Prescription, Integer> {
            "  SELECT mf2.medicalfile_id FROM User u JOIN u.medicalFiles mf2 WHERE u.userId = :patientId" +
            ") ORDER BY p.date DESC")
     java.util.List<Prescription> findByPatientId(@Param("patientId") Integer patientId);
+
+    @Query("SELECT COUNT(p) > 0 FROM Prescription p " +
+           "JOIN p.acte a " +
+           "JOIN a.medicalFile mf " +
+           "LEFT JOIN p.medicines m " +
+           "LEFT JOIN p.treatments t " +
+           "WHERE mf.medicalfile_id IN (SELECT mf2.medicalfile_id FROM User u JOIN u.medicalFiles mf2 WHERE u.userId = :patientId) " +
+           "AND p.status = tn.esprit.pi.tbibi.entities.PrescriptionStatus.VALIDATED " +
+           "AND (" +
+           "  LOWER(m.medicineName) LIKE LOWER(CONCAT('%', :medName, '%')) OR " +
+           "  LOWER(t.description) LIKE LOWER(CONCAT('%', :medName, '%'))" +
+           ")")
+    boolean hasValidPrescriptionForMedicineName(@Param("patientId") Integer patientId, @Param("medName") String medName);
 }
 
 

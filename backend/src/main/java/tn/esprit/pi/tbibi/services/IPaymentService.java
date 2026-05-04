@@ -11,4 +11,5 @@ public interface IPaymentService {
     List<PaymentResponse> getAllPayments();
     PaymentResponse updatePayment(Long id, PaymentRequest request);
     void deletePayment(Long id);
+    String createCheckoutSession(tn.esprit.pi.tbibi.DTO.payment.StripePaymentDTO stripeRequest) throws Exception;
 }

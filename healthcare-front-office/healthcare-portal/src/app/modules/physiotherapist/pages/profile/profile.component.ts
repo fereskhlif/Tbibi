@@ -79,10 +79,46 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
 
               <div class="section-block" style="margin-top: 2rem;">
                 <div class="section-header"><div class="section-bar bar-amber"></div><h3>Change Password</h3></div>
-                <div class="form-group"><label>Current Password</label><input type="password" [(ngModel)]="oldPassword" placeholder="Enter current password" /></div>
-                <div class="form-group"><label>New Password</label><input type="password" [(ngModel)]="newPassword" placeholder="Enter new password" /></div>
-                <div class="form-group"><label>Confirm New Password</label><input type="password" [(ngModel)]="confirmPassword" placeholder="Confirm new password" /></div>
-                <button class="change-pw-btn" (click)="changePassword()" [disabled]="savingPw || !oldPassword || !newPassword || !confirmPassword">
+                
+                <div class="form-group">
+                  <label>Current Password</label>
+                  <input type="password" [(ngModel)]="oldPassword" placeholder="Enter current password" />
+                </div>
+
+                <div class="form-group">
+                  <label>New Password</label>
+                  <input type="password" [(ngModel)]="newPassword" placeholder="Enter new password" />
+                  
+                  <!-- Strength Meter -->
+                  <div class="strength-meter" *ngIf="newPassword">
+                    <div class="strength-bar" [style.width.%]="getPasswordStrength()" [style.background-color]="getStrengthColor()"></div>
+                    <p class="strength-text" [style.color]="getStrengthColor()">{{ getStrengthLabel() }}</p>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Confirm New Password</label>
+                  <input type="password" [(ngModel)]="confirmPassword" placeholder="Confirm new password" [class.input-error]="confirmPassword && newPassword !== confirmPassword" />
+                  <p class="match-error" *ngIf="confirmPassword && newPassword !== confirmPassword">Passwords do not match</p>
+                </div>
+
+                <!-- Requirement Checklist -->
+                <div class="checklist" *ngIf="newPassword">
+                  <div class="check-item" [class.valid]="getValidation().length">
+                    <span class="icon">{{ getValidation().length ? '✅' : '❌' }}</span> 8+ characters
+                  </div>
+                  <div class="check-item" [class.valid]="getValidation().upper">
+                    <span class="icon">{{ getValidation().upper ? '✅' : '❌' }}</span> Uppercase letter
+                  </div>
+                  <div class="check-item" [class.valid]="getValidation().number">
+                    <span class="icon">{{ getValidation().number ? '✅' : '❌' }}</span> Number
+                  </div>
+                  <div class="check-item" [class.valid]="getValidation().special">
+                    <span class="icon">{{ getValidation().special ? '✅' : '❌' }}</span> Special character
+                  </div>
+                </div>
+
+                <button class="change-pw-btn" (click)="changePassword()" [disabled]="savingPw || !isPasswordValid() || !oldPassword">
                   {{ savingPw ? 'Changing...' : 'Update Password' }}
                 </button>
                 <p *ngIf="pwMsg" class="form-msg" [class.success]="pwMsg.includes('success')">{{ pwMsg }}</p>
@@ -98,7 +134,7 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
     .profile-wrapper { min-height: 100vh; background: #f8fafc; padding-bottom: 3rem; }
     @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
     .skeleton-shimmer { background: #e2e8f0; background-image: linear-gradient(90deg, #e2e8f0 0px, #f1f5f9 40px, #e2e8f0 80px); background-size: 600px 100%; animation: shimmer 1.8s infinite linear; }
-    .cover-banner { height: 10rem; width: 100%; background: linear-gradient(135deg, #7c3aed, #8b5cf6, #6d28d9); position: relative; overflow: hidden; }
+    .cover-banner { height: 10rem; width: 100%; background: linear-gradient(135deg, #2563eb, #3b82f6, #1d4ed8); position: relative; overflow: hidden; }
     .cover-orb { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); }
     .cover-orb-1 { width: 16rem; height: 16rem; top: -5rem; right: -3rem; }
     .cover-orb-2 { width: 8rem; height: 8rem; bottom: -2rem; left: 5rem; }
@@ -109,35 +145,44 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
     .card-center { padding: 0 2rem 2rem; text-align: center; }
     .card-right { padding: 2rem; }
     .avatar-area { display: flex; justify-content: center; margin-top: -4rem; margin-bottom: 1rem; }
-    .avatar-ring { width: 8rem; height: 8rem; border-radius: 50%; border: 4px solid white; box-shadow: 0 8px 20px rgba(0,0,0,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f5f3ff; position: relative; }
+    .avatar-ring { width: 8rem; height: 8rem; border-radius: 50%; border: 4px solid white; box-shadow: 0 8px 20px rgba(0,0,0,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; background: #eff6ff; position: relative; }
     .avatar-img { width: 100%; height: 100%; object-fit: cover; }
     .avatar-emoji { font-size: 3.5rem; }
     .online-dot { position: absolute; bottom: 6px; right: 6px; width: 14px; height: 14px; background: #22c55e; border-radius: 50%; border: 3px solid white; }
     .profile-name { font-size: 1.5rem; font-weight: 800; color: #0f172a; }
-    .role-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem; background: #f5f3ff; border-radius: 9999px; margin: 0.5rem auto 1rem; color: #7c3aed; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .role-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem; background: #eff6ff; border-radius: 9999px; margin: 0.5rem auto 1rem; color: #2563eb; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
     .profile-email-row { display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; }
-    .upload-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 12px; color: #7c3aed; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .upload-btn:hover { background: #ede9fe; }
+    .upload-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; color: #2563eb; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .upload-btn:hover { background: #dbeafe; }
     .upload-msg { font-size: 0.8rem; color: #ef4444; margin-top: 0.5rem; font-weight: 600; }
-    .upload-msg.success { color: #7c3aed; }
+    .upload-msg.success { color: #2563eb; }
     .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
-    .section-bar { width: 4px; height: 1.5rem; background: #7c3aed; border-radius: 4px; }
+    .section-bar { width: 4px; height: 1.5rem; background: #2563eb; border-radius: 4px; }
     .section-bar.bar-amber { background: #f59e0b; }
     .section-header h3 { font-size: 1.15rem; font-weight: 800; color: #0f172a; }
     .form-group { margin-bottom: 1rem; }
     .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
     .form-group input { width: 100%; padding: 0.7rem 1rem; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; color: #0f172a; background: #f8fafc; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
-    .form-group input:focus { border-color: #7c3aed; background: white; }
+    .form-group input:focus { border-color: #2563eb; background: white; }
     .input-row { display: flex; gap: 0.75rem; }
     .input-row input { flex: 1; }
-    .save-btn { padding: 0.7rem 1.25rem; background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: white; border: none; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-    .save-btn:hover { box-shadow: 0 4px 12px rgba(124,58,237,0.3); transform: translateY(-1px); }
+    .save-btn { padding: 0.7rem 1.25rem; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; border: none; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .save-btn:hover { box-shadow: 0 4px 12px rgba(37,99,235,0.3); transform: translateY(-1px); }
     .save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
     .change-pw-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
     .change-pw-btn:hover { box-shadow: 0 4px 12px rgba(245,158,11,0.3); transform: translateY(-1px); }
     .change-pw-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
     .form-msg { font-size: 0.8rem; color: #ef4444; margin-top: 0.75rem; font-weight: 600; padding: 0.5rem 0.75rem; background: #fef2f2; border-radius: 8px; }
-    .form-msg.success { color: #7c3aed; background: #f5f3ff; }
+    .form-msg.success { color: #2563eb; background: #eff6ff; }
+    .strength-meter { height: 6px; background: #e2e8f0; border-radius: 3px; margin: 0.5rem 0 0.25rem; overflow: hidden; position: relative; }
+    .strength-bar { height: 100%; transition: all 0.3s; }
+    .strength-text { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; margin-top: 0.25rem; }
+    .checklist { background: #f8fafc; padding: 0.75rem; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1rem; }
+    .check-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; transition: all 0.2s; }
+    .check-item.valid { color: #10b981; font-weight: 600; }
+    .check-item .icon { font-size: 0.8rem; }
+    .input-error { border-color: #ef4444 !important; }
+    .match-error { font-size: 0.7rem; color: #ef4444; font-weight: 600; margin-top: 0.25rem; }
     .error-banner { background: #fef2f2; border: 1px solid #fecaca; border-radius: 1rem; padding: 2rem; text-align: center; color: #dc2626; font-weight: 600; }
     @media (max-width: 768px) { .profile-container { padding: 0 1rem; } .input-row { flex-direction: column; } }
   `]
@@ -204,12 +249,55 @@ export class PhysioProfileComponent implements OnInit {
 
   changePassword() {
     this.pwMsg = '';
-    if (this.newPassword !== this.confirmPassword) { this.pwMsg = 'New passwords do not match.'; return; }
-    if (this.newPassword.length < 4) { this.pwMsg = 'Password must be at least 4 characters.'; return; }
+    if (!this.isPasswordValid() || !this.oldPassword) {
+      this.pwMsg = 'Please meet all security requirements.'; return;
+    }
     this.savingPw = true;
     this.userService.changePassword(this.oldPassword, this.newPassword).subscribe({
       next: () => { this.pwMsg = 'Password changed successfully!'; this.oldPassword = ''; this.newPassword = ''; this.confirmPassword = ''; this.savingPw = false; },
       error: (err) => { this.pwMsg = err?.error || 'Failed to change password.'; this.savingPw = false; }
     });
+  }
+
+  getPasswordStrength(): number {
+    const pw = this.newPassword;
+    if (!pw) return 0;
+    let s = 0;
+    if (pw.length >= 8) s += 25;
+    if (/[A-Z]/.test(pw)) s += 25;
+    if (/[0-9]/.test(pw)) s += 25;
+    if (/[^A-Za-z0-9]/.test(pw)) s += 25;
+    return s;
+  }
+
+  getStrengthColor(): string {
+    const s = this.getPasswordStrength();
+    if (s <= 25) return '#ef4444';
+    if (s <= 50) return '#f59e0b';
+    if (s <= 75) return '#3b82f6';
+    return '#10b981';
+  }
+
+  getStrengthLabel(): string {
+    const s = this.getPasswordStrength();
+    if (s <= 25) return 'Very Weak';
+    if (s <= 50) return 'Weak';
+    if (s <= 75) return 'Fair';
+    return 'Strong';
+  }
+
+  getValidation() {
+    return {
+      length: this.newPassword.length >= 8,
+      upper: /[A-Z]/.test(this.newPassword),
+      number: /[0-9]/.test(this.newPassword),
+      special: /[^A-Za-z0-9]/.test(this.newPassword),
+      match: this.newPassword === this.confirmPassword && this.newPassword.length > 0
+    };
+  }
+
+  isPasswordValid(): boolean {
+    const v = this.getValidation();
+    return v.length && v.upper && v.number && v.special && v.match;
   }
 }

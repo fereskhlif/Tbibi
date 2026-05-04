@@ -44,6 +44,17 @@ public interface MedicineRepository extends JpaRepository<Medicine,Long> {
            @Param("inStockOnly") boolean inStockOnly, 
            Pageable pageable);
 
+    @Query("SELECT m FROM Medicine m WHERE m.available = true " +
+           "AND (:name IS NULL OR LOWER(m.medicineName) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+           "AND (:pharmacyId IS NULL OR m.pharmacy.pharmacyId = :pharmacyId) " +
+           "AND (:category IS NULL OR m.category = :category) " +
+           "AND (:inStockOnly = false OR m.stock > 0)")
+    List<Medicine> filterAll(
+           @Param("name") String name, 
+           @Param("pharmacyId") Long pharmacyId, 
+           @Param("category") MedicineCategory category, 
+           @Param("inStockOnly") boolean inStockOnly);
+
     @Query("SELECT m.medicineName, SUM(ol.quantity) as totalQty " +
            "FROM OrderLine ol " +
            "JOIN ol.medicine m " +

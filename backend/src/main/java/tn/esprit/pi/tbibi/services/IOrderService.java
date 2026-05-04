@@ -19,5 +19,8 @@ public interface IOrderService {
     org.springframework.data.domain.Page<OrderResponse> getOrdersPaginated(Long pharmacyId, String status, String search, String sortType, int page, int size);
     
     org.springframework.data.domain.Page<OrderResponse> getUserOrdersPaginated(Integer userId, String status, String search, String sortType, int page, int size);
-
+    
+    List<tn.esprit.pi.tbibi.DTO.order.PatientSpendingAnalyticsDTO> getPatientSpendingAnalytics(Integer patientId);
+    List<tn.esprit.pi.tbibi.DTO.order.MedicinePurchaseHistoryDTO> getMedicinePurchaseHistory(Integer userId, String medicineName);
+    List<tn.esprit.pi.tbibi.DTO.order.MedicinePurchaseHistoryDTO> getAllPatientMedicineHistory(Integer userId);
 }

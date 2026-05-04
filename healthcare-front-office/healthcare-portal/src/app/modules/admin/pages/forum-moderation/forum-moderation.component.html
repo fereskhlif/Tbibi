@@ -1,0 +1,173 @@
+<div class="forum-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <div>
+        <h1>Forum Moderation</h1>
+        <p>Monitor and manage forum content</p>
+      </div>
+    </div>
+    <button class="refresh-btn" (click)="refreshAll()" title="Refresh">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-slate">📄</div>
+      <div class="stat-body">
+        <p class="stat-num" *ngIf="!loadingStats">{{ stats?.totalPosts ?? 0 }}</p>
+        <div class="skeleton-bar" *ngIf="loadingStats"></div>
+        <p class="stat-label">Total Messages</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-red">🛡️</div>
+      <div class="stat-body">
+        <p class="stat-num text-red" *ngIf="!loadingStats">{{ stats?.toxic ?? 0 }}</p>
+        <div class="skeleton-bar" *ngIf="loadingStats"></div>
+        <p class="stat-label">Toxic Messages</p>
+        <p class="stat-sub text-red" *ngIf="!loadingStats">Toxicity rate: {{ getToxicPercent() }}%</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-orange">⚠️</div>
+      <div class="stat-body">
+        <p class="stat-num text-orange" *ngIf="!loadingStats">{{ stats?.uncertain ?? 0 }}</p>
+        <div class="skeleton-bar" *ngIf="loadingStats"></div>
+        <p class="stat-label">To Verify</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-green">✅</div>
+      <div class="stat-body">
+        <p class="stat-num text-green" *ngIf="!loadingStats">{{ stats?.clean ?? 0 }}</p>
+        <div class="skeleton-bar" *ngIf="loadingStats"></div>
+        <p class="stat-label">Clean Messages</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Pills -->
+  <div class="filter-row">
+    <button *ngFor="let f of filters"
+      class="filter-pill"
+      [class.active]="activeFilter === f.key"
+      (click)="setFilter(f.key)">
+      <span class="filter-icon">{{ f.icon }}</span> {{ f.label }}
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="skeleton-list" *ngIf="loadingPosts">
+    <div class="skeleton-row" *ngFor="let i of [1,2,3]"></div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loadingPosts && posts.length === 0">
+    <span class="empty-icon">💬</span>
+    <p class="empty-title">No posts found</p>
+    <p class="empty-sub">Adjust filters to see more results</p>
+  </div>
+
+  <!-- Posts List -->
+  <div class="posts-container" *ngIf="!loadingPosts && posts.length > 0">
+    <div *ngFor="let post of posts"
+      class="post-wrapper"
+      [class.removing]="post.removing">
+
+      <!-- Post Row -->
+      <div class="post-row" (click)="togglePost(post)">
+        <span class="verdict-badge" [ngClass]="getVerdictClass(post.toxicityVerdict)">
+          {{ post.toxicityVerdict || 'UNSCORED' }}
+        </span>
+        <span class="post-score" [style.color]="getScoreColor(post.toxicityVerdict)">
+          {{ formatScore(post.toxicityScore) }}
+        </span>
+        <span class="post-title">{{ truncate(post.title, 50) }}</span>
+        <span class="post-author">{{ post.authorName }}</span>
+        <span class="post-date">{{ formatDate(post.createdDate) }}</span>
+        <button class="btn-icon btn-trash" (click)="deletePost(post, $event)" title="Delete">🗑️</button>
+        <span class="chevron" [class.rotated]="post.expanded">▼</span>
+      </div>
+
+      <!-- Accordion -->
+      <div class="accordion" *ngIf="post.expanded">
+
+        <!-- Accordion Header -->
+        <div class="accordion-header">
+          <div class="accordion-header-left" style="cursor: pointer;" (click)="toggleAllComments(post, getSelectedCount(post) !== post.comments?.length)">
+            <input type="checkbox"
+              class="comment-checkbox"
+              [checked]="post.comments?.length > 0 && getSelectedCount(post) === post.comments?.length"
+              style="pointer-events: none;" />
+            <span class="comment-count">
+              {{ post.comments?.length ?? 0 }} comment(s)
+              <span *ngIf="getSelectedCount(post) > 0" class="selected-count">
+                · {{ getSelectedCount(post) }} selected
+              </span>
+            </span>
+          </div>
+          <div class="accordion-header-right">
+            <button *ngIf="getSelectedCount(post) > 0"
+              class="btn-bulk-delete"
+              (click)="deleteSelectedComments(post)">
+              🗑️ Delete selected ({{ getSelectedCount(post) }})
+            </button>
+            <button class="btn-delete-post" (click)="deletePost(post, $event)">
+              🗑️ Delete this post
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading comments -->
+        <div class="skeleton-row slim" *ngIf="post.comments === undefined"></div>
+
+        <!-- No comments -->
+        <div class="no-comments" *ngIf="post.comments !== undefined && post.comments.length === 0">
+          No comments
+        </div>
+
+        <!-- Comment Rows -->
+        <div *ngFor="let c of post.comments"
+          class="comment-row"
+          [class.selected]="post.selectedIds && post.selectedIds[c.commentId]"
+          (click)="toggleComment(post, c.commentId)"
+          style="cursor: pointer;">
+
+          <input type="checkbox"
+            class="comment-checkbox"
+            [checked]="post.selectedIds && post.selectedIds[c.commentId]"
+            style="pointer-events: none;" />
+
+          <span class="verdict-badge small" [ngClass]="getVerdictClass(c.toxicityVerdict)">
+            {{ c.toxicityVerdict || 'UNSCORED' }}
+          </span>
+
+          <span class="comment-score" [style.color]="getScoreColor(c.toxicityVerdict)">
+            {{ formatScore(c.toxicityScore) }}
+          </span>
+
+          <span class="comment-text">{{ c.comment }}</span>
+
+          <span class="comment-author">{{ c.authorName }}</span>
+
+          <span class="comment-date">{{ formatDate(c.commentDate) }}</span>
+
+          <button class="btn-icon btn-trash-sm" (click)="deleteComment(post, c.commentId); $event.stopPropagation()" title="Delete">🗑️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div *ngIf="toastVisible"
+    class="toast"
+    [class.toast-success]="toastType === 'success'"
+    [class.toast-error]="toastType === 'error'">
+    <span class="toast-icon">{{ toastType === 'success' ? '✅' : '❌' }}</span>
+    <span class="toast-text">{{ toastMessage }}</span>
+  </div>
+</div>

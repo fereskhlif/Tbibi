@@ -30,12 +30,29 @@ export class ForumCategoryComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
+    const currentRole = this.normalizeRole(localStorage.getItem('RoleUserConnect') || localStorage.getItem('userRole') || 'PATIENT');
+
     this.forumService.getCategories().subscribe({
       next: (cats) => {
         this.category = cats.find(c => c.categoryId === this.categoryId) || null;
+        
+        // Expertise check for professionals
+        if (this.category && currentRole !== 'PATIENT' && !this.canProfessionalAccess(currentRole, this.category.categoryName)) {
+          this.error = 'You do not have the required expertise to access this category.';
+          this.loading = false;
+          return;
+        }
+
+        this.loadPosts();
+      },
+      error: () => {
+        this.error = 'Failed to load category information.';
+        this.loading = false;
       }
     });
+  }
 
+  private loadPosts(): void {
     this.forumService.getPostsByCategory(this.categoryId).subscribe({
       next: (data) => {
         this.posts = data;
@@ -46,6 +63,26 @@ export class ForumCategoryComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private normalizeRole(role: string): string {
+    const r = role ? role.toUpperCase().trim() : 'PATIENT';
+    if (r.includes('DOCTOR') || r.includes('DOCTEUR')) return 'DOCTOR';
+    if (r.includes('PHARMACIST') || r.includes('PHARMASIS')) return 'PHARMACIST';
+    if (r.includes('KINE') || r.includes('PHYSIO')) return 'PHYSIO';
+    if (r.includes('LABORATORY') || r.includes('LAB')) return 'LAB';
+    return 'PATIENT';
+  }
+
+  private canProfessionalAccess(role: string, categoryName: string): boolean {
+    const map: { [key: string]: string[] } = {
+      'DOCTOR': ['Ask a Doctor', 'General Health', 'Mental Health', 'Chronic Diseases', 'First Aid & Emergencies', 'Children Health', 'Women Health'],
+      'PHARMACIST': ['Ask a Pharmacist', 'General Health', 'Medications & Side Effects', 'Nutrition & Diet'],
+      'LAB': ['Ask a Lab', 'General Health', 'Chronic Diseases'],
+      'PHYSIO': ['Ask a Physiotherapist', 'General Health', 'Fitness & Wellness', 'Healthy Lifestyle']
+    };
+    const allowed = map[role] || [];
+    return allowed.includes(categoryName);
   }
 
   get filteredPosts(): PostResponse[] {

@@ -19,7 +19,7 @@ export interface PaymentResponse {
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-    private apiUrl = 'http://localhost:8089/api/payments';
+    private apiUrl = 'http://localhost:8088/api/payments'; // Fixed port to 8088
 
     constructor(private http: HttpClient) { }
 
@@ -41,5 +41,9 @@ export class PaymentService {
 
     delete(id: number): Observable<void> {
         return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    }
+
+    createCheckoutSession(request: any): Observable<{ sessionUrl: string }> {
+        return this.http.post<{ sessionUrl: string }>(`${this.apiUrl}/create-checkout-session`, request);
     }
 }

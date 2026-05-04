@@ -135,27 +135,27 @@
                   <svg viewBox="0 0 120 120" width="220" height="220">
                     <circle cx="60" cy="60" r="45" fill="none" class="donut-track" stroke-width="20" />
                     <circle *ngIf="donutHealthy.length > 0" cx="60" cy="60" r="45" fill="none"
-                            class="donut-segment green" stroke-width="20"
+                            class="donut-segment blue-600" stroke-width="20"
                             [attr.stroke-dasharray]="healthyArc + ' ' + (282.74 - healthyArc)"
-                            stroke-dashoffset="70">
+                            stroke-dashoffset="0">
                       <title>In Stock / Healthy: {{ healthyPercent }}%</title>
                     </circle>
                     <circle *ngIf="donutLowStock.length > 0" cx="60" cy="60" r="45" fill="none"
-                            class="donut-segment teal" stroke-width="20"
+                            class="donut-segment blue-400" stroke-width="20"
                             [attr.stroke-dasharray]="lowStockArc + ' ' + (282.74 - lowStockArc)"
-                            [attr.stroke-dashoffset]="70 - healthyArc">
+                            [attr.stroke-dashoffset]="-healthyArc">
                       <title>Low Stock: {{ lowStockPercent }}%</title>
                     </circle>
                     <circle *ngIf="donutOutOfStock.length > 0" cx="60" cy="60" r="45" fill="none"
-                            class="donut-segment pink" stroke-width="20"
+                            class="donut-segment blue-200" stroke-width="20"
                             [attr.stroke-dasharray]="outOfStockArc + ' ' + (282.74 - outOfStockArc)"
-                            [attr.stroke-dashoffset]="70 - healthyArc - lowStockArc">
+                            [attr.stroke-dashoffset]="-(healthyArc + lowStockArc)">
                       <title>Out of Stock: {{ outOfStockPercent }}%</title>
                     </circle>
                     <circle *ngIf="donutExpired.length > 0" cx="60" cy="60" r="45" fill="none"
-                            class="donut-segment red" stroke-width="20"
+                            class="donut-segment blue-900" stroke-width="20"
                             [attr.stroke-dasharray]="expiredArc + ' ' + (282.74 - expiredArc)"
-                            [attr.stroke-dashoffset]="70 - healthyArc - lowStockArc - outOfStockArc">
+                            [attr.stroke-dashoffset]="-(healthyArc + lowStockArc + outOfStockArc)">
                       <title>Expired: {{ expiredPercentNum }}%</title>
                     </circle>
                   </svg>
@@ -170,10 +170,10 @@
                   </div>
                 </div>
                 <div class="donut-legend">
-                  <div class="legend-item"><span class="dot green"></span> Healthy</div>
-                  <div class="legend-item"><span class="dot teal"></span> Low Stock</div>
-                  <div class="legend-item"><span class="dot pink"></span> Out of Stock</div>
-                  <div class="legend-item"><span class="dot red"></span> Expired</div>
+                  <div class="legend-item"><span class="dot blue-600"></span> Healthy</div>
+                  <div class="legend-item"><span class="dot blue-400"></span> Low Stock</div>
+                  <div class="legend-item"><span class="dot blue-200"></span> Out of Stock</div>
+                  <div class="legend-item"><span class="dot blue-900"></span> Expired</div>
                 </div>
               </div>
 
@@ -316,10 +316,6 @@
                 <span class="qa-icon">📜</span>
                 <span class="qa-text">Prescriptions</span>
               </button>
-              <button class="qa-btn" (click)="navigateTo('availability')">
-                <span class="qa-icon">🔍</span>
-                <span class="qa-text">Check Stock</span>
-              </button>
             </div>
           </div>
         </div>
@@ -365,7 +361,7 @@
             <ul class="top-selling-list" style="list-style: none; padding: 0; margin: 0;">
               <li *ngFor="let item of topSellingMedicines.slice(0, 5)" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
                 <span class="font-medium">{{ item[0] }}</span>
-                <span class="qty-badge" style="background:#d1fae5; color:#065f46;">{{ item[1] }} sold</span>
+                <span class="qty-badge" style="background:#eff6ff; color:#2563eb;">{{ item[1] }} sold</span>
               </li>
             </ul>
           </div>
@@ -504,7 +500,7 @@
       </div>
       <div class="modal-body">
         <!-- Most sold highlight -->
-        <div class="highlight-banner green-bg" *ngIf="mostSoldToday">
+        <div class="highlight-banner blue-bg" *ngIf="mostSoldToday">
           <span class="highlight-icon">🏆</span>
           <span class="highlight-text">Most sold: <strong>{{ mostSoldToday.name }}</strong> — {{ mostSoldToday.qty }} units</span>
         </div>
@@ -574,7 +570,7 @@
       </div>
       <div class="modal-body">
         <!-- Already Expired Section -->
-        <div class="section-label"><span class="section-dot red"></span> Already Expired ({{ expiredItems.length }})</div>
+        <div class="section-label"><span class="section-dot blue-900"></span> Already Expired ({{ expiredItems.length }})</div>
         <div class="empty-state-sm" *ngIf="expiredItems.length === 0">
           <span>✅ No expired medicines found</span>
         </div>
@@ -653,10 +649,10 @@
       </div>
       <div class="modal-body">
         <div class="report-summary-grid">
-          <div class="report-stat green-bg"><span class="stat-num">{{ donutHealthy.length }}</span><span class="stat-lbl">Healthy</span></div>
-          <div class="report-stat teal-bg"><span class="stat-num">{{ donutLowStock.length }}</span><span class="stat-lbl">Low Stock</span></div>
-          <div class="report-stat pink-bg"><span class="stat-num">{{ donutOutOfStock.length }}</span><span class="stat-lbl">Out of Stock</span></div>
-          <div class="report-stat red-bg"><span class="stat-num">{{ donutExpired.length }}</span><span class="stat-lbl">Expired</span></div>
+          <div class="report-stat blue-600-bg"><span class="stat-num">{{ donutHealthy.length }}</span><span class="stat-lbl">Healthy</span></div>
+          <div class="report-stat blue-400-bg"><span class="stat-num">{{ donutLowStock.length }}</span><span class="stat-lbl">Low Stock</span></div>
+          <div class="report-stat blue-200-bg"><span class="stat-num">{{ donutOutOfStock.length }}</span><span class="stat-lbl">Out of Stock</span></div>
+          <div class="report-stat blue-900-bg"><span class="stat-num">{{ donutExpired.length }}</span><span class="stat-lbl">Expired</span></div>
         </div>
         <table class="detail-table">
           <thead><tr><th>Medicine</th><th>Category</th><th>Stock</th><th>Min Stock</th><th>Expiry</th><th>Status</th></tr></thead>

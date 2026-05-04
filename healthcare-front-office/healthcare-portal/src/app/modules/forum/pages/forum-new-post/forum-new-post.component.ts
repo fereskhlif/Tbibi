@@ -38,7 +38,7 @@ export class ForumNewPostComponent implements OnInit {
   submitting = false;
   formError = '';
   activeTab: 'text' | 'image' | 'link' = 'text';
-  currentUserId = 1;
+  currentUserId = 0;
 
   selectedFiles: File[] = [];
   filePreviews: string[] = [];
@@ -132,13 +132,46 @@ export class ForumNewPostComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const data = this.route.snapshot.data['role']
+      ? this.route.snapshot.data
+      : (this.route.parent?.snapshot.data || {});
+    this.currentUserId = parseInt(localStorage.getItem('userId') || '0', 10) || data['userId'] || 0;
+    const currentRole = this.normalizeRole(data['role'] || localStorage.getItem('RoleUserConnect') || localStorage.getItem('userRole') || 'PATIENT');
+
     this.forumService.getCategories().subscribe({
-      next: (data) => {
-        this.categories = data.filter(c => c.active);
+      next: (cats) => {
+        const activeCats = cats.filter(c => c.active);
+        
+        if (currentRole === 'PATIENT') {
+          this.categories = activeCats;
+        } else {
+          // Filter categories based on expertise for professionals
+          this.categories = this.filterExpertiseCategories(currentRole, activeCats);
+        }
         this.loadingCategories = false;
       },
       error: () => this.loadingCategories = false
     });
+  }
+
+  private normalizeRole(role: string): string {
+    const r = role ? role.toUpperCase().trim() : 'PATIENT';
+    if (r.includes('DOCTOR') || r.includes('DOCTEUR')) return 'DOCTOR';
+    if (r.includes('PHARMACIST') || r.includes('PHARMASIS')) return 'PHARMACIST';
+    if (r.includes('KINE') || r.includes('PHYSIO')) return 'PHYSIO';
+    if (r.includes('LABORATORY') || r.includes('LAB')) return 'LAB';
+    return 'PATIENT';
+  }
+
+  private filterExpertiseCategories(role: string, categories: CategoryResponse[]): CategoryResponse[] {
+    const map: { [key: string]: string[] } = {
+      'DOCTOR': ['Ask a Doctor', 'General Health', 'Mental Health', 'Chronic Diseases', 'First Aid & Emergencies', 'Children Health', 'Women Health'],
+      'PHARMACIST': ['Ask a Pharmacist', 'General Health', 'Medications & Side Effects', 'Nutrition & Diet'],
+      'LAB': ['Ask a Lab', 'General Health', 'Chronic Diseases'],
+      'PHYSIO': ['Ask a Physiotherapist', 'General Health', 'Fitness & Wellness', 'Healthy Lifestyle']
+    };
+    const allowedNames = map[role] || [];
+    return categories.filter(c => allowedNames.includes(c.categoryName));
   }
 
   onFilesChanged(files: FileList | null): void {

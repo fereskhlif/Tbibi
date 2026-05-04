@@ -264,6 +264,50 @@ export class HomepageComponent {
 
     constructor(private router: Router) { }
 
+    ngOnInit(): void {
+        this.checkExistingSession();
+    }
+
+    private checkExistingSession(): void {
+        const token = localStorage.getItem('TokenUserConnect');
+        const role = localStorage.getItem('RoleUserConnect');
+        
+        if (token && role && !this.isTokenExpired(token)) {
+            const routes: Record<string, string> = {
+                'PATIENT': '/patient',
+                'ROLE_PATIENT': '/patient',
+                'DOCTEUR': '/doctor',
+                'ROLE_DOCTEUR': '/doctor',
+                'KINE': '/physio',
+                'ROLE_KINE': '/physio',
+                'PHARMASIS': '/pharmacist',
+                'ROLE_PHARMASIS': '/pharmacist',
+                'LABORATORY': '/laboratory',
+                'ROLE_LABORATORY': '/laboratory',
+                'ADMIN': '/admin/dashboard',
+                'ROLE_ADMIN': '/admin/dashboard'
+            };
+            
+            const roleKey = role.toUpperCase().trim();
+            const destination = routes[roleKey] || '/';
+            
+            if (destination !== '/') {
+                this.router.navigateByUrl(destination);
+            }
+        }
+    }
+
+    private isTokenExpired(token: string): boolean {
+        try {
+            const parts = token.split('.');
+            if (parts.length !== 3) return true;
+            const payload = JSON.parse(atob(parts[1]));
+            return Date.now() > payload.exp * 1000;
+        } catch {
+            return true;
+        }
+    }
+
     goToLogin() { this.router.navigate(['/login']); }
     goToSignup() { this.router.navigate(['/signup']); }
     scrollToServices() {

@@ -7,6 +7,7 @@ import { MainLayoutComponent } from '../../../../shared/layouts/main-layout/main
 import { PatientMedicineService } from '../../services/patient-medicine.service';
 import { UserService, UserProfileDTO } from '../../../../services/user.service';
 import { Pharmacy } from '../../models/pharmacy.model';
+import { PaymentService } from '../../services/payment.service';
 
 @Component({
   selector: 'app-checkout-page',
@@ -20,11 +21,19 @@ export class CheckoutPageComponent implements OnInit { // UI Refactor Trigger
   pharmacyId: number | null = null;
   userProfile: UserProfileDTO | null = null;
 
+  // New fields for checkout
+  deliveryMethod: string = 'PICKUP';
+  deliveryAddress: string = '';
+  paymentMethod: string = 'CARD';
+  prescriptionFile: File | null = null;
+  prescriptionBase64: string | null = null;
+
   constructor(
     public cartService: CartService,
     private orderService: PatientOrderService,
     private medicineService: PatientMedicineService,
     private userService: UserService,
+    private paymentService: PaymentService,
     private router: Router
   ) { }
 
@@ -48,7 +57,12 @@ export class CheckoutPageComponent implements OnInit { // UI Refactor Trigger
 
   loadUserProfile(): void {
     this.userService.getProfile().subscribe({
-      next: (profile) => this.userProfile = profile,
+      next: (profile) => {
+        this.userProfile = profile;
+        if (profile.adresse) {
+          this.deliveryAddress = profile.adresse;
+        }
+      },
       error: (err) => console.error('Failed to load user profile during checkout:', err)
     });
   }
@@ -66,6 +80,18 @@ export class CheckoutPageComponent implements OnInit { // UI Refactor Trigger
       : 'assets/images/placeholder-medicine.png';
   }
 
+  handlePrescriptionUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.prescriptionFile = input.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.prescriptionBase64 = reader.result as string;
+      };
+      reader.readAsDataURL(this.prescriptionFile);
+    }
+  }
+
   placeOrder(): void {
     const items = this.cartService.getItems();
     if (!items || items.length === 0) return;
@@ -80,6 +106,10 @@ export class CheckoutPageComponent implements OnInit { // UI Refactor Trigger
     const request: OrderRequest = {
       userId: this.userProfile?.userId || 3, // Fallback to 3 if profile not loaded yet, but ideally it should be loaded
       pharmacyId: this.pharmacyId,
+      deliveryMethod: this.deliveryMethod,
+      deliveryAddress: this.deliveryMethod === 'DELIVERY' ? this.deliveryAddress : '',
+      paymentMethod: this.paymentMethod,
+      prescriptionImage: this.prescriptionBase64 || undefined,
       orderLines: items.map(item => ({
         medicineId: item.medicine.medicineId,
         quantity: item.quantity
@@ -88,14 +118,41 @@ export class CheckoutPageComponent implements OnInit { // UI Refactor Trigger
 
     this.orderService.placeOrder(request).subscribe({
       next: (resp) => {
-        this.cartService.clearCart();
-        this.isOrdering = false;
-        // Native success page navigation
-        this.router.navigate(['/patient/order-success', resp.orderId]);
+        if (this.paymentMethod === 'CARD') {
+          this.initiateStripePayment(resp.orderId);
+        } else {
+          this.cartService.clearCart();
+          this.isOrdering = false;
+          this.router.navigate(['/patient/order-success', resp.orderId]);
+        }
       },
       error: (err) => {
         this.isOrdering = false;
         this.checkoutError = err.error?.message || 'Failed to place order. Please review your active cart.';
+      }
+    });
+  }
+
+  private initiateStripePayment(orderId: number): void {
+    const amount = Math.round(this.cartService.getTotalAmount() * 100); // Stripe expects cents
+    const request = {
+      amount: amount,
+      currency: 'usd', // Usually USD or TND if configured, using USD for demo
+      productName: 'Pharmacy Order #' + orderId,
+      successUrl: window.location.origin + '/patient/order-success/' + orderId,
+      cancelUrl: window.location.origin + '/patient/checkout',
+      orderId: orderId
+    };
+
+    this.paymentService.createCheckoutSession(request).subscribe({
+      next: (resp) => {
+        this.cartService.clearCart();
+        window.location.href = resp.sessionUrl; // Redirect to Stripe
+      },
+      error: (err) => {
+        this.isOrdering = false;
+        this.checkoutError = 'Order created, but failed to initiate Stripe payment. You can pay at pickup instead.';
+        console.error('Stripe error:', err);
       }
     });
   }

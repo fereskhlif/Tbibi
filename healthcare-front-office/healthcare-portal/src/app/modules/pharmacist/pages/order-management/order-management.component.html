@@ -1,39 +1,31 @@
-<div class="min-h-screen bg-[#F8FAFC] p-6 lg:p-10 font-sans">
+<div class="min-h-screen bg-[#F8FAFC] p-6 pt-2 lg:p-10 lg:pt-4 font-sans">
     <div class="max-w-7xl mx-auto flex flex-col gap-6">
 
-        <!-- ═══════════════════════════════════════════════════════
-             HEADER — Gradient banner with KPIs + Refresh
-             ═══════════════════════════════════════════════════════ -->
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-8 lg:p-10">
-            <div class="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-            <div class="absolute bottom-0 left-0 w-56 h-56 bg-indigo-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
-
+        <!-- ─── Page Header ─────────────────────────────────────────────── -->
+        <div class="relative overflow-hidden rounded-3xl bg-white border border-slate-200 p-8 lg:p-10 shadow-sm">
             <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div class="flex items-center gap-5">
-                    <div class="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center shrink-0">
-                        <lucide-icon name="clipboard-list" [size]="28" class="text-blue-300"></lucide-icon>
+                    <div class="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-100 ring-4 ring-blue-50 shrink-0">
+                        <lucide-icon name="clipboard-list" [size]="28" class="text-white"></lucide-icon>
                     </div>
                     <div>
-                        <h1 class="text-2xl lg:text-3xl font-black text-white tracking-tight">Order Validation</h1>
-                        <p class="text-sm text-blue-200/80 font-medium mt-1">Review, confirm, and manage patient pharmacy orders</p>
+                        <h1 class="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">Order Validation</h1>
                     </div>
                 </div>
+
 
                 <div class="flex items-center gap-4">
                     <!-- Refresh Button -->
                     <button (click)="refreshOrders()" [disabled]="loading"
-                        class="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all active:scale-90 disabled:opacity-50"
+                        class="w-12 h-12 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-all active:scale-90 disabled:opacity-50"
                         title="Refresh orders">
-                        <lucide-icon name="refresh-cw" [size]="18" class="text-blue-300"
+                        <lucide-icon name="refresh-cw" [size]="18" class="text-slate-600"
                             [class.animate-spin]="loading"></lucide-icon>
                     </button>
                 </div>
             </div>
 
-            <!-- Last refreshed timestamp -->
-            <p *ngIf="lastFetched" class="relative z-10 text-[10px] text-blue-300/50 font-medium mt-4 uppercase tracking-widest">
-                Last updated: {{ getTimeSinceRefresh() }}
-            </p>
+
         </div>
 
         <!-- ═══════════════════════════════════════════════════════
@@ -193,39 +185,48 @@
                         <div *ngIf="order.orderStatus !== 'PENDING'" class="w-6 shrink-0"></div>
 
                         <!-- Status Icon -->
-                        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 cursor-pointer"
+                        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-105 shadow-sm"
                             (click)="expandedOrderId = expandedOrderId === order.orderId ? null : order.orderId"
                             [ngClass]="{
-                                'bg-yellow-50': order.orderStatus === 'PENDING',
+                                'bg-yellow-50 ring-4 ring-yellow-500/10 animate-pulse': order.orderStatus === 'PENDING',
                                 'bg-blue-50': order.orderStatus === 'CONFIRMED',
                                 'bg-purple-50': order.orderStatus === 'IN_PROGRESS',
                                 'bg-green-50': order.orderStatus === 'DELIVERED',
-                                'bg-red-50': order.orderStatus === 'REJECTED' || order.orderStatus === 'CANCELLED'
+                                'bg-red-50': order.orderStatus === 'REJECTED',
+                                'bg-gray-50': order.orderStatus === 'CANCELLED'
                             }">
                             <lucide-icon *ngIf="order.orderStatus === 'PENDING'" name="clock" [size]="20" class="text-yellow-600"></lucide-icon>
                             <lucide-icon *ngIf="order.orderStatus === 'CONFIRMED'" name="check-circle" [size]="20" class="text-blue-600"></lucide-icon>
                             <lucide-icon *ngIf="order.orderStatus === 'IN_PROGRESS'" name="truck" [size]="20" class="text-purple-600"></lucide-icon>
                             <lucide-icon *ngIf="order.orderStatus === 'DELIVERED'" name="package" [size]="20" class="text-green-600"></lucide-icon>
-                            <lucide-icon *ngIf="order.orderStatus === 'REJECTED' || order.orderStatus === 'CANCELLED'" name="x-circle" [size]="20" class="text-red-500"></lucide-icon>
+                            <lucide-icon *ngIf="order.orderStatus === 'REJECTED'" name="x-circle" [size]="20" class="text-red-500"></lucide-icon>
+                            <lucide-icon *ngIf="order.orderStatus === 'CANCELLED'" name="ban" [size]="20" class="text-gray-400"></lucide-icon>
                         </div>
 
                         <!-- Order Info (clickable to expand) -->
-                        <div class="flex-1 min-w-0 cursor-pointer"
+                        <div class="flex-1 min-w-0 cursor-pointer group/info"
                             (click)="expandedOrderId = expandedOrderId === order.orderId ? null : order.orderId">
                             <div class="flex items-center gap-2.5 flex-wrap">
-                                <h3 class="text-sm font-black text-gray-900">#ORD-{{order.orderId}}</h3>
+                                <h3 class="text-sm font-black text-gray-900 group-hover/info:text-blue-600 transition-colors">#ORD-{{order.orderId}}</h3>
                                 <span [class]="'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ' + getStatusClass(order.orderStatus)">
                                     {{order.orderStatus.replace('_', ' ')}}
                                 </span>
                             </div>
                             <div class="flex items-center gap-2 mt-1">
-                                <lucide-icon name="user" [size]="12" class="text-gray-400"></lucide-icon>
-                                <span class="text-xs font-semibold text-gray-700 truncate">{{order.userName}}</span>
+                                <div class="flex items-center gap-1 text-gray-700">
+                                    <lucide-icon name="user" [size]="12" class="text-gray-400"></lucide-icon>
+                                    <span class="text-xs font-bold truncate">{{order.userName}}</span>
+                                </div>
                                 <span class="text-gray-300">·</span>
-                                <lucide-icon name="calendar" [size]="12" class="text-gray-400"></lucide-icon>
-                                <span class="text-xs text-gray-500">{{order.orderDate | date:'MMM d, y'}}</span>
+                                <div class="flex items-center gap-1 text-gray-500">
+                                    <lucide-icon name="calendar" [size]="12" class="text-gray-400"></lucide-icon>
+                                    <span class="text-xs font-medium">{{order.orderDate | date:'MMM d, y'}}</span>
+                                </div>
                                 <span class="text-gray-300 hidden sm:inline">·</span>
-                                <span class="text-xs text-gray-400 hidden sm:inline">{{order.orderLines.length}} item{{order.orderLines.length > 1 ? 's' : ''}}</span>
+                                <div class="hidden sm:flex items-center gap-1 text-gray-400">
+                                    <lucide-icon name="package" [size]="12"></lucide-icon>
+                                    <span class="text-xs font-medium">{{order.orderLines.length}} item{{order.orderLines.length > 1 ? 's' : ''}}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -423,7 +424,40 @@
                     <p class="font-bold text-gray-900">{{selectedOrder.pharmacyName}}</p>
                     <p class="text-xs text-gray-500">ID: {{selectedOrder.pharmacyId}}</p>
                 </div>
+                
+                <div class="bg-gray-50 rounded-2xl p-5 space-y-2 border border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <lucide-icon name="truck" [size]="14" class="text-gray-400"></lucide-icon>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Delivery Info</p>
+                    </div>
+                    <p class="font-bold text-gray-900">{{selectedOrder.deliveryMethod === 'DELIVERY' ? 'Home Delivery' : 'Store Pickup'}}</p>
+                    <p *ngIf="selectedOrder.deliveryMethod === 'DELIVERY' && selectedOrder.deliveryAddress" class="text-xs text-gray-500">{{selectedOrder.deliveryAddress}}</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-5 space-y-2 border border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <lucide-icon name="credit-card" [size]="14" class="text-gray-400"></lucide-icon>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Payment</p>
+                    </div>
+                    <p class="font-bold text-gray-900">{{selectedOrder.paymentMethod === 'CASH_ON_DELIVERY' ? 'Cash on Delivery' : 'Pay at Pickup'}}</p>
+                </div>
             </div>
+            
+            <div *ngIf="selectedOrder.prescriptionImage" class="mt-4 p-5 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                        <lucide-icon name="file-text" [size]="20"></lucide-icon>
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-900 text-sm">Patient Prescription attached</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Please verify before confirming</p>
+                    </div>
+                </div>
+                <a [href]="selectedOrder.prescriptionImage" target="_blank" class="px-4 py-2 bg-white text-blue-600 border border-blue-200 text-sm font-bold rounded-xl hover:bg-blue-50 transition-colors">
+                    View
+                </a>
+            </div>
+            
             <div>
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                     <lucide-icon name="pill" [size]="14" class="text-gray-400"></lucide-icon>

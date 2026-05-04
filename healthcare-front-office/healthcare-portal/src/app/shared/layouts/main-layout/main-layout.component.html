@@ -150,7 +150,7 @@
                 <lucide-icon name="user" [size]="16" class="text-gray-400"></lucide-icon> View Profile
               </button>
 
-              <button (click)="router.navigate(['/patient/forum/my-posts']); showProfileDropdown = false" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
+              <button *ngIf="role === 'patient'" (click)="router.navigate(['/patient/forum/my-posts']); showProfileDropdown = false" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
                 <lucide-icon name="message-square" [size]="16" class="text-gray-400"></lucide-icon> My Posts
               </button>
 
