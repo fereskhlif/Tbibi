@@ -6,7 +6,7 @@ import { OrderRequest, OrderResponse } from '../models/order.model';
 describe('PatientOrderService', () => {
     let service: PatientOrderService;
     let httpMock: HttpTestingController;
-    const apiUrl = 'http://localhost:8088/api/orders';
+    const apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/orders';
 
     const mockOrder: OrderResponse = {
         orderId: 1, orderDate: '2024-01-15', deliveryDate: null,

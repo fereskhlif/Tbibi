@@ -16,7 +16,7 @@ export interface MedicineOcrResult {
 })
 export class OcrService {
 
-  private apiUrl = 'http://localhost:8088/api/ocr/scan';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/ocr/scan';
 
   constructor(private http: HttpClient) { }
 

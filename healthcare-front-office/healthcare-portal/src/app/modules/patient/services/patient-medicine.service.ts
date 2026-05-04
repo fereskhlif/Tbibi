@@ -6,8 +6,8 @@ import { Pharmacy } from '../models/pharmacy.model';
 
 @Injectable({ providedIn: 'root' })
 export class PatientMedicineService {
-    private apiUrl = 'http://localhost:8088/api/medicines';
-    private pharmacyUrl = 'http://localhost:8088/api/pharmacies';
+    private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/medicines';
+    private pharmacyUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/pharmacies';
 
     constructor(private http: HttpClient) { }
 

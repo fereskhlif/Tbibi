@@ -32,7 +32,7 @@ export interface DoctorExceptionResponse {
 
 @Injectable({ providedIn: 'root' })
 export class DoctorAppointmentService {
-    private readonly base = 'http://localhost:8088';
+    private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net';
 
     constructor(private http: HttpClient) { }
 

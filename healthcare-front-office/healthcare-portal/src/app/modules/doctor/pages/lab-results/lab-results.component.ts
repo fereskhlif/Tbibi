@@ -37,7 +37,7 @@ export class DoctorLabResultsComponent implements OnInit {
     requestNotes: ''
   };
   
-  private apiUrl = 'http://localhost:8088/api';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
   private get doctorId(): number {
     return Number(localStorage.getItem('userId') || 0);
   }

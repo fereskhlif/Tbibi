@@ -217,7 +217,7 @@ export class PharmacistProfileComponent implements OnInit {
     const pic = this.profile?.profilePicture;
     if (!pic) return '';
     if (pic.startsWith('http')) return pic;
-    return 'http://localhost:8088/' + pic;
+    return 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/' + pic;
   }
 
   triggerFileInput(): void {

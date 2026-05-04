@@ -264,7 +264,7 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
   // ── Load real patients from the application (via doctor's appointments) ────
   loadPatients() {
     this.loadingPatients = true;
-    this.http.get<any[]>(`http://localhost:8088/appointement/doctor/${this.doctorId}`).subscribe({
+    this.http.get<any[]>(`https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/appointement/doctor/${this.doctorId}`).subscribe({
       next: appointments => {
         // Deduplicate by userId, keep name
         const seen = new Set<number>();
@@ -424,7 +424,7 @@ export class ChronicDiseaseComponent implements OnInit, OnDestroy {
       message: msg
     };
 
-    this.http.post('http://localhost:8088/api/chronic/warn-email', payload).subscribe({
+    this.http.post('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic/warn-email', payload).subscribe({
       next: () => console.log(`${level} email sent to patient successfully`),
       error: err => console.error(`Failed to send ${level} email`, err)
     });

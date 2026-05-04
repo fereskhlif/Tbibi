@@ -221,7 +221,7 @@ export class HealthGoalsComponent implements OnInit {
     frequencyPerWeek: undefined
   };
 
-  private readonly baseUrl = 'http://localhost:8088/api/health-goals';
+  private readonly baseUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/health-goals';
 
   private get userId(): number {
     return Number(localStorage.getItem('userId') || 1);

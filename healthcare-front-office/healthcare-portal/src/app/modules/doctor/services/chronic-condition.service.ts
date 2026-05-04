@@ -30,7 +30,7 @@ export interface ChronicConditionResponse {
 
 @Injectable({ providedIn: 'root' })
 export class ChronicConditionService {
-  private readonly base = 'http://localhost:8088/api/chronic';
+  private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic';
 
   constructor(private http: HttpClient) {}
 

@@ -140,7 +140,7 @@ export class AdminApprovalsComponent implements OnInit {
     if (!profilePicture) return '';
     if (profilePicture.startsWith('http')) return profilePicture;
     const filename = profilePicture.replace(/^.*[\\/]/, '');
-    return `http://localhost:8088/uploads/documents/${filename}`;
+    return `https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/uploads/documents/${filename}`;
   }
 
   openDiploma(user: AdminUser, event: Event): void {

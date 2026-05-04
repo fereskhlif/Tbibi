@@ -8,8 +8,8 @@ describe('PatientMedicineService', () => {
     let service: PatientMedicineService;
     let httpMock: HttpTestingController;
 
-    const apiUrl = 'http://localhost:8088/api/medicines';
-    const pharmacyUrl = 'http://localhost:8088/api/pharmacies';
+    const apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/medicines';
+    const pharmacyUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/pharmacies';
 
     const mockMedicines: Medicine[] = [
         {

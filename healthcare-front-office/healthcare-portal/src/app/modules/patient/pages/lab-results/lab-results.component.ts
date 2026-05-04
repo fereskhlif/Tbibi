@@ -23,7 +23,7 @@ export class LabResultsComponent implements OnInit {
   results: LabResult[] = [];
   loading = true;
   
-  private apiUrl = 'http://localhost:8088/api';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
   private get patientId(): number {
     return Number(localStorage.getItem('userId') || 0);
   }

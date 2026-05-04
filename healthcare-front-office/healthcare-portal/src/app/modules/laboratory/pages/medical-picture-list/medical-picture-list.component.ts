@@ -42,8 +42,8 @@ export class MedicalPictureListComponent implements OnInit {
 
   selectedFile: File | null = null;
 
-  private readonly IMAGE_BASE_URL = 'http://localhost:8088/uploads/medical-pictures/';
-  private readonly API_URL = 'http://localhost:8088/api';
+  private readonly IMAGE_BASE_URL = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/uploads/medical-pictures/';
+  private readonly API_URL = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
 
   categoryOptions = ['Radio', 'Scanner', 'IRM', 'Echographie'];
   statusOptions = ['Pending', 'In Progress', 'Completed', 'Validated', 'Rejected'];

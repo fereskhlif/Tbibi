@@ -28,7 +28,7 @@ export class PatientEvaluationComponent implements OnInit {
   
   newEvaluation: PatientEvaluationRequest = this.getEmptyEvaluation();
 
-  private apiUrl = 'http://localhost:8088/api';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api';
 
   constructor(
     private evaluationService: PatientEvaluationService,

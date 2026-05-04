@@ -200,7 +200,7 @@ import { UserService, UserProfileDTO } from '../../../../services/user.service';
 })
 export class ProfileComponent implements OnInit {
 
-  private readonly API_BASE = 'http://localhost:8088';
+  private readonly API_BASE = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net';
 
   userProfile: UserProfileDTO | null = null;
   loading = true;

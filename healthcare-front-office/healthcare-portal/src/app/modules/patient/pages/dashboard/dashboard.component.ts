@@ -210,7 +210,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.http.get<any[]>(`http://localhost:8088/api/chronic/patient/${patientId}`).subscribe({
+    this.http.get<any[]>(`https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/chronic/patient/${patientId}`).subscribe({
       next: (records) => {
         records = records || [];
         if (records.length === 0) {
@@ -240,7 +240,7 @@ export class DashboardComponent implements OnInit {
           cholesterol: 190,
         };
 
-        this.http.post<any>('http://localhost:8088/api/disease-risk/predict', body).subscribe({
+        this.http.post<any>('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/disease-risk/predict', body).subscribe({
           next: (r) => {
             const stat = this.getStat('health');
             if (stat) {

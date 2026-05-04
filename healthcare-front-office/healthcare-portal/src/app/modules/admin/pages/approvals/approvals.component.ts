@@ -7,15 +7,15 @@ import { environment } from '../../../../../environments/environment';
   template: `
   <div class="min-h-screen bg-gray-50 p-6 lg:p-8">
     <div class="mb-8">
-      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Pending Approvals</h1>
-      <p class="text-sm text-gray-500 mt-0.5">Validation of registered healthcare professionals</p>
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Approbations en attente</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Validation des professionnels de santé inscrits</p>
     </div>
 
     <!-- Error/Loading -->
-    <div *ngIf="loading" class="text-gray-500 mb-6 flex justify-center py-10 border border-dashed border-gray-300 rounded-2xl bg-white">Loading...</div>
+    <div *ngIf="loading" class="text-gray-500 mb-6 flex justify-center py-10 border border-dashed border-gray-300 rounded-2xl bg-white">Chargement...</div>
     <div *ngIf="error" class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 flex justify-between">
       <span>⚠️ {{error}}</span>
-      <button (click)="loadPending()" class="underline font-medium">Retry</button>
+      <button (click)="loadPending()" class="underline font-medium">Réessayer</button>
     </div>
 
     <!-- Cards Grid -->
@@ -41,28 +41,28 @@ import { environment } from '../../../../../environments/environment';
 
         <div class="space-y-2 mb-6 text-sm text-gray-600 bg-gray-50 p-4 rounded-xl">
           <div class="flex justify-between border-b border-gray-200 pb-2">
-            <span class="font-medium">Date of Birth</span>
-            <span>{{user.dateOfBirth || 'Not provided'}}</span>
+            <span class="font-medium">Date de naissance</span>
+            <span>{{user.dateOfBirth || 'Non renseigné'}}</span>
           </div>
           <div class="flex justify-between pt-1">
-            <span class="font-medium">Gender</span>
-            <span>{{user.gender === 'Female' ? 'Female' : 'Male'}}</span>
+            <span class="font-medium">Genre</span>
+            <span>{{user.gender === 'Female' ? 'Féminin' : 'Masculin'}}</span>
           </div>
         </div>
 
         <!-- Document Verification Button -->
         <button (click)="openDiploma(user, $event)" class="w-full mb-6 flex items-center justify-center gap-3 border-2 border-blue-300 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 transition-all rounded-xl p-4 cursor-pointer select-none font-medium text-blue-600">
           <span class="text-2xl">📄</span>
-          <span>Diploma / Certificate - Open Document</span>
+          <span>Diplôme / Certificat (PJ) - Ouvrir le document</span>
         </button>
 
         <!-- Action Buttons -->
         <div class="flex gap-3">
-          <button (click)="approveUser(user.userId)" class="flex-1 bg-green-600 text-white font-bold py-2.5 rounded-xl hover:bg-green-700 transition-colors shadow-sm">
-            ✅ Approve
+          <button (click)="approveUser(user.userId)" class="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200">
+            ✅ Approuver
           </button>
           <button (click)="rejectUser(user.userId)" class="px-4 bg-white text-red-600 font-bold border border-red-200 py-2.5 rounded-xl hover:bg-red-50 transition-colors">
-            Reject
+            Refuser
           </button>
         </div>
       </div>
@@ -70,17 +70,13 @@ import { environment } from '../../../../../environments/environment';
       <!-- Empty State -->
       <div *ngIf="pendingUsers.length === 0" class="col-span-full border border-dashed border-gray-300 rounded-2xl p-12 text-center bg-white">
         <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">🎉</div>
-        <h3 class="text-lg font-bold text-gray-900 mb-1">No pending requests</h3>
-        <p class="text-gray-500">All professional accounts have been processed.</p>
+        <h3 class="text-lg font-bold text-gray-900 mb-1">Aucune demande en attente</h3>
+        <p class="text-gray-500">Tous les comptes professionnels ont été traités.</p>
       </div>
 
     </div>
   </div>
-  `,
-  styles: [`
-    .bg-green-600 { background-color: #16a34a !important; }
-    .text-white { color: #ffffff !important; }
-  `]
+  `
 })
 export class AdminApprovalsComponent implements OnInit {
   pendingUsers: AdminUser[] = [];
@@ -103,7 +99,7 @@ export class AdminApprovalsComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.error = "Connection error (Mock data injected).";
+        this.error = "Erreur de connexion (Mock data injectée).";
         this.loading = false;
         
         // Mock data for UI development
@@ -117,6 +113,7 @@ export class AdminApprovalsComponent implements OnInit {
   }
 
   approveUser(userId: number): void {
+    if (!confirm('Valider définitivement et activer ce compte professionnel ?')) return;
     this.adminService.updateUserStatus(userId, 'ACTIVE').subscribe({
       next: () => this.loadPending(),
       error: () => {
@@ -127,6 +124,7 @@ export class AdminApprovalsComponent implements OnInit {
   }
 
   rejectUser(userId: number): void {
+    if (!confirm('Rejeter cette demande ? Le compte ne sera pas activé.')) return;
     this.adminService.updateUserStatus(userId, 'REJECTED').subscribe({
       next: () => this.loadPending(),
       error: () => {
@@ -146,16 +144,16 @@ export class AdminApprovalsComponent implements OnInit {
     if (profilePicture.startsWith('http')) return profilePicture;
     
     const filename = profilePicture.replace(/^.*[\\/]/, '');
-    // Construction of the URL to the API backend
-    return `http://localhost:8088/uploads/documents/${filename}`;
+    // Construction de l'URL vers le backend de l'API (généralement sur le port 8088)
+    return `https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/uploads/documents/${filename}`;
   }
 
   openDiploma(user: AdminUser, event: Event): void {
     if (user.profilePicture && user.profilePicture.trim() !== '') {
       window.open(this.getDiplomaUrl(user.profilePicture), '_blank');
     } else {
-      // If no diploma, warn instead of opening the dummy W3C PDF
-      alert("❌ No diploma or supporting document provided by " + user.name + " during registration.");
+      // Si pas de diplôme, on avertit au lieu d'ouvrir le faux PDF du W3C
+      alert("❌ Aucun diplôme ou document justificatif n'a été fourni par " + user.name + " lors de son inscription.");
     }
   }
 }

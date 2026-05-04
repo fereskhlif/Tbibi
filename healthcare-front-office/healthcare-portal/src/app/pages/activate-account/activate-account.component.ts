@@ -99,7 +99,7 @@ export class ActivateAccountComponent implements OnInit {
   private activate(token: string) {
     // ✅ FIXED: removed the backslash before ${token}
     this.http.get(
-      `http://localhost:8088/auth/activate-account?token=${token}`,
+      `https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/auth/activate-account?token=${token}`,
       { responseType: 'text' }
     ).subscribe({
       next: () => {

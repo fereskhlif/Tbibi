@@ -544,7 +544,7 @@ export class DoctorAllAppointmentsComponent implements OnInit {
     // Fetch doctor specialty if not yet loaded
     if (!this.doctorSpecialty) {
       const token = localStorage.getItem('token') || localStorage.getItem('TokenUserConnect') || '';
-      this.http.get<any>('http://localhost:8088/api/users/profile', {
+      this.http.get<any>('https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       }).subscribe({
         next: profile => {
@@ -563,7 +563,7 @@ export class DoctorAllAppointmentsComponent implements OnInit {
     if (this.patientSearch.trim().length < 2) { this.patientResults = []; return; }
     this.searchTimer = setTimeout(() => {
       this.http.get<any[]>(
-        `http://localhost:8088/api/users/patients/search?name=${encodeURIComponent(this.patientSearch)}`
+        `https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/users/patients/search?name=${encodeURIComponent(this.patientSearch)}`
       ).subscribe({
         next: res => {
           this.patientResults = res.map(u => ({
@@ -606,7 +606,7 @@ export class DoctorAllAppointmentsComponent implements OnInit {
     console.log('[NewAppt] Submitting payload:', payload);
 
     this.http.post<AppointmentResponse>(
-      'http://localhost:8088/appointement/doctor-initiated', payload
+      'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/appointement/doctor-initiated', payload
     ).subscribe({
       next: created => {
         console.log('[NewAppt] Created:', created);

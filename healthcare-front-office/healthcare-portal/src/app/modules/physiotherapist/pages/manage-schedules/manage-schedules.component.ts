@@ -199,7 +199,7 @@ export class PhysioManageSchedulesComponent implements OnInit {
   allDays = DAYS_OF_WEEK;
   dayLabels = DAY_LABELS;
 
-  private readonly base = 'http://localhost:8088';
+  private readonly base = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net';
   get physioId(): number { return Number(localStorage.getItem('userId') || 0); }
 
   constructor(private http: HttpClient) {}

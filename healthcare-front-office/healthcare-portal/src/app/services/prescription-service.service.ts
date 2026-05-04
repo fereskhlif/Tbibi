@@ -189,4 +189,4 @@ getAllActes(): Observable<ActeDTO[]> {
   syncAi(): Observable<any> {
     return this.http.post<any>(`${environment.baseUrl}/api/medicines/sync-ai`, {});
   }
-}
+}

@@ -7,7 +7,7 @@ import { MedicalPictureAnalysisRequest, MedicalPictureAnalysisResponse } from '.
   providedIn: 'root'
 })
 export class MedicalPictureAnalysisService {
-  private apiUrl = 'http://localhost:8088/api/medical-picture-analysis';
+  private apiUrl = 'https://app-backend-fbc4d6ghfwfwbwhv.austriaeast-01.azurewebsites.net/api/medical-picture-analysis';
 
   constructor(private http: HttpClient) {}
 
