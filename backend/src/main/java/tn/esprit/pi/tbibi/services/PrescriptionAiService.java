@@ -41,8 +41,10 @@ public class PrescriptionAiService {
     @Value("${ai.prescription.service.url:http://localhost:5001}")
     private String aiServiceUrl;
 
-    public AiAlternativeResponse getAlternatives(String medicament, String indication, String famille, Integer patientId) {
-        log.info("Fetching AI alternatives for: {}, indication: {}, famille: {}, patientId: {}", medicament, indication, famille, patientId);
+    public AiAlternativeResponse getAlternatives(String medicament, String indication, String famille,
+            Integer patientId) {
+        log.info("Fetching AI alternatives for: {}, indication: {}, famille: {}, patientId: {}", medicament, indication,
+                famille, patientId);
 
         AiAlternativeRequest.AiPatient aiPatient = new AiAlternativeRequest.AiPatient();
         aiPatient.setNom("Unknown Patient");
@@ -82,15 +84,16 @@ public class PrescriptionAiService {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<AiAlternativeRequest> requestEntity = new HttpEntity<>(requestPayload, headers);
-            
+
             ResponseEntity<AiAlternativeResponse> response = restTemplate.postForEntity(
                     aiServiceUrl + "/api/alternatives-v4",
                     requestEntity,
-                    AiAlternativeResponse.class
-            );
+                    AiAlternativeResponse.class);
 
             return response.getBody();
         } catch (Exception e) {
+            System.err.println("CRITICAL AI SERVICE ERROR: " + e.getClass().getName() + " - " + e.getMessage());
+            e.printStackTrace();
             log.error("Failed to fetch alternatives from AI service: {}", e.getMessage(), e);
             return AiAlternativeResponse.builder()
                     .message("The AI service is unavailable. Reason: " + e.getMessage())
@@ -100,7 +103,8 @@ public class PrescriptionAiService {
     }
 
     public AiPredictResponse predictTherapeuticClass(AiPredictRequest req) {
-        log.info("Predicting therapeutic class for patientId: {}, indication: {}, weight: {}", req.getPatientId(), req.getIndication(), req.getWeight());
+        log.info("Predicting therapeutic class for patientId: {}, indication: {}, weight: {}", req.getPatientId(),
+                req.getIndication(), req.getWeight());
 
         Double age = 30.0;
         String gender = "M";
@@ -126,17 +130,18 @@ public class PrescriptionAiService {
                 List<Prescription> recentPrescriptions = prescriptionRepo.findByPatientId(req.getPatientId());
                 // Prendre les 3 prescriptions les plus récentes
                 recentPrescriptions.stream()
-                    .limit(3)
-                    .forEach(p -> {
-                        if (p.getMedicines() != null) {
-                            p.getMedicines().forEach(m -> {
-                                if (m.getMedicineName() != null) {
-                                    medicamentsActuels.add(m.getMedicineName());
-                                }
-                            });
-                        }
-                    });
-                log.info("Patient {} a {} médicaments actuels: {}", req.getPatientId(), medicamentsActuels.size(), medicamentsActuels);
+                        .limit(3)
+                        .forEach(p -> {
+                            if (p.getMedicines() != null) {
+                                p.getMedicines().forEach(m -> {
+                                    if (m.getMedicineName() != null) {
+                                        medicamentsActuels.add(m.getMedicineName());
+                                    }
+                                });
+                            }
+                        });
+                log.info("Patient {} a {} médicaments actuels: {}", req.getPatientId(), medicamentsActuels.size(),
+                        medicamentsActuels);
             } catch (Exception e) {
                 log.warn("Impossible de récupérer les médicaments actuels: {}", e.getMessage());
             }
@@ -160,12 +165,11 @@ public class PrescriptionAiService {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestPayload, headers);
-            
+
             ResponseEntity<AiPredictResponse> response = restTemplate.postForEntity(
                     aiServiceUrl + "/api/predict",
                     requestEntity,
-                    AiPredictResponse.class
-            );
+                    AiPredictResponse.class);
 
             return response.getBody();
         } catch (HttpClientErrorException e) {

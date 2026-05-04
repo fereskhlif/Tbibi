@@ -46,7 +46,7 @@ public class PrescriptionService implements IPrescriptionService {
     @jakarta.transaction.Transactional
     public PrescriptionResponse add(PrescriptionRequest request) {
         log.info("=== ADD PRESCRIPTION ===");
-        log.info("Request reçue: note={}, date={}", request.getNote(), request.getDate());
+        log.info("Request reçue: note={}, date={}, medicineIds={}", request.getNote(), request.getDate(), request.getMedicineIds());
 
         try {
             Prescription prescr = mapper.toEntity(request);
@@ -60,7 +60,9 @@ public class PrescriptionService implements IPrescriptionService {
                 List<tn.esprit.pi.tbibi.entities.Medicine> meds =
                     medicineRepository.findAllById(request.getMedicineIds());
                 prescr.setMedicines(meds);
-                log.info("Linked {} medicine(s) to new prescription", meds.size());
+                log.info("Linked {} medicine(s) to new prescription. Medicine IDs found: {}", meds.size(), meds.stream().map(m -> m.getMedicineId()).collect(Collectors.toList()));
+            } else {
+                log.warn("WARNING: No medicineIds provided in the request payload!");
             }
 
             Prescription saved = repository.save(prescr);
@@ -297,7 +299,10 @@ public class PrescriptionService implements IPrescriptionService {
     public PrescriptionResponse assignActe(int prescriptionId, int acteId) {
         log.info("=== ASSIGN ACTE {} TO PRESCRIPTION {} ===", acteId, prescriptionId);
 
-        Prescription existing = repository.findById(prescriptionId)
+        // Use the medicines-eager query so the lazy collection is initialised
+        // before we call save(). Without this, Hibernate sees an empty proxy
+        // and clears the prescription_medicine join table.
+        Prescription existing = repository.findByIdWithMedicines(prescriptionId)
                 .orElseThrow(() -> new RuntimeException("Prescription not found: " + prescriptionId));
 
         Acte acte = acteRepository.findById(acteId)
@@ -305,7 +310,9 @@ public class PrescriptionService implements IPrescriptionService {
 
         existing.setActe(acte);
         Prescription saved = repository.save(existing);
-        log.info("Acte {} assigné à la prescription {}", acteId, prescriptionId);
+        log.info("Acte {} assigné à la prescription {} ({} medicine(s) preserved)",
+                acteId, prescriptionId,
+                existing.getMedicines() != null ? existing.getMedicines().size() : 0);
 
         checkAndSendImmediateAlert(saved);
 

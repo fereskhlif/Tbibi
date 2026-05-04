@@ -18,8 +18,12 @@ import tn.esprit.pi.tbibi.services.PrescriptionService;
 import tn.esprit.pi.tbibi.services.IMedicineService;
 import tn.esprit.pi.tbibi.services.PrescriptionAiService;
 
+import tn.esprit.pi.tbibi.DTO.AiAlternativeItem;
+import tn.esprit.pi.tbibi.DTO.AiAlternativeResponse;
+
 import java.util.List;
 import java.util.Map;
+
 
 @Slf4j
 @RestController
@@ -75,13 +79,9 @@ public class PrescriptionController {
         }
     }
     @GetMapping("/all")
-    public ResponseEntity<String> getAll() throws Exception {
+    public ResponseEntity<List<PrescriptionResponse>> getAll() {
         List<PrescriptionResponse> list = service.getAll();
-        ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(list);
-        System.out.println("JSON LENGTH: " + json.length());
-        System.out.println("JSON: " + json);
-        return ResponseEntity.ok(json);
+        return ResponseEntity.ok(list);
     }
 
     @PutMapping("/update/{id}")
@@ -214,12 +214,28 @@ public class PrescriptionController {
                 } else {
                     response.setStatusMessage("Médicament indisponible. Recherche d'alternatives via l'IA...");
                 }
-                response.setAiAlternatives(prescriptionAiService.getAlternatives(
+                AiAlternativeResponse aiResp = prescriptionAiService.getAlternatives(
                         req.getMedicineName(),
                         req.getIndication(),
                         req.getFamille(),
                         req.getPatientId()
-                ));
+                );
+                // Enrich each in-stock AI alternative with its real DB medicine ID
+                if (aiResp != null && aiResp.getAlternatives() != null) {
+                    for (AiAlternativeItem item : aiResp.getAlternatives()) {
+                        if (item.isInStock() && item.getMedicineId() == null && item.getNom() != null) {
+                            try {
+                                List<MedicineResponse> matched = medicineService.searchByName(item.getNom());
+                                if (!matched.isEmpty()) {
+                                    item.setMedicineId(matched.get(0).getMedicineId());
+                                }
+                            } catch (Exception ex) {
+                                log.warn("Could not resolve medicine ID for AI alternative '{}': {}", item.getNom(), ex.getMessage());
+                            }
+                        }
+                    }
+                }
+                response.setAiAlternatives(aiResp);
             } else {
                 response.setStatusMessage("Médicament disponible en stock.");
             }

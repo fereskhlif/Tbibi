@@ -80,7 +80,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
   outOfStockWarning = false;
   syncingAI = false;
 
-  constructor(private prescriptionService: PrescriptionService, private http: HttpClient) {}
+  constructor(private prescriptionService: PrescriptionService, private http: HttpClient) { }
 
   ngOnInit(): void {
     this.loadAll();
@@ -199,7 +199,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
       color: color,
       bgLabel: bgLabel
     });
-    
+
     return cards;
   }
 
@@ -266,7 +266,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     // Use local formatted date for the HTML datetime-local input
     const localDateTime = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     this.form = { patientId: null, acteDescription: '', typeOfActe: 'PRESCRIPTION', typeCategory: 'PRESCRIPTION', analysisSubType: '', note: '', date: localDateTime, duration: null, expirationDate: null, rxOriginalDate: null };
-    
+
     // Reset AI state
     this.addedMedicines = [];
     this.medicineInput = '';
@@ -276,7 +276,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     this.medicineCheckStatus = '';
     this.predictedClassResponse = null;
     this.predictedClassError = '';
-    
+
     console.log('📅 Date envoyée:', isoString);
     this.showModal = true;
   }
@@ -404,9 +404,9 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
 
   predictTherapeuticClass(): void {
     if (!this.form.patientId || (!this.indicationInput.trim() && !this.form.note.trim())) return;
-    
+
     const indicationToUse = this.indicationInput.trim() || this.form.note.trim();
-    
+
     this.predictingClass = true;
     this.predictedClassResponse = null;
     this.predictedClassError = '';
@@ -443,8 +443,9 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     // Handles both snake_case (sous_classe) from Flask via Jackson and camelCase (sousClasse) from Angular serialization
     const displayName = sub.nom || sub.name || 'Médicament AI';
     const subClass = sub.sous_classe || sub.sousClasse || '';
-    // The substitute may carry a medicine ID if it was matched to a stock item
-    const medId = sub.medicineId || sub.medicine_id || null;
+    // AiAlternativeItem uses @JsonProperty("id") so the JSON key is "id" (not "medicineId")
+    // We fall back through all possible shapes to get the real DB medicine ID
+    const medId = sub.medicineId || sub.medicine_id || sub.id || null;
     this.addedMedicines.push({
       name: displayName,
       id: medId,
@@ -488,7 +489,7 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
       expirationDate: rx.expirationDate || null,
       rxOriginalDate: rx.date
     };
-    
+
     // Reset AI state & populate if needed
     // Assuming UI display only, we map the medicines back if editing
     this.addedMedicines = rx.medicines ? rx.medicines.map((m: any) => ({ name: m.medicineName, id: m.medicineId ?? null })) : [];
@@ -536,22 +537,36 @@ export class DoctorPrescriptionsComponent implements OnInit, OnDestroy {
     if (acteDateToSend && acteDateToSend.length === 16) {
       acteDateToSend = acteDateToSend + ':00.000Z';
     }
-    
-    const rxDateToSend = this.editMode && this.form.rxOriginalDate 
-                         ? this.form.rxOriginalDate 
-                         : new Date().toISOString();
+
+    const rxDateToSend = this.editMode && this.form.rxOriginalDate
+      ? this.form.rxOriginalDate
+      : new Date().toISOString();
 
     // Collect only medicine IDs that were resolved (have an id)
     const medicineIds: number[] = this.addedMedicines
       .filter((m: any) => m.id != null)
       .map((m: any) => m.id as number);
 
+    // If there are medicines WITHOUT IDs (e.g. out of stock AI alternatives),
+    // append them to the note so the data is not lost.
+    const medicinesWithoutId = this.addedMedicines.filter((m: any) => m.id == null);
+    let finalNote = this.form.note || '';
+    if (medicinesWithoutId.length > 0) {
+      finalNote += '\n\nMédicaments prescrits (non gérés en base locale) :\n';
+      medicinesWithoutId.forEach((m: any) => {
+        finalNote += `- ${m.name} ${m.sousClasse ? '(' + m.sousClasse + ')' : ''}\n`;
+      });
+    }
+
     const rxDataToSend = {
-      note: this.form.note,
+      note: finalNote,
       date: rxDateToSend,
       expirationDate: this.form.expirationDate,
       medicineIds: medicineIds.length > 0 ? medicineIds : undefined
     };
+
+    console.log("=== FRONTEND PAYLOAD ===", rxDataToSend);
+    console.log("Added medicines array:", this.addedMedicines);
 
     this.saving = true;
 
